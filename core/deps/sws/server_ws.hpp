@@ -122,18 +122,10 @@ namespace SimpleWeb {
 		}
 	};
 
-	class Address {
-
-	};
-
 	class IdleTimer {
 	public: 
 		void cancel() { }
 		bool expired() { return false;  }
-	};
-
-	class Endpoint {
-
 	};
 
     template <class socket_type>
@@ -222,11 +214,47 @@ namespace SimpleWeb {
 			unique_ptr<socket_type> listener = make_unique<socket_type>();
 
 			listener->listen(this->port);
+
+			fd_set readfds;
+			
 			for (;;) {
-				socket_type* skt = listener->accept();
-				if (skt) {
-					std::shared_ptr<Connection> connection(new Connection(skt));
-					read_handshake(connection);
+
+				FD_ZERO(&readfds);
+				FD_SET(listener->socket_handle, &readfds);
+				for (auto& connection : get_connections()) {
+					FD_SET(connection->socket->socket_handle, &readfds);
+				}
+
+				int activity = select(0, &readfds, 0, 0, 0);
+
+				if (activity == SOCKET_ERROR)
+				{
+					printf("select call failed with error code : %d", WSAGetLastError());
+					exit(EXIT_FAILURE);
+				}
+
+				if (FD_ISSET(listener->socket_handle, &readfds)) {
+					socket_type* skt = listener->accept();
+					if (skt) {
+						std::shared_ptr<Connection> connection(new Connection(skt));
+						read_handshake(connection);
+					}
+				}
+
+				for (auto& connection : get_connections()) {
+					if (FD_ISSET(connection->socket->socket_handle, &readfds)) {
+						for (auto& e : endpoint) {
+							e.second.connections_mutex.lock();
+							bool this_endpoint = e.second.connections.count(connection) != 0;
+							e.second.connections_mutex.unlock();
+
+							if (this_endpoint) {
+								read_message(connection, e.second);
+								break;
+							}
+						}
+					}
+					
 				}
 			}
             //accept();
@@ -445,7 +473,8 @@ namespace SimpleWeb {
                         //Capture write_buffer in lambda so it is not destroyed before async_write is finished
 						if (connection->socket->writeString(write_buffer)) {
 							connection_open(connection, an_endpoint.second);
-							read_message(connection, read_buffer, an_endpoint.second);
+							//Switched to select based logic
+							//read_message(connection, read_buffer, an_endpoint.second);
 						} else {
 							connection_error(connection, an_endpoint.second, 0);
 						}
@@ -470,8 +499,8 @@ namespace SimpleWeb {
             return 1;
         }
         
-        void read_message(std::shared_ptr<Connection> connection, 
-                stringstream& read_buffer, Endpoint& endpoint) const {
+        void read_message(std::shared_ptr<Connection> connection, Endpoint& endpoint) const {
+			stringstream read_buffer;
 			if (connection->socket->readString(read_buffer, 2)) {
 
 				istream& stream = read_buffer;
@@ -590,8 +619,9 @@ namespace SimpleWeb {
 					endpoint.onmessage(connection, message);
 				}
 
+				//Switched to select-based logic
 				//Next message
-				read_message(connection, read_buffer, endpoint);
+				//read_message(connection, read_buffer, endpoint);
 			}
 			else {
 				connection_error(connection, endpoint, 0);
