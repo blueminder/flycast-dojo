@@ -322,10 +322,10 @@ namespace SimpleWeb {
             
             //Need to copy the callback-function in case its destroyed
 			if (connection->socket->writeString(write_buffer)) {
-				callback(1);
+				if (callback != nullptr) callback(1);
 			}
 			else {
-				callback(0);
+				if (callback != nullptr) callback(0);
 			}
         }
         
