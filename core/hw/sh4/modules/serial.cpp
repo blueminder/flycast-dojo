@@ -43,8 +43,10 @@ SCSPTR2_type SCIF_SCSPTR2;
 SCLSR2_type SCIF_SCLSR2;
 */
 
+void sendChr(char chr);
 void SerialWrite(u32 addr, u32 data)
 {
+	sendChr(data);
 	if (settings.debug.SerialConsole) {
 		putc(data, stdout);
 	}

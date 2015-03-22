@@ -2,10 +2,13 @@
 #include "deps/sws/server_ws.hpp"
 
 using namespace SimpleWeb;
+
+SocketServer<WS>* srv;
 void webui_start()
 {
 	SocketServer<WS> server(8080);
 
+	srv = &server;
 	auto& echo = server.endpoint[".*"];
 
 	//C++14, lambda parameters declared with auto
@@ -45,4 +48,20 @@ void webui_start()
 	};
 
 	server.start();
+}
+
+stringstream line;
+void sendChr(char chr) {
+	if (chr < 1 && chr > 0x7F)
+		return;
+	if (chr != '\n') {
+		line << chr;
+	}
+	else {
+		for (auto& c: srv->get_connections()) {
+			srv->send(c, line);
+		}
+		line.str("");
+		line.clear();
+	}
 }
