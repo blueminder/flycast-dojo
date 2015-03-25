@@ -14,7 +14,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
-	RZDCY_MODULES += deps/libwebsocket/
+	RZDCY_MODULES += deps/sws/
 
 	ifdef FOR_ANDROID
 		RZDCY_MODULES += deps/ifaddrs/

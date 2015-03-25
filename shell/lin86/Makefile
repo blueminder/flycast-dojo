@@ -4,7 +4,7 @@ FOR_LINUX :=1
 NOT_ARM := 1
 NO_REC := 1
 #NO_REND := 1
-WEBUI :=1 
+#WEBUI :=1
 
 RZDCY_SRC_DIR = ../../core
 
@@ -24,11 +24,6 @@ ASFLAGS := -m32
 #-march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
 LDFLAGS	:= -m32	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
-
-SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/rec_v2/ plugins/ profiler/ serial_ipc/ \
- hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
-
 
 CXXFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_REC #-D NO_REND
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
