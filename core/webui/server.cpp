@@ -6,10 +6,10 @@ using namespace SimpleWeb;
 SocketServer<WS>* srv;
 void webui_start()
 {
-	SocketServer<WS> server(8080);
+	SocketServer<WS> server(4567);
 
 	srv = &server;
-	auto& echo = server.endpoint[".*"];
+	auto& echo = server.endpoint["/serial"];
 
 	//C++14, lambda parameters declared with auto
 	//For C++11 use: (shared_ptr<Server<WS>::Connection> connection, shared_ptr<Server<WS>::Message> message)
