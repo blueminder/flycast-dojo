@@ -10,12 +10,12 @@ void WriteChannelReg8(u32 channel,u32 reg);
 void sgc_Init();
 void sgc_Term();
 
-union fp_22_10
+union fp_12_18
 {
 	struct
 	{
-		u32 fp:10;
-		u32 ip:22;
+		u32 fp:18;
+		u32 ip:14;
 	};
 	u32 full;
 };

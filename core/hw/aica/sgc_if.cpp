@@ -38,11 +38,20 @@ double AEG_DSR_Time[]=
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
+double FEG_ADSR_Time[]=
+{	-1,-1,472800.0,405200.0,354400.0,283600.0,236400.0,202800.0,177200.0,142000.0,118400.0,101200.0,88800.0,70800.0,
+	 592000,50800.0,44400.0,35600.0,29600.0,25200.0,22000.0,17600.0,14800.0,12800.0,11200.0,8800.0,7200.0,6400.0,
+	 5600.0,4400.0,3680.0,3160.0,2760.0,2200.0,1840.0,1560.0,1360.0,1080.0,920.0,800.0,680.0,560.0,440.0,392.0,340.0,
+	 272.0,228.0,196.0,172.0,34.0,136.0,100.0,88.0,72.0,56.0,48.0,44.0,34.0,28.0,24.0,22.0,17.0,14.0,12.0
+};
+
+
 
 #define AEG_STEP_BITS (16)
 //Steps per sample
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
+u32 FEG_ADSR_SPS[64];
 
 const char* stream_names[]=
 {
@@ -195,7 +204,9 @@ struct ChannelCommonData
 
 	//+28	TL[7:0]	--	Q[4:0]
 	u32 Q:5;
-	u32 rez_28_0:3;
+	u32 rez_28_0:1;
+	u32 voff:1;
+	u32 lpoff:1;
 
 	u32 TL:8;
 
@@ -283,10 +294,11 @@ struct ChannelEx
 
 	u8* SA;
 	u32 CA;
-	fp_22_10 step;
+	fp_12_18 step;
 	u32 update_rate;
 
 	SampleType s0,s1;
+	SampleType z1, z2;
 
 	struct
 	{
@@ -341,8 +353,20 @@ struct ChannelEx
 	
 	struct
 	{
-		s32 value;
+		s32 val;
+		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
+		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
 		_EG_state state;
+
+		u32 AttackRate;
+		u32 Decay1Rate;
+		u32 Decay2Rate;
+		u32 ReleaseRate;
+		u32 flv0;
+		u32 flv1;
+		u32 flv2;
+		u32 flv3;
+		u32 flv4;
 	} FEG;//i have to figure out how this works w/ AEG and channel state, and the iir values
 	
 	struct 
@@ -385,8 +409,8 @@ struct ChannelEx
 	{
 		SampleType rv;
 		u32 fp=step.fp;
-		rv=FPMul(s0,(s32)(1024-fp),10);
-		rv+=FPMul(s1,(s32)(fp),10);
+		rv=FPMul(s0,(s64)((1<<18)-fp),18);
+		rv+=FPMul(s1,(s64)(fp),18);
 
 		return rv;
 	}
@@ -401,6 +425,15 @@ struct ChannelEx
 		{
 			SampleType sample=InterpolateSample();
 
+			s32 f = (((FEG.GetValue() & 0xFF) | 0x100) << 4) >> ((FEG.GetValue()>>8)^0x1F);
+			s32 q = ccd->Q << 8;
+
+			if (!ccd->lpoff) {
+				sample = (f * sample + (0x1FFF - f + q) * z1 - q * z2) >> 13;
+				z2 = z1;
+				z1 = sample;
+			}
+
 			//Volume & Mixer processing
 			//All attenuations are added together then applied and mixed :)
 			
@@ -408,7 +441,12 @@ struct ChannelEx
 			//*Att is up to 511
 			//logtable handles up to 1024, anything >=255 is mute
 
-			u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
+			u32 ofsatt = lfo.alfo;
+
+			if (!ccd->voff) {
+				ofsatt += AEG.GetValue()>>2;
+			}
+
 			
 			s32* logtable=ofsatt+tl_lut;
 
@@ -455,6 +493,7 @@ struct ChannelEx
 		AEG.state=newstate;
 		if (newstate==EG_Release)
 			ccd->KYONB=0;
+
 	}
 	void SetFegState(_EG_state newstate)
 	{
@@ -463,17 +502,19 @@ struct ChannelEx
 	}
 	void KEY_ON()
 	{
-		if (AEG.state==EG_Release)
+		if (AEG.state==EG_Release || AEG.GetValue() > 0x3BF)
 		{
 			//if it was off then turn it on !
 			enable();
 
 			// reset AEG
 			SetAegState(EG_Attack);
-			AEG.SetValue(0x3FF);//start from 0x3FF ? .. it seems so !
+			AEG.SetValue(0x280);//start from 0x3FF ? .. it seems so !
 
 			//reset FEG
 			SetFegState(EG_Attack);
+			FEG.SetValue(FEG.flv0);
+			z1 = z2 =0;
 			//set values and crap
 
 
@@ -487,7 +528,7 @@ struct ChannelEx
 
 			StepStreamInitial(this);
 
-			key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
+			key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/(1<<18),ChanData->LPCTL);
 		}
 		else
 		{
@@ -500,6 +541,8 @@ struct ChannelEx
 		{
 			key_printf("[%d] KEY_OFF -> Release\n",Channel);
 			SetAegState(EG_Release);
+			FEG.SetValue(FEG.flv3);
+			SetFegState(EG_Release);
 			//switch to release state
 		}
 		else
@@ -535,13 +578,17 @@ struct ChannelEx
 	//
 	u32 AEG_EffRate(u32 re)
 	{
-		s32 rv=ccd->KRS+(ccd->FNS>>9) + re*2;
-		if (ccd->KRS==0xF)
-			rv-=0xF;
-		if (ccd->OCT&8)
-			rv-=(16-ccd->OCT)*2;
-		else
-			rv+=ccd->OCT*2;
+		s32 rv=re*2;
+
+		if (ccd->KRS!=0xF)
+		{
+			rv += ccd->KRS*2+(ccd->FNS>>9);
+
+			if (ccd->OCT&8)
+				rv-=(16-ccd->OCT)*2;
+			else
+				rv+=ccd->OCT*2;
+		}
 
 		if (rv<0)
 			rv=0;
@@ -561,15 +608,7 @@ struct ChannelEx
 	//OCT,FNS
 	void UpdatePitch()
 	{
-		u32 oct=ccd->OCT;
-
-		u32 update_rate = 1024 | ccd->FNS;
-		if (oct& 8)
-			update_rate>>=(16-oct);
-		else
-			update_rate<<=oct;
-
-		this->update_rate=update_rate;
+		this->update_rate = (1024 | ccd->FNS) << (8 ^ ccd->OCT);
 	}
 
 	//LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
@@ -585,12 +624,12 @@ struct ChannelEx
 			lfo.SetStartValue(O);
 		}
 
-		lfo.plfo_shft=8-ccd->PLFOS;
+		lfo.plfo_shft=ccd->PLFOS;
 		lfo.alfo_shft=8-ccd->ALFOS;
 
 		lfo.alfo_calc=ALFOWS_CALC[ccd->ALFOWS];
 		lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
-
+		/*
 		if (ccd->LFORE)
 		{
 			lfo.Reset(this);
@@ -602,6 +641,7 @@ struct ChannelEx
 		}
 
 		ccd->LFORE=0;
+		*/
 	}
 
 	//ISEL
@@ -633,7 +673,16 @@ struct ChannelEx
 	//Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR
 	void UpdateFEG()
 	{
-		//this needs to be filled
+		FEG.AttackRate = AEG_ATT_SPS[AEG_EffRate(ccd->FAR)];
+		FEG.Decay1Rate = AEG_DSR_SPS[AEG_EffRate(ccd->FD1R)];
+		FEG.Decay2Rate = AEG_DSR_SPS[AEG_EffRate(ccd->FD2R)];
+		FEG.ReleaseRate = AEG_DSR_SPS[AEG_EffRate(ccd->FRR)];
+
+		FEG.flv0 = ccd->FLV0;
+		FEG.flv1 = ccd->FLV1;
+		FEG.flv2 = ccd->FLV2;
+		FEG.flv3 = ccd->FLV3;
+		FEG.flv4 = ccd->FLV4;
 	}
 	
 	//WHEE :D!
@@ -831,8 +880,8 @@ void StepDecodeSampleInitial(ChannelEx* ch)
 template<s32 PCMS,u32 LPCTL,u32 LPSLNK>
 void StreamStep(ChannelEx* ch)
 {
-	ch->step.full+=ch->update_rate;
-	fp_22_10 sp=ch->step;
+	ch->step.full+=ch->update_rate + ch->lfo.plfo;
+	fp_12_18 sp=ch->step;
 	ch->step.ip=0;
 
 	while(sp.ip>0)
@@ -853,6 +902,11 @@ void StreamStep(ChannelEx* ch)
 				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
+		}
+
+		if (CA == ch->loop.LSA && ch->ccd->LFORE)
+		{
+			ch->lfo.Reset(ch);
 		}
 
 		if (ca_t>=ch->loop.LEA)
@@ -934,7 +988,7 @@ void CalcPlfo(ChannelEx* ch)
 		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
 		break;
 	}
-	ch->lfo.alfo=rv>>ch->lfo.plfo_shft;
+	ch->lfo.plfo=rv<<ch->lfo.plfo_shft;
 }
 
 template<u32 state>
@@ -997,7 +1051,47 @@ void AegStep(ChannelEx* ch)
 template<u32 state>
 void FegStep(ChannelEx* ch)
 {
-	
+	switch(state)
+	{
+		case EG_Attack:
+		{
+			if (ch->FEG.GetValue() > ch->FEG.flv0)
+				ch->FEG.val-=ch->FEG.AttackRate;
+			else
+				ch->FEG.val+=ch->FEG.AttackRate;
+
+			if (ch->FEG.GetValue() == ch->FEG.flv0)
+				ch->SetFegState(EG_Decay1);
+		}
+			break;
+		case EG_Decay1:
+		{
+			if (ch->FEG.GetValue() > ch->FEG.flv1)
+				ch->FEG.val-=ch->FEG.Decay1Rate;
+			else
+				ch->FEG.val+=ch->FEG.Decay1Rate;
+
+			if (ch->FEG.GetValue() == ch->FEG.flv1)
+				ch->SetFegState(EG_Decay2);
+		}
+			break;
+		case EG_Decay2:
+		{
+			if (ch->FEG.GetValue() > ch->FEG.flv2)
+				ch->FEG.val-=ch->FEG.Decay2Rate;
+			else
+				ch->FEG.val+=ch->FEG.Decay2Rate;
+		}
+			break;
+		case EG_Release: //only on key_off ?
+		{
+			if (ch->FEG.GetValue() > ch->FEG.flv4)
+				ch->FEG.val-=ch->FEG.ReleaseRate;
+			else
+				ch->FEG.val+=ch->FEG.ReleaseRate;
+		}
+			break;
+	}
 }
 void staticinitialise()
 {
@@ -1075,6 +1169,20 @@ u32 CalcAegSteps(float t)
 	double steps=aeg_allsteps/scnt;
 	return (u32)(steps+0.5);
 }
+u32 CalcFegSteps(float t)
+{
+	const double feg_allsteps=(1<<13)*(1<<AEG_STEP_BITS)-1;
+
+	if (t<0)
+		return 0;
+	if (t==0)
+		return (u32)feg_allsteps;
+
+	//44.1*ms = samples
+	double scnt=44.1*t;
+	double steps=feg_allsteps/scnt;
+	return (u32)(steps+0.5);
+}
 void sgc_Init()
 {
 	staticinitialise();
@@ -1099,6 +1207,7 @@ void sgc_Init()
 	{
 		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
 		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
+		FEG_ADSR_SPS[i]=CalcFegSteps(AEG_DSR_Time[i]);
 	}
 	for (int i=0;i<64;i++)
 		Chans[i].Init(i,aica_reg);
