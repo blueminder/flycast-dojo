@@ -37,3 +37,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 void YUV_init();
 //registers 
 #define PVR_BASE 0x005F8000
+
+extern u32 fb_watch_addr_start;
+extern u32 fb_watch_addr_end;
+extern bool fb_dirty;

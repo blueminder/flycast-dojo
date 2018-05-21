@@ -126,3 +126,6 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
+
+void renderFrameBuffer(float &width, float &height);
+void drawFrameBuffer(float w, float h);

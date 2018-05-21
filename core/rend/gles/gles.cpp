@@ -1081,7 +1081,7 @@ void tryfit(float* x,float* y)
 	}
 	ShaderUniforms.fog_coefs[0] = a;
 	ShaderUniforms.fog_coefs[1] = b;
-	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
+	//printf("FOG COEFS %g %g\n", a, b);
 }
 
 
@@ -1477,9 +1477,9 @@ bool RenderFrame()
 {
 	DoCleanup();
 
-	bool is_rtt=pvrrc.isRTT;
+	bool is_rtt = _pvrrc ? pvrrc.isRTT : false;
 
-	if (!is_rtt)
+	if (_pvrrc && !is_rtt)
 		OSD_HOOK();
 
 	//if (FrameCount&7) return;
@@ -1488,7 +1488,7 @@ bool RenderFrame()
 
 	//TODO: Make this dynamic
 	float vtx_min_fZ=0.f;	//pvrrc.fZ_min;
-	float vtx_max_fZ=pvrrc.fZ_max;
+	float vtx_max_fZ= _pvrrc ? pvrrc.fZ_max : 1.0;
 
 	//sanitise the values, now with NaN detection (for omap)
 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
@@ -1572,7 +1572,12 @@ bool RenderFrame()
 	float dc_width=640;
 	float dc_height=480;
 
-	if (!is_rtt)
+	if (_pvrrc == NULL)
+	{
+		gcflip = 0;
+		renderFrameBuffer(dc_width, dc_height);
+	}
+	else if (!is_rtt)
 	{
 		gcflip=0;
 	}
@@ -1789,47 +1794,54 @@ bool RenderFrame()
 
 	//move vertex to gpu
 
-	//Main VBO
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
-
-	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
-
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
-
-	//Modvol VBO
-	if (pvrrc.modtrig.used())
+	if (_pvrrc)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+		//Main VBO
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+
+		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+
+		//Modvol VBO
+		if (pvrrc.modtrig.used())
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+		}
+
+		int offs_x=ds2s_offs_x+0.5f;
+		//this needs to be scaled
+
+		//not all scaling affects pixel operations, scale to adjust for that
+		scale_x *= scissoring_scale_x;
+
+		#if 0
+			//handy to debug really stupid render-not-working issues ...
+			printf("SS: %dx%d\n", screen_width, screen_height);
+			printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+		#endif
+
+		if (!wide_screen_on)
+		{
+			glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x * (is_rtt ? 1 : dc2s_scale_h),
+					  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
+					  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
+					  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
+			glcache.Enable(GL_SCISSOR_TEST);
+		}
+
+		//restore scale_x
+		scale_x /= scissoring_scale_x;
+
+		DrawStrips();
 	}
-
-	int offs_x=ds2s_offs_x+0.5f;
-	//this needs to be scaled
-
-	//not all scaling affects pixel operations, scale to adjust for that
-	scale_x *= scissoring_scale_x;
-
-	#if 0
-		//handy to debug really stupid render-not-working issues ...
-		printf("SS: %dx%d\n", screen_width, screen_height);
-		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-	#endif
-
-	if (!wide_screen_on)
+	else
 	{
-		glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x * (is_rtt ? 1 : dc2s_scale_h),
-				  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
-				  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
-				  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
-		glcache.Enable(GL_SCISSOR_TEST);
+		drawFrameBuffer(dc_width, dc_height);
 	}
-
-	//restore scale_x
-	scale_x /= scissoring_scale_x;
-
-	DrawStrips();
 
 	#if HOST_OS==OS_WINDOWS
 		//Sleep(40); //to test MT stability

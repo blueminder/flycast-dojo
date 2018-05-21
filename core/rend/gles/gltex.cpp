@@ -109,6 +109,53 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	free(rows);
 }
 
+static void dumpTexture(u32 name, u32 w, u32 h, u8 *data, GLuint textype) {
+	char sname[256];
+	sprintf(sname, "texdump/%x-%d.png", name, FrameCount);
+	FILE *fp = fopen(sname, "wb");
+    if (fp == NULL)
+    	return;
+
+	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
+	for (int y = 0; y < h; y++) {
+		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		u32 *dst = (u32*)rows[y];
+		u16 *src = (u16 *)(data + y * w * 2);
+		for (int i = 0; i < w; i++) {
+			u32 s = *src;
+			if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
+				*dst++ = (((s >> 12) & 0xF) << 28) | (((s >> 8) & 0xF) << 20) | (((s >> 4) & 0xF) << 12) | ((s & 0xF) << 4);
+			else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
+				*dst++ = (((s >> 11) & 0x1F) << 27) | (((s >> 6) & 0x1F) << 19) | (((s >> 1) & 0x1F) << 11) | ((s & 0x1) ? 0xFF : 0);
+			src++;
+		}
+	}
+
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+
+    png_init_io(png_ptr, fp);
+
+
+    /* write header */
+    png_set_IHDR(png_ptr, info_ptr, w, h,
+                         8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_write_info(png_ptr, info_ptr);
+
+
+            /* write bytes */
+    png_write_image(png_ptr, rows);
+
+    /* end write */
+    png_write_end(png_ptr, NULL);
+    fclose(fp);
+
+	for (int y = 0; y < h; y++)
+		free(rows[y]);
+	free(rows);
+}
 
 //Texture Cache :)
 struct TextureCacheData
@@ -753,3 +800,117 @@ void rend_text_invl(vram_block* bl)
 
 	libCore_vramlock_Unlock_block_wb(bl);
 }
+
+static GLuint fbTextureId;
+
+void renderFrameBuffer(float &width, float &height) {
+
+	width = (FB_R_SIZE.fb_x_size + 1) << 1;
+	height = FB_R_SIZE.fb_y_size + 1;
+	if (SPG_CONTROL.interlace)
+		height *= 2;
+	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
+
+	int bpp = FB_R_CTRL.fb_depth == 3 ? 4 : 2;	// FIXME other formats
+	if (bpp == 4) {
+		width /= 2;
+		modulus /= 2;
+	}
+
+	if (fbTextureId == 0)
+		fbTextureId = glcache.GenTexture();
+
+	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+
+	//set texture repeat mode
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	u8 *dst = (u8*)temp_tex_buffer;
+	for (int y = 0; y < height; y++) {
+		for (int bank = 0; bank < SPG_CONTROL.interlace; bank++) {
+			int bufline = y;
+			if (SPG_CONTROL.interlace)
+				bufline /= 2;
+			u32 bank_addr = bank ? FB_R_SOF2 : FB_R_SOF1;
+			for (int i = 0; i < width; i++) {
+				if (bpp == 2) {
+					u16 src = pvr_read_area1_16(bank_addr + (i + bufline * (width + modulus)) * bpp);
+					*dst++ = ((src >> 11) & 0x1F) << 3;
+					*dst++ = ((src >> 5) & 0x3F) << 2;
+					*dst++ = ((src >> 0) & 0x1F) << 3;
+				}
+				else
+				{
+					u32 src = pvr_read_area1_32(bank_addr + (i + bufline * (width + modulus)) * bpp);
+					*dst++ = (src >> 16) & 0xFF;
+					*dst++ = (src >> 8) & 0xFF;
+					*dst++ = src & 0xFF;
+				}
+			}
+		}
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, temp_tex_buffer); glCheck();
+
+	printf("FB_R_SOF1=%x FB_R_SOF1[0]=%x FB_R_SOF2=%x FB_R_SOF2[0]=%x FB_R_CTRL.fb_depth=%d FB_R_SIZE=%f x %f %% %d%c fb_strip_buf_en=%d\n",
+		FB_R_SOF1, vri(FB_R_SOF1), FB_R_SOF2, vri(FB_R_SOF2), FB_R_CTRL.fb_depth, width, height, modulus, SPG_CONTROL.interlace ? 'i' : ' ',
+		FB_R_CTRL.fb_strip_buf_en);
+}
+
+void drawFrameBuffer(float w, float h) {
+	printf("drawFrameBuffer(%f,%f)\n", w, h);
+
+	struct Vertex vertices[] = {
+			{ 0, h, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ 0, 0, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+			{ w, h, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ w, 0, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+	};
+	GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+	glcache.ClearColor(0, 0.5, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+
+	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 0)];
+//	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 0, 0, 1, 0, 0, 0)]; // no texture
+	if (shader->program == -1)
+		CompilePipelineShader(shader);
+	glcache.UseProgram(shader->program); glCheck();
+
+	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+
+	//GLuint hGeometry, hIndices;
+	//glGenBuffers(1, &hGeometry); glCheck();
+	//glGenBuffers(1, &hIndices);
+
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hIndices); glCheck();
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW); glCheck();
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW); glCheck();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u)); glCheck();
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
+	//glDrawArrays(GL_TRIANGLE_STRIP, 0, 3); glCheck();
+
+	//glcache.DeleteTextures(1, &fbTextureId);
+	//fbTextureId = 0;
+}
+

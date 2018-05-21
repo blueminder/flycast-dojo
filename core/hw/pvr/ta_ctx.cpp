@@ -135,6 +135,10 @@ bool QueueRender(TA_context* ctx)
 
 	if (rqueue) {
 		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
+		if (ctx->rend.isRTT)
+			printf("RTT frame skipped!!\n");
+		else
+			printf("Frame skipped!!\n");
 		tactx_Recycle(ctx);
 		fskip++;
 		return false;
@@ -173,12 +177,15 @@ bool rend_framePending() {
 
 void FinishRender(TA_context* ctx)
 {
-	verify(rqueue == ctx);
-	mtx_rqueue.Lock();
-	rqueue = 0;
-	mtx_rqueue.Unlock();
+	if (ctx)
+	{
+		verify(rqueue == ctx);
+		mtx_rqueue.Lock();
+		rqueue = 0;
+		mtx_rqueue.Unlock();
 
-	tactx_Recycle(ctx);
+		tactx_Recycle(ctx);
+	}
 	frame_finished.Set();
 }
 

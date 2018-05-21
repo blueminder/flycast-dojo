@@ -209,10 +209,20 @@ void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
+	u32 maddr = addr & VRAM_MASK;
+	if (!fb_dirty && maddr <= fb_watch_addr_end && maddr + 1 >= fb_watch_addr_start) {
+		fb_dirty = true;
+		printf("FRAMEBUFFER WRITE DETECTED\n");
+	}
 	*(u16*)&vram[pvr_map32(addr) & VRAM_MASK]=data;
 }
 void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 {
+	u32 maddr = addr & VRAM_MASK;
+	if (!fb_dirty && maddr <= fb_watch_addr_end && maddr + 3 >= fb_watch_addr_start) {
+		fb_dirty = true;
+		printf("FRAMEBUFFER WRITE DETECTED\n");
+	}
 	*(u32*)&vram[pvr_map32(addr) & VRAM_MASK] = data;
 }
 

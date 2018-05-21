@@ -84,6 +84,12 @@ cResetEvent re(false,true);
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
+static bool render_called = false;
+bool fb_dirty;
+bool render_framebuffer;
+u32 fb_watch_addr_start;
+u32 fb_watch_addr_end;
+
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
@@ -138,6 +144,11 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 	fwrite(compressed, 1, compressed_size, fw);
 	free(compressed);
 
+	fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
+	for (int i = 0; i < ctx->tad.render_pass_count; i++) {
+		u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
+		fwrite(&offset, 1, sizeof(offset), fw);
+	}
 	fclose(fw);
 }
 
@@ -159,8 +170,6 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	TA_context* ctx = tactx_Alloc();
 
 	ctx->Reset();
-
-	ctx->tad.Clear();
 
 	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
 	fread(&ctx->rend.isAutoSort, 1, sizeof(ctx->rend.isAutoSort), fw);
@@ -194,6 +203,16 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	free(gz_stream);
 
 	ctx->tad.thd_data += t;
+
+	if (fread(&t, 1, sizeof(t), fw) > 0) {
+		ctx->tad.render_pass_count = t;
+		for (int i = 0; i < t; i++) {
+			u32 offset;
+			fread(&offset, 1, sizeof(offset), fw);
+			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
+		}
+	}
+
 	fclose(fw);
     
     return ctx;
@@ -207,10 +226,10 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		sprintf(name, "dcframe-%d", FrameCount);
 		dump_frame(name, _pvrrc, &vram[0]);
 	}
-	bool proc = renderer->Process(ctx);
+	bool proc = ctx == NULL || renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
-	if (!proc || !ctx->rend.isRTT)
-		// If rendering to texture, continue locking until the frame is rendered
+	if (!proc || (ctx && !ctx->rend.isRTT))
+		// If rendering to texture, continue locking until the frame is rendered. Otherwise the next frame might be skipped if rendered too early.
 		re.Set();
 #endif
 
@@ -232,15 +251,24 @@ bool rend_single_frame()
 #endif
 		_pvrrc = DequeueRender();
 	}
-	while (!_pvrrc);
+	while (!_pvrrc && !render_framebuffer);
 	bool do_swp = rend_frame(_pvrrc, true);
 
-	if (_pvrrc->rend.isRTT)
-		re.Set();
-
 	//clear up & free data ..
-	FinishRender(_pvrrc);
-	_pvrrc=0;
+	if (_pvrrc)
+	{
+		if (_pvrrc->rend.isRTT)
+			re.Set();
+		FinishRender(_pvrrc);
+		_pvrrc=0;
+	}
+	else
+	{
+		// Direct FB
+		re.Set();
+		FinishRender(NULL);
+	}
+	fb_dirty = false;
 
 	return do_swp;
 }
@@ -317,6 +345,14 @@ void rend_resize(int width, int height) {
 
 void rend_start_render()
 {
+	render_called = true;
+	if (!(FB_W_SOF1 & 0x1000000)) {
+		fb_watch_addr_start = FB_W_SOF1;
+		u32 fb_size = (FB_R_SIZE.fb_y_size + 1)
+						* (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) / 4 - 1;
+		fb_watch_addr_end = FB_W_SOF1 + fb_size - 1;
+	}
+
 	pend_rend = false;
 	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
@@ -528,5 +564,14 @@ void rend_term()
 
 void rend_vblank()
 {
+	if ((!render_called || fb_dirty) && FB_R_CTRL.fb_enable /*&& (!SPG_CONTROL.interlace || SPG_STATUS.fieldnum == 0)*/) {
+		render_framebuffer = true;
+		rs.Set();
+	}
+	else {
+		render_framebuffer = false;
+		fb_dirty = false;
+	}
+	render_called = false;
 	os_DoEvents();
 }
