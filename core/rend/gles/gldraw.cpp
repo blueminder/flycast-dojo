@@ -148,7 +148,6 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
 	CurrentShader = &gl.pogram_table[
@@ -165,9 +164,9 @@ __forceinline
 		CompilePipelineShader(CurrentShader);
 	glcache.UseProgram(CurrentShader->program);
 
-	if (Type == ListType_Opaque)
+	if (Type == ListType_Opaque || Type == ListType_Punch_Through)
 	{
-		// FIXME Must be done for drawing pass only and only for opaque (and pt?)
+		// FIXME Must be done for drawing pass only and only for opaque and pt
 		glActiveTexture(GL_TEXTURE1);
 		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
 		GLint uniform = glGetUniformLocation(CurrentShader->program, "shadow_stencil");
@@ -941,7 +940,7 @@ void DrawModVols(int first, int count)
 //	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glcache.UseProgram(gl.modvol_shader.program);
-	glUniform1f(gl.modvol_shader.sp_ShaderColor,0.5f);
+	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
@@ -1121,6 +1120,7 @@ void DrawStrips()
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 		// Modifier volumes
 		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
@@ -1139,6 +1139,8 @@ void DrawStrips()
 		//Alpha tested
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
+		// Modifier volumes
+		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		//Alpha blended
 		{
