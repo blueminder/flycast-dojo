@@ -193,7 +193,10 @@ uniform lowp vec4 pp_ClipTest; \n\
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform highp float sp_FOG_DENSITY; \n\
+uniform highp float shade_scale_factor; \n\
+uniform highp vec2 screen_size; \n\
 uniform sampler2D tex,fog_table; \n\
+uniform usampler2D shadow_stencil; \n\
 /* Vertex input*/ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
@@ -267,6 +270,10 @@ void main() \n\
 		#endif\n\
 	} \n\
 	#endif\n\
+	//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
+	uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+	if (stencil.r == uint(0x81)) \n\
+		color.rgb *= shade_scale_factor; \n\
 	#if pp_FogCtrl==0 \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
@@ -661,6 +668,12 @@ struct ShaderUniforms_t
 
 		if (s->sp_LOG_FOG_COEFS!=-1)
 			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
+
+		if (s->screen_size != -1)
+			glUniform2f(s->screen_size, (float)screen_width, (float)screen_height);
+
+		if (s->shade_scale_factor != -1)
+			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
 	}
 
 } ShaderUniforms;
@@ -807,7 +820,8 @@ bool CompilePipelineShader(	PipelineShader* s)
 		s->sp_FOG_COL_RAM=-1;
 		s->sp_LOG_FOG_COEFS=-1;
 	}
-
+	s->screen_size = glGetUniformLocation(s->program, "screen_size");
+	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
 
 	ShaderUniforms.Set(s);
 
@@ -1411,6 +1425,12 @@ bool ProcessFrame(TA_context* ctx)
 
 bool RenderFrame()
 {
+	static int old_screen_width, old_screen_height;
+	if (screen_width != old_screen_width || screen_height != old_screen_height) {
+		rend_resize(screen_width, screen_height);
+		old_screen_width = screen_width;
+		old_screen_height = screen_height;
+	}
 	DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
@@ -1824,7 +1844,17 @@ void rend_set_fb_scale(float x,float y)
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
+	void Resize(int w, int h)
+	{
+		// FIXME Not called :(
+		screen_width=w;
+		screen_height=h;
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+	}
 	void Term() { }
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

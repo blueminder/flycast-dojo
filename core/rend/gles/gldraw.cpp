@@ -73,6 +73,8 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
+GLuint fbo;
+GLuint stencilTexId;
 
 s32 SetTileClip(u32 val, bool set)
 {
@@ -162,6 +164,20 @@ __forceinline
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
 	glcache.UseProgram(CurrentShader->program);
+
+	if (Type == ListType_Opaque)
+	{
+		// FIXME Must be done for drawing pass only and only for opaque (and pt?)
+		glActiveTexture(GL_TEXTURE1);
+		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
+		GLint uniform = glGetUniformLocation(CurrentShader->program, "shadow_stencil");
+		if (uniform != -1)
+		{
+			glUniform1i(uniform, 1); glCheck();
+		}
+		glActiveTexture(GL_TEXTURE0);
+	}
+
 	SetTileClip(gp->tileclip,true);
 
 	//This bit control which pixels are affected
@@ -921,8 +937,8 @@ void DrawModVols(int first, int count)
 
 	SetupModvolVBO();
 
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	glcache.Enable(GL_BLEND);
+//	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor,0.5f);
@@ -1021,29 +1037,26 @@ void DrawModVols(int first, int count)
 			}
 		}
 		//disable culling
-		SetCull(0);
-		//enable color writes
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-
-		//black out any stencil with '1'
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		
-		glcache.Enable(GL_STENCIL_TEST);
-		glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
-		
-		//clear the stencil result bit
-		glcache.StencilMask(0x3);    //write to lsb
-		glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
-
-		//don't do depth testing
-		glcache.Disable(GL_DEPTH_TEST);
+//		SetCull(0);
+//		//enable color writes
+//		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+//
+//		//black out any stencil with '1'
+//		glcache.Enable(GL_BLEND);
+//		glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+//
+//		glcache.Enable(GL_STENCIL_TEST);
+//		glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
+//
+//		//clear the stencil result bit
+//		glcache.StencilMask(0x3);    //write to lsb
+//		glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
+//
+//		//don't do depth testing
+//		glcache.Disable(GL_DEPTH_TEST);
 
 		SetupMainVBO();
-		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-
-		//Draw and blend
-		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
+//		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 	}
 
@@ -1053,6 +1066,42 @@ void DrawModVols(int first, int count)
 
 void DrawStrips()
 {
+	if (fbo == 0)
+	{
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);		// Bind framebuffer 0 to use the system fb
+
+		stencilTexId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL); glCheck();
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
+
+//		GLuint colortexid = glcache.GenTexture();
+//		glcache.BindTexture(GL_TEXTURE_2D, colortexid);
+//
+//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); glCheck();
+//		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colortexid, 0); glCheck();
+
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	}
+	else
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		if (stencilTexId == 0)
+		{
+			stencilTexId = glcache.GenTexture();
+			glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL); glCheck();
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
+		}
+		glcache.Disable(GL_SCISSOR_TEST);
+		glcache.DepthMask(GL_TRUE);
+		glStencilMask(0xFF); glCheck();
+		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+	}
+
 	SetupMainVBO();
 	//Draw the strips !
 
@@ -1067,11 +1116,25 @@ void DrawStrips()
 		glcache.Enable(GL_DEPTH_TEST);
 		glcache.DepthMask(GL_TRUE);
 
-		//Opaque
-		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+        // Do a first pass on the depth+stencil buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+        DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 		// Modifier volumes
 		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); glCheck();
+		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX); glCheck();
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glCheck();
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glCheck();
+
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+		//Opaque
+		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 		//Alpha tested
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);

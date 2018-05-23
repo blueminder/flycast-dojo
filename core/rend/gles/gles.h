@@ -55,6 +55,8 @@ struct PipelineShader
 	GLuint scale,depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
+	GLuint shade_scale_factor;
+	GLuint screen_size;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
@@ -126,3 +128,5 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
+
+extern GLuint stencilTexId;
