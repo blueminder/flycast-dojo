@@ -88,12 +88,14 @@ uniform highp vec4      depth_scale; \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
+" vary " mediump float vtx_z; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
+	vtx_z = vpos.z; \n\
 	vpos.w=1.0/vpos.z;  \n"
 #ifndef GLES
 	"\
@@ -174,10 +176,8 @@ lowp float fog_mode2(highp float invW)  \n\
 const char* PixelPipelineShader =
 #ifndef GLES
 	"#version 140 \n"
-	"out vec4 FragColor; \n"
 #endif
 "\
-\
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
@@ -186,6 +186,21 @@ const char* PixelPipelineShader =
 #define pp_ShadInstr %d \n\
 #define pp_Offset %d \n\
 #define pp_FogCtrl %d \n\
+#define pp_WeightedAverage %d \n\
+#define pp_FrontPeeling %d \n\
+#if pp_WeightedAverage == 1 \n\
+#extension GL_ARB_draw_buffers : require \n\
+#endif \n\
+#if pp_FrontPeeling == 2 \n\
+uniform sampler2DRect DepthTex; \n\
+#endif \n"
+#ifndef GLES
+	"\
+	#if pp_WeightedAverage == 0 \n\
+	out vec4 FragColor; \n\
+	#endif \n"
+#endif
+"\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
@@ -201,13 +216,27 @@ uniform usampler2D shadow_stencil; \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
+" vary " mediump float vtx_z; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float fog_idx = clamp(w * sp_FOG_DENSITY, 0.0, 127.99); \n\
 	return clamp(sp_LOG_FOG_COEFS.y * log2(fog_idx) + sp_LOG_FOG_COEFS.x, 0.001, 1.0); //the clamp is required due to yet another bug !\n\
 } \n\
 void main() \n\
-{ \n\
+{ \n"
+#ifndef GLES
+	"\
+	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n"
+#endif
+	"\
+	#if pp_FrontPeeling == 2 \n\
+		// Bit-exact comparison between FP32 z-buffer and fragment depth \n\
+		highp float frontDepth = texture2DRect(DepthTex, gl_FragCoord.xy).r; \n\
+		if (gl_FragDepth <= frontDepth) { \n\
+			discard; \n\
+		} \n\
+	#endif \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
 		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
@@ -221,11 +250,11 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-	lowp vec4 color=vtx_base; \n\
+	highp vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
-	#if pp_FogCtrl==3 \n\
+	#if pp_FogCtrl==3 // LUT Mode 2 \n\
 		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
@@ -239,23 +268,23 @@ void main() \n\
 		#if cp_AlphaTest == 1 \n\
 			if (cp_AlphaTestValue>texcol.a) discard;\n\
 		#endif  \n\
-		#if pp_ShadInstr==0 \n\
+		#if pp_ShadInstr==0 // DECAL \n\
 		{ \n\
 			color=texcol; \n\
 		} \n\
 		#endif\n\
-		#if pp_ShadInstr==1 \n\
+		#if pp_ShadInstr==1 // MODULATE \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\
 			color.a=texcol.a; \n\
 		} \n\
 		#endif\n\
-		#if pp_ShadInstr==2 \n\
+		#if pp_ShadInstr==2 // DECAL ALPHA \n\
 		{ \n\
 			color.rgb=mix(color.rgb,texcol.rgb,texcol.a); \n\
 		} \n\
 		#endif\n\
-		#if  pp_ShadInstr==3 \n\
+		#if  pp_ShadInstr==3 // MODULATE ALPHA \n\
 		{ \n\
 			color*=texcol; \n\
 		} \n\
@@ -264,7 +293,7 @@ void main() \n\
 		#if pp_Offset==1 \n\
 		{ \n\
 			color.rgb+=vtx_offs.rgb; \n\
-			if (pp_FogCtrl==1) \n\
+			if (pp_FogCtrl==1) // Per vertex \n\
 				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
 		} \n\
 		#endif\n\
@@ -274,7 +303,7 @@ void main() \n\
 	uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
 	if (stencil.r == uint(0x81)) \n\
 		color.rgb *= shade_scale_factor; \n\
-	#if pp_FogCtrl==0 \n\
+	#if pp_FogCtrl==0 // LUT \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
@@ -282,13 +311,31 @@ void main() \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
 	#endif  \n\
-	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n"
-#ifndef GLES
-	"\
-	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34; \n"
-#endif
-	FRAGCOL "=color; \n\
+	\n\
+	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0); \n\
+	//if (gl_FragCoord.w < 0) \n\
+	//	color.rgb = vec3(1, 0, 0); \n\
+	//else if (gl_FragCoord.w > 1) \n\
+	//	color.rgb = vec3(0, 1, 0); \n\
+	//color = vec4(gl_FragCoord.w*6, 0, 0, 0.5); \n\
+	\n\
+	#if pp_WeightedAverage == 1 \n\
+		// Average colors \n\
+		gl_FragData[0] = vec4(color.rgb * color.a, color.a); \n\
+		gl_FragData[1] = vec4(1.0); \n\
+		// Weighted Blended \n\
+//		float viewDepth = abs(1.0 / gl_FragCoord.w); \n\
+//		float linearDepth = viewDepth * 4.5; // uDepthScale \n\
+//		float weight = clamp(0.03 / (1e-5 + pow(linearDepth/10, 3.0)), 1e-2, 3e3); \n\
+//		gl_FragData[0] = vec4(color.rgb * color.a, color.a) * weight; \n\
+//		gl_FragData[1] = vec4(color.a); \n\
+	#elif pp_FrontPeeling == 1 \n"
+		FRAGCOL " = vec4(color.rgb * color.a, 1.0 - color.a); \n\
+	#elif pp_FrontPeeling == 2 \n"
+		FRAGCOL " = vec4(color.rgb * color.a, color.a); \n\
+	#else  \n"
+		FRAGCOL "=color; \n\
+	#endif \n\
 }";
 
 const char* ModifierVolumeShader =
@@ -303,8 +350,8 @@ void main() \n\
 { \n"
 #ifndef GLES
 	"\
-	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34; \n"
+	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n"
 #endif
 	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
@@ -636,47 +683,7 @@ int screen_height;
 
 #endif
 
-struct ShaderUniforms_t
-{
-	float PT_ALPHA;
-	float scale_coefs[4];
-	float depth_coefs[4];
-	float fog_den_float;
-	float ps_FOG_COL_RAM[3];
-	float ps_FOG_COL_VERT[3];
-	float fog_coefs[2];
-
-	void Set(PipelineShader* s)
-	{
-		if (s->cp_AlphaTestValue!=-1)
-			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
-
-		if (s->depth_scale!=-1)
-			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
-
-		if (s->sp_FOG_COL_RAM!=-1)
-			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-		if (s->sp_FOG_COL_VERT!=-1)
-			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->sp_LOG_FOG_COEFS!=-1)
-			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
-
-		if (s->screen_size != -1)
-			glUniform2f(s->screen_size, (float)screen_width, (float)screen_height);
-
-		if (s->shade_scale_factor != -1)
-			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
-	}
-
-} ShaderUniforms;
+ShaderUniforms_t ShaderUniforms;
 
 GLuint gl_CompileShader(const char* shader,GLuint type)
 {
@@ -762,7 +769,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl)
+							u32 pp_FogCtrl, bool pp_WeightedAverage, u32 pp_FrontPeeling)
 {
 	u32 rv=0;
 
@@ -774,17 +781,19 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
+	rv <<= 1; rv |= pp_WeightedAverage;
+	rv <<= 2; rv |= pp_FrontPeeling;
 
 	return rv;
 }
 
-bool CompilePipelineShader(	PipelineShader* s)
+bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipelineShader */)
 {
 	char pshader[8192];
 
-	sprintf(pshader,PixelPipelineShader,
+	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, (int)s->pp_WeightedAverage, s->pp_FrontPeeling);
 
 	s->program=gl_CompileAndLink(VertexShaderSource,pshader);
 
@@ -823,7 +832,17 @@ bool CompilePipelineShader(	PipelineShader* s)
 	s->screen_size = glGetUniformLocation(s->program, "screen_size");
 	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
 
-	ShaderUniforms.Set(s);
+	// Depth peeling: use texture 1 for depth texture
+	gu = glGetUniformLocation(s->program, "DepthTex");
+	if (gu != -1)
+		glUniform1i(gu, 1);
+	else
+	{
+		// Shadow stencil for OP/PT rendering pass
+		gu = glGetUniformLocation(s->program, "shadow_stencil");
+		if (gu != -1)
+			glUniform1i(gu, 1);
+	}
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -847,6 +866,7 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
+	/*
 	memset(gl.pogram_table,0,sizeof(gl.pogram_table));
 
 	PipelineShader* dshader=0;
@@ -888,6 +908,7 @@ bool gl_create_resources()
 			}
 		}
 	}
+	*/
 
 
 
@@ -1445,7 +1466,7 @@ bool RenderFrame()
 	//TODO: Make this dynamic
 	float vtx_min_fZ=0.f;	//pvrrc.fZ_min;
 	float vtx_max_fZ=pvrrc.fZ_max;
-
+//printf("Zmin %g Zmax %g\n", pvrrc.fZ_min, pvrrc.fZ_max);
 	//sanitise the values, now with NaN detection (for omap)
 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
 	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
@@ -1665,7 +1686,7 @@ bool RenderFrame()
 	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
-
+/*
 	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
 	{
 		PipelineShader* s=&gl.pogram_table[i];
@@ -1676,6 +1697,7 @@ bool RenderFrame()
 
 		ShaderUniforms.Set(s);
 	}
+*/
 	//setup render target first
 	if (is_rtt)
 	{

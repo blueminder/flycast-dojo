@@ -21,15 +21,25 @@ const static u32 CullMode[]=
 	GL_FRONT, //2   Cull if Negative    Cull if ( |det| < 0 ) or ( |det| < fpu_cull_val )
 	GL_BACK,  //3   Cull if Positive    Cull if ( |det| > 0 ) or ( |det| < fpu_cull_val )
 };
+#define INVERT_DEPTH_FUNC
 const static u32 Zfunction[]=
 {
 	GL_NEVER,      //GL_NEVER,              //0 Never
+#ifndef INVERT_DEPTH_FUNC
 	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
 	GL_EQUAL,       //GL_EQUAL,             //2 Equal
 	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
 	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
 	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
 	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+#else
+	GL_GREATER,        //GL_LESS/*EQUAL*/,     //1 Less
+	GL_EQUAL,       //GL_EQUAL,             //2 Equal
+	GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
+	GL_LESS,     //GL_GREATER/*EQUAL*/,  //4 Greater
+	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
+	GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+#endif
 	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
 
@@ -67,9 +77,6 @@ const static u32 SrcBlendGL[] =
 	GL_DST_ALPHA,
 	GL_ONE_MINUS_DST_ALPHA
 };
-
-extern int screen_width;
-extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
@@ -148,9 +155,9 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-	void SetGPState(const PolyParam* gp,u32 cflip=0)
+	void SetGPState(const PolyParam* gp, bool weighted_average = false, u32 front_peeling = 0, u32 cflip=0)
 {
-	CurrentShader = &gl.pogram_table[
+	CurrentShader = gl.getShader(
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
 												  gp->pcw.Texture,
@@ -158,24 +165,25 @@ template <u32 Type, bool SortingEnabled>
 												  gp->tsp.IgnoreTexA,
 												  gp->tsp.ShadInstr,
 												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl)];
+												  gp->tsp.FogCtrl,
+												  weighted_average,
+												  front_peeling));
 	
-	if (CurrentShader->program == -1)
+	if (CurrentShader->program == -1) {
+		CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
+		CurrentShader->pp_ClipTestMode = SetTileClip(gp->tileclip, false);
+		CurrentShader->pp_Texture = gp->pcw.Texture;
+		CurrentShader->pp_UseAlpha = gp->tsp.UseAlpha;
+		CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
+		CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
+		CurrentShader->pp_Offset = gp->pcw.Offset;
+		CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
+		CurrentShader->pp_WeightedAverage = weighted_average;
+		CurrentShader->pp_FrontPeeling = front_peeling;
 		CompilePipelineShader(CurrentShader);
-	glcache.UseProgram(CurrentShader->program);
-
-	if (Type == ListType_Opaque || Type == ListType_Punch_Through)
-	{
-		// FIXME Must be done for drawing pass only and only for opaque and pt
-		glActiveTexture(GL_TEXTURE1);
-		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
-		GLint uniform = glGetUniformLocation(CurrentShader->program, "shadow_stencil");
-		if (uniform != -1)
-		{
-			glUniform1i(uniform, 1); glCheck();
-		}
-		glActiveTexture(GL_TEXTURE0);
 	}
+	glcache.UseProgram(CurrentShader->program);
+	ShaderUniforms.Set(CurrentShader);
 
 	SetTileClip(gp->tileclip,true);
 
@@ -187,28 +195,31 @@ template <u32 Type, bool SortingEnabled>
 
 	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
 
-	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
-	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
+	if (gp->texid > 0)
+	{
+		SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
+		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
-	//set texture filter mode
-	if (gp->tsp.FilterMode == 0)
-	{
-		//disable filtering, mipmaps
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-	else
-	{
-		//bilinear filtering
-		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		//set texture filter mode
+		if (gp->tsp.FilterMode == 0)
+		{
+			//disable filtering, mipmaps
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+		else
+		{
+			//bilinear filtering
+			//PowerVR supports also trilinear via two passes, but we ignore that for now
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		}
 	}
 
 	if (Type==ListType_Translucent)
 	{
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+//		glcache.Enable(GL_BLEND);
+//		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 	}
 	else
 		glcache.Disable(GL_BLEND);
@@ -221,10 +232,14 @@ template <u32 Type, bool SortingEnabled>
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
 	{
-		if (gp->isp.DepthMode == 7)		// Fixes VR2 menu but not sure about this one
+		if (gp->isp.DepthMode == 7) {		// Fixes VR2 menu but not sure about this one
 			glcache.DepthFunc(GL_ALWAYS);
+		}
 		else
-			glcache.DepthFunc(GL_GEQUAL);
+		{
+			glcache.DepthFunc(Zfunction[6]);	// Greater or equal
+//			glcache.DepthFunc(GL_LESS);
+		}
 	}
 	else
 	{
@@ -232,15 +247,17 @@ template <u32 Type, bool SortingEnabled>
 	}
 
 #if TRIG_SORT
-	if (SortingEnabled)
+	if (SortingEnabled && !front_peeling)
 		glcache.DepthMask(GL_FALSE);
 	else
 #endif
-		glcache.DepthMask(!gp->isp.ZWriteDis);
+		if (!weighted_average)
+			glcache.DepthMask(!gp->isp.ZWriteDis);
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply, int first, int count)
+void DrawList(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0,
+		int srcBlendModeFilter = -1, int dstBlendModeFilter = -1)
 {
 	PolyParam* params = &gply.head()[first];
 
@@ -260,12 +277,35 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 	{
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
-			SetGPState<Type,SortingEnabled>(params);
+			if (Type == ListType_Translucent) {
+				if ((params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)						// Nothing to do
+					|| (srcBlendModeFilter != -1 && params->tsp.SrcInstr != srcBlendModeFilter)		// src filter doesn't match
+					|| (dstBlendModeFilter != -1 && params->tsp.DstInstr != dstBlendModeFilter)) {	// dst filter doesn't match
+					params++;
+					continue;
+				}
+			}
+
+			SetGPState<Type,SortingEnabled>(params, weighted_average, front_peeling);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
 		}
 
 		params++;
 	}
+}
+
+void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0,
+		int srcBlendModeFilter = -1, int dstBlendModeFilter = -1)
+{
+	DrawList<ListType_Translucent, true>(gply, first, count, weighted_average, front_peeling, srcBlendModeFilter, dstBlendModeFilter);
+}
+void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0)
+{
+	DrawList<ListType_Opaque, false>(gply, first, count, weighted_average, front_peeling);
+}
+void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0)
+{
+	DrawList<ListType_Punch_Through, false>(gply, first, count, weighted_average, front_peeling);
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -780,7 +820,7 @@ void DrawSorted(bool multipass)
 				glcache.UseProgram(gl.modvol_shader.program);
 				glUniform1f(gl.modvol_shader.sp_ShaderColor, 1.f);
 
-				glcache.DepthFunc(GL_GEQUAL);
+				glcache.DepthFunc(Zfunction[6]);	// Greater or equal
 				glcache.DepthMask(GL_TRUE);
 
 				for (u32 p = 0; p < count; p++)
@@ -943,7 +983,7 @@ void DrawModVols(int first, int count)
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	glcache.DepthMask(GL_FALSE);
-	glcache.DepthFunc(GL_GREATER);
+	glcache.DepthFunc(Zfunction[4]);
 
 	if(0)
 	{
@@ -1061,7 +1101,14 @@ void DrawModVols(int first, int count)
 
 	//restore states
 	glcache.Enable(GL_DEPTH_TEST);
+	glcache.DepthMask(GL_TRUE);
 }
+
+void InitDualPeeling();
+void RenderAverageColors();
+void RenderWeightedBlended();
+void RenderFrontToBackPeeling(int first, int count);
+void DualPeelingReshape(int w, int h);
 
 void DrawStrips()
 {
@@ -1100,6 +1147,8 @@ void DrawStrips()
 		glStencilMask(0xFF); glCheck();
 		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 	}
+	InitDualPeeling();
+	DualPeelingReshape(screen_width, screen_height);
 
 	SetupMainVBO();
 	//Draw the strips !
@@ -1126,12 +1175,17 @@ void DrawStrips()
 		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0); glCheck();
-		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX); glCheck();
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glCheck();
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glCheck();
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+		// Bind stencil buffer for the fragment shader (shadowing)
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, stencilTexId);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glActiveTexture(GL_TEXTURE0);
+		glCheck();
 
 		//Opaque
 		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
@@ -1141,19 +1195,25 @@ void DrawStrips()
 
 		//Alpha blended
 		{
-			if (pvrrc.isAutoSort)
-				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-
-#if TRIG_SORT
-			if (pvrrc.isAutoSort)
-				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-			else
-				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-#else
-			if (pvrrc.isAutoSort)
-				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-#endif
+//			if (hack_on)
+//				RenderAverageColors();
+//			else
+				RenderFrontToBackPeeling(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+			//RenderWeightedBlended();
+//			if (pvrrc.isAutoSort)
+//				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+//
+//#if TRIG_SORT
+//			if (pvrrc.isAutoSort)
+//				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+//			else
+//				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+//#else
+//			if (pvrrc.isAutoSort)
+//				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+//			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+//#endif
+			SetupMainVBO();
 		}
 		previous_pass = current_pass;
 	}
