@@ -57,6 +57,7 @@ struct PipelineShader
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
 	GLuint shade_scale_factor;
 	GLuint screen_size;
+	GLuint blend_mode;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
@@ -146,6 +147,7 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
+	GLuint blend_mode[2];
 
 	void Set(PipelineShader* s)
 	{
@@ -175,6 +177,9 @@ struct ShaderUniforms_t
 
 		if (s->shade_scale_factor != -1)
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
+
+		if (s->blend_mode != -1)
+			glUniform2uiv(s->blend_mode, 1, blend_mode);
 	}
 
 };
@@ -186,6 +191,7 @@ bool CompilePipelineShader(PipelineShader* s, const char *source = PixelPipeline
 GLuint loadPNG(const string& subpath, int &width, int &height);
 
 extern GLuint stencilTexId;
+extern GLuint depthTexId;
 
 void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0, int srcBlendModeFilter = -1, int dstBlendModeFilter = -1);
 void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);

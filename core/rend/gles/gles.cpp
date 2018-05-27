@@ -191,8 +191,8 @@ const char* PixelPipelineShader =
 #if pp_WeightedAverage == 1 \n\
 #extension GL_ARB_draw_buffers : require \n\
 #endif \n\
-#if pp_FrontPeeling == 2 \n\
-uniform sampler2DRect DepthTex; \n\
+#if pp_FrontPeeling != 1 // FIXME \n\
+uniform sampler2D DepthTex; \n\
 #endif \n"
 #ifndef GLES
 	"\
@@ -209,9 +209,17 @@ uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 uniform highp float shade_scale_factor; \n\
-uniform highp vec2 screen_size; \n\
+uniform lowp vec2 screen_size; \n\
 uniform sampler2D tex,fog_table; \n\
-uniform usampler2D shadow_stencil; \n\
+#if pp_WeightedAverage == 0 && pp_FrontPeeling == 0 \n\
+	uniform usampler2D shadow_stencil; \n\
+#endif \n\
+#extension GL_EXT_shader_image_load_store : enable \n\
+#define ABUFFER_SIZE 32 \n\
+uniform uvec2 blend_mode; \n\
+coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
+coherent uniform layout(size4x32) image2DArray abufferImg; \n\
+coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
 /* Vertex input*/ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
@@ -230,9 +238,16 @@ void main() \n\
 	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n"
 #endif
 	"\
+	#if pp_FrontPeeling != 1 // FIXME \n\
+		// Manual depth testing \n\
+		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
+		// FIXME this causes dots to appear. Loss of precision? \n\
+		//if (gl_FragDepth > frontDepth - 1e-8) // FIXME the TA depth test is ignored \n\
+		//	discard; \n\
+	#endif \n\
 	#if pp_FrontPeeling == 2 \n\
 		// Bit-exact comparison between FP32 z-buffer and fragment depth \n\
-		highp float frontDepth = texture2DRect(DepthTex, gl_FragCoord.xy).r; \n\
+		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
 		if (gl_FragDepth <= frontDepth) { \n\
 			discard; \n\
 		} \n\
@@ -299,10 +314,12 @@ void main() \n\
 		#endif\n\
 	} \n\
 	#endif\n\
-	//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
-	uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
-	if (stencil.r == uint(0x81)) \n\
-		color.rgb *= shade_scale_factor; \n\
+	#if pp_WeightedAverage == 0 && pp_FrontPeeling == 0 \n\
+		//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
+		uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+		if (stencil.r == uint(0x81)) \n\
+			color.rgb *= shade_scale_factor; \n\
+	#endif\n\
 	#if pp_FogCtrl==0 // LUT \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
@@ -334,7 +351,16 @@ void main() \n\
 	#elif pp_FrontPeeling == 2 \n"
 		FRAGCOL " = vec4(color.rgb * color.a, color.a); \n\
 	#else  \n"
-		FRAGCOL "=color; \n\
+//		FRAGCOL "=color; \n
+"		ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+		int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
+		if (abidx >= ABUFFER_SIZE) \n\
+			discard; \n\
+		vec4 blend_val = vec4(gl_FragDepth, float(blend_mode.x) * 8 + float(blend_mode.y), 0, 0); \n\
+		ivec3 coords3 = ivec3(coords, abidx); \n\
+		imageStore(abufferImg, coords3, color); \n\
+		imageStore(abufferBlendingImg, coords3, blend_val); \n\
+		\n\
 	#endif \n\
 }";
 
@@ -835,14 +861,25 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 	// Depth peeling: use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
-		glUniform1i(gu, 1);
-	else
-	{
-		// Shadow stencil for OP/PT rendering pass
-		gu = glGetUniformLocation(s->program, "shadow_stencil");
-		if (gu != -1)
-			glUniform1i(gu, 1);
-	}
+		glUniform1i(gu, 1);		// GL_TEXTURE1
+
+	// Shadow stencil for OP/PT rendering pass
+	gu = glGetUniformLocation(s->program, "shadow_stencil");
+	if (gu != -1)
+		glUniform1i(gu, 2);		// GL_TEXTURE2
+
+	// A-buffers
+	gu = glGetUniformLocation(s->program, "abufferImg");
+	if (gu != -1)
+		glUniform1i(gu, 3);		// GL_TEXTURE3
+	gu = glGetUniformLocation(s->program, "abufferCounterImg");
+	if (gu != -1)
+		glUniform1i(gu, 4);		// GL_TEXTURE4
+	gu = glGetUniformLocation(s->program, "abufferBlendingImg");
+	if (gu != -1)
+		glUniform1i(gu, 5);		// GL_TEXTURE5
+
+	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -958,7 +995,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type);
 bool gl_create_resources();
 
 //setup
-
+extern void initABuffer();
 
 bool gles_init()
 {
@@ -986,6 +1023,7 @@ bool gles_init()
 #ifdef GLES
 	glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
+	initABuffer();
 
 	return true;
 }
@@ -1863,6 +1901,8 @@ void rend_set_fb_scale(float x,float y)
 	fb_scale_y=y;
 }
 
+void reshapeABuffer(int w, int h);
+
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
@@ -1876,6 +1916,7 @@ struct glesrend : Renderer
 			glcache.DeleteTextures(1, &stencilTexId);
 			stencilTexId = 0;
 		}
+		reshapeABuffer(w, h);
 	}
 	void Term() { }
 
