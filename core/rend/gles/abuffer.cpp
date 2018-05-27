@@ -10,6 +10,7 @@ GLuint abufferTexID = 0;
 GLuint abufferBlendingTexID = 0;
 GLuint abufferCounterTexID = 0;
 PipelineShader g_abuffer_final_shader;
+PipelineShader g_abuffer_final_nosort_shader;
 PipelineShader g_abuffer_clear_shader;
 PipelineShader g_abuffer_pass2_shader;
 static GLuint g_quadBuffer = 0;
@@ -22,12 +23,12 @@ static const char *final_shader_source = "\
 #version 140 \n\
 #extension GL_EXT_shader_image_load_store : enable \n\
 #define ABUFFER_SIZE %d \n\
+#define DEPTH_SORTED %d \n\
 out vec4 FragColor; \n\
 uniform layout(size1x32) uimage2D abufferCounterImg; \n\
 uniform layout(size4x32) image2DArray abufferImg; \n\
-uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
+uniform layout(size4x32) image2DArray abufferBlendingImg; \n\
 uniform lowp vec2 screen_size; \n\
-uniform int sortFragments; \n\
  \n\
 vec4 colorList[ABUFFER_SIZE]; \n\
 vec4 depthBlendList[ABUFFER_SIZE]; \n\
@@ -74,9 +75,15 @@ void fillFragmentArray(ivec2 coords, int num_frag) { \n\
 void bubbleSort(int array_size) { \n\
 	for (int i = array_size - 2; i >= 0; i--) { \n\
 		for (int j = 0; j <= i; j++) { \n\
-// depth only			if (depthBlendList[j].x < depthBlendList[j + 1].x) { \n\
+#if DEPTH_SORTED == 1 \n\
+			// depth only \n\
+			//if (depthBlendList[j].x < depthBlendList[j + 1].x) { \n\
+			// depth then poly number \n\
 			if (depthBlendList[j].x < depthBlendList[j + 1].x || (depthBlendList[j].x == depthBlendList[j + 1].x && depthBlendList[j].z > depthBlendList[j + 1].z)) { \n\
-//			if (depthBlendList[j].z > depthBlendList[j + 1].z) { \n\
+#else \n\
+			// poly number only \n\
+			if (depthBlendList[j].z > depthBlendList[j + 1].z) { \n\
+#endif \n\
 				vec4 depthBlend = depthBlendList[j + 1]; \n\
 				depthBlendList[j + 1] = depthBlendList[j]; \n\
 				depthBlendList[j] = depthBlend; \n\
@@ -95,8 +102,11 @@ void insertionSort(int array_size) { \n\
 		vec4 aDepth = depthBlendList[i]; \n\
 		vec4 aColor = colorList[i]; \n\
 		int j = i - 1; \n\
-//		for (; j >= 0 && depthBlendList[j].z < aDepth.z; j--) { \n\
+#if DEPTH_SORTED == 1 \n\
 		for (; j >= 0 && (depthBlendList[j].x < aDepth.x || (depthBlendList[j].x == aDepth.x && depthBlendList[j].z > aDepth.z)); j--) { \n\
+#else \n\
+		for (; j >= 0 && depthBlendList[j].z < aDepth.z; j--) { \n\
+#endif \n\
 			depthBlendList[j + 1] = depthBlendList[j]; \n\
 			colorList[j + 1] = colorList[j]; \n\
 		} \n\
@@ -111,8 +121,7 @@ vec4 returnNthLayer(ivec2 coords, int num_frag, int layer) { \n\
 	fillFragmentArray(coords, num_frag); \n\
 	 \n\
 	// Sort fragments in local memory array \n\
-	if (sortFragments != 0) \n\
-		bubbleSort(num_frag); \n\
+	bubbleSort(num_frag); \n\
 	 \n\
 	return vec4(colorList[min(layer, num_frag - 1)].rgb, 1); \n\
 } \n\
@@ -124,18 +133,7 @@ vec4 resolveAlphaBlend(ivec2 coords, int num_frag){ \n\
 	fillFragmentArray(coords, num_frag); \n\
 	 \n\
 	// Sort fragments in local memory array \n\
-	if (sortFragments != 0) \n\
-		bubbleSort(num_frag); \n\
-	else if (num_frag > 1) \n\
-	{ \n\
-		// FIXME This is wrong \n\
-		vec4 depthBlend = depthBlendList[0]; \n\
-		depthBlendList[0] = depthBlendList[num_frag - 1]; \n\
-		depthBlendList[num_frag - 1] = depthBlend; \n\
-		vec4 color = colorList[0]; \n\
-		colorList[0] = colorList[num_frag - 1]; \n\
-		colorList[num_frag - 1] = color; \n\
-	} \n\
+	bubbleSort(num_frag); \n\
 	 \n\
 	vec4 finalColor = colorList[0]; \n\
 	for (int i = 1; i < num_frag; i++) { \n\
@@ -235,8 +233,6 @@ static const char *clear_shader_source = "\
 #version 140 \n\
 #extension GL_EXT_shader_image_load_store : enable \n\
 coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
-coherent uniform layout(size4x32) image2DArray abufferImg; \n\
-coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
  \n\
 void main(void) \n\
 { \n\
@@ -244,12 +240,6 @@ void main(void) \n\
  \n\
 	// Reset counter \n\
 	imageStore(abufferCounterImg, coords, uvec4(0)); \n\
- \n\
-	// FIXME should not be necessary \n\
-	// Put black in first layer \n\
-	//imageStore(abufferImg, ivec3(coords, 0), vec4(0)); \n\
-	// Reset depth \n\
-	//imageStore(abufferBlendingImg, ivec3(coords, 0), vec4(0)); \n\
  \n\
 	// Discard fragment so nothing is writen to the framebuffer \n\
 	discard; \n\
@@ -262,7 +252,7 @@ static const char *pass2_shader_source = "\
 #extension GL_EXT_shader_image_load_store : enable \n\
 coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
 coherent uniform layout(size4x32) image2DArray abufferImg; \n\
-coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
+coherent uniform layout(size4x32) image2DArray abufferBlendingImg; \n\
 uniform lowp vec2 screen_size; \n\
 uniform sampler2D DepthTex; \n\
 uniform sampler2D tex; \n\
@@ -321,14 +311,20 @@ void initABuffer()
 	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferBlendingTexID);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, g_imageWidth, g_imageHeight, ABUFFER_SIZE, 0,  GL_RG, GL_FLOAT, 0);
-	glBindImageTexture(5, abufferBlendingTexID, 0, true, 0,  GL_READ_WRITE, GL_RG32F);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, g_imageWidth, g_imageHeight, ABUFFER_SIZE, 0,  GL_RGBA, GL_FLOAT, 0);
+	glBindImageTexture(5, abufferBlendingTexID, 0, true, 0,  GL_READ_WRITE, GL_RGBA32F);
 
 	if (g_abuffer_final_shader.program == 0)
 	{
 		char source[8192];
-		sprintf(source, final_shader_source, ABUFFER_SIZE);
+		sprintf(source, final_shader_source, ABUFFER_SIZE, 1);
 		CompilePipelineShader(&g_abuffer_final_shader, source);
+	}
+	if (g_abuffer_final_nosort_shader.program == 0)
+	{
+		char source[8192];
+		sprintf(source, final_shader_source, ABUFFER_SIZE, 0);
+		CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
 	}
 	if (g_abuffer_clear_shader.program == 0)
 		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
@@ -424,10 +420,8 @@ void renderABuffer(bool sortFragments)
 	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferBlendingTexID);
 	glCheck();
 
-	glcache.UseProgram(g_abuffer_final_shader.program);
+	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
-	GLint gu = glGetUniformLocation(g_abuffer_final_shader.program, "sortFragments");
-	glUniform1i(gu, (int)sortFragments);
 
 	glcache.Disable(GL_BLEND);
 	glcache.Disable(GL_DEPTH_TEST);
