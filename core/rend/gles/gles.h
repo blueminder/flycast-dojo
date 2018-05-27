@@ -58,12 +58,12 @@ struct PipelineShader
 	GLuint shade_scale_factor;
 	GLuint screen_size;
 	GLuint blend_mode;
+	GLuint pp_Number;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	bool pp_WeightedAverage;
-	u32 pp_FrontPeeling;
+	int pass;
 };
 
 
@@ -85,8 +85,6 @@ struct gl_ctx
 		GLuint program;
 
 		GLuint scale,depth_scale;
-		GLuint sp_ShaderColor;
-
 	} modvol_shader;
 
 	std::map<int, PipelineShader *> shaders;
@@ -136,7 +134,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_WeightedAverage, u32 pp_FrontPeeling);
+							u32 pp_FogCtrl, int pass);
 
 struct ShaderUniforms_t
 {
@@ -148,6 +146,7 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
 	GLuint blend_mode[2];
+	int poly_number;
 
 	void Set(PipelineShader* s)
 	{
@@ -180,6 +179,9 @@ struct ShaderUniforms_t
 
 		if (s->blend_mode != -1)
 			glUniform2uiv(s->blend_mode, 1, blend_mode);
+
+		if (s->pp_Number != -1)
+			glUniform1i(s->pp_Number, poly_number);
 	}
 
 };
@@ -192,8 +194,6 @@ GLuint loadPNG(const string& subpath, int &width, int &height);
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
+extern GLuint opaqueTexId;
 
-void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0, int srcBlendModeFilter = -1, int dstBlendModeFilter = -1);
-void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
-void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
-void SetupMainVBO();
+#define ABUFFER_SIZE 16
