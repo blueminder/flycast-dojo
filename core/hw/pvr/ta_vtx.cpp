@@ -774,6 +774,12 @@ public:
 			p.id=vdrc.modtrig.used();
 			*vdrc.global_param_mvo.Append()=p;
 		}
+		else if (ListType == ListType_Translucent_Modifier_Volume)
+		{
+			ISP_Modvol p;
+			p.id = vdrc.modtrig.used();
+			*vdrc.global_param_mvo_tr.Append()=p;
+		}
 	}
 
 	/*
@@ -1373,9 +1379,13 @@ public:
 	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		ISP_Modvol* p = NULL;
+		if (CurrentList == ListType_Opaque_Modifier_Volume)
+			p = vdrc.global_param_mvo.Append();
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			p = vdrc.global_param_mvo_tr.Append();
+		else
 			return;
-		ISP_Modvol* p=vdrc.global_param_mvo.Append();
 		p->full=param->isp.full;
 		p->VolumeLast=param->pcw.Volume;
 		p->id=vdrc.modtrig.used();
@@ -1383,7 +1393,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1403,7 +1413,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
@@ -1469,14 +1479,18 @@ bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->mvo_count = vd_rc.global_param_mvo.used();
 			render_pass->pt_count = vd_rc.global_param_pt.used();
 			render_pass->tr_count = vd_rc.global_param_tr.used();
+			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
 		}
 
 		rv = true; //whatever
 	}
+	bool overrun = ctx->rend.Overrun;
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
 	ctx->rend_inuse.Unlock();
+
+	ctx->rend.Overrun = overrun;
 
 	return rv;
 }

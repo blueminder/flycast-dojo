@@ -95,6 +95,7 @@ struct RenderPass {
 	u32 mvo_count;
 	u32 pt_count;
 	u32 tr_count;
+	u32 mvo_tr_count;
 };
 
 struct rend_context
@@ -118,6 +119,7 @@ struct rend_context
 	List<u16>         idx;
 	List<ModTriangle> modtrig;
 	List<ISP_Modvol>  global_param_mvo;
+	List<ISP_Modvol>  global_param_mvo_tr;
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
@@ -133,6 +135,7 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
+		global_param_mvo_tr.Clear();
 		render_passes.Clear();
 
 		Overrun=false;
@@ -188,8 +191,9 @@ struct TA_context
 		rend.global_param_pt.Init(4096,&rend.Overrun);
 		rend.global_param_mvo.Init(4096,&rend.Overrun);
 		rend.global_param_tr.Init(4096,&rend.Overrun);
+		rend.global_param_mvo_tr.Init(4096,&rend.Overrun);
 
-		rend.modtrig.Init(8192,&rend.Overrun);
+		rend.modtrig.Init(16384,&rend.Overrun);
 		
 		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun);	// 10 render passes
 
@@ -215,6 +219,7 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
+		rend.global_param_mvo_tr.Free();
 		rend.render_passes.Free();
 	}
 };
