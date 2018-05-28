@@ -611,6 +611,10 @@ void CreateGeometryTexture()
 
 void DrawStrips()
 {
+
+	GLint output_fbo;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &output_fbo);
+
 	if (geom_fbo == 0)
 	{
 		glGenFramebuffers(1, &geom_fbo);
@@ -671,6 +675,8 @@ void DrawStrips()
 		glActiveTexture(GL_TEXTURE0);
 		glCheck();
 
+// Multipass: render on generated tex of previous pass?
+// FIXME re-rendering on same depth buffer: what if GL_LESS is used?
 		//Opaque
 		DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
 
@@ -698,10 +704,6 @@ void DrawStrips()
 		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3);
 		glCheck();
 
-		// FIXME Unsorted TR cannot use a-buffer because of lost ordering
-
-		// FIXME Blinking pixels in Soulcalibur score table. Could be that some TR have same depth and rely on natural order?
-		// a-buffers makes the final order unpredictable and varies each frame
 		// FIXME Depth of translucent poly must be used for next render pass if any
 		// FIXME Multipass in general...
 
@@ -711,7 +713,7 @@ void DrawStrips()
 	//
 	// PASS 4: Render a-buffers to screen
 	//
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); glCheck();
+	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo); glCheck();
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	renderABuffer(pvrrc.isAutoSort);
