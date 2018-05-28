@@ -22,7 +22,7 @@ static int g_imageHeight = 0;
 static const char *final_shader_source = "\
 #version 140 \n\
 #extension GL_EXT_shader_image_load_store : enable \n\
-#define ABUFFER_SIZE %d \n\
+#define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
 #define DEPTH_SORTED %d \n\
 out vec4 FragColor; \n\
 uniform layout(size1x32) uimage2D abufferCounterImg; \n\
@@ -275,6 +275,36 @@ void main(void) \n\
 } \n\
 ";
 
+static const char *tr_modvol_shader_source = "\
+#version 140 \n\
+#extension GL_EXT_shader_image_load_store : enable \n\
+coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
+coherent uniform layout(size4x32) image2DArray abufferBlendingImg; \n\
+uniform lowp vec2 screen_size; \n\
+uniform sampler2D DepthTex; \n\
+ \n\
+void main(void) \n\
+{ \n\
+	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+ \n\
+	int num_frag = int(imageLoad(abufferCounterImg, coords).r); \n\
+ \n\
+	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	highp float depth = 1 - log2(1.0 + w) / 34; \n\
+	for (int i = 0; i < num_frag; i++) \n\
+	{ \n\
+		vec4 pixel_info = imageLoad(abufferBlendingImg, ivec3(coords, i)); \n\
+		highp float pixel_depth = info.x; \n\
+		if (depth > pixel_depth) \n\
+			continue; \n\
+		// FIXME Need int or uint pixel format, not vec4 \n\
+		imageAtomicXor(abufferBlendingImg, ivec3(coords, i), 1); \n\
+	} \n\
+ \n\
+	discard; \n\
+} \n\
+";
+
 void initABuffer()
 {
 	g_imageWidth = screen_width;
@@ -317,13 +347,13 @@ void initABuffer()
 	if (g_abuffer_final_shader.program == 0)
 	{
 		char source[8192];
-		sprintf(source, final_shader_source, ABUFFER_SIZE, 1);
+		sprintf(source, final_shader_source, 1);
 		CompilePipelineShader(&g_abuffer_final_shader, source);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[8192];
-		sprintf(source, final_shader_source, ABUFFER_SIZE, 0);
+		sprintf(source, final_shader_source, 0);
 		CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
 	}
 	if (g_abuffer_clear_shader.program == 0)

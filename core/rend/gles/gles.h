@@ -196,4 +196,6 @@ extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 
+// Must match!
 #define ABUFFER_SIZE 32
+#define ABUFFER_SIZE_STR "32"
