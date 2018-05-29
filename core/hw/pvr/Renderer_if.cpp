@@ -165,7 +165,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	}
 	int sizeofPolyParam = sizeof(PolyParam);
 	int sizeofVertex = sizeof(Vertex);
-	if (id0[8] != '3')
+	if (id0[8] == '3')
 	{
 		sizeofPolyParam -= 12;
 		sizeofVertex -= 16;
