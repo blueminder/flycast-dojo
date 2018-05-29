@@ -635,6 +635,7 @@ void DrawStrips()
 			CreateGeometryTexture();
 		}
 		glcache.ClearColor(0, 0, 0, 0);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glcache.Disable(GL_SCISSOR_TEST);
 		glcache.DepthMask(GL_TRUE);
 		glStencilMask(0xFF);
@@ -696,12 +697,17 @@ void DrawStrips()
 
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-		renderPass2(opaqueTexId, depthTexId);
+//		renderPass2(opaqueTexId, depthTexId);
 
 		//
 		// PASS 3: Render TR to a-buffers
 		//
 		SetupMainVBO();
+		glcache.Disable(GL_DEPTH_TEST);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, depthTexId);
+		glActiveTexture(GL_TEXTURE0);
 
 		//Alpha blended
 		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3);
@@ -721,6 +727,9 @@ void DrawStrips()
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo); glCheck();
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
 	renderABuffer(pvrrc.isAutoSort);
 	SetupMainVBO();
