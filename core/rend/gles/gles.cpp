@@ -84,16 +84,25 @@ uniform highp vec4      depth_scale; \n\
 " attr " lowp vec4     in_base; \n\
 " attr " lowp vec4     in_offs; \n\
 " attr " mediump vec2  in_uv; \n\
+" attr " lowp vec4     in_base1; \n\
+" attr " lowp vec4     in_offs1; \n\
+" attr " mediump vec2  in_uv1; \n\
 /* output */ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
+" vary " lowp vec4 vtx_base1; \n\
+" vary " lowp vec4 vtx_offs1; \n\
+" vary " mediump vec2 vtx_uv1; \n\
 " vary " mediump float vtx_z; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
+	vtx_base1 = in_base1; \n\
+	vtx_offs1 = in_offs1; \n\
+	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
 	vtx_z = vpos.z; \n\
 	vpos.w=1.0/vpos.z;  \n"
@@ -183,6 +192,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_ShadInstr %d \n\
 #define pp_Offset %d \n\
 #define pp_FogCtrl %d \n\
+#define pp_TwoVolumes %d \n\
 #define PASS %d \n"
 #ifndef GLES
 	"\
@@ -200,6 +210,12 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define DST_ALPHA			6u \n\
 #define INVERSE_DST_ALPHA	7u \n\
  \n\
+#if pp_TwoVolumes == 1 // FIXME This is not needed for pass 3 (TR) and causes issues? Fix it Felix!\n\
+#define IF(x) if (x) \n\
+#else \n\
+#define IF(x) \n\
+#endif \n\
+ \n\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
@@ -209,17 +225,33 @@ uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 uniform highp float shade_scale_factor; \n\
 uniform lowp vec2 screen_size; \n\
-uniform sampler2D tex,fog_table; \n\
+uniform sampler2D tex0, tex1; \n\
+uniform sampler2D fog_table; \n\
 uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
-uniform uvec2 blend_mode; \n\
 uniform uint pp_Stencil; \n\
+ \n\
+uniform uvec2 blend_mode0; \n\
+#if pp_TwoVolumes == 1 \n\
+uniform bool use_alpha0; \n\
+uniform bool ignore_tex_alpha0; \n\
+uniform int shading_instr0; \n\
+uniform int fog_control0; \n\
+uniform uvec2 blend_mode1; \n\
+uniform bool use_alpha1; \n\
+uniform bool ignore_tex_alpha1; \n\
+uniform int shading_instr1; \n\
+uniform int fog_control1; \n\
+#endif \n\
  \n\
 /* Vertex input*/ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
+" vary " lowp vec4 vtx_base1; \n\
+" vary " lowp vec4 vtx_offs1; \n\
+" vary " mediump vec2 vtx_uv1; \n\
 " vary " mediump float vtx_z; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
@@ -250,41 +282,74 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-	highp vec4 color=vtx_base; \n\
-	#if pp_UseAlpha==0 \n\
-		color.a=1.0; \n\
+	highp vec4 color = vtx_base; \n\
+	lowp vec4 offset = vtx_offs; \n\
+	mediump vec2 uv = vtx_uv; \n\
+	bool area1 = false; \n\
+	uvec2 blend_mode = blend_mode0; \n\
+	\n\
+	#if pp_TwoVolumes == 1 \n\
+		bool use_alpha = use_alpha0; \n\
+		bool ignore_tex_alpha = ignore_tex_alpha0; \n\
+		int shading_instr = shading_instr0; \n\
+		int fog_control = fog_control0; \n\
+		#if PASS == 1 \n\
+			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+			if (stencil.r == 0x81u) { \n\
+				color = vtx_base1; \n\
+				offset = vtx_offs1; \n\
+				uv = vtx_uv1; \n\
+				area1 = true; \n\
+				blend_mode = blend_mode1; \n\
+				use_alpha = use_alpha1; \n\
+				ignore_tex_alpha = ignore_tex_alpha1; \n\
+				shading_instr = shading_instr1; \n\
+				fog_control = fog_control1; \n\
+			} \n\
+		#endif\n\
 	#endif\n\
-	#if pp_FogCtrl==3 // LUT Mode 2 \n\
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
+	\n\
+	#if pp_UseAlpha==0 || pp_TwoVolumes == 1 \n\
+		IF(!use_alpha) \n\
+			color.a=1.0; \n\
+	#endif\n\
+	#if pp_FogCtrl==3 || pp_TwoVolumes == 1 // LUT Mode 2 \n\
+		IF(fog_control == 3) \n\
+			color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
+		lowp vec4 texcol=" TEXLOOKUP "(area1 ? tex1 : tex0, uv); \n\
 		\n\
-		#if pp_IgnoreTexA==1 \n\
-			texcol.a=1.0;	 \n\
+		#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1 \n\
+			IF(ignore_tex_alpha) \n\
+				texcol.a=1.0;	 \n\
 		#endif\n\
 		\n\
 		#if cp_AlphaTest == 1 \n\
 			if (cp_AlphaTestValue>texcol.a) discard;\n\
 		#endif  \n\
-		#if pp_ShadInstr==0 // DECAL \n\
+		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL \n\
+		IF(shading_instr == 0) \n\
 		{ \n\
 			color=texcol; \n\
 		} \n\
 		#endif\n\
-		#if pp_ShadInstr==1 // MODULATE \n\
+		#if pp_ShadInstr==1 || pp_TwoVolumes == 1 // MODULATE \n\
+		IF(shading_instr == 1) \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\
 			color.a=texcol.a; \n\
 		} \n\
 		#endif\n\
-		#if pp_ShadInstr==2 // DECAL ALPHA \n\
+		#if pp_ShadInstr==2 || pp_TwoVolumes == 1 // DECAL ALPHA \n\
+		IF(shading_instr == 2) \n\
 		{ \n\
 			color.rgb=mix(color.rgb,texcol.rgb,texcol.a); \n\
 		} \n\
 		#endif\n\
-		#if  pp_ShadInstr==3 // MODULATE ALPHA \n\
+		#if  pp_ShadInstr==3 || pp_TwoVolumes == 1 // MODULATE ALPHA \n\
+		IF(shading_instr == 3) \n\
 		{ \n\
 			color*=texcol; \n\
 		} \n\
@@ -292,20 +357,22 @@ void main() \n\
 		\n\
 		#if pp_Offset==1 \n\
 		{ \n\
-			color.rgb+=vtx_offs.rgb; \n\
-			if (pp_FogCtrl==1) // Per vertex \n\
-				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
+			color.rgb += offset.rgb; \n\
+			#if pp_FogCtrl == 1 || pp_TwoVolumes == 1  // Per vertex \n\
+				IF(fog_control == 1) \n\
+					color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
+			#endif\n\
 		} \n\
 		#endif\n\
 	} \n\
 	#endif\n\
-	#if PASS == 1 \n\
-		//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
+	#if PASS == 1 && pp_TwoVolumes == 0 \n\
 		uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
 		if (stencil.r == 0x81u) \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
-	#if pp_FogCtrl==0 // LUT \n\
+	#if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT \n\
+	IF(fog_control == 0) \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
@@ -774,6 +841,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+	glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
+	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
+	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
 #ifndef GLES
 	glBindFragDataLocation(program, 0, "FragColor");
@@ -815,7 +885,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, int pass)
+							u32 pp_FogCtrl, bool pp_TwoVolumes, int pass)
 {
 	u32 rv=0;
 
@@ -827,6 +897,7 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
+	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 2; rv |= pass;
 
 	return rv;
@@ -838,15 +909,18 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pass);
 
 	s->program=gl_CompileAndLink(VertexShaderSource,pshader);
 
-
 	//setup texture 0 as the input for the shader
-	GLuint gu=glGetUniformLocation(s->program, "tex");
-	if (s->pp_Texture==1)
-		glUniform1i(gu,0);
+	GLint gu = glGetUniformLocation(s->program, "tex0");
+	if (s->pp_Texture == 1 && gu != -1)
+		glUniform1i(gu, 0);
+	// Setup texture 1 as the input for area 1 in two volume mode
+	gu = glGetUniformLocation(s->program, "tex1");
+	if (s->pp_Texture == 1 && gu != -1)
+		glUniform1i(gu, 1);
 
 	//get the uniform locations
 	s->scale	            = glGetUniformLocation(s->program, "scale");
@@ -880,21 +954,26 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 	// Use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
-		glUniform1i(gu, 1);		// GL_TEXTURE1
+		glUniform1i(gu, 2);		// GL_TEXTURE2
 
 	// Shadow stencil for OP/PT rendering pass
 	gu = glGetUniformLocation(s->program, "shadow_stencil");
 	if (gu != -1)
-		glUniform1i(gu, 2);		// GL_TEXTURE2
+		glUniform1i(gu, 3);		// GL_TEXTURE3
 
-	// A-buffers
-//	gu = glGetUniformLocation(s->program, "abufferPointerImg");
-//	if (gu != -1)
-//		glUniform1i(gu, 3);		// GL_TEXTURE3
-
-	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
 	s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
 	s->pp_Stencil = glGetUniformLocation(s->program, "pp_Stencil");
+
+	s->blend_mode0 = glGetUniformLocation(s->program, "blend_mode0");
+	s->blend_mode1 = glGetUniformLocation(s->program, "blend_mode1");
+	s->use_alpha0 = glGetUniformLocation(s->program, "use_alpha0");
+	s->use_alpha1 = glGetUniformLocation(s->program, "use_alpha1");
+	s->ignore_tex_alpha0 = glGetUniformLocation(s->program, "ignore_tex_alpha0");
+	s->ignore_tex_alpha1 = glGetUniformLocation(s->program, "ignore_tex_alpha1");
+	s->shading_instr0 = glGetUniformLocation(s->program, "shading_instr0");
+	s->shading_instr1 = glGetUniformLocation(s->program, "shading_instr1");
+	s->fog_control0 = glGetUniformLocation(s->program, "fog_control0");
+	s->fog_control1 = glGetUniformLocation(s->program, "fog_control1");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -924,7 +1003,6 @@ bool gl_create_resources()
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
@@ -1749,18 +1827,7 @@ bool RenderFrame()
 	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
-/*
-	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
-	{
-		PipelineShader* s=&gl.pogram_table[i];
-		if (s->program == -1)
-			continue;
 
-		glcache.UseProgram(s->program);
-
-		ShaderUniforms.Set(s);
-	}
-*/
 	//setup render target first
 	if (is_rtt)
 	{
