@@ -608,7 +608,6 @@ void DrawModVols(int first, int count)
 }
 
 void renderABuffer(bool sortFragments);
-void renderPass2(GLuint textureId, GLuint depthTexId);
 void DrawTranslucentModVols(int first, int count);
 
 void CreateGeometryTexture()
@@ -690,7 +689,7 @@ void DrawStrips()
 		glcache.DepthMask(GL_TRUE);
 		glcache.Disable(GL_BLEND);
 		//
-        // PASS 0: Geometry pass to update the depth and stencil
+        // PASS 1: Geometry pass to update the depth and stencil
 		//
 		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -702,7 +701,7 @@ void DrawStrips()
 		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		//
-		// PASS 1: Render OP and PT to fbo
+		// PASS 2: Render OP and PT to fbo
 		//
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -720,17 +719,12 @@ void DrawStrips()
 		//Alpha tested
 		DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
 
-		//
-		// PASS 2: Render opaque and PT texture to a-buffers along with depth
-		//
 		// Unbind stencil
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
 
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-//		renderPass2(opaqueTexId, depthTexId);
 
 		//
 		// PASS 3: Render TR to a-buffers
@@ -746,8 +740,8 @@ void DrawStrips()
 		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3);
 		glCheck();
 
-//		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-//		DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+		// Translucent modifier volumes
+		DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
 		// FIXME Depth of translucent poly must be used for next render pass if any
 		// FIXME Multipass in general...
