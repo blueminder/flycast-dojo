@@ -22,7 +22,7 @@ void ta_vtx_data(u32* data, u32 size);
 bool ta_parse_vdrc(TA_context* ctx);
 
 
-#define STRIPS_AS_PPARAMS 0
+#define STRIPS_AS_PPARAMS 1
 #define TRIG_SORT 0
 
 
