@@ -241,6 +241,7 @@ template <u32 Type, bool SortingEnabled>
 	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
 	ShaderUniforms.stencil = stencil;
+	ShaderUniforms.depth_func = gp->isp.DepthMode;
 	ShaderUniforms.Set(CurrentShader);
 
 	if (CurrentShader->pp_Texture)
@@ -280,14 +281,6 @@ template <u32 Type, bool SortingEnabled>
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	if (Type==ListType_Translucent && !SortingEnabled)
-	{
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
-	}
-	else
-		glcache.Disable(GL_BLEND);
-
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
@@ -309,10 +302,11 @@ template <u32 Type, bool SortingEnabled>
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
 
-//	if (Type == ListType_Translucent)
-//		glcache.DepthMask(GL_FALSE);
-//	else
+	// Depth buffer is updated in pass 1 for OP and PT, but in pass 0 for TR (multipass only)
+	if (pass != 0 || Type == ListType_Translucent)
 		glcache.DepthMask(!gp->isp.ZWriteDis);
+	else
+		glcache.DepthMask(GL_FALSE);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -325,32 +319,20 @@ void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
 		return;
 	//we want at least 1 PParam
 
-
-	//set some 'global' modes for all primitives
-
-	if (pass == 0)
-	{
-		glcache.Enable(GL_STENCIL_TEST);
-		glcache.StencilFunc(GL_ALWAYS,0,0);
-		glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-	}
-	else
-	{
-		glcache.StencilMask(0);
-		glcache.Disable(GL_STENCIL_TEST);
-	}
-
 	while(count-->0)
 	{
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
-			if (Type == ListType_Translucent && params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)
+			if (pass != 0)
 			{
-				// No-op
-				params++;
-				continue;
+				// No need to draw this one
+				if (Type == ListType_Translucent && params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)
+				{
+					params++;
+					continue;
+				}
 			}
-			ShaderUniforms.poly_number = params - gply.head() + 1;
+			ShaderUniforms.poly_number = params - gply.head();
 			SetGPState<Type,SortingEnabled>(params, pass);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
 		}
@@ -610,7 +592,20 @@ void DrawModVols(int first, int count)
 void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
 
-void CreateGeometryTexture()
+GLuint CreateColorFBOTexture()
+{
+	GLuint texId = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, texId);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+	glCheck();
+
+	return texId;
+}
+
+void CreateTextures()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 
@@ -624,13 +619,7 @@ void CreateGeometryTexture()
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
 	glCheck();
 
-	opaqueTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexId, 0);
-	glCheck();
+	opaqueTexId = CreateColorFBOTexture();
 
 	depthTexId = glcache.GenTexture();
 	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
@@ -646,12 +635,12 @@ void DrawStrips()
 {
 
 	GLint output_fbo;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &output_fbo);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &output_fbo);	// TODO pass fbo id as parameter
 
 	if (geom_fbo == 0)
 	{
 		glGenFramebuffers(1, &geom_fbo);
-		CreateGeometryTexture();
+		CreateTextures();
 
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -662,7 +651,7 @@ void DrawStrips()
 		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 		if (stencilTexId == 0)
 		{
-			CreateGeometryTexture();
+			CreateTextures();
 		}
 		glcache.ClearColor(0, 0, 0, 0);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -679,20 +668,23 @@ void DrawStrips()
 
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
+	glcache.Disable(GL_BLEND);
 
 	RenderPass previous_pass = {0};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
+	int render_pass_count = pvrrc.render_passes.used();
+
+	for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
+    {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-		//initial state
-		glcache.Enable(GL_DEPTH_TEST);
-		glcache.DepthMask(GL_TRUE);
-		glcache.Disable(GL_BLEND);
 		//
-        // PASS 1: Geometry pass to update the depth and stencil
+        // PASS 1: Geometry pass to update the stencil
 		//
-		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glcache.Enable(GL_DEPTH_TEST);
+		glcache.DepthMask(GL_FALSE);
+		glcache.Enable(GL_STENCIL_TEST);
+		glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
         DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
         DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
@@ -704,6 +696,7 @@ void DrawStrips()
 		// PASS 2: Render OP and PT to fbo
 		//
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glcache.Disable(GL_STENCIL_TEST);
 
 		// Bind stencil buffer for the fragment shader (shadowing)
 		glActiveTexture(GL_TEXTURE3);
@@ -711,8 +704,6 @@ void DrawStrips()
 		glActiveTexture(GL_TEXTURE0);
 		glCheck();
 
-// Multipass: render on generated tex of previous pass?
-// FIXME re-rendering on same depth buffer: what if GL_LESS is used?
 		//Opaque
 		DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
 
@@ -737,14 +728,48 @@ void DrawStrips()
 		glActiveTexture(GL_TEXTURE0);
 
 		//Alpha blended
-		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3);
+		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 		glCheck();
 
 		// Translucent modifier volumes
 		DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
-		// FIXME Depth of translucent poly must be used for next render pass if any
-		// FIXME Multipass in general...
+		if (render_pass < render_pass_count - 1)
+		{
+			//
+			// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
+			//
+			// Unbind depth texture
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glActiveTexture(GL_TEXTURE0);
+
+			glcache.Enable(GL_DEPTH_TEST);
+			DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+
+			//
+			// PASS 3c: Render a-buffer to temporary texture
+			//
+			GLuint texId = CreateColorFBOTexture();
+
+			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindSampler(0, 0);
+			glBindTexture(GL_TEXTURE_2D, opaqueTexId);
+
+			renderABuffer(pvrrc.isAutoSort);
+			SetupMainVBO();
+
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = texId;
+
+			// Clear the stencil from this pass
+			glStencilMask(0xFF);
+			glClear(GL_STENCIL_BUFFER_BIT);
+
+			glCheck();
+		}
 
 		previous_pass = current_pass;
 	}
