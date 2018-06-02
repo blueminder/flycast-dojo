@@ -60,7 +60,6 @@ Tile clip
 
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
-int viewport_width, viewport_height;
 
 #ifndef GLES
 #define attr "in"
@@ -1865,8 +1864,6 @@ bool RenderFrame()
 		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		output_fbo = BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
-		viewport_width = dc_width;
-		viewport_height = dc_height;
 	}
 	else
 	{
@@ -1875,8 +1872,6 @@ bool RenderFrame()
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 #endif
 		glViewport(0, 0, screen_width, screen_height);
-		viewport_width = screen_width;
-		viewport_height = screen_height;
 		output_fbo = 0;
 	}
 
