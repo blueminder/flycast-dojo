@@ -277,10 +277,11 @@ void initABuffer()
 		glGenBuffers(1, &atomic_buffer);
 		// Bind it
 		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-		// Declare storage. Using GL_DYNAMIC_READ instead of GL_DYNAMIC_COPY as the latter makes
-		// reading the counter after each frame very slow.
-		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_READ);
+		// Declare storage
+		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
+		GLint zero = 0;
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLint), &zero);
 		glCheck();
 	}
 
@@ -451,24 +452,11 @@ void DrawTranslucentModVols(int first, int count)
 	}
 }
 
-void renderABuffer(bool sortFragments)
+void checkOverflowAndReset()
 {
-	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
-	ShaderUniforms.Set(&g_abuffer_final_shader);
-
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
-
-	DrawQuad();
-
-	glCheck();
-
-	glcache.UseProgram(g_abuffer_clear_shader.program);
-	ShaderUniforms.Set(&g_abuffer_clear_shader);
-
+	// Using atomic counter
 	GLuint max_pixel_index = 0;
-	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, 4, &max_pixel_index);
+	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &max_pixel_index);
 //	printf("ABUFFER %d pixels used\n", max_pixel_index);
 	if ((max_pixel_index + 1) * 32 - 1 >= pixel_buffer_size)
 	{
@@ -488,15 +476,31 @@ void renderABuffer(bool sortFragments)
 			glCheck();
 		}
 	}
+	// Reset counter
+	max_pixel_index = 0;
+ 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
+}
+
+void renderABuffer(bool sortFragments)
+{
+	// Render to output FBO
+	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
+	ShaderUniforms.Set(&g_abuffer_final_shader);
+
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+
+	DrawQuad();
+
+	glCheck();
+
+	// Clear A-buffer pointers
+	glcache.UseProgram(g_abuffer_clear_shader.program);
+	ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	DrawQuad();
-
-	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
-
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-	GLuint zero = 0;
- 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &zero);
 
 	glActiveTexture(GL_TEXTURE0);
 

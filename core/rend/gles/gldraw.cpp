@@ -116,12 +116,14 @@ s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set && clip_mode) {
-		csx *= scale_x;
-		csy *= scale_y;
-		cex *= scale_x;
-		cey *= scale_y;
-		if (!pvrrc.isRTT) {
+	if (set && clip_mode)
+	{
+		if (!pvrrc.isRTT)
+		{
+			csx *= scale_x;
+			csy *= scale_y;
+			cex *= scale_x;
+			cey *= scale_y;
 			float t = cey;
 			cey = 480 - csy;
 			csy = 480 - t;
@@ -596,6 +598,7 @@ void DrawModVols(int first, int count)
 
 void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
+void checkOverflowAndReset();
 
 GLuint CreateColorFBOTexture()
 {
@@ -636,6 +639,8 @@ void CreateTextures()
 
 void DrawStrips(GLuint output_fbo)
 {
+	checkOverflowAndReset();
+
 	if (geom_fbo == 0)
 	{
 		glGenFramebuffers(1, &geom_fbo);

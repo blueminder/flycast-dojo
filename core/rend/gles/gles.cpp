@@ -442,10 +442,7 @@ void main() \n\
 		\n\
 		ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 		uint idx =  getNextPixelIndex(); \n\
-		if (idx >= pixels.length()) { \n\
-			discard; \n\
-			return; \n\
-		} \n\
+		 \n\
 		Pixel pixel; \n\
 		pixel.color = color; \n\
 		pixel.depth = gl_FragDepth; \n\
@@ -1315,7 +1312,7 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   float w=float(strlen(text)*14)*scale;
 
-  float x = 320 + 240 * screen_width / screen_height - w;
+  float x = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0] - w;
   float y=yy;
   float h=16.0f*scale;
   w=14.0f*scale;
@@ -1487,17 +1484,7 @@ void OSD_DRAW()
 #endif
   if (osd_font)
   {
-    float u=0;
-    float v=0;
-
     verify(glIsProgram(gl.OSD_SHADER.program));
-
-	float dc_width=640;
-	float dc_height=480;
-
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
 
     glcache.BindTexture(GL_TEXTURE_2D,osd_font);
     glcache.UseProgram(gl.OSD_SHADER.program);
@@ -1506,14 +1493,11 @@ void OSD_DRAW()
     glcache.Disable(GL_DEPTH_TEST);
     glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
     glcache.DepthMask(false);
     glcache.DepthFunc(GL_ALWAYS);
 
-
     glcache.Disable(GL_CULL_FACE);
     glcache.Disable(GL_SCISSOR_TEST);
-
 
     int dfa=osd_count/4;
 
@@ -1555,9 +1539,6 @@ bool RenderFrame()
 	DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
-
-	if (!is_rtt)
-		OSD_HOOK();
 
 	//if (FrameCount&7) return;
 
@@ -1688,6 +1669,7 @@ bool RenderFrame()
 
 	if (SCALER_CTL.hscale)
 	{
+		scissoring_scale_x /= 2;
 		scale_x*=2;
 	}
 
@@ -1738,6 +1720,8 @@ bool RenderFrame()
 
 	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
 
+	if (!is_rtt)
+		OSD_HOOK();
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
