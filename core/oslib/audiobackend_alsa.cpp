@@ -7,6 +7,8 @@ static bool pcm_blocking = true;
 static snd_pcm_uframes_t buffer_size;
 static snd_pcm_uframes_t period_size;
 
+#define MAX_LATENCY 100
+
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
 {
@@ -89,7 +91,7 @@ static void alsa_init()
 	}
 	else
 		printf("ALSA: period size set to %ld\n", period_size);
-	buffer_size = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / period_size + 1) * period_size;
+	buffer_size = (44100 * MAX_LATENCY / 1000 / period_size + 1) * period_size;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{
@@ -122,7 +124,7 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 		fprintf(stderr, "ALSA: underrun occurred\n");
 		snd_pcm_prepare(handle);
 		// Write some silence then our samples
-		const size_t silence_size = period_size;
+		const size_t silence_size = period_size * 4;
 		void *silence = alloca(silence_size * 4);
 		memset(silence, 0, silence_size * 4);
 		rc = snd_pcm_writei(handle, silence, silence_size);
