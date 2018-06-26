@@ -46,10 +46,11 @@ struct PolyParam
 	u32 texid1;
 };
 
-struct ModParam
+struct ModifierVolumeParam
 {
-	u32 first;		//entry index , holds vertex/pos data
+	u32 first;
 	u32 count;
+	ISP_Modvol isp;
 };
 
 struct ModTriangle
@@ -127,8 +128,8 @@ struct rend_context
 	List<Vertex>      verts;
 	List<u16>         idx;
 	List<ModTriangle> modtrig;
-	List<ISP_Modvol>  global_param_mvo;
-	List<ISP_Modvol>  global_param_mvo_tr;
+	List<ModifierVolumeParam>  global_param_mvo;
+	List<ModifierVolumeParam>  global_param_mvo_tr;
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
