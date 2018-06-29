@@ -661,8 +661,8 @@ void DrawStrips(GLuint output_fbo)
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
         // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
-		bool skip_op_pt = false; // true;
-		bool skip_tr = false; // true;
+		bool skip_op_pt = true;
+		bool skip_tr = true;
 		for (int j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
 			if (pvrrc.global_param_op.head()[j].count > 2)

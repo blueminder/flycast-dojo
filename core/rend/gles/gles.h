@@ -109,6 +109,7 @@ struct gl_ctx
 #ifndef GLES
 		GLuint vao;
 #endif
+		GLuint tr_poly_params;
 	} vbo;
 
 	PipelineShader *getShader(int programId) {
@@ -239,7 +240,6 @@ struct Pixel { \n\
 	mediump vec4 color; \n\
 	mediump float depth; \n\
 	int seq_num; \n\
-	uint blend_stencil; \n\
 	uint next; \n\
 }; \n\
 #define EOL 0xFFFFFFFFu \n\
@@ -272,6 +272,94 @@ void setFragDepth(void) \n\
 	highp float w = 100000.0 * gl_FragCoord.w; \n\
 	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n\
 } \n\
+struct PolyParam { \n\
+	int first; \n\
+	int count; \n\
+	int texid; \n\
+	int tsp; \n\
+	int tcw; \n\
+	int pcw; \n\
+	int isp; \n\
+	float zvZ; \n\
+	int tileclip; \n\
+	int tsp1; \n\
+	int tcw1; \n\
+	int texid1; \n\
+}; \n\
+layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
+	PolyParam tr_poly_params[]; \n\
+}; \n\
+ \n\
+int getSrcBlendFunc(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return ((area1 ? pp.tsp1 : pp.tsp) >> 29) & 7; \n\
+} \n\
+\n\
+int getDstBlendFunc(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return ((area1 ? pp.tsp1 : pp.tsp) >> 26) & 7; \n\
+} \n\
+\n\
+bool getSrcSelect(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return (((area1 ? pp.tsp1 : pp.tsp) >> 25) & 1) != 0; \n\
+} \n\
+\n\
+bool getDstSelect(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return (((area1 ? pp.tsp1 : pp.tsp) >> 24) & 1) != 0; \n\
+} \n\
+\n\
+int getFogControl(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return ((area1 ? pp.tsp1 : pp.tsp) >> 22) & 3; \n\
+} \n\
+\n\
+bool getUseAlpha(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return (((area1 ? pp.tsp1 : pp.tsp) >> 20) & 1) != 0; \n\
+} \n\
+\n\
+bool getIgnoreTexAlpha(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return (((area1 ? pp.tsp1 : pp.tsp) >> 19) & 1) != 0; \n\
+} \n\
+\n\
+int getShadingInstruction(const in PolyParam pp, bool area1) \n\
+{ \n\
+	return ((area1 ? pp.tsp1 : pp.tsp) >> 6) & 3; \n\
+} \n\
+\n\
+int getDepthFunc(const in PolyParam pp) \n\
+{ \n\
+	return (pp.isp >> 29) & 7; \n\
+} \n\
+\n\
+bool getDepthMask(const in PolyParam pp) \n\
+{ \n\
+	return ((pp.isp >> 26) & 1) != 1; \n\
+} \n\
+\n\
+bool getShadowEnable(const in PolyParam pp) \n\
+{ \n\
+	return ((pp.pcw >> 7) & 1) != 0; \n\
+} \n\
+\n\
+int getPolyNumber(const in Pixel pixel) \n\
+{ \n\
+	return pixel.seq_num & 0x3FFFFFFF; \n\
+} \n\
+\n\
+bool isShadowed(const in Pixel pixel) \n\
+{ \n\
+	return (pixel.seq_num & 0x80000000) == 0x80000000; \n\
+} \n\
+\n\
+bool isTwoVolumes(const in PolyParam pp) \n\
+{ \n\
+	return pp.tsp1 != 0xFFFFFFFF || pp.tcw1 != 0xFFFFFFFF; \n\
+} \n\
+ \n\
 "
 
 void SetupModvolVBO();

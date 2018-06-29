@@ -458,7 +458,6 @@ void main() \n\
 		pixel.color = color; \n\
 		pixel.depth = gl_FragDepth; \n\
 		pixel.seq_num = pp_Number; \n\
-		pixel.blend_stencil = uint(depth_mask << 19) + uint(pp_DepthFunc << 16) + uint(((cur_blend_mode.x << 3) + cur_blend_mode.y) << 8) + pp_Stencil; \n\
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
 		pixels[idx] = pixel; \n\
 		\n\
@@ -837,8 +836,8 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 {
 	//create shaders
-	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
+	GLuint vs=gl_CompileShader(VertexShader, GL_VERTEX_SHADER);
+	GLuint ps=gl_CompileShader(FragmentShader, GL_FRAGMENT_SHADER);
 
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vs);
@@ -1027,6 +1026,14 @@ bool gl_create_resources()
 	if (osd_font == 0)
 		osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
 #endif
+
+	// Create the buffer for Translucent poly params
+	glGenBuffers(1, &gl.vbo.tr_poly_params);
+	// Bind it
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+	// Declare storage
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl.vbo.tr_poly_params);
+	glCheck();
 
 	return true;
 }
@@ -1856,6 +1863,11 @@ bool RenderFrame()
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
+
+	// TR PolyParam data
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+	glCheck();
 
 	int offs_x=ds2s_offs_x+0.5f;
 	//this needs to be scaled
