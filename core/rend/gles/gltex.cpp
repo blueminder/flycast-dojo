@@ -109,6 +109,75 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	free(rows);
 }
 
+static void dumpTexture(int texID, int w, int h, GLuint textype)
+{
+	// Dump
+	char sname[256];
+	sprintf(sname, "texdump/%d.png", texID);
+	FILE *fp = fopen(sname, "wb");
+	if (fp == NULL)
+		return;
+
+	u16 *src = (u16 *)temp_tex_buffer;
+
+	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
+	for (int y = 0; y < h; y++) {
+		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		u8 *dst = (u8 *)rows[y];
+		if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
+			for (int x = 0; x < w; x++)
+			{
+				*dst++ = ((*src >> 12) & 0xF) << 4;
+				*dst++ = ((*src >> 8) & 0xF) << 4;
+				*dst++ = ((*src >> 4) & 0xF) << 4;
+				*dst++ = (*src & 0xF) << 4;
+				src++;
+			}
+		else if (textype == GL_UNSIGNED_SHORT_5_6_5)
+			for (int x = 0; x < w; x++)
+			{
+				*dst++ = ((*src >> 11) & 0x1F) << 3;
+				*dst++ = ((*src >> 5) & 0x3F) << 3;
+				*dst++ = (*src & 0x1F) << 3;
+				*dst++ = 255;
+				src++;
+			}
+		if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
+			for (int x = 0; x < w; x++)
+			{
+				*dst++ = ((*src >> 11) & 0x1F) << 3;
+				*dst++ = ((*src >> 6) & 0x1F) << 3;
+				*dst++ = ((*src >> 1) & 0x1F) << 3;
+				*dst++ = (*src & 1) ? 255 : 0;
+				src++;
+			}
+	}
+
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+
+	png_init_io(png_ptr, fp);
+
+
+	// write header
+	png_set_IHDR(png_ptr, info_ptr, w, h,
+						 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+						 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_write_info(png_ptr, info_ptr);
+
+
+	// write bytes
+	png_write_image(png_ptr, rows);
+
+	// end write
+	png_write_end(png_ptr, NULL);
+	fclose(fp);
+
+	for (int y = 0; y < h; y++)
+		free(rows[y]);
+	free(rows);
+}
 
 //Texture Cache :)
 struct TextureCacheData
@@ -317,6 +386,8 @@ struct TextureCacheData
 			glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
+
+			//dumpTexture(texID, w, h, textype);
 		}
 		else {
 			#if FEAT_HAS_SOFTREND
