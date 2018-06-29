@@ -76,6 +76,14 @@ const char* VertexShaderSource =
 	"#version 140 \n"
 #endif
 "\
+#define pp_Gouraud %d \n\
+ \n\
+#if pp_Gouraud == 0 \n\
+#define INTERPOLATION flat \n\
+#else \n\
+#define INTERPOLATION smooth \n\
+#endif \n\
+ \n\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
@@ -88,13 +96,13 @@ uniform highp vec4      depth_scale; \n\
 " attr " lowp vec4     in_offs1; \n\
 " attr " mediump vec2  in_uv1; \n\
 /* output */ \n\
-" vary " lowp vec4 vtx_base; \n\
-" vary " lowp vec4 vtx_offs; \n\
-" vary " mediump vec2 vtx_uv; \n\
-" vary " lowp vec4 vtx_base1; \n\
-" vary " lowp vec4 vtx_offs1; \n\
-" vary " mediump vec2 vtx_uv1; \n\
-" vary " mediump float vtx_z; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
+			  " vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
+			  " vary " mediump vec2 vtx_uv1; \n\
+			  " vary " mediump float vtx_z; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -194,6 +202,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_FogCtrl %d \n\
 #define pp_TwoVolumes %d \n\
 #define pp_DepthFunc %d \n\
+#define pp_Gouraud %d \n\
 #define PASS %d \n"
 #ifndef GLES
 	"\
@@ -206,6 +215,12 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define IF(x) if (x) \n\
 #else \n\
 #define IF(x) \n\
+#endif \n\
+ \n\
+#if pp_Gouraud == 0 \n\
+#define INTERPOLATION flat \n\
+#else \n\
+#define INTERPOLATION smooth \n\
 #endif \n\
  \n\
 /* Shader program params*/ \n\
@@ -232,13 +247,13 @@ uniform int fog_control[2]; \n\
 #endif \n\
  \n\
 /* Vertex input*/ \n\
-" vary " lowp vec4 vtx_base; \n\
-" vary " lowp vec4 vtx_offs; \n\
-" vary " mediump vec2 vtx_uv; \n\
-" vary " lowp vec4 vtx_base1; \n\
-" vary " lowp vec4 vtx_offs1; \n\
-" vary " mediump vec2 vtx_uv1; \n\
-" vary " mediump float vtx_z; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
+			  " vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
+			  " vary " mediump vec2 vtx_uv1; \n\
+			  " vary " mediump float vtx_z; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
@@ -893,7 +908,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, int pass)
+							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, int pass)
 {
 	u32 rv=0;
 
@@ -907,6 +922,7 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=2; rv|=pp_FogCtrl;
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 3; rv |= pp_DepthFunc;
+	rv <<= 1; rv |= (int)pp_Gouraud;
 	rv <<= 2; rv |= pass;
 
 	return rv;
@@ -914,13 +930,17 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 
 bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipelineShader */)
 {
+	char vshader[16384];
+
+	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+
 	char pshader[16384];
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pass);
 
-	s->program=gl_CompileAndLink(VertexShaderSource,pshader);
+	s->program = gl_CompileAndLink(vshader, pshader);
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex0");
@@ -999,12 +1019,15 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-	gl.modvol_shader.program=gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
+	char vshader[16384];
+	sprintf(vshader, VertexShaderSource, 1);
+
+	gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 
-	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
+	gl.OSD_SHADER.program=gl_CompileAndLink(vshader, OSD_Shader);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
