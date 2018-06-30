@@ -203,9 +203,8 @@ template <u32 Type, bool SortingEnabled>
 		int depth_func = 0;
 		if (Type == ListType_Translucent)
 		{
-			// TR in autosort mode ignores specified depth func and defaults to GL_LEQUAL, except for GL_ALWAYS.
-			if (SortingEnabled && gp->isp.DepthMode != 7 && gp->isp.DepthMode != 6)
-				depth_func = 6;
+			if (SortingEnabled)
+				depth_func = 6;		// GEQUAL
 			else
 				depth_func = gp->isp.DepthMode;
 		}
@@ -310,13 +309,7 @@ template <u32 Type, bool SortingEnabled>
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
 	{
-		if (gp->isp.DepthMode == 7) {		// Fixes VR2 menu but not sure about this one
-			glcache.DepthFunc(GL_ALWAYS);
-		}
-		else
-		{
-			glcache.DepthFunc(Zfunction[6]);	// Greater or equal
-		}
+		glcache.DepthFunc(Zfunction[6]);	// Greater or equal
 	}
 	else
 	{
@@ -810,7 +803,7 @@ void DrawStrips(GLuint output_fbo)
 				glBindSampler(0, 0);
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer(pvrrc.isAutoSort);
+				renderABuffer(current_pass.autosort);
 				SetupMainVBO();
 
 				glcache.DeleteTextures(1, &opaqueTexId);
@@ -840,6 +833,6 @@ void DrawStrips(GLuint output_fbo)
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-	renderABuffer(pvrrc.isAutoSort);
+	renderABuffer(previous_pass.autosort);
 	SetupMainVBO();
 }
