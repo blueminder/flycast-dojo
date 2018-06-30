@@ -97,8 +97,8 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	 \n\
 	for (int i = 0; i < num_frag; i++) \n\
 	{ \n\
-		const Pixel pixel = pixel_list[i]; \n\
-		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
+		Pixel pixel = pixel_list[i]; \n\
+		PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
 		const float frag_depth = pixel.depth; \n\
 		switch (getDepthFunc(pp)) \n\
@@ -273,7 +273,7 @@ void main(void) \n\
 			discard; \n\
 		int list_len = 0; \n\
 		while (idx != EOL) { \n\
-			const PolyParam pp = tr_poly_params[getPolyNumber(pixels[idx])]; \n\
+			PolyParam pp = tr_poly_params[getPolyNumber(pixels[idx])]; \n\
 			if (getShadowEnable(pp)) \n\
 			{ \n\
 #if MV_MODE == MV_XOR \n\
