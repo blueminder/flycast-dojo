@@ -178,6 +178,7 @@ template <u32 Type, bool SortingEnabled>
 				2,
 				false,	// TODO Can PT have two different textures for area 0 and 1 ??
 				0,
+				false,
 				pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -191,6 +192,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_FogCtrl = 2;
 			CurrentShader->pp_TwoVolumes = false;
 			CurrentShader->pp_DepthFunc = 0;
+			CurrentShader->pp_Gouraud = false;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
@@ -219,6 +221,7 @@ template <u32 Type, bool SortingEnabled>
 												  gp->tsp.FogCtrl,
 												  two_volumes_mode,
 												  depth_func,
+												  gp->pcw.Gouraud,
 												  pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -232,6 +235,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
 			CurrentShader->pp_TwoVolumes = two_volumes_mode;
 			CurrentShader->pp_DepthFunc = depth_func;
+			CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
@@ -645,6 +649,7 @@ void DrawStrips(GLuint output_fbo)
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
 	glcache.Disable(GL_BLEND);
+	glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
 	RenderPass previous_pass = {0};
 	int render_pass_count = pvrrc.render_passes.used();
