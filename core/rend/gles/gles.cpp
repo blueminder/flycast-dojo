@@ -102,7 +102,6 @@ INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
 INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
 INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
 			  " vary " mediump vec2 vtx_uv1; \n\
-			  " vary " mediump float vtx_z; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -112,7 +111,6 @@ void main() \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
-	vtx_z = vpos.z; \n\
 	vpos.w=1.0/vpos.z;  \n"
 #ifndef GLES
 	"\
@@ -235,8 +233,6 @@ layout(binding = 5) uniform sampler2D fog_table; \n\
 uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
-uniform uint pp_Stencil; \n\
-uniform bool depth_mask; \n\
  \n\
 uniform ivec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
@@ -253,7 +249,6 @@ INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
 INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
 INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
 			  " vary " mediump vec2 vtx_uv1; \n\
-			  " vary " mediump float vtx_z; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
@@ -985,14 +980,12 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 		glUniform1i(gu, 3);		// GL_TEXTURE3
 
 	s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
-	s->pp_Stencil = glGetUniformLocation(s->program, "pp_Stencil");
 
 	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
 	s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
 	s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
 	s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
 	s->fog_control = glGetUniformLocation(s->program, "fog_control");
-	s->depth_mask = glGetUniformLocation(s->program, "depth_mask");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }

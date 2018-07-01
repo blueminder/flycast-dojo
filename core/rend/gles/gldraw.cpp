@@ -255,6 +255,7 @@ template <u32 Type, bool SortingEnabled>
 		ShaderUniforms.tsp1.SrcInstr = 1;
 		ShaderUniforms.tsp1.DstInstr = 0;
 	}
+	ShaderUniforms.Set(CurrentShader);
 
 	SetTileClip(gp->tileclip,true);
 
@@ -263,10 +264,6 @@ template <u32 Type, bool SortingEnabled>
 	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
 
 	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
-
-	ShaderUniforms.stencil = stencil;
-	ShaderUniforms.depth_mask = gp->isp.ZWriteDis == 0;
-	ShaderUniforms.Set(CurrentShader);
 
 	if (CurrentShader->pp_Texture)
 	{
