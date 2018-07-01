@@ -57,7 +57,7 @@ void bubbleSort(int array_size) { \n\
 			// poly number only \n\
 			if (getPolyNumber(pixel_list[j]) > getPolyNumber(pixel_list[j + 1])) { \n\
 #endif \n\
-				Pixel p = pixel_list[j + 1]; \n\
+				const Pixel p = pixel_list[j + 1]; \n\
 				pixel_list[j + 1] = pixel_list[j]; \n\
 				pixel_list[j] = p; \n\
 			} \n\
@@ -69,7 +69,7 @@ void bubbleSort(int array_size) { \n\
 // Insertion sort used to sort fragments \n\
 void insertionSort(int array_size) { \n\
 	for (int i = 1; i < array_size; i++) { \n\
-		Pixel p = pixel_list[i]; \n\
+		const Pixel p = pixel_list[i]; \n\
 		int j = i - 1; \n\
 #if DEPTH_SORTED == 1 \n\
 		for (; j >= 0 && (pixel_list[j].depth < p.depth || (pixel_list[j].depth == p.depth && getPolyNumber(pixel_list[j]) > getPolyNumber(p))); j--) { \n\
@@ -97,8 +97,8 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	 \n\
 	for (int i = 0; i < num_frag; i++) \n\
 	{ \n\
-		Pixel pixel = pixel_list[i]; \n\
-		PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
+		const Pixel pixel = pixel_list[i]; \n\
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
 		const float frag_depth = pixel.depth; \n\
 		switch (getDepthFunc(pp)) \n\
@@ -214,7 +214,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 				dstCoef = vec4(1.0 - dstColor.a); \n\
 				break; \n\
 		} \n\
-		vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
+		const vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
 		if (getDstSelect(pp, area1)) \n\
 			secondaryBuffer = result; \n\
 		else \n\
@@ -273,7 +273,8 @@ void main(void) \n\
 			discard; \n\
 		int list_len = 0; \n\
 		while (idx != EOL) { \n\
-			PolyParam pp = tr_poly_params[getPolyNumber(pixels[idx])]; \n\
+			const Pixel pixel = pixels[idx]; \n\
+			const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 			if (getShadowEnable(pp)) \n\
 			{ \n\
 #if MV_MODE == MV_XOR \n\
@@ -283,11 +284,11 @@ void main(void) \n\
 				if (gl_FragDepth <= pixels[idx].depth) \n\
 					atomicOr(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
+				int prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
 				if ((prev_val & 0xC0000000) == 0x40000000) \n\
 					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
+				int prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
 				if ((prev_val & 0xC0000000) == 0x80000000) \n\
 					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #endif \n\

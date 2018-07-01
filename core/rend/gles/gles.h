@@ -290,72 +290,72 @@ layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\
 }; \n\
  \n\
-int getSrcBlendFunc(PolyParam pp, bool area1) \n\
+int getSrcBlendFunc(const PolyParam pp, bool area1) \n\
 { \n\
 	return ((area1 ? pp.tsp1 : pp.tsp) >> 29) & 7; \n\
 } \n\
 \n\
-int getDstBlendFunc(PolyParam pp, bool area1) \n\
+int getDstBlendFunc(const PolyParam pp, bool area1) \n\
 { \n\
 	return ((area1 ? pp.tsp1 : pp.tsp) >> 26) & 7; \n\
 } \n\
 \n\
-bool getSrcSelect(PolyParam pp, bool area1) \n\
+bool getSrcSelect(const PolyParam pp, bool area1) \n\
 { \n\
 	return (((area1 ? pp.tsp1 : pp.tsp) >> 25) & 1) != 0; \n\
 } \n\
 \n\
-bool getDstSelect(PolyParam pp, bool area1) \n\
+bool getDstSelect(const PolyParam pp, bool area1) \n\
 { \n\
 	return (((area1 ? pp.tsp1 : pp.tsp) >> 24) & 1) != 0; \n\
 } \n\
 \n\
-int getFogControl(PolyParam pp, bool area1) \n\
+int getFogControl(const PolyParam pp, bool area1) \n\
 { \n\
 	return ((area1 ? pp.tsp1 : pp.tsp) >> 22) & 3; \n\
 } \n\
 \n\
-bool getUseAlpha(PolyParam pp, bool area1) \n\
+bool getUseAlpha(const PolyParam pp, bool area1) \n\
 { \n\
 	return (((area1 ? pp.tsp1 : pp.tsp) >> 20) & 1) != 0; \n\
 } \n\
 \n\
-bool getIgnoreTexAlpha(PolyParam pp, bool area1) \n\
+bool getIgnoreTexAlpha(const PolyParam pp, bool area1) \n\
 { \n\
 	return (((area1 ? pp.tsp1 : pp.tsp) >> 19) & 1) != 0; \n\
 } \n\
 \n\
-int getShadingInstruction(PolyParam pp, bool area1) \n\
+int getShadingInstruction(const PolyParam pp, bool area1) \n\
 { \n\
 	return ((area1 ? pp.tsp1 : pp.tsp) >> 6) & 3; \n\
 } \n\
 \n\
-int getDepthFunc(PolyParam pp) \n\
+int getDepthFunc(const PolyParam pp) \n\
 { \n\
 	return (pp.isp >> 29) & 7; \n\
 } \n\
 \n\
-bool getDepthMask(PolyParam pp) \n\
+bool getDepthMask(const PolyParam pp) \n\
 { \n\
 	return ((pp.isp >> 26) & 1) != 1; \n\
 } \n\
 \n\
-bool getShadowEnable(PolyParam pp) \n\
+bool getShadowEnable(const PolyParam pp) \n\
 { \n\
 	return ((pp.pcw >> 7) & 1) != 0; \n\
 } \n\
 \n\
-int getPolyNumber(Pixel pixel) \n\
+int getPolyNumber(const Pixel pixel) \n\
 { \n\
 	return pixel.seq_num & 0x3FFFFFFF; \n\
 } \n\
 \n\
-bool isShadowed(Pixel pixel) \n\
+bool isShadowed(const Pixel pixel) \n\
 { \n\
 	return (pixel.seq_num & 0x80000000) == 0x80000000; \n\
 } \n\
 \n\
-bool isTwoVolumes(PolyParam pp) \n\
+bool isTwoVolumes(const PolyParam pp) \n\
 { \n\
 	return pp.tsp1 != 0xFFFFFFFF || pp.tcw1 != 0xFFFFFFFF; \n\
 } \n\
