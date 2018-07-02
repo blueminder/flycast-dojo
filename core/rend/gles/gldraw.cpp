@@ -179,6 +179,7 @@ template <u32 Type, bool SortingEnabled>
 				false,	// TODO Can PT have two different textures for area 0 and 1 ??
 				0,
 				false,
+				false,
 				pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -193,6 +194,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_TwoVolumes = false;
 			CurrentShader->pp_DepthFunc = 0;
 			CurrentShader->pp_Gouraud = false;
+			CurrentShader->pp_BumpMap = false;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
@@ -222,6 +224,7 @@ template <u32 Type, bool SortingEnabled>
 												  two_volumes_mode,
 												  depth_func,
 												  gp->pcw.Gouraud,
+												  gp->tcw.PixelFmt == 4,
 												  pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -236,6 +239,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_TwoVolumes = two_volumes_mode;
 			CurrentShader->pp_DepthFunc = depth_func;
 			CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
+			CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == 4;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}

@@ -201,7 +201,10 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_TwoVolumes %d \n\
 #define pp_DepthFunc %d \n\
 #define pp_Gouraud %d \n\
-#define PASS %d \n"
+#define pp_BumpMap %d \n\
+#define PASS %d \n\
+#define PI 3.1415926 \n\
+ \n"
 #ifndef GLES
 	"\
 	#if PASS <= 1 \n\
@@ -340,14 +343,21 @@ void main() \n\
 	{ \n\
 		lowp vec4 texcol=" TEXLOOKUP "(area1 ? tex1 : tex0, uv); \n\
 		\n\
-		#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1 \n\
-			IF(cur_ignore_tex_alpha) \n\
-				texcol.a=1.0;	 \n\
+		#if pp_BumpMap == 1 \n\
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0; \n\
+			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0); \n\
+			texcol.rgb = vec3(1.0, 1.0, 1.0);	 \n\
+		#else\n\
+			#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1 \n\
+				IF(cur_ignore_tex_alpha) \n\
+					texcol.a=1.0;	 \n\
+			#endif\n\
+			\n\
+			#if cp_AlphaTest == 1 \n\
+				if (cp_AlphaTestValue>texcol.a) discard;\n\
+			#endif  \n\
 		#endif\n\
-		\n\
-		#if cp_AlphaTest == 1 \n\
-			if (cp_AlphaTestValue>texcol.a) discard;\n\
-		#endif  \n\
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL \n\
 		IF(cur_shading_instr == 0) \n\
 		{ \n\
@@ -374,7 +384,7 @@ void main() \n\
 		} \n\
 		#endif\n\
 		\n\
-		#if pp_Offset==1 \n\
+		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
 			color.rgb += offset.rgb; \n\
 			#if pp_FogCtrl == 1 || pp_TwoVolumes == 1  // Per vertex \n\
@@ -900,7 +910,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, int pass)
+							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, int pass)
 {
 	u32 rv=0;
 
@@ -915,6 +925,7 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 3; rv |= pp_DepthFunc;
 	rv <<= 1; rv |= (int)pp_Gouraud;
+	rv <<= 1; rv |= pp_BumpMap;
 	rv <<= 2; rv |= pass;
 
 	return rv;
@@ -930,7 +941,7 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);
 
