@@ -506,8 +506,7 @@ void DrawTranslucentModVols(int first, int count)
 			ShaderUniforms.Set(shader);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-			DrawQuad();
-			SetupModvolVBO();
+			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3); glCheck();
 		}
 	}
 }
