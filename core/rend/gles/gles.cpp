@@ -15,11 +15,9 @@
 int fbdev = -1;
 #endif
 
-#ifndef GLES
 #if HOST_OS != OS_DARWIN
 #include <GL3/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
-#endif
 #endif
 
 /*
@@ -61,21 +59,14 @@ Tile clip
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
 
-#ifndef GLES
 #define attr "in"
 #define vary "out"
-#else
-#define attr "attribute"
-#define vary "varying"
-#endif
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#ifndef GLES
-	"#version 140 \n"
-#endif
 "\
+#version 140 \n\
 #define pp_Gouraud %d \n\
  \n\
 #if pp_Gouraud == 0 \n\
@@ -111,19 +102,12 @@ void main() \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
-	vpos.w=1.0/vpos.z;  \n"
-#ifndef GLES
-	"\
+	vpos.w=1.0/vpos.z;  \n\
 	if (vpos.w < 0.0) { \n\
 		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
 		return; \n\
 	} \n\
-	vpos.z = vpos.w; \n"
-#else
-	"\
-	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n"
-#endif
-	"\
+	vpos.z = vpos.w; \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
@@ -178,14 +162,9 @@ lowp float fog_mode2(highp float invW)  \n\
 } \n\
 */
 
-#ifndef GLES
 #define FRAGCOL "FragColor"
 #define TEXLOOKUP "texture"
 #define vary "in"
-#else
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#endif
 
 
 const char* PixelPipelineShader = SHADER_HEADER
@@ -204,14 +183,11 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_BumpMap %d \n\
 #define PASS %d \n\
 #define PI 3.1415926 \n\
- \n"
-#ifndef GLES
-	"\
-	#if PASS <= 1 \n\
-	out vec4 FragColor; \n\
-	#endif \n"
-#endif
-"\
+ \n\
+#if PASS <= 1 \n\
+out vec4 FragColor; \n\
+#endif \n\
+ \n\
 #if pp_TwoVolumes == 1 \n\
 #define IF(x) if (x) \n\
 #else \n\
@@ -225,7 +201,6 @@ const char* PixelPipelineShader = SHADER_HEADER
 #endif \n\
  \n\
 /* Shader program params*/ \n\
-/* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
 uniform lowp vec4 pp_ClipTest; \n\
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
@@ -497,11 +472,10 @@ void main() \n\
 }";
 
 const char* OSD_Shader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
 " \
+#version 140 \n\
+out vec4 FragColor; \n\
+ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
@@ -521,304 +495,187 @@ int screen_height;
 GLuint fogTextureId;
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
-#if defined(GLES) && !defined(USE_SDL)
-	// Create a basic GLES context
-	bool gl_init(void* wind, void* disp)
+
+#if HOST_OS == OS_WINDOWS
+	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
+	#define WGL_ACCELERATION_ARB           0x2003
+	#define WGL_SWAP_METHOD_ARB            0x2007
+	#define WGL_SUPPORT_OPENGL_ARB         0x2010
+	#define WGL_DOUBLE_BUFFER_ARB          0x2011
+	#define WGL_PIXEL_TYPE_ARB             0x2013
+	#define WGL_COLOR_BITS_ARB             0x2014
+	#define WGL_DEPTH_BITS_ARB             0x2022
+	#define WGL_STENCIL_BITS_ARB           0x2023
+	#define WGL_FULL_ACCELERATION_ARB      0x2027
+	#define WGL_SWAP_EXCHANGE_ARB          0x2028
+	#define WGL_TYPE_RGBA_ARB              0x202B
+	#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
+	#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
+	#define WGL_CONTEXT_FLAGS_ARB              0x2094
+
+	#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
+	#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
+	#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
+	#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
+	#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
+	#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
+	#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
+	#define 	ERROR_INVALID_VERSION_ARB   0x2095
+	#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+
+	typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats,
+															int *piFormats, UINT *nNumFormats);
+	typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
+	typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+
+	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
+
+	HDC ourWindowHandleToDeviceContext;
+	bool gl_init(void* hwnd, void* hdc)
 	{
-	#if !defined(_ANDROID)
-		gl.setup.native_wind=(EGLNativeWindowType)wind;
-		gl.setup.native_disp=(EGLNativeDisplayType)disp;
-
-		//try to get a display
-		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
-
-		//if failed, get the default display (this will not happen in win32)
-		if(gl.setup.display == EGL_NO_DISPLAY)
-			gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
-
-
-		// Initialise EGL
-		EGLint maj, min;
-		if (!eglInitialize(gl.setup.display, &maj, &min))
+		PIXELFORMATDESCRIPTOR pfd =
 		{
-			printf("EGL Error: eglInitialize failed\n");
-			return false;
+				sizeof(PIXELFORMATDESCRIPTOR),
+				1,
+				PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
+				PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
+				32,                        //Colordepth of the framebuffer.
+				0, 0, 0, 0, 0, 0,
+				0,
+				0,
+				0,
+				0, 0, 0, 0,
+				24,                        //Number of bits for the depthbuffer
+				8,                        //Number of bits for the stencilbuffer
+				0,                        //Number of Aux buffers in the framebuffer.
+				PFD_MAIN_PLANE,
+				0,
+				0, 0, 0
+		};
+
+		/*HDC*/ ourWindowHandleToDeviceContext = (HDC)hdc;//GetDC((HWND)hwnd);
+
+		int  letWindowsChooseThisPixelFormat;
+		letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
+		SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+
+		HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
+		wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+
+		bool rv = true;
+
+		if (rv) {
+
+			wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+			if(!wglChoosePixelFormatARB)
+			{
+				return false;
+			}
+
+			wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+			if(!wglCreateContextAttribsARB)
+			{
+				return false;
+			}
+
+			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			if(!wglSwapIntervalEXT)
+			{
+				return false;
+			}
+
+			int attribs[] =
+		   {
+				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+				0
+		   };
+
+			HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
+
+			if (m_hrc)
+				wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
+			else
+				rv = false;
+
+			wglDeleteContext(ourOpenGLRenderingContext);
 		}
 
-		printf("Info: EGL version %d.%d\n",maj,min);
-
-
-
-		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
-
-		int num_config;
-
-		EGLConfig config;
-		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
-		{
-			printf("EGL Error: eglChooseConfig failed\n");
-			return false;
+		if (rv) {
+			rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
 		}
 
-		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
+		RECT r;
+		GetClientRect((HWND)hwnd, &r);
+		screen_width = r.right - r.left;
+		screen_height = r.bottom - r.top;
 
-		if (eglCheck())
-			return false;
-
-		eglBindAPI(EGL_OPENGL_ES_API);
-		if (eglCheck())
-			return false;
-
-		gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
-
-		if (eglCheck())
-			return false;
-
-	#endif
-
-		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
-
-		if (eglCheck())
-			return false;
-
-		EGLint w,h;
-		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
-		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
-
-		screen_width=w;
-		screen_height=h;
-
-		printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
-		return true;
+		return rv;
 	}
-
-	void egl_stealcntx()
-	{
-		gl.setup.context=eglGetCurrentContext();
-		gl.setup.display=eglGetCurrentDisplay();
-		gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
-	}
-
-	//swap buffers
+	#include <Wingdi.h>
 	void gl_swap()
 	{
-		#ifdef TARGET_PANDORA0
-		if (fbdev >= 0)
-		{
-			int arg = 0;
-			ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
-		}
-		#endif
-		eglSwapBuffers(gl.setup.display, gl.setup.surface);
-	}
-
-	//destroy the gles context and free resources
-	void gl_term()
-	{
-	#if HOST_OS==OS_WINDOWS
-		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-	#endif
-	#ifdef TARGET_PANDORA
-		eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
-		if (gl.setup.context)
-			eglDestroyContext(gl.setup.display, gl.setup.context);
-		if (gl.setup.surface)
-			eglDestroySurface(gl.setup.display, gl.setup.surface);
-		if (gl.setup.display)
-			eglTerminate(gl.setup.display);
-		if (fbdev>=0)
-			close( fbdev );
-
-		fbdev=-1;
-		gl.setup.context=0;
-		gl.setup.surface=0;
-		gl.setup.display=0;
-	#endif
+		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
+		//SwapBuffers(ourWindowHandleToDeviceContext);
 	}
 #else
+	#if defined(SUPPORT_X11)
+		//! windows && X11
+		//let's assume glx for now
 
-	#if HOST_OS == OS_WINDOWS
-		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
-		#define WGL_ACCELERATION_ARB           0x2003
-		#define WGL_SWAP_METHOD_ARB            0x2007
-		#define WGL_SUPPORT_OPENGL_ARB         0x2010
-		#define WGL_DOUBLE_BUFFER_ARB          0x2011
-		#define WGL_PIXEL_TYPE_ARB             0x2013
-		#define WGL_COLOR_BITS_ARB             0x2014
-		#define WGL_DEPTH_BITS_ARB             0x2022
-		#define WGL_STENCIL_BITS_ARB           0x2023
-		#define WGL_FULL_ACCELERATION_ARB      0x2027
-		#define WGL_SWAP_EXCHANGE_ARB          0x2028
-		#define WGL_TYPE_RGBA_ARB              0x202B
-		#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
-		#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
-		#define WGL_CONTEXT_FLAGS_ARB              0x2094
-
-		#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
-		#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
-		#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
-		#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
-		#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
-		#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
-		#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
-		#define 	ERROR_INVALID_VERSION_ARB   0x2095
-		#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
-
-		typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats,
-		                                                        int *piFormats, UINT *nNumFormats);
-		typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
-		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
-
-		PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-		PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+		#include <X11/X.h>
+		#include <X11/Xlib.h>
+		#include <GL/gl.h>
+		#include <GL/glx.h>
 
 
-		HDC ourWindowHandleToDeviceContext;
-		bool gl_init(void* hwnd, void* hdc)
+		bool gl_init(void* wind, void* disp)
 		{
-			PIXELFORMATDESCRIPTOR pfd =
-		    {
-		            sizeof(PIXELFORMATDESCRIPTOR),
-		            1,
-		            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
-		            PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
-		            32,                        //Colordepth of the framebuffer.
-		            0, 0, 0, 0, 0, 0,
-		            0,
-		            0,
-		            0,
-		            0, 0, 0, 0,
-		            24,                        //Number of bits for the depthbuffer
-		            8,                        //Number of bits for the stencilbuffer
-		            0,                        //Number of Aux buffers in the framebuffer.
-		            PFD_MAIN_PLANE,
-		            0,
-		            0, 0, 0
-		    };
+			extern void* x11_glc;
 
-		    /*HDC*/ ourWindowHandleToDeviceContext = (HDC)hdc;//GetDC((HWND)hwnd);
+			glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
+				(GLXDrawable)libPvr_GetRenderTarget(),
+				(GLXContext)x11_glc);
 
-		    int  letWindowsChooseThisPixelFormat;
-		    letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
-		    SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
-
-		    HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
-		    wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
-
-			bool rv = true;
-
-			if (rv) {
-
-				wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-				if(!wglChoosePixelFormatARB)
-				{
-					return false;
-				}
-
-				wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-				if(!wglCreateContextAttribsARB)
-				{
-					return false;
-				}
-
-				wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-				if(!wglSwapIntervalEXT)
-				{
-					return false;
-				}
-
-				int attribs[] =
-		       {
-		            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		            WGL_CONTEXT_MINOR_VERSION_ARB, 1,
-		            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-		            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-		            0
-		       };
-
-				HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
-
-				if (m_hrc)
-					wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
-				else
-					rv = false;
-
-				wglDeleteContext(ourOpenGLRenderingContext);
-			}
-
-			if (rv) {
-				rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
-			}
-
-			RECT r;
-			GetClientRect((HWND)hwnd, &r);
-			screen_width = r.right - r.left;
-			screen_height = r.bottom - r.top;
-
-			return rv;
+			screen_width = 640;
+			screen_height = 480;
+			return gl3wInit() != -1 && gl3wIsSupported(3, 1);
 		}
-		#include <Wingdi.h>
+
 		void gl_swap()
 		{
-			wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
-			//SwapBuffers(ourWindowHandleToDeviceContext);
-		}
-	#else
-		#if defined(SUPPORT_X11)
-			//! windows && X11
-			//let's assume glx for now
+			glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
-			#include <X11/X.h>
-			#include <X11/Xlib.h>
-			#include <GL/gl.h>
-			#include <GL/glx.h>
+			Window win;
+			int temp;
+			unsigned int tempu, new_w, new_h;
+			XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
+						&win, &temp, &temp, &new_w, &new_h,&tempu,&tempu);
 
-
-			bool gl_init(void* wind, void* disp)
-			{
-				extern void* x11_glc;
-
-				glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
-					(GLXDrawable)libPvr_GetRenderTarget(),
-					(GLXContext)x11_glc);
-
-				screen_width = 640;
-				screen_height = 480;
-				return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+			//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
+			if (new_w != screen_width || new_h != screen_height) {
+				screen_width = new_w;
+				screen_height = new_h;
 			}
 
-			void gl_swap()
-			{
+			#if 0
+				//handy to debug really stupid render-not-working issues ...
+
+				glcache.ClearColor( 0, 0.5, 1, 1 );
+				glClear( GL_COLOR_BUFFER_BIT );
 				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
-				Window win;
-				int temp;
-				unsigned int tempu, new_w, new_h;
-				XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
-							&win, &temp, &temp, &new_w, &new_h,&tempu,&tempu);
 
-				//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
-				if (new_w != screen_width || new_h != screen_height) {
-					screen_width = new_w;
-					screen_height = new_h;
-				}
-
-				#if 0
-					//handy to debug really stupid render-not-working issues ...
-
-					glcache.ClearColor( 0, 0.5, 1, 1 );
-					glClear( GL_COLOR_BUFFER_BIT );
-					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-
-
-					glcache.ClearColor ( 1, 0.5, 0, 1 );
-					glClear ( GL_COLOR_BUFFER_BIT );
-					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-				#endif
-			}
-		#endif
+				glcache.ClearColor ( 1, 0.5, 0, 1 );
+				glClear ( GL_COLOR_BUFFER_BIT );
+				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+			#endif
+		}
 	#endif
 #endif
 
@@ -873,9 +730,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
-#ifndef GLES
 	glBindFragDataLocation(program, 0, "FragColor");
-#endif
 
 	glLinkProgram(program);
 
@@ -1012,12 +867,10 @@ GLuint osd_font;
 bool gl_create_resources()
 {
 
-#ifndef GLES
 	//create vao
 	//This is really not "proper", vaos are supposed to be defined once
 	//i keep updating the same one to make the es2 code work in 3.1 context
 	glGenVertexArrays(1, &gl.vbo.vao);
-#endif
 
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);
@@ -1143,14 +996,6 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
-	#ifdef TARGET_PANDORA
-	fbdev=open("/dev/fb0", O_RDONLY);
-	#else
-	eglSwapInterval(gl.setup.display,1);
-	#endif
-#endif
-
 //    glEnable(GL_DEBUG_OUTPUT);
 //    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 //    glDebugMessageCallback(gl_DebugOutput, NULL);
@@ -1162,9 +1007,6 @@ bool gles_init()
 	glClear(GL_COLOR_BUFFER_BIT);
 	gl_swap();
 
-#ifdef GLES
-	glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
-#endif
 	initABuffer();
 
 	return true;
