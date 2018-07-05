@@ -265,39 +265,35 @@ void main(void) \n\
 	setFragDepth(); \n\
 #endif \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	if (all(greaterThanEqual(coords, ivec2(0))) && all(lessThan(coords, imageSize(abufferPointerImg)))) \n\
+	 \n\
+	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
+	int list_len = 0; \n\
+	while (idx != EOL) \n\
 	{ \n\
-		 \n\
-		uint idx = imageLoad(abufferPointerImg, coords).x; \n\
-		if (idx >= pixels.length()) // FIXME Shouldn't be necessary \n\
-			discard; \n\
-		int list_len = 0; \n\
-		while (idx != EOL) { \n\
-			const Pixel pixel = pixels[idx]; \n\
-			const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
-			if (getShadowEnable(pp)) \n\
-			{ \n\
+		const Pixel pixel = pixels[idx]; \n\
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
+		if (getShadowEnable(pp)) \n\
+		{ \n\
 #if MV_MODE == MV_XOR \n\
-				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicXor(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixels[idx].depth) \n\
+				atomicXor(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_OR \n\
-				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicOr(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixels[idx].depth) \n\
+				atomicOr(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-				int prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
-				if ((prev_val & 0xC0000000) == 0x40000000) \n\
-					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
+			if ((prev_val & 0xC0000000) == 0x40000000) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-				int prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
-				if ((prev_val & 0xC0000000) == 0x80000000) \n\
-					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
+			if ((prev_val & 0xC0000000) == 0x80000000) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #endif \n\
-			} \n\
-			idx = pixels[idx].next; \n\
-			list_len++; \n\
-			if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
-				break; \n\
 		} \n\
+		idx = pixels[idx].next; \n\
+		list_len++; \n\
+		if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
+			break; \n\
 	} \n\
 	 \n\
 	discard; \n\
@@ -473,6 +469,8 @@ void DrawTranslucentModVols(int first, int count)
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
+	int mod_base = -1;
+
 	for (u32 cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
@@ -483,6 +481,9 @@ void DrawTranslucentModVols(int first, int count)
 		u32 mv_mode = param.isp.DepthMode;
 
 		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+
+		if (mod_base == -1)
+			mod_base = param.first;
 
 		PipelineShader *shader;
 		if (!param.isp.VolumeLast && mv_mode > 0)
@@ -506,7 +507,8 @@ void DrawTranslucentModVols(int first, int count)
 			ShaderUniforms.Set(shader);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3); glCheck();
+			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3); glCheck();
+			mod_base = -1;
 		}
 	}
 }
