@@ -48,5 +48,6 @@ Workdir/lib*ant.properties
 shell/linux/.map
 shell/linux/nosym-reicast.elf
 shell/linux/reicast.elf
+shell/linux/reicast_naomi.elf
 
 reicast-ios.xccheckout
