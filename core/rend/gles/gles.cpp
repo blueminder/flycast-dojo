@@ -74,7 +74,6 @@ const char* VertexShaderSource =
  \n\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
-uniform highp vec4      depth_scale; \n\
 /* Vertex input */ \n\
 in highp vec4    in_pos; \n\
 in lowp vec4     in_base; \n\
@@ -760,7 +759,6 @@ bool CompilePipelineShader(	PipelineShader* s, const char *source /* = PixelPipe
 
 	//get the uniform locations
 	s->scale	            = glGetUniformLocation(s->program, "scale");
-	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 
 
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
@@ -829,12 +827,10 @@ bool gl_create_resources()
 
 	gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(vshader, OSD_Shader);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	//#define PRECOMPILE_SHADERS
@@ -871,8 +867,6 @@ bool gl_init(void* wind, void* disp);
 
 //swap buffers
 void gl_swap();
-//destroy the gles context and free resources
-void gl_term();
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
 
@@ -1080,12 +1074,6 @@ static void DrawButton(float* xy, u32 state)
 
 	osd_count+=4;
 }
-
-static void ClearBG()
-{
-
-}
-
 
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 
@@ -1378,90 +1366,6 @@ bool RenderFrame()
 
 	//if (FrameCount&7) return;
 
-	//Setup the matrix
-
-	//TODO: Make this dynamic
-	float vtx_min_fZ=0.f;	//pvrrc.fZ_min;
-	float vtx_max_fZ=pvrrc.fZ_max;
-//printf("Zmin %g Zmax %g\n", pvrrc.fZ_min, pvrrc.fZ_max);
-	//sanitise the values, now with NaN detection (for omap)
-	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
-	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
-		vtx_max_fZ=10*1024;
-
-
-	//add some extra range to avoid clipping border cases
-	vtx_min_fZ*=0.98f;
-	vtx_max_fZ*=1.001f;
-
-	//calculate a projection so that it matches the pvr x,y setup, and
-	//a) Z is linearly scaled between 0 ... 1
-	//b) W is passed though for proper perspective calculations
-
-	/*
-	PowerVR coords:
-	fx, fy (pixel coordinates)
-	fz=1/w
-
-	(as a note, fx=x*fz;fy=y*fz)
-
-	Clip space
-	-Wc .. Wc, xyz
-	x: left-right, y: bottom-top
-	NDC space
-	-1 .. 1, xyz
-	Window space:
-	translated NDC (viewport, glDepth)
-
-	Attributes:
-	//this needs to be cleared up, been some time since I wrote my rasteriser and i'm starting
-	//to forget/mixup stuff
-	vaX         -> VS output
-	iaX=vaX*W   -> value to be interpolated
-	iaX',W'     -> interpolated values
-	paX=iaX'/W' -> Per pixel interpolated value for attribute
-
-
-	Proper mappings:
-	Output from shader:
-	W=1/fz
-	x=fx*W -> maps to fx after perspective divide
-	y=fy*W ->         fy   -//-
-	z=-W for min, W for max. Needs to be linear.
-
-
-
-	umodified W, perfect mapping:
-	Z mapping:
-	pz=z/W
-	pz=z/(1/fz)
-	pz=z*fz
-	z=zt_s+zt_o
-	pz=(zt_s+zt_o)*fz
-	pz=zt_s*fz+zt_o*fz
-	zt_s=scale
-	zt_s=2/(max_fz-min_fz)
-	zt_o*fz=-min_fz-1
-	zt_o=(-min_fz-1)/fz == (-min_fz-1)*W
-
-
-	x=fx/(fx_range/2)-1		//0 to max -> -1 to 1
-	y=fy/(-fy_range/2)+1	//0 to max -> 1 to -1
-	z=-min_fz*W + (zt_s-1)  //0 to +inf -> -1 to 1
-
-	o=a*z+c
-	1=a*z_max+c
-	-1=a*z_min+c
-
-	c=-a*z_min-1
-	1=a*z_max-a*z_min-1
-	2=a*(z_max-z_min)
-	a=2/(z_max-z_min)
-	*/
-
-	//float B=2/(min_invW-max_invW);
-	//float A=-B*max_invW+vnear;
-
 	//these should be adjusted based on the current PVR scaling etc params
 	float dc_width=640;
 	float dc_height=480;
@@ -1513,30 +1417,6 @@ bool RenderFrame()
 	dc_height *= scale_y;
 
 	/*
-
-	float vnear=0;
-	float vfar =1;
-
-	float max_invW=1/vtx_min_fZ;
-	float min_invW=1/vtx_max_fZ;
-
-	float B=vfar/(min_invW-max_invW);
-	float A=-B*max_invW+vnear;
-
-
-	GLfloat dmatrix[16] =
-	{
-		(2.f/dc_width)  ,0                ,-(640/dc_width)              ,0  ,
-		0               ,-(2.f/dc_height) ,(480/dc_height)              ,0  ,
-		0               ,0                ,A                            ,B  ,
-		0               ,0                ,1                            ,0
-	};
-
-	glUniformMatrix4fv(gl.matrix, 1, GL_FALSE, dmatrix);
-
-	*/
-
-	/*
 		Handle Dc to screen scaling
 	*/
 	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
@@ -1547,12 +1427,6 @@ bool RenderFrame()
 	ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
-
-
-	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
-	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
-	ShaderUniforms.depth_coefs[2]=0;
-	ShaderUniforms.depth_coefs[3]=0;
 
 	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
 
@@ -1586,14 +1460,12 @@ bool RenderFrame()
 	glcache.UseProgram(gl.modvol_shader.program);
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 
 
 	GLfloat td[4]={0.5,0,0,0};
 
 	glcache.UseProgram(gl.OSD_SHADER.program);
 	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -1746,32 +1618,6 @@ bool RenderFrame()
 #endif
 
 extern u16 kcode[4];
-
-/*
-bool rend_single_frame()
-{
-	//wait render start only if no frame pending
-	_pvrrc = DequeueRender();
-
-	while (!_pvrrc)
-	{
-		rs.Wait();
-		_pvrrc = DequeueRender();
-	}
-
-	bool do_swp=false;
-	//if (kcode[0]&(1<<9))
-	{
-
-
-	//clear up & free data ..
-	tactx_Recycle(_pvrrc);
-	_pvrrc=0;
-
-	return do_swp;
-}
-*/
-
 
 void rend_set_fb_scale(float x,float y)
 {
