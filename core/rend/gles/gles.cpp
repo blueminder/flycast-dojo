@@ -59,11 +59,8 @@ Tile clip
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
 
-#define attr "in"
-#define vary "out"
-
 //Fragment and vertex shaders code
-//pretty much 1:1 copy of the d3d ones for now
+
 const char* VertexShaderSource =
 "\
 #version 140 \n\
@@ -79,20 +76,20 @@ const char* VertexShaderSource =
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 /* Vertex input */ \n\
-" attr " highp vec4    in_pos; \n\
-" attr " lowp vec4     in_base; \n\
-" attr " lowp vec4     in_offs; \n\
-" attr " mediump vec2  in_uv; \n\
-" attr " lowp vec4     in_base1; \n\
-" attr " lowp vec4     in_offs1; \n\
-" attr " mediump vec2  in_uv1; \n\
+in highp vec4    in_pos; \n\
+in lowp vec4     in_base; \n\
+in lowp vec4     in_offs; \n\
+in mediump vec2  in_uv; \n\
+in lowp vec4     in_base1; \n\
+in lowp vec4     in_offs1; \n\
+in mediump vec2  in_uv1; \n\
 /* output */ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-			  " vary " mediump vec2 vtx_uv; \n\
-INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
-			  " vary " mediump vec2 vtx_uv1; \n\
+INTERPOLATION out lowp vec4 vtx_base; \n\
+INTERPOLATION out lowp vec4 vtx_offs; \n\
+			  out mediump vec2 vtx_uv; \n\
+INTERPOLATION out lowp vec4 vtx_base1; \n\
+INTERPOLATION out lowp vec4 vtx_offs1; \n\
+			  out mediump vec2 vtx_uv1; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -112,60 +109,6 @@ void main() \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
-
-/*
-
-cp_AlphaTest 0 1        2 2
-pp_ClipTestMode -1 0 1  3 6
-pp_UseAlpha  0 1        2 12
-pp_Texture 1
-	pp_IgnoreTexA 0 1       2   2
-	pp_ShadInstr 0 1 2 3    4   8
-	pp_Offset 0 1           2   16
-	pp_FogCtrl 0 1 2 3      4   64
-pp_Texture 0
-	pp_FogCtrl 0 2 3        4   4
-
-pp_Texture: off -> 12*4=48 shaders
-pp_Texture: on  -> 12*64=768 shaders
-Total: 816 shaders
-
-highp float fdecp(highp float flt,out highp float e)  \n\
-{  \n\
-	highp float lg2=log2(flt);  //ie , 2.5  \n\
-	highp float frc=fract(lg2); //ie , 0.5  \n\
-	e=lg2-frc;                  //ie , 2.5-0.5=2 (exp)  \n\
-	return pow(2.0,frc);        //2^0.5 (manitsa)  \n\
-}  \n\
-lowp float fog_mode2(highp float invW)  \n\
-{  \n\
-	highp float foginvW=invW;  \n\
-	foginvW=clamp(foginvW,1.0,255.0);  \n\
-	  \n\
-	highp float fogexp;                                 //0 ... 7  \n\
-	highp float fogman=fdecp(foginvW, fogexp);          //[1,2) mantissa bits. that is 1.m  \n\
-	  \n\
-	highp float fogman_hi=fogman*16.0-16.0;             //[16,32) -16 -> [0,16)  \n\
-	highp float fogman_idx=floor(fogman_hi);            //[0,15]  \n\
-	highp float fogman_blend=fract(fogman_hi);          //[0,1) -- can also be fogman_idx-fogman_idx !  \n\
-	highp float fog_idx_fr=fogexp*16.0+fogman_idx;      //[0,127]  \n\
-	  \n\
-	highp float fog_idx_pixel_fr=fog_idx_fr+0.5;  \n\
-	highp float fog_idx_pixel_n=fog_idx_pixel_fr/128.0;//normalise to [0.5/128,127.5/128) coordinates  \n\
-  \n\
-	//fog is 128x1 texure  \n\
-	lowp vec2 fog_coefs=texture2D(fog_table,vec2(fog_idx_pixel_n)).rg;  \n\
-  \n\
-	lowp float fog_coef=mix(fog_coefs.r,fog_coefs.g,fogman_blend);  \n\
-	  \n\
-	return fog_coef;  \n\
-} \n\
-*/
-
-#define FRAGCOL "FragColor"
-#define TEXLOOKUP "texture"
-#define vary "in"
-
 
 const char* PixelPipelineShader = SHADER_HEADER
 "\
@@ -222,19 +165,19 @@ uniform int fog_control[2]; \n\
 #endif \n\
  \n\
 /* Vertex input*/ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-			  " vary " mediump vec2 vtx_uv; \n\
-INTERPOLATION " vary " lowp vec4 vtx_base1; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs1; \n\
-			  " vary " mediump vec2 vtx_uv1; \n\
+INTERPOLATION in lowp vec4 vtx_base; \n\
+INTERPOLATION in lowp vec4 vtx_offs; \n\
+			  in mediump vec2 vtx_uv; \n\
+INTERPOLATION in lowp vec4 vtx_base1; \n\
+INTERPOLATION in lowp vec4 vtx_offs1; \n\
+			  in mediump vec2 vtx_uv1; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
 	float exp = floor(log2(z)); \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
 	float idx = floor(m) + exp * 16.0 + 0.5; \n\
-	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
+	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
 	return fog_coef.a; \n\
  } \n\
 void main() \n\
@@ -317,8 +260,11 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=" TEXLOOKUP "(area1 ? tex1 : tex0, uv); \n\
-		\n\
+		highp vec4 texcol; \n\
+		if (area1) \n\
+			texcol = texture(tex1, uv); \n\
+		else \n\
+			texcol = texture(tex0, uv); \n\
 		#if pp_BumpMap == 1 \n\
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
 			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0; \n\
@@ -390,8 +336,8 @@ void main() \n\
 	\n\
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0); \n\
 	\n\
-	#if PASS == 1  \n"
-		FRAGCOL " = color; \n\
+	#if PASS == 1  \n\
+		FragColor = color; \n\
 	#elif PASS > 1 \n\
 		// Discard as many pixels as possible \n\
 		switch (cur_blend_mode.y) // DST \n\
@@ -476,15 +422,15 @@ const char* OSD_Shader =
 #version 140 \n\
 out vec4 FragColor; \n\
  \n\
-" vary " lowp vec4 vtx_base; \n\
-" vary " mediump vec2 vtx_uv; \n\
+in lowp vec4 vtx_base; \n\
+in mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
 void main() \n\
 { \n\
-	mediump vec2 uv=vtx_uv; \n\
-	uv.y=1.0-uv.y; \n\
-	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
+	mediump vec2 uv = vtx_uv; \n\
+	uv.y = 1.0 - uv.y; \n\
+	FragColor = vtx_base * texture(tex, uv.st); \n\n\
 }";
 
 GLCache glcache;
