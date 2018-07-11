@@ -117,7 +117,6 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 
 static void dumpTexture(int texID, int w, int h, GLuint textype)
 {
-	// Dump
 	char sname[256];
 	sprintf(sname, "texdump/%d.png", texID);
 	FILE *fp = fopen(sname, "wb");
@@ -127,10 +126,13 @@ static void dumpTexture(int texID, int w, int h, GLuint textype)
 	u16 *src = (u16 *)temp_tex_buffer;
 
 	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
-	for (int y = 0; y < h; y++) {
+	for (int y = 0; y < h; y++)
+	{
 		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
 		u8 *dst = (u8 *)rows[y];
-		if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
+		switch (textype)
+		{
+		case GL_UNSIGNED_SHORT_4_4_4_4:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 12) & 0xF) << 4;
@@ -139,16 +141,18 @@ static void dumpTexture(int texID, int w, int h, GLuint textype)
 				*dst++ = (*src & 0xF) << 4;
 				src++;
 			}
-		else if (textype == GL_UNSIGNED_SHORT_5_6_5)
+			break;
+		case GL_UNSIGNED_SHORT_5_6_5:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
-				*dst++ = ((*src >> 5) & 0x3F) << 3;
+				*dst++ = ((*src >> 5) & 0x3F) << 2;
 				*dst++ = (*src & 0x1F) << 3;
 				*dst++ = 255;
 				src++;
 			}
-		if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
+			break;
+		case GL_UNSIGNED_SHORT_5_5_5_1:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
@@ -157,6 +161,23 @@ static void dumpTexture(int texID, int w, int h, GLuint textype)
 				*dst++ = (*src & 1) ? 255 : 0;
 				src++;
 			}
+			break;
+		case GL_UNSIGNED_INT_8_8_8_8:
+			for (int x = 0; x < w; x++)
+			{
+				*dst++ = ((u8 *)src)[3];
+				*dst++ = ((u8 *)src)[2];
+				*dst++ = ((u8 *)src)[1];
+				*dst++ = ((u8 *)src)[0];
+				src += 2;
+			}
+			break;
+		default:
+			printf("dumpTexture: unsupported picture format %x\n", textype);
+			free(rows[0]);
+			free(rows);
+			return;
+		}
 	}
 
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
