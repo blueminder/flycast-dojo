@@ -136,6 +136,7 @@ const char *EGHackGamesList[] = {
 		"T47801M",		/* Chaos Field (Japan) */
 		"T23202M",		/* Death Crimson OX (Japan) */
 		"T2401N",		/* Death Crimson OX (USA) */
+		"T1223M",		/* Eldorado Gate Vol. 1 (Japan) */
 		"T44306N",		/* Fatal Fury: Mark of the Wolves (USA) */
 		"T3108M",		/* Garou: Mark of the Wolves (Japan) */
 		"HDR-0078",		/* Jet Set Radio (Japan) */
@@ -178,8 +179,12 @@ void LoadSpecialSettings()
 			settings.aica.EGHack = 1;
 			break;
 		}
-	if (!strncmp("T30701D", reios_product_number, 7))
-		// Pro Pinball Trilogy
+	// Pro Pinball Trilogy
+	if (!strncmp("T30701D", reios_product_number, 7)
+		// Demolition Racer
+		|| !strncmp("T15112N", reios_product_number, 7)
+		// Star Wars - Episode I - Racer (United Kingdom)
+		|| !strncmp("T23001D", reios_product_number, 7))
 		settings.dynarec.DisableDivMatching = true;
 }
 
