@@ -300,9 +300,11 @@ void x11_window_create()
 			verify(glXCreateContextAttribsARB != 0);
 			int context_attribs[] =
 			{
-				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+#ifndef RELEASE
 				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+#endif
 				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 				None
 			};
@@ -312,7 +314,7 @@ void x11_window_create()
 
 			if (!x11_glc)
 			{
-				die("Failed to create GL3.1 context\n");
+				die("Failed to create OpenGL 4.3 context\n");
 			}
 		#endif
 
