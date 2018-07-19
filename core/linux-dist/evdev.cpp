@@ -159,7 +159,7 @@
 		mf.parse(fd);
 
 		EvdevControllerMapping mapping = {
-			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
+			mf.get("emulator", "mapping_name", "<Unknown>"),
 			load_keycode(&mf, "dreamcast", "btn_a"),
 			load_keycode(&mf, "dreamcast", "btn_b"),
 			load_keycode(&mf, "dreamcast", "btn_c"),
@@ -308,7 +308,7 @@
 					}
 				}
 				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+				printf("evdev: Using '%s' mapping\n", controller->mapping->name.c_str());
 				controller->init();
 
 				return 0;
@@ -471,6 +471,7 @@
 					break;
 			}
 		}
+		return true;
 	}
 
 	void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak)

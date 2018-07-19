@@ -698,6 +698,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
 
 		free(compile_log);
+
+		// Dump the shaders source for troubleshooting
+		printf("// VERTEX SHADER\n%s\n// END\n", VertexShader);
+		printf("// FRAGMENT SHADER\n%s\n// END\n", FragmentShader);
 		die("shader compile fail\n");
 	}
 
@@ -1587,6 +1591,13 @@ bool RenderFrame()
 			min_y = screen_height - height * dc2s_scale_h;
 			width *= dc2s_scale_h;
 			height *= dc2s_scale_h;
+		}
+		else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+		{
+			min_x *= settings.rend.RenderToTextureUpscale;
+			min_y *= settings.rend.RenderToTextureUpscale;
+			width *= settings.rend.RenderToTextureUpscale;
+			height *= settings.rend.RenderToTextureUpscale;
 		}
 
 		glScissor(min_x, min_y, width, height);

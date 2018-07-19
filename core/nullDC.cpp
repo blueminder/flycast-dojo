@@ -78,8 +78,10 @@ s32 plugins_Init()
 	if (s32 rv = libPvr_Init())
 		return rv;
 
+	#ifndef TARGET_DISPFRAME
 	if (s32 rv = libGDR_Init())
 		return rv;
+	#endif
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
@@ -276,10 +278,12 @@ int dc_init(int argc,wchar* argv[])
 	return rv;
 }
 
+#ifndef TARGET_DISPFRAME
 void dc_run()
 {
 	sh4_cpu.Run();
 }
+#endif
 
 void dc_term()
 {
@@ -313,6 +317,7 @@ void LoadSettings()
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
 	settings.rend.RenderToTextureBuffer = cfgLoadInt("config", "rend.RenderToTextureBuffer", 0);
+	settings.rend.RenderToTextureUpscale = cfgLoadInt("config", "rend.RenderToTextureUpscale", 1);
 	settings.rend.TranslucentPolygonDepthMask = cfgLoadInt("config", "rend.TranslucentPolygonDepthMask", 0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
@@ -327,12 +332,12 @@ void LoadSettings()
 
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
-	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
+	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
+	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile", "");
 
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 #endif
 
-	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
 	settings.pvr.HashCheckFile = cfgLoadStr("testing", "ta.HashCheckFile", "");
 

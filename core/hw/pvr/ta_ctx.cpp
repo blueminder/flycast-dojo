@@ -15,6 +15,28 @@ tad_context ta_tad;
 TA_context*  vd_ctx;
 rend_context vd_rc;
 
+#if ANDROID
+#include <errno.h>
+#include <malloc.h>
+
+int posix_memalign(void** memptr, size_t alignment, size_t size) {
+  if ((alignment & (alignment - 1)) != 0 || alignment == 0) {
+    return EINVAL;
+  }
+
+  if (alignment % sizeof(void*) != 0) {
+    return EINVAL;
+  }
+
+  *memptr = memalign(alignment, size);
+  if (*memptr == NULL) {
+    return errno;
+  }
+
+  return 0;
+}
+#endif
+
 // helper for 32 byte aligned memory allocation
 void* OS_aligned_malloc(size_t align, size_t size)
 {
@@ -203,7 +225,6 @@ TA_context* tactx_Alloc()
 	{
 		rv = new TA_context();
 		rv->Alloc();
-		printf("new tactx\n");
 	}
 
 	return rv;

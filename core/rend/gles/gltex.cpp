@@ -432,7 +432,7 @@ struct TextureCacheData
 			//upload to OpenGL !
 			glcache.BindTexture(GL_TEXTURE_2D, texID);
 			GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
-			glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, textype, temp_tex_buffer);
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -523,6 +523,13 @@ GLuint BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
+	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	{
+		fbw *= settings.rend.RenderToTextureUpscale;
+		fbh *= settings.rend.RenderToTextureUpscale;
+		fbw2 *= settings.rend.RenderToTextureUpscale;
+		fbh2 *= settings.rend.RenderToTextureUpscale;
+	}
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 

@@ -238,7 +238,7 @@ struct vram_block
 	#define VRAM_SIZE (16*1024*1024)
 	#define ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
-	#define BBSRAM_SIZE (8*1024)
+	#define BBSRAM_SIZE (32*1024)
 
 	#define ROM_PREFIX "naomi_"
 	#define ROM_NAMES ";epr-21576d.bin"
@@ -251,7 +251,7 @@ struct vram_block
 	#define VRAM_SIZE (16*1024*1024)
 	#define ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)	
-	#define BBSRAM_SIZE (8*1024)
+	#define BBSRAM_SIZE (32*1024)
 
 	#define ROM_PREFIX "n2_"
 	#define ROM_NAMES
@@ -617,6 +617,7 @@ struct settings_t
 		bool WideScreen;
 		bool ShowFPS;
 		bool RenderToTextureBuffer;
+		int RenderToTextureUpscale;
 		bool TranslucentPolygonDepthMask;
 		bool ModifierVolumes;
 		bool Clipping;
