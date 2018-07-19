@@ -164,10 +164,15 @@ static void dumpTexture(int texID, int w, int h, GLuint textype, void *temp_tex_
 		case GL_UNSIGNED_INT_8_8_8_8:
 			for (int x = 0; x < w; x++)
 			{
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ || defined(GLES)
+				*(u32 *)dst = *(u32 *)src;
+				dst += 4;
+#else
 				*dst++ = ((u8 *)src)[3];
 				*dst++ = ((u8 *)src)[2];
 				*dst++ = ((u8 *)src)[1];
 				*dst++ = ((u8 *)src)[0];
+#endif
 				src += 2;
 			}
 			break;
@@ -487,7 +492,7 @@ struct TextureCacheData
 #endif
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
-			//dumpTexture(texID, w, h, textype, temp_tex_buffer);
+			//dumpTexture(texID, upscaled_w, upscaled_h, textype, temp_tex_buffer);
 		}
 		else {
 			#if FEAT_HAS_SOFTREND
