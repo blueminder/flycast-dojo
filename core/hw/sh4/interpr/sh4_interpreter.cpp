@@ -21,6 +21,7 @@
 #include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
+#include "../sh4_debug.h"
 
 #include <time.h>
 #include <float.h>
@@ -44,11 +45,12 @@ void Sh4_int_Run()
 	for (int i=0; i<10000; i++)
 #endif
 	{
-#if !defined(NO_MMU)
 		try {
-#endif
 			do
 			{
+#ifdef HAVE_GDBSERVER
+				check_breakpoint(next_pc);
+#endif
 				u32 addr = next_pc;
 				next_pc += 2;
 				u32 op = IReadMem16(addr);
@@ -58,13 +60,11 @@ void Sh4_int_Run()
 			} while (l > 0);
 			l += SH4_TIMESLICE;
 			UpdateSystem_INTC();
-#if !defined(NO_MMU)
 		}
 		catch (SH4ThrownException ex) {
 			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
 			l -= CPU_RATIO * 5;
 		}
-#endif
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	} while(sh4_int_bCpuRun);
 
@@ -90,9 +90,21 @@ void Sh4_int_Step()
 	}
 	else
 	{
-		u32 op=ReadMem16(next_pc);
-		next_pc+=2;
-		ExecuteOpcode(op);
+		try {
+#ifdef HAVE_GDBSERVER
+			check_breakpoint(next_pc);
+#endif
+			u32 addr = next_pc;
+			next_pc += 2;
+			u32 op = ReadMem16(next_pc);
+
+			ExecuteOpcode(op);
+
+			// FIXME UpdateSystem_INTC() ?
+		}
+		catch (SH4ThrownException ex) {
+			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+		}
 	}
 }
 
@@ -145,40 +157,36 @@ bool Sh4_int_IsCpuRunning()
 //TODO : Check for valid delayslot instruction
 void ExecuteDelayslot()
 {
-#if !defined(NO_MMU)
 	try {
-#endif
 		u32 addr = next_pc;
 		next_pc += 2;
 		u32 op = IReadMem16(addr);
 		if (op != 0)
+		{
+			if (OpDesc[op]->type & (Branch_rel|Branch_rel))
+				RaiseException(0x1A0, 0x100);
 			ExecuteOpcode(op);
-#if !defined(NO_MMU)
+		}
 	}
 	catch (SH4ThrownException ex) {
 		ex.epc -= 2;
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
-#endif
 }
 
 void ExecuteDelayslot_RTE()
 {
 	u32 oldsr = sr.GetFull();
 
-#if !defined(NO_MMU)
 	try {
-#endif
 		sr.SetFull(ssr);
 
 		ExecuteDelayslot();
-#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException ex) {
 		msgboxf("RTE Exception", MBX_ICONERROR);
 	}
-#endif
 }
 
 //General update
@@ -250,6 +258,8 @@ int UpdateSystem()
 	if (Sh4cntx.sh4_sched_next<0)
 		sh4_sched_tick(448);
 
+	debugger_tick();
+
 	return Sh4cntx.interrupt_pend;
 }
 
@@ -285,12 +295,15 @@ void Sh4_int_Init()
 	rtc_schid=sh4_sched_register(0,&DreamcastSecond);
 	sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+
+	debugger_init();
 }
 
 void Sh4_int_Term()
 {
 	Sh4_int_Stop();
 	printf("Sh4 Term\n");
+	debugger_destroy();
 }
 
 /*
