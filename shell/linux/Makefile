@@ -3,11 +3,9 @@ FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
-USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_EVDEV := 1
-USE_JOYSTICK := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -23,6 +21,13 @@ LIBS :=
 CFLAGS := 
 CXXFLAGS :=
 
+ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
+    CFLAGS += -DTARGET_BSD
+else
+    USE_ALSA := 1
+    USE_JOYSTICK := 1
+endif
+
 # Platform auto-detection
 # Can be overridden by using:
 #   make platform=x64
@@ -30,7 +35,7 @@ ifeq (,$(platform))
     ARCH = $(shell uname -m)
     ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
         platform = x86
-    else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
+    else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64 amd64))
         platform = x64
     else ifneq (,$(findstring aarch64,$(ARCH)))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
@@ -91,8 +96,8 @@ ifneq (,$(findstring x86,$(platform)))
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant -fno-builtin-sqrtf
-    CXXFLAGS += -fno-exceptions
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
         HAS_SOFTREND := 1
@@ -103,7 +108,7 @@ else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant -fno-builtin-sqrtf
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
@@ -237,7 +242,7 @@ CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0
+CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
@@ -281,9 +286,9 @@ ifdef USE_DISPMANX
 endif
 
 ifdef USE_X11
-    CFLAGS += -D SUPPORT_X11
-    CXXFLAGS += -D SUPPORT_X11 
-    LIBS += -lX11
+    CFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
+    CXXFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
+    LIBS += `pkg-config --libs x11`
 endif
 
 ifdef USE_EVDEV
@@ -300,8 +305,8 @@ ifdef USE_OMX
 endif
 
 ifdef USE_ALSA
-    CXXFLAGS += -D USE_ALSA
-    LIBS += -lasound
+    CXXFLAGS += `pkg-config --cflags alsa` -D USE_ALSA
+    LIBS += `pkg-config --libs alsa`
 endif
 
 ifdef USE_OSS
@@ -309,8 +314,8 @@ ifdef USE_OSS
 endif
 
 ifdef USE_PULSEAUDIO
-    CXXFLAGS += -D USE_PULSEAUDIO
-    LIBS += -lpulse-simple
+    CXXFLAGS += `pkg-config --cflags libpulse-simple` -D USE_PULSEAUDIO
+    LIBS += `pkg-config --libs libpulse-simple`
 endif
 
 ifdef HAS_SOFTREND
@@ -341,7 +346,7 @@ ifdef NAOMI
     EXECUTABLE_NAME=reicast-naomi
 else ifdef DISPFRAME
     CFLAGS += -D TARGET_DISPFRAME
-    DC_PLATFORM=dreamcast
+    DC_PLATFORM=dispframe
     EXECUTABLE=dispframe.elf
     EXECUTABLE_NAME=dispframe
 else
@@ -393,18 +398,14 @@ $(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.S $(DEPDIR)/%.d
-	mkdir -p $(dir $@)	
-	mkdir -p .dep-$(dir $@)
-	$(AS) $(DEPFLAGS) $(ASFLAGS) $(INCS) $< -o $@
-	$(POSTCOMPILE)
+	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 install: $(EXECUTABLE)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
+	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
 	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings

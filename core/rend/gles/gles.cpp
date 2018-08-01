@@ -98,7 +98,10 @@ void main() \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
-	vpos.w=1.0/vpos.z;  \n\
+	if (isinf(vpos.z)) \n\
+		vpos.w = 1.18e-38; \n\
+	else \n\
+		vpos.w = 1.0 / vpos.z; \n\
 	if (vpos.w < 0.0) { \n\
 		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
 		return; \n\
@@ -952,6 +955,14 @@ bool gles_init()
 	gl_swap();
 
 	initABuffer();
+
+	if (settings.rend.TextureUpscale > 1)
+	{
+		// Trick to preload the tables used by xBRZ
+		u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
+		u32 dst[16];
+		UpscalexBRZ(2, src, dst, 2, 2, false);
+	}
 
 	return true;
 }

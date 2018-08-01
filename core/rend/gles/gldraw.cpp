@@ -118,15 +118,15 @@ s32 SetTileClip(u32 val, bool set)
 
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
-	
+
 	if (set && clip_mode)
 	{
 		if (!pvrrc.isRTT)
 		{
-			csx *= scale_x;
-			csy *= scale_y;
-			cex *= scale_x;
-			cey *= scale_y;
+			csx /= scale_x;
+			csy /= scale_y;
+			cex /= scale_x;
+			cey /= scale_y;
 			float t = cey;
 			cey = 480 - csy;
 			csy = 480 - t;
@@ -237,7 +237,7 @@ template <u32 Type, bool SortingEnabled>
 												  two_volumes_mode,
 												  depth_func,
 												  gp->pcw.Gouraud,
-												  gp->tcw.PixelFmt == 4,
+												  gp->tcw.PixelFmt == PixelBumpMap,
 												  pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {

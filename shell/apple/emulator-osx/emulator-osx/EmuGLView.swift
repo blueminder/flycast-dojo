@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class EmuGLView: NSOpenGLView {
+class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
     override var acceptsFirstResponder: Bool {
         return true;
@@ -26,9 +26,10 @@ class EmuGLView: NSOpenGLView {
         
         openGLContext!.makeCurrentContext()
         
-        while 0==emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) { }
-        
-        openGLContext!.flushBuffer()
+        if (emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) != 0)
+        {
+            openGLContext!.flushBuffer()
+        }
     }
     
     override func awakeFromNib() {
@@ -61,7 +62,10 @@ class EmuGLView: NSOpenGLView {
     
    
     func timerTick() {
-        self.needsDisplay = true;
+        if (emu_frame_pending())
+        {
+            self.needsDisplay = true;
+        }
     }
     
     override func keyDown(with e: NSEvent) {
@@ -72,4 +76,12 @@ class EmuGLView: NSOpenGLView {
         emu_key_input(e.keyCode, 0);
     }
     
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        self.window!.delegate = self
+    }
+    
+    func windowWillClose(_ notification: Notification) {
+        emu_dc_stop()
+    }
 }

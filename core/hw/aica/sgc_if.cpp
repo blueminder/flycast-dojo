@@ -1,4 +1,4 @@
-﻿#include "sgc_if.h"
+#include "sgc_if.h"
 #include "dsp.h"
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
@@ -392,7 +392,7 @@ struct ChannelEx
 
 		return rv;
 	}
-	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp, int32_t mixl, int32_t mixr)
+	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
 	{
 		if (!enabled)
 		{
@@ -431,33 +431,6 @@ struct ChannelEx
 			clip_verify(sample*oRight>=0);
 			clip_verify(sample*oDsp>=0);
 
-			if (settings.aica.EGHack)
-			{
-				if ((s64)(this->ccd->DL + mixl + mixr + *VolMix.DSPOut) == 0)
-				{
-					switch(this->AEG.state)
-					{
-					case EG_Decay1:
-						if(this->AEG.AttackRate > this->AEG.Decay1Rate)
-						{
-							//printf("Promote 1\n");
-							this->SetAegState(EG_Attack);
-						}
-
-						break;
-
-					case EG_Decay2:
-						if(this->AEG.AttackRate > this->AEG.Decay2Rate)
-						{
-							//printf("Promote 2\n");
-							this->SetAegState(EG_Attack);
-						}
-
-						break;
-					}
-				}
-			}
-
 			StepAEG(this);
 			StepFEG(this);
 			StepStream(this);
@@ -470,7 +443,7 @@ struct ChannelEx
 	{
 		SampleType oLeft,oRight,oDsp;
 
-		Step(oLeft, oRight, oDsp, mixl, mixr);
+		Step(oLeft, oRight, oDsp);
 
 		*VolMix.DSPOut+=oDsp;
 		mixl+=oLeft;
@@ -723,6 +696,7 @@ struct ChannelEx
 		case 0x18://FNS
 		case 0x19://FNS,OCT
 			UpdatePitch();
+			UpdateAEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
@@ -1226,7 +1200,7 @@ void AICA_Sample32()
 		{
 			SampleType oLeft,oRight,oDsp;
 			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp, mxlr[i * 2 + 0], mxlr[i * 2 + 1]))
+			if (!Chans[ch].Step(oLeft, oRight, oDsp))
 				break;
 
 			sg++;
@@ -1358,8 +1332,16 @@ void AICA_Sample()
 	{
 		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+
+		DSPData->EXTS[0] = EXTS0L;
+		DSPData->EXTS[1] = EXTS0R;
 	}
-	if (settings.aica.DSPEnabled)
+	else
+	{
+		DSPData->EXTS[0] = 0;
+		DSPData->EXTS[1] = 0;
+	}
+	//if (settings.aica.DSPEnabled)
 	{
 		dsp_step();
 

@@ -194,7 +194,7 @@ struct TA_context
 
 	void Alloc()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
+		tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
 
 		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
 		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
