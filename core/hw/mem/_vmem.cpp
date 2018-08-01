@@ -2,6 +2,9 @@
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/sh4/sh4_interrupts.h"
+#include "hw/sh4/sh4_mmr.h"
+#include "hw/sh4/sh4_debug.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -139,10 +142,21 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 	return 0;
 }
 
+static void raise_address_error_exception(u32 address, bool write)
+{
+	CCN_TEA = address;
+	CCN_PTEH.VPN = address >> 10;
+	RaiseException(write ? 0x100 : 0xe0, 0x100);
+}
+
 template<typename T,typename Trv>
 INLINE Trv DYNACALL _vmem_readt(u32 addr)
 {
 	const u32 sz=sizeof(T);
+
+	if (addr & (sz-1))
+		raise_address_error_exception(addr, false);
+	check_read_watchpoint(addr);
 
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
@@ -188,6 +202,10 @@ template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 {
 	const u32 sz=sizeof(T);
+
+	if (addr & (sz-1))
+		raise_address_error_exception(addr, true);
+	check_write_watchpoint(addr);
 
 	u32 page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
@@ -251,31 +269,31 @@ void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address
 //default read handlers
 u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
 {
-	//printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u8)MEM_ERROR_RETURN_VALUE;
 }
 u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
 {
-	//printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u16)MEM_ERROR_RETURN_VALUE;
 }
 u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
 {
-	//printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u32)MEM_ERROR_RETURN_VALUE;
 }
 //default write handers
 void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
 {
-	//printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
 {
-	//printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
 {
-	//printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 //code to register handlers
 //0 is considered error :)
@@ -646,8 +664,6 @@ void _vmem_bm_reset_nvmem()
     madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
     #endif
 #endif
-
-	printf("Freeing fpcb\n");
 }
 
 bool BM_LockedWrite(u8* address)

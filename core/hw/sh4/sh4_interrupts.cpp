@@ -14,7 +14,7 @@
 #include "sh4_core.h"
 #include "sh4_mmr.h"
 #include "oslib/oslib.h"
-
+#include "sh4_debug.h"
 /*
 
 */
@@ -160,23 +160,49 @@ bool Do_Interrupt(u32 intEvn)
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {
-	verify(sr.BL == 0);
-	CCN_EXPEVT = expEvn;
+	// Hide the debug traps from the system
+	if (expEvn != 0x160)
+	{
+		if (sr.BL)
+		{
+			//Sh4_int_Reset(false);
+			next_pc = 0xA0000000;
+			ssr = sr.GetFull();
+			spc = epc;
+			sr.BL = 0;
+			UpdateSR();
+		}
+		else
+		{
+			CCN_EXPEVT = expEvn;
 
-	ssr = sr.GetFull();
-	spc = epc;
-	sgr = r[15];
-	sr.BL = 1;
-	sr.MD = 1;
-	sr.RB = 1;
-	UpdateSR();
+			ssr = sr.GetFull();
+			spc = epc;
+			sgr = r[15];
+			sr.BL = 1;
+			sr.MD = 1;
+			sr.RB = 1;
+			UpdateSR();
 
-	next_pc = vbr + CallVect;
+			next_pc = vbr + CallVect;
+		}
 
-	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
+		printf("RaiseException: code %x, epc %08X, vect %08X\n", expEvn, epc, next_pc);
+	}
+
+#ifdef HAVE_GDBSERVER
+	if (debugger_trap(expEvn))
+		return false;
+	else
+#endif
+
 	return true;
 }
 
+void RaiseException(u32 expEvnt, u32 callVect, int pc_delta /* = -2 */) {
+	SH4ThrownException ex = { next_pc + pc_delta, expEvnt, callVect };
+	throw ex;
+}
 
 //Init/Res/Term
 void interrupts_init()

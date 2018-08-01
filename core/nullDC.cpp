@@ -12,6 +12,7 @@
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_debug.h"
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
@@ -238,10 +239,20 @@ int dc_init(int argc,wchar* argv[])
 	return rv;
 }
 
+static bool stop_requested;
+
 #ifndef TARGET_DISPFRAME
 void dc_run()
 {
-	sh4_cpu.Run();
+	p_sh4rcb->cntx.CpuRunning = 1;
+
+	do {
+		debugger_tick();
+		if (sh4_cpu.IsCpuRunning())
+			sh4_cpu.Run();
+		else
+			os_DoEvents();
+	} while (!stop_requested);
 }
 #endif
 
@@ -261,6 +272,7 @@ void dc_term()
 
 void dc_stop()
 {
+	stop_requested = true;
 	sh4_cpu.Stop();
 }
 

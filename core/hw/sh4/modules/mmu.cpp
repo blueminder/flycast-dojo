@@ -145,15 +145,6 @@ void ITLB_Sync(u32 entry)
 	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
 
-void RaiseException(u32 expEvnt, u32 callVect) {
-#if !defined(NO_MMU)
-	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
-	throw ex;
-#else
-	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
-#endif
-}
-
 u32 mmu_error_TT;
 void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 {

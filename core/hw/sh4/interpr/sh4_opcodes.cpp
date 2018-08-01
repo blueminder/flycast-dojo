@@ -63,8 +63,10 @@ void cpu_iNimp(u32 op, const char* info)
 {
 	printf("\n\nUnimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s\n", op, next_pc, pr, info);
 	//next_pc = pr; //debug hackfix: try to recover by returning from call
-	die("iNimp reached\n");
+	//die("iNimp reached\n");
 	//sh4_cpu.Stop();
+
+	RaiseException(0x180, 0x100);
 }
 
 void cpu_iWarn(u32 op, const char* info)
@@ -1030,7 +1032,7 @@ sh4op(i1100_0011_iiii_iiii)
 {
 	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
 	CCN_TRA = (GetImm8(op) << 2);
-	Do_Exception(next_pc,0x160,0x100);
+	RaiseException(0x160, 0x100);
 }
 
 //jmp @<REG_N>
