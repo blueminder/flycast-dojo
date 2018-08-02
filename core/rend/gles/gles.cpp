@@ -1421,12 +1421,12 @@ bool RenderFrame()
 			scissoring_scale_x = 0.5f;
 			scale_x *= 0.5f;
 		}
-	}
 
-	if (SCALER_CTL.hscale)
-	{
-		scissoring_scale_x /= 2;
-		scale_x*=2;
+		if (SCALER_CTL.hscale)
+		{
+			scissoring_scale_x /= 2;
+			scale_x*=2;
+		}
 	}
 
 	dc_width  *= scale_x;
@@ -1543,15 +1543,9 @@ bool RenderFrame()
 			&& pvrrc.fb_Y_CLIP.min == 0
 			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
 
-	//Color is cleared by the bgp
-	if (wide_screen_on)
-		glcache.ClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
-	else
-		glcache.ClearColor(0,0,0,1.0f);
+	//Color is cleared by the background plane
 
 	glcache.Disable(GL_SCISSOR_TEST);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 
@@ -1592,14 +1586,14 @@ bool RenderFrame()
 	{
 		float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
 		float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-		int min_x = pvrrc.fb_X_CLIP.min / scale_x;
-		int min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+		float min_x = pvrrc.fb_X_CLIP.min / scale_x;
+		float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 		if (!is_rtt)
 		{
 			// Add x offset for aspect ratio > 4/3
 			min_x = min_x * dc2s_scale_h + offs_x;
 			// Invert y coordinates when rendering to screen
-			min_y = screen_height - height * dc2s_scale_h;
+			min_y = screen_height - (min_y + height) * dc2s_scale_h;
 			width *= dc2s_scale_h;
 			height *= dc2s_scale_h;
 		}
