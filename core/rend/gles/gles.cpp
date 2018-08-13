@@ -176,7 +176,7 @@ INTERPOLATION in lowp vec4 vtx_offs1; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-	float exp = floor(log2(z)); \n\
+	highp float exp = floor(log2(z)); \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
 	float idx = floor(m) + exp * 16.0 + 0.5; \n\
 	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
@@ -268,8 +268,8 @@ void main() \n\
 		else \n\
 			texcol = texture(tex0, uv); \n\
 		#if pp_BumpMap == 1 \n\
-			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
-			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0; \n\
+			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
+			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0; \n\
 			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0); \n\
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	 \n\
 		#else\n\
