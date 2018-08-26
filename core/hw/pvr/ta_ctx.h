@@ -120,7 +120,8 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-
+	bool isRenderFramebuffer;
+	
 	double early;
 
 	FB_X_CLIP_type    fb_X_CLIP;
@@ -152,6 +153,7 @@ struct rend_context
 		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
+		isRenderFramebuffer = false;
 	}
 };
 
