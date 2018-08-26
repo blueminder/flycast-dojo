@@ -876,14 +876,39 @@ void DrawFramebuffer(float w, float h)
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false)];
+	int shaderId = GetProgramID(0,
+				1,
+				1,
+				0,
+				1,
+				0,
+				0,
+				2,
+				false,
+				0,
+				false,
+				false,
+				1);
+	PipelineShader *shader = gl.getShader(shaderId);
 	if (shader->program == -1)
-		CompilePipelineShader(shader);
-	else
 	{
-		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
+		CurrentShader->cp_AlphaTest = 0;
+		CurrentShader->pp_ClipTestMode = 1;
+		CurrentShader->pp_Texture = 1;
+		CurrentShader->pp_UseAlpha = 0;
+		CurrentShader->pp_IgnoreTexA = 1;
+		CurrentShader->pp_ShadInstr = 0;
+		CurrentShader->pp_Offset = 0;
+		CurrentShader->pp_FogCtrl = 2;
+		CurrentShader->pp_TwoVolumes = false;
+		CurrentShader->pp_DepthFunc = 0;
+		CurrentShader->pp_Gouraud = false;
+		CurrentShader->pp_BumpMap = false;
+		CurrentShader->pass = 1;
+		CompilePipelineShader(shader);
 	}
+	glcache.UseProgram(shader->program);
+	ShaderUniforms.Set(shader);
 
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
