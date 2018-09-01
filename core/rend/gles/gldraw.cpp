@@ -193,6 +193,7 @@ template <u32 Type, bool SortingEnabled>
 				0,
 				false,
 				false,
+				false,
 				pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -208,6 +209,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_DepthFunc = 0;
 			CurrentShader->pp_Gouraud = false;
 			CurrentShader->pp_BumpMap = false;
+			CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
@@ -238,6 +240,7 @@ template <u32 Type, bool SortingEnabled>
 												  depth_func,
 												  gp->pcw.Gouraud,
 												  gp->tcw.PixelFmt == PixelBumpMap,
+												  pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff,
 												  pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -253,11 +256,12 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_DepthFunc = depth_func;
 			CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
 			CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == 4;
+			CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
 	}
-	
+
 	glcache.UseProgram(CurrentShader->program);
 
 	ShaderUniforms.tsp0 = gp->tsp;
@@ -888,6 +892,7 @@ void DrawFramebuffer(float w, float h)
 				0,
 				false,
 				false,
+				false,
 				1);
 	PipelineShader *shader = gl.getShader(shaderId);
 	if (shader->program == -1)
@@ -904,6 +909,7 @@ void DrawFramebuffer(float w, float h)
 		CurrentShader->pp_DepthFunc = 0;
 		CurrentShader->pp_Gouraud = false;
 		CurrentShader->pp_BumpMap = false;
+		CurrentShader->fog_clamping = false;
 		CurrentShader->pass = 1;
 		CompilePipelineShader(shader);
 	}

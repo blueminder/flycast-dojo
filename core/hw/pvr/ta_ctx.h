@@ -126,6 +126,9 @@ struct rend_context
 
 	FB_X_CLIP_type    fb_X_CLIP;
 	FB_Y_CLIP_type    fb_Y_CLIP;
+	
+	u32 fog_clamp_min;
+	u32 fog_clamp_max;
 
 	List<Vertex>      verts;
 	List<u16>         idx;
