@@ -120,7 +120,7 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
-#if !defined(TARGET_NO_WEBUI)
+#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
 
 void* webui_th(void* p)
 {
@@ -136,7 +136,9 @@ void LoadSpecialSettings()
 	// Tony Hawk's Pro Skater 2
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
 			// Tony Hawk's Pro Skater 1
-			|| !strncmp("T40205N", reios_product_number, 7))
+			|| !strncmp("T40205N", reios_product_number, 7)
+			// Tony Hawk's Skateboarding
+			|| !strncmp("T40204D", reios_product_number, 7))
 		settings.rend.RenderToTextureBuffer = 1;
 	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
 		// Cosmic Smash
@@ -165,7 +167,7 @@ int dc_init(int argc,wchar* argv[])
 		return -1;
 	}
 
-#if !defined(TARGET_NO_WEBUI)
+#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
 	webui_thd.Start();
 #endif
 
@@ -300,6 +302,11 @@ void LoadSettings()
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
 	settings.rend.TextureUpscale	= cfgLoadInt("config","rend.TextureUpscale", 1);
 	settings.rend.MaxFilteredTextureSize = cfgLoadInt("config","rend.MaxFilteredTextureSize", 256);
+	char extra_depth_scale_str[128];
+	cfgLoadStr("config","rend.ExtraDepthScale", extra_depth_scale_str, "1");
+	settings.rend.ExtraDepthScale = atof(extra_depth_scale_str);
+	if (settings.rend.ExtraDepthScale == 0)
+		settings.rend.ExtraDepthScale = 1.f;
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	
@@ -318,6 +325,7 @@ void LoadSettings()
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;
+	settings.rend.ExtraDepthScale = 1.f;
 #endif
 
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
