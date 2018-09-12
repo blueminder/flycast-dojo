@@ -480,8 +480,8 @@ using namespace std;
 #include "stdclass.h"
 
 #define EMUERROR(x)( printf("Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
-#define EMUERROR2(x,a)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUERROR3(x,a,b)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
+#define EMUERROR2(x,a)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a))
+#define EMUERROR3(x,a,b)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b))
 #define EMUERROR4(x,a,b,c)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
 #define EMUWARN(x)(printf(      "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
@@ -841,8 +841,11 @@ s32 libExtDevice_Init();
 void libExtDevice_Reset(bool M);
 void libExtDevice_Term();
 
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+// 0x00600000 - 0x006007FF [Modem]
 static u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size) { return 0; }
 static void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) { }
+#endif
 
 //Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
 static u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }

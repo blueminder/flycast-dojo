@@ -186,6 +186,7 @@ template <u32 Type, bool SortingEnabled>
 
 	s32 clipping = SetTileClip(gp->tileclip, false);
 	int shaderId;
+
 	if (pass == 0)
 	{
 		shaderId = GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
@@ -216,7 +217,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_DepthFunc = 0;
 			CurrentShader->pp_Gouraud = false;
 			CurrentShader->pp_BumpMap = false;
-			CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
+			CurrentShader->fog_clamping = false;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
@@ -225,6 +226,7 @@ template <u32 Type, bool SortingEnabled>
 	{
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
+		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 		int depth_func = 0;
 		if (Type == ListType_Translucent)
@@ -247,7 +249,7 @@ template <u32 Type, bool SortingEnabled>
 												  depth_func,
 												  gp->pcw.Gouraud,
 												  gp->tcw.PixelFmt == PixelBumpMap,
-												  pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff,
+												  color_clamp,
 												  pass);
 		CurrentShader = gl.getShader(shaderId);
 		if (CurrentShader->program == -1) {
@@ -263,7 +265,7 @@ template <u32 Type, bool SortingEnabled>
 			CurrentShader->pp_DepthFunc = depth_func;
 			CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
 			CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == 4;
-			CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
+			CurrentShader->fog_clamping = color_clamp;
 			CurrentShader->pass = pass;
 			CompilePipelineShader(CurrentShader);
 		}
