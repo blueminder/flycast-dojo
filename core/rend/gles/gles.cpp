@@ -667,8 +667,6 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
 
@@ -713,8 +711,6 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		compile_log_len+= 1024;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
@@ -851,6 +847,9 @@ GLuint osd_font;
 
 bool gl_create_resources()
 {
+	if (gl.vbo.geometry != 0)
+		// Assume the resources have already been created
+		return true;
 
 	//create vao
 	//This is really not "proper", vaos are supposed to be defined once
@@ -1095,10 +1094,10 @@ static void DrawButton(float* xy, u32 state)
 
 	vtx.z=1;
 
-	float x=xy[0];
-	float y=xy[1];
-	float w=xy[2];
-	float h=xy[3];
+	float x = xy[0] * scale_x;
+	float y = xy[1] * scale_y;
+	float w = xy[2] * scale_x;
+	float h = xy[3] * scale_y;
 
 	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
 
@@ -1186,12 +1185,12 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   vtx.z=1;
 
-  float w=float(strlen(text)*14)*scale;
+  float w = float(strlen(text) * 14) * scale * scale_x;
 
   float x = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0] - w;
-  float y=yy;
-  float h=16.0f*scale;
-  w=14.0f*scale;
+  float y = yy * scale_y;
+  float h = 16.0f * scale * scale_y;
+  w = 14.0f * scale * scale_x;
   float step=32.0f/512.0f;
   float step2=4.0f/512.0f;
 
@@ -1277,7 +1276,7 @@ static void OSD_HOOK()
 	  }
 	#endif
 
-	if (settings.rend.ShowFPS) {
+	if (settings.rend.ShowFPS && osd_font) {
 		if (os_GetSeconds() - LastFPSTime > 0.5) {
 			fps = (FrameCount - lastFrameCount) / (os_GetSeconds() - LastFPSTime);
 			LastFPSTime = os_GetSeconds();
@@ -1654,6 +1653,16 @@ bool RenderFrame()
 				min_y = screen_height - (min_y + height) * dc2s_scale_h;
 				width *= dc2s_scale_h;
 				height *= dc2s_scale_h;
+
+				if (ds2s_offs_x > 0)
+				{
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glScissor(0, 0, ds2s_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+					glScissor(screen_width - ds2s_offs_x, 0, ds2s_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
 			}
 			else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
 			{
@@ -1674,6 +1683,10 @@ bool RenderFrame()
 	else
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+
+		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		DrawFramebuffer(dc_width, dc_height);
 	}
 	#if HOST_OS==OS_WINDOWS
@@ -1695,8 +1708,6 @@ bool RenderFrame()
 #define SET_AFNT 1
 #endif
 #endif
-
-extern u16 kcode[4];
 
 void rend_set_fb_scale(float x,float y)
 {

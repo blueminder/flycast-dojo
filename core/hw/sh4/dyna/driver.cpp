@@ -382,6 +382,11 @@ void recSh4_Stop()
 	Sh4_int_Stop();
 }
 
+void recSh4_Start()
+{
+	Sh4_int_Start();
+}
+
 void recSh4_Step()
 {
 	Sh4_int_Step();
@@ -420,6 +425,7 @@ void recSh4_Init()
 	}
 	
 #if defined(_WIN64)
+#ifdef _MSC_VER
 	for (int i = 10; i < 1300; i++) {
 
 
@@ -431,6 +437,10 @@ void recSh4_Init()
 		if (CodeCache)
 			break;
 	}
+#else
+	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
+	verify(CodeCache != NULL);
 #else
 	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 #endif
@@ -485,6 +495,7 @@ void Get_Sh4Recompiler(sh4_if* rv)
 {
 	rv->Run = recSh4_Run;
 	rv->Stop = recSh4_Stop;
+	rv->Start = recSh4_Start;
 	rv->Step = recSh4_Step;
 	rv->Skip = recSh4_Skip;
 	rv->Reset = recSh4_Reset;

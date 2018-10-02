@@ -5,9 +5,13 @@
 #if BUILD_COMPILER==COMPILER_VC
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
+#ifndef __forceinline
 #define __forceinline inline
+#endif
 #define DECL_ALIGN(x) __attribute__((aligned(x)))
+#ifndef _WIN32
 #define __debugbreak
+#endif
 #endif
 
 
@@ -517,6 +521,102 @@ using namespace std;
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
+bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
+bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
+bool dc_serialize(void **data, unsigned int *total_size);
+bool dc_unserialize(void **data, unsigned int *total_size);
+
+#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
+#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
+
+#define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+
+enum
+{
+	RN_CPSR      = 16,
+	RN_SPSR      = 17,
+
+	R13_IRQ      = 18,
+	R14_IRQ      = 19,
+	SPSR_IRQ     = 20,
+	R13_USR      = 26,
+	R14_USR      = 27,
+	R13_SVC      = 28,
+	R14_SVC      = 29,
+	SPSR_SVC     = 30,
+	R13_ABT      = 31,
+	R14_ABT      = 32,
+	SPSR_ABT     = 33,
+	R13_UND      = 34,
+	R14_UND      = 35,
+	SPSR_UND     = 36,
+	R8_FIQ       = 37,
+	R9_FIQ       = 38,
+	R10_FIQ      = 39,
+	R11_FIQ      = 40,
+	R12_FIQ      = 41,
+	R13_FIQ      = 42,
+	R14_FIQ      = 43,
+	SPSR_FIQ     = 44,
+	RN_PSR_FLAGS = 45,
+	R15_ARM_NEXT = 46,
+	INTR_PEND    = 47,
+	CYCL_CNT     = 48,
+
+	RN_ARM_REG_COUNT,
+};
+
+typedef union
+{
+	struct
+	{
+		u8 B0;
+		u8 B1;
+		u8 B2;
+		u8 B3;
+	} B;
+
+	struct
+	{
+		u16 W0;
+		u16 W1;
+	} W;
+
+	union
+	{
+		struct
+		{
+			u32 _pad0 : 28;
+			u32 V     : 1; //Bit 28
+			u32 C     : 1; //Bit 29
+			u32 Z     : 1; //Bit 30
+			u32 N     : 1; //Bit 31
+		};
+
+		struct
+		{
+			u32 _pad1 : 28;
+			u32 NZCV  : 4; //Bits [31:28]
+		};
+	} FLG;
+
+	struct
+	{
+		u32 M     : 5;  //mode, PSR[4:0]
+		u32 _pad0 : 1;  //not used / zero
+		u32 F     : 1;  //FIQ disable, PSR[6]
+		u32 I     : 1;  //IRQ disable, PSR[7]
+		u32 _pad1 : 20; //not used / zero
+		u32 NZCV  : 4;  //Bits [31:28]
+	} PSR;
+
+	u32 I;
+} reg_pair;
+
+
+
+
 #if COMPILER_VC==BUILD_COMPILER
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
@@ -631,8 +731,8 @@ struct settings_t
 		bool Enable;
 		bool idleskip;
 		bool unstable_opt;
+		bool safemode;
 		bool disable_nvmem;
-		bool DisableDivMatching;
 	} dynarec;
 	
 	struct
@@ -659,7 +759,7 @@ struct settings_t
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
-        u32 NoSound;        //0 ->sound, 1 -> no sound
+		u32 NoSound;        //0 ->sound, 1 -> no sound
 	} aica;
 
 #if USE_OMX
@@ -675,7 +775,7 @@ struct settings_t
 	{
 		u32 Width;
 		u32 Height;
-		bool Maintain_Aspect;
+		bool Keep_Aspect;
 	} dispmanx;
 #endif
 
@@ -722,7 +822,7 @@ struct settings_t
 		u32 rend;
 		
 		u32 MaxThreads;
-		u32 SynchronousRendering;
+		u32 SynchronousRender;
 
 		string HashLogFile;
 		string HashCheckFile;
@@ -735,11 +835,18 @@ struct settings_t
 	struct {
 		bool OpenGlChecks;
 	} validate;
+
+	struct {
+		bool DCKeyboard;
+		bool DCMouse;
+		u32 MouseSensitivity;
+	} input;
 };
 
 extern settings_t settings;
 
 void LoadSettings();
+void LoadCustom();
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;

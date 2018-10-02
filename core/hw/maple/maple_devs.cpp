@@ -5,6 +5,7 @@
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
 #include "hw/naomi/naomi.h"
+#include "hw/pvr/spg.h"
 #include <time.h>
 
 #if _ANDROID
@@ -25,6 +26,7 @@ const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
 const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_purupuru_name = "Puru Puru Pack";
+const char* maple_sega_lightgun_name = "Dreamcast Gun";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -131,7 +133,7 @@ struct maple_base: maple_device
 		while(len--)
 			w8(0x20);
 	}
-	
+
 	u8 r8()	  { u8  rv=*((u8*)dma_buffer_in);dma_buffer_in+=1;dma_count_in-=1; return rv; }
 	u16 r16() { u16 rv=*((u16*)dma_buffer_in);dma_buffer_in+=2;dma_count_in-=2; return rv; }
 	u32 r32() { u32 rv=*(u32*)dma_buffer_in;dma_buffer_in+=4;dma_count_in-=4; return rv; }
@@ -162,6 +164,11 @@ struct maple_base: maple_device
 */
 struct maple_sega_controller: maple_base
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_SegaController;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n",device_instance->port,Command);
@@ -183,7 +190,7 @@ struct maple_sega_controller: maple_base
 
 			//1	direction
 			w8(0);
-			
+
 			//30
 			wstr(maple_sega_controller_name,30);
 
@@ -191,10 +198,10 @@ struct maple_sega_controller: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE); 
+			w16(0x01AE);	// 43 mA
 
 			//2
-			w16(0x01F4);
+			w16(0x01F4);	// 50 mA
 
 			return MDRS_DeviceStatus;
 
@@ -237,7 +244,7 @@ struct maple_sega_controller: maple_base
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 /*
@@ -273,25 +280,63 @@ struct maple_sega_vmu: maple_base
 	u8 flash_data[128*1024];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
-	
+
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_SegaVMU;
+	}
+
+	// creates an empty VMU
+	bool init_emptyvmu()
+	{
+		printf("Initialising empty VMU...\n");
+
+		uLongf dec_sz = sizeof(flash_data);
+		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+
+		verify(rv == Z_OK);
+		verify(dec_sz == sizeof(flash_data));
+
+		return (rv == Z_OK && dec_sz == sizeof(flash_data));
+	}
+
+	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(flash_data,128*1024);
+		REICAST_SA(lcd_data,192);
+		REICAST_SA(lcd_data_decoded,48*32);
+		return true ;
+	}
+	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(flash_data,128*1024);
+		REICAST_USA(lcd_data,192);
+		REICAST_USA(lcd_data_decoded,48*32);
+		return true ;
+	}
 	virtual void OnSetup()
 	{
-		memset(flash_data,0,sizeof(flash_data));
-		memset(lcd_data,0,sizeof(lcd_data));
+		memset(flash_data, 0, sizeof(flash_data));
+		memset(lcd_data, 0, sizeof(lcd_data));
 		wchar tempy[512];
-		sprintf(tempy,"/vmu_save_%s.bin",logical_port);
-		string apath=get_writable_data_path(tempy);
+		sprintf(tempy, "/vmu_save_%s.bin", logical_port);
+		string apath = get_writable_data_path(tempy);
 
-		file=fopen(apath.c_str(),"rb+");
+		file = fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
 			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
-			file=fopen(apath.c_str(),"wb");
+			file = fopen(apath.c_str(), "wb");
 			if (file) {
+				if (!init_emptyvmu())
+					printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+
 				fwrite(flash_data, sizeof(flash_data), 1, file);
-				fseek(file,0,SEEK_SET);
-			} else {
-				printf("Unable to create vmu\n");
+				fseek(file, 0, SEEK_SET);
+			}
+			else
+			{
+				printf("Unable to create VMU!\n");
 			}
 		}
 
@@ -301,20 +346,33 @@ struct maple_sega_vmu: maple_base
 		}
 		else
 		{
-			fread(flash_data,1,sizeof(flash_data),file);
+			fread(flash_data, 1, sizeof(flash_data), file);
 		}
 
 		u8 sum = 0;
-		for (int i=0;i<sizeof(flash_data);i++)
-			sum|=flash_data[i];
+		for (int i = 0; i < sizeof(flash_data); i++)
+			sum |= flash_data[i];
 
 		if (sum == 0) {
-			printf("Initialising empty vmu...\n");
-			uLongf dec_sz = sizeof(flash_data);
-			int rv=uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+			// This means the existing VMU file is completely empty and needs to be recreated
 
-			verify(rv == Z_OK);
-			verify(dec_sz == sizeof(flash_data));
+			if (init_emptyvmu())
+			{
+				if (!file)
+					file = fopen(apath.c_str(), "wb");
+
+				if (file) {
+					fwrite(flash_data, sizeof(flash_data), 1, file);
+					fseek(file, 0, SEEK_SET);
+				}
+				else {
+					printf("Unable to create VMU!\n");
+				}
+			}
+			else
+			{
+				printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+			}
 		}
 
 	}
@@ -349,10 +407,10 @@ struct maple_sega_vmu: maple_base
 				wstr(maple_sega_brand,60);
 
 				//2
-				w16(0x007c);
+				w16(0x007c);	// 12.4 mA
 
 				//2
-				w16(0x0082);
+				w16(0x0082);	// 13 mA
 
 				return MDRS_DeviceStatus;
 			}
@@ -367,7 +425,7 @@ struct maple_sega_vmu: maple_base
 				case MFID_1_Storage:
 					{
 						w32(MFID_1_Storage);
-						
+
 						//total_size;
 						w16(0xff);
 						//partition_number;
@@ -413,7 +471,7 @@ struct maple_sega_vmu: maple_base
 							w8(31);             //Y dots -1
 							w8(((1)<<4) | (0)); //1 Color, 0 contrast levels
 							w8(0);              //Padding
-							
+
 							return MDRS_DataTransfer;
 						}
 					}
@@ -455,7 +513,7 @@ struct maple_sega_vmu: maple_base
 						w32(MFID_2_LCD);
 						w32(r32()); // mnn ?
 						wptr(flash_data,192);
-						
+
 						return MDRS_DataTransfer;//data transfer
 					}
 					break;
@@ -474,7 +532,7 @@ struct maple_sega_vmu: maple_base
 							time_t now;
 							time(&now);
 							tm* timenow=localtime(&now);
-							
+
 							u8* timebuf=dma_buffer_out;
 
 							w8((timenow->tm_year+1900)%256);
@@ -510,7 +568,7 @@ struct maple_sega_vmu: maple_base
 					{
 						u32 bph=r32();
 						u32 Block = (SWAP32(bph))&0xffff;
-						u32 Phase = ((SWAP32(bph))>>16)&0xff; 
+						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
 						rptr(&flash_data[write_adr],write_len);
@@ -528,13 +586,13 @@ struct maple_sega_vmu: maple_base
 						return MDRS_DeviceReply;//just ko
 					}
 					break;
-					
+
 
 					case MFID_2_LCD:
 					{
 						u32 wat=r32();
 						rptr(lcd_data,192);
-						
+
 						u8 white=0xff,black=0x00;
 
 						for(int y=0;y<32;++y)
@@ -562,8 +620,8 @@ struct maple_sega_vmu: maple_base
 							dev->lcd.visible=true;
 							ShowWindow(dev->lcd.handle,SHOW_OPENNOACTIVATE);
 						}
-						
-							
+
+
 							InvalidateRect(dev->lcd.handle,NULL,FALSE);
 						}
 
@@ -663,7 +721,7 @@ struct maple_sega_vmu: maple_base
 			//printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 
@@ -671,6 +729,21 @@ struct maple_microphone: maple_base
 {
 	u8 micdata[SIZE_OF_MIC_DATA];
 
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Microphone;
+	}
+
+	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(micdata,SIZE_OF_MIC_DATA);
+		return true ;
+	}
+	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(micdata,SIZE_OF_MIC_DATA);
+		return true ;
+	}
 	virtual void OnSetup()
 	{
 		memset(micdata,0,sizeof(micdata));
@@ -702,7 +775,7 @@ struct maple_microphone: maple_base
 
 			//1	direction
 			w8(0);
-			
+
 			//30
 			wstr(maple_sega_mic_name,30);
 
@@ -710,10 +783,10 @@ struct maple_microphone: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE); 
+			w16(0x01AE);	// 43 mA
 
 			//2
-			w16(0x01F4);
+			w16(0x01F4);	// 50 mA
 
 			return MDRS_DeviceStatus;
 
@@ -844,7 +917,7 @@ struct maple_microphone: maple_base
 			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 
@@ -853,6 +926,25 @@ struct maple_sega_purupuru : maple_base
 	u16 AST, AST_ms;
 	u32 VIBSET;
 
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_PurupuruPack;
+	}
+
+   virtual bool maple_serialize(void **data, unsigned int *total_size)
+   {
+      REICAST_S(AST);
+      REICAST_S(AST_ms);
+      REICAST_S(VIBSET);
+      return true ;
+   }
+   virtual bool maple_unserialize(void **data, unsigned int *total_size)
+   {
+      REICAST_US(AST);
+      REICAST_US(AST_ms);
+      REICAST_US(VIBSET);
+      return true ;
+   }
 	virtual u32 dma(u32 cmd)
 	{
 		switch (cmd)
@@ -881,16 +973,16 @@ struct maple_sega_purupuru : maple_base
 			wstr(maple_sega_brand, 60);
 
 			//2
-			w16(0x00C8);
+			w16(0x00C8);	// 20 mA
 
 			//2
-			w16(0x0640);
+			w16(0x0640);	// 160 mA
 
 			return MDRS_DeviceStatus;
 
 			//get last vibration
 		case MDCF_GetCondition:
-			
+
 			w32(MFID_8_Vibration);
 
 			w32(VIBSET);
@@ -902,7 +994,7 @@ struct maple_sega_purupuru : maple_base
 			w32(MFID_8_Vibration);
 
 			// PuruPuru vib specs
-			w32(0x3B07E010); 
+			w32(0x3B07E010);
 
 			return MDRS_DataTransfer;
 
@@ -917,7 +1009,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DataTransfer;
 
 		case MDCF_BlockWrite:
-			
+
 			//Auto-stop time
 			AST = dma_buffer_in[10];
 			AST_ms = AST * 250 + 250;
@@ -925,7 +1017,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DeviceReply;
 
 		case MDCF_SetCondition:
-			
+
 			VIBSET = *(u32*)&dma_buffer_in[4];
 			//Do the rumble thing!
 			config->SetVibration(VIBSET);
@@ -945,6 +1037,11 @@ u8 kb_key[6]={0};	// normal keys pressed
 
 struct maple_keyboard : maple_base
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Keyboard;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		switch (cmd)
@@ -976,10 +1073,10 @@ struct maple_keyboard : maple_base
 			}
 
 			// Low-consumption standby current (2)
-			w16(0x01AE);
+			w16(0x01AE);	// 43 mA
 
 			// Maximum current consumption (2)
-			w16(0x01F5);
+			w16(0x01F5);	// 50.1 mA
 
 			return MDRS_DeviceStatus;
 
@@ -1005,18 +1102,209 @@ struct maple_keyboard : maple_base
 	}
 };
 
+// Mouse buttons
+// bit 0: Button C
+// bit 1: Right button (B)
+// bit 2: Left button (A)
+// bit 3: Wheel button
+u32 mo_buttons = 0xFFFFFFFF;
+// Relative mouse coordinates [-512:511]
+f32 mo_x_delta;
+f32 mo_y_delta;
+f32 mo_wheel_delta;
+// Absolute mouse coordinates
+// Range [0:639] [0:479]
+// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
+s32 mo_x_abs;
+s32 mo_y_abs;
+
+struct maple_mouse : maple_base
+{
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Mouse;
+	}
+
+	static u16 mo_cvt(f32 delta)
+	{
+		delta+=0x200 + 0.5;
+		if (delta<=0)
+			delta=0;
+		else if (delta>0x3FF)
+			delta=0x3FF;
+
+		return (u16) delta;
+	}
+
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_9_Mouse);
+
+			//struct data
+			//3*4
+			w32(0x00070E00);	// Mouse, 3 buttons, 3 axes
+			w32(0);
+			w32(0);
+			//1	area code
+			w8(0xFF);
+			//1	direction
+			w8(0);
+			// Product name (30)
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_mouse_name[i]);
+			}
+
+			// License (60)
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+
+			// Low-consumption standby current (2)
+			w16(0x0069);	// 10.5 mA
+
+			// Maximum current consumption (2)
+			w16(0x0120);	// 28.8 mA
+
+			return MDRS_DeviceStatus;
+
+		case MDCF_GetCondition:
+			w32(MFID_9_Mouse);
+			//struct data
+			//int32 buttons       ; digital buttons bitfield (little endian)
+			w32(mo_buttons);
+			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_x_delta));
+			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_y_delta));
+			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_wheel_delta));
+			//int16 axis4         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis5         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis6         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis7         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis8         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+
+			mo_x_delta=0;
+			mo_y_delta=0;
+			mo_wheel_delta = 0;
+
+			return MDRS_DataTransfer;
+
+		default:
+			printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+};
+
+struct maple_lightgun : maple_base
+{
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_LightGun;
+	}
+
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_7_LightGun | MFID_0_Input);
+
+			//struct data
+			//3*4
+			w32(0);				// Light gun
+			w32(0xFE000000);	// Controller
+			w32(0);
+			//1	area code
+			w8(0x01);		// FF: Worldwide, 01: North America
+			//1	direction
+			w8(0);
+			// Product name (30)
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_lightgun_name[i]);
+			}
+
+			// License (60)
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+
+			// Low-consumption standby current (2)
+			w16(0x0069);	// 10.5 mA
+
+			// Maximum current consumption (2)
+			w16(0x0120);	// 28.8 mA
+
+			return MDRS_DeviceStatus;
+
+		case MDCF_GetCondition:
+		{
+			PlainJoystickState pjs;
+			config->GetInput(&pjs);
+
+			// Also use the mouse buttons
+			if (!(mo_buttons & 4))	// Left button
+				pjs.kcode &= ~4;	// A
+			if (!(mo_buttons & 2))	// Right button
+				pjs.kcode &= ~2;	// B
+			if (!(mo_buttons & 8))	// Wheel button
+				pjs.kcode &= ~8;	// Start
+
+			//caps
+			//4
+			w32(MFID_0_Input);
+
+			//state data
+			//2 key code
+			w16(pjs.kcode | 0xFF01);
+
+			//not used
+			//2
+			w16(0xFFFF);
+
+			//not used
+			//4
+			w32(0x80808080);
+		}
+
+		return MDRS_DataTransfer;
+
+		default:
+			printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+
+	virtual void get_lightgun_pos()
+	{
+		read_lightgun_position(mo_x_abs, mo_y_abs);
+		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
+	}
+};
+
 extern u16 kcode[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
-struct _NaomiState
-{
-	u8 Cmd;
-	u8 Mode;
-	u8 Node;
-};
 _NaomiState State;
 
 
@@ -1083,11 +1371,16 @@ No error checking of any kind, but works just fine
 */
 struct maple_naomi_jamma : maple_sega_controller
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_NaomiJamma;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		u32* buffer_in = (u32*)dma_buffer_in;
 		u32* buffer_out = (u32*)dma_buffer_out;
-		
+
 		u8* buffer_in_b = dma_buffer_in;
 		u8* buffer_out_b = dma_buffer_out;
 
@@ -1162,7 +1455,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					break;
 
 					//CMD Version
-					//REV in command|Format command to read the (revision)|One|Two 
+					//REV in command|Format command to read the (revision)|One|Two
 					//in : 1 byte, out : 2 bytes
 					case 0x11:
 					{
@@ -1171,7 +1464,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					break;
 
 					//JVS Version
-					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two 
+					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two
 					//in : 1 byte, out : 2 bytes
 					case 0x12:
 					{
@@ -1433,7 +1726,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			buffer_out_len = 256;
 			return (0x83);
 		}
-		
+
 		case 1:
 		case 9:
 			return maple_sega_controller::dma(cmd);
@@ -1470,6 +1763,14 @@ maple_device* maple_Create(MapleDeviceType type)
 
 	case MDT_Keyboard:
 		rv = new maple_keyboard();
+		break;
+
+	case MDT_Mouse:
+		rv = new maple_mouse();
+		break;
+
+	case MDT_LightGun:
+		rv = new maple_lightgun();
 		break;
 
 	case MDT_NaomiJamma:

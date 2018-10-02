@@ -1,4 +1,4 @@
-﻿#include "arm7.h"
+#include "arm7.h"
 #include "arm_mem.h"
 
 
@@ -36,87 +36,6 @@
 #define CPUUpdateTicksAccess16(a) 1
 
 
-enum
-{
-	RN_CPSR      = 16,
-	RN_SPSR      = 17,
-
-	R13_IRQ      = 18,
-	R14_IRQ      = 19,
-	SPSR_IRQ     = 20,
-	R13_USR      = 26,
-	R14_USR      = 27,
-	R13_SVC      = 28,
-	R14_SVC      = 29,
-	SPSR_SVC     = 30,
-	R13_ABT      = 31,
-	R14_ABT      = 32,
-	SPSR_ABT     = 33,
-	R13_UND      = 34,
-	R14_UND      = 35,
-	SPSR_UND     = 36,
-	R8_FIQ       = 37,
-	R9_FIQ       = 38,
-	R10_FIQ      = 39,
-	R11_FIQ      = 40,
-	R12_FIQ      = 41,
-	R13_FIQ      = 42,
-	R14_FIQ      = 43,
-	SPSR_FIQ     = 44,
-	RN_PSR_FLAGS = 45,
-	R15_ARM_NEXT = 46,
-	INTR_PEND    = 47,
-	CYCL_CNT     = 48,
-
-	RN_ARM_REG_COUNT,
-};
-
-typedef union
-{
-	struct
-	{
-		u8 B0;
-		u8 B1;
-		u8 B2;
-		u8 B3;
-	} B;
-	
-	struct
-	{
-		u16 W0;
-		u16 W1;
-	} W;
-
-	union
-	{
-		struct
-		{
-			u32 _pad0 : 28;
-			u32 V     : 1; //Bit 28
-			u32 C     : 1; //Bit 29
-			u32 Z     : 1; //Bit 30
-			u32 N     : 1; //Bit 31
-		};
-
-		struct
-		{
-			u32 _pad1 : 28;
-			u32 NZCV  : 4; //Bits [31:28]
-		};
-	} FLG;
-
-	struct
-	{
-		u32 M     : 5;  //mode, PSR[4:0]
-		u32 _pad0 : 1;  //not used / zero
-		u32 F     : 1;  //FIQ disable, PSR[6]
-		u32 I     : 1;  //IRQ disable, PSR[7]
-		u32 _pad1 : 20; //not used / zero
-		u32 NZCV  : 4;  //Bits [31:28]
-	} PSR;
-
-	u32 I;
-} reg_pair;
 
 //bool arm_FiqPending; -- not used , i use the input directly :)
 //bool arm_IrqPending;
@@ -1177,19 +1096,19 @@ void StoreReg(eReg rd,u32 regn,ConditionCode cc=CC_AL)
 }
 
 //very quick-and-dirty register rename based virtualisation
-map<u32,u32> renamed_regs;
+u32 renamed_regs[16];
 u32 rename_reg_base;
 
 void RenameRegReset()
 {
 	rename_reg_base=r1;
-	renamed_regs.clear();
+	memset(renamed_regs, 0, sizeof(renamed_regs));
 }
 
 //returns new reg #. didrn is true if a rename mapping was added
 u32 RenameReg(u32 reg, bool& didrn)
 {
-	if (renamed_regs.find(reg)==renamed_regs.end())
+	if (renamed_regs[reg] == 0)
 	{
 		renamed_regs[reg]=rename_reg_base;
 		rename_reg_base++;
@@ -1290,7 +1209,7 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 		StoreAndRename(orig,16);
 
 	//Sanity check ..
-	if (renamed_regs.find(15)!=renamed_regs.end())
+	if (renamed_regs[15] != 0)
 	{
 		verify(flag&OP_READS_PC || (flag&OP_SETS_PC && !(flag&OP_IS_COND)));
 	}
@@ -1614,7 +1533,7 @@ void armv_MOV32(eReg regn, u32 imm)
 	No sanity checks on arm ..
 */
 
-#endif	// HOST_CPU 
+#endif	// HOST_CPU == CPU_ARM
 
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
@@ -1771,8 +1690,8 @@ extern "C" void CompileCode()
 					armv_imm_to_reg(15,pc+8);
 
 				else*/
-					#if HOST_CPU==CPU_X86
-					armv_imm_to_reg(15,rand());
+#if HOST_CPU==CPU_X86
+				armv_imm_to_reg(15,rand());
 #endif
 
 				VirtualizeOpcode(opcd,op_flags,pc);

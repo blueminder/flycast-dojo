@@ -2,10 +2,12 @@ LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
-WEBUI :=1 
+WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+#USE_LIBAO := 1
 USE_EVDEV := 1
+PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -13,19 +15,19 @@ AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 
-MFLAGS := 
-ASFLAGS := 
+MFLAGS :=
+ASFLAGS :=
 LDFLAGS :=
 INCS :=
 LIBS :=
-CFLAGS := 
+CFLAGS :=
 CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
 else
     USE_ALSA := 1
-    USE_JOYSTICK := 1
+#    USE_JOYSTICK := 1
 endif
 
 # Platform auto-detection
@@ -229,6 +231,30 @@ else ifneq (,$(findstring vero4k,$(platform)))
     USE_GLES := 1
     USE_SDL := 1
 
+# Windows
+else ifneq (,$(findstring win32,$(platform)))
+    X64_REC := 1
+    NOT_ARM := 1
+    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops
+    LDFLAGS += -static-libgcc -static-libstdc++
+    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
+    PLATFORM_EXT := exe
+    CC = gcc
+    CXX = g++
+ifeq ($(WITH_DYNAREC), x86)
+    LDFLAGS += -m32
+    CFLAGS += -m32
+else
+    CFLAGS += -D TARGET_NO_AREC
+endif
+    undefine USE_X11
+    undefine USE_ALSA
+    undefine USE_OSS
+    undefine USE_EVDEV
+    undefine FOR_LINUX
+    undefine WEBUI
+    NO_NIXPROF := 1
+    FOR_WINDOWS := 1
 else
     $(error Unknown platform)
 endif
@@ -238,16 +264,18 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
+CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
+CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
-LIBS  += -lpthread
+LIBS += -lm -lpthread
+ifdef FOR_LINUX
+LIBS += -lrt -ldl
+endif
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
@@ -276,8 +304,8 @@ ifdef PGO_USE
 endif
 
 ifdef LTO_TEST
-    CFLAGS += -flto -fwhole-program 
-    LDFLAGS +=-flto -fwhole-program 
+    CFLAGS += -flto -fwhole-program
+    LDFLAGS +=-flto -fwhole-program
 endif
 
 ifdef USE_DISPMANX
@@ -318,6 +346,11 @@ ifdef USE_PULSEAUDIO
     LIBS += `pkg-config --libs libpulse-simple`
 endif
 
+ifdef USE_LIBAO
+	CXXFLAGS += `pkg-config --cflags ao` -D USE_LIBAO
+	LIBS += `pkg-config --libs ao`
+endif
+
 ifdef HAS_SOFTREND
     CFLAGS += -msse4.1
 endif
@@ -328,7 +361,7 @@ endif
 ifdef USE_GLES
     CXXFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
-else
+else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
 endif
 
@@ -337,20 +370,20 @@ ifdef HAS_SOFTREND
     CXXFLAGS += -DTARGET_SOFTREND
 endif
 
-EXECUTABLE_STRIPPED=nosym-reicast.elf
+EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI -D SAVE_EPPROM
     DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.elf
+    EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast-naomi
 else ifdef DISPFRAME
     CFLAGS += -D TARGET_DISPFRAME
     DC_PLATFORM=dispframe
-    EXECUTABLE=dispframe.elf
+    EXECUTABLE=dispframe.$(PLATFORM_EXT)
     EXECUTABLE_NAME=dispframe
 else
     DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.elf
+    EXECUTABLE=reicast.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast
 endif
 
@@ -375,7 +408,7 @@ all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
-	
+
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
@@ -397,6 +430,7 @@ $(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 install: $(EXECUTABLE)
