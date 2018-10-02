@@ -446,8 +446,8 @@ const char* OSD_Shader =
 #version 140 \n\
 out vec4 FragColor; \n\
  \n\
-in lowp vec4 vtx_base; \n\
-in mediump vec2 vtx_uv; \n\
+smooth in lowp vec4 vtx_base; \n\
+       in mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
 void main() \n\
