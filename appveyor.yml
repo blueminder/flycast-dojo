@@ -10,6 +10,7 @@ environment:
 install:
   - set PATH=C:\msys64\usr\bin;%PATH%
   - bash -lc "pacman -Sq --noconfirm mingw-w64-x86_64-libjpeg-turbo"
+  - bash -lc "pacman -Sq --noconfirm mingw-w64-i686-libjpeg-turbo"
 
 build_script:
 - cmd: >-
