@@ -261,6 +261,8 @@ endif
     undefine WEBUI
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
+    # Appveyor hack
+    INCS += -IC:\msys64\mingw64\include
 else
     $(error Unknown platform)
 endif
