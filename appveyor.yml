@@ -7,6 +7,10 @@ environment:
     LAUNCH_BUILD: mingw32-make platform=win32
     LAUNCH_PATH: shell\linux\
 
+install:
+  - set PATH=C:\msys64\usr\bin;%PATH%
+  - bash -lc "pacman -Sq --noconfirm mingw-w64-x86_64-libjpeg-turbo"
+
 build_script:
 - cmd: >-
     set PATH=%EXTRA_PATH%;%PATH%
