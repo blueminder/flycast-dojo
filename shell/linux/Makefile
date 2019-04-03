@@ -249,8 +249,14 @@ ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32
     CFLAGS += -m32
+    # Appveyor hack
+    INCS += -IC:\msys64\mingw32\include
+    LIBS += -LC:\msys64\mingw32\lib
 else
     X64_REC := 1
+    # Appveyor hack
+    INCS += -IC:\msys64\mingw64\include
+    LIBS += -LC:\msys64\mingw64\lib
 endif
     undefine USE_X11
     undefine USE_ALSA
@@ -261,8 +267,6 @@ endif
     undefine WEBUI
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
-    # Appveyor hack
-    INCS += -IC:\msys64\mingw64\include
 else
     $(error Unknown platform)
 endif
