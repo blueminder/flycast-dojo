@@ -905,6 +905,8 @@ public:
 			regalloc.OpEnd(&op);
 		}
 
+		regalloc.Cleanup();
+
 		mov(rax, (size_t)&next_pc);
 
 		switch (block->BlockType) {

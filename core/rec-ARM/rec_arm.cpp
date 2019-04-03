@@ -2206,6 +2206,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 
 		reg.OpEnd(op);
 	}
+	reg.Cleanup();
 
 	/*
 

@@ -755,6 +755,7 @@ public:
 			}
 			regalloc.OpEnd(&op);
 		}
+		regalloc.Cleanup();
 
 		block->relink_offset = (u32)GetBuffer()->GetCursorOffset();
 		block->relink_data = 0;
