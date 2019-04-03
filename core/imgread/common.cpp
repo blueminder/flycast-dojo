@@ -384,7 +384,7 @@ void GetDriveToc(u32* to,DiskArea area)
 	}
 }
 
-void GetDriveSessionInfo(u8* to,u8 session)
+void GetDriveSessionInfo(Disc *disc, u8* to,u8 session)
 {
 	if (!disc)
 		return;

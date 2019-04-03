@@ -37,7 +37,7 @@ u32 libGDR_GetDiscType()
 
 void libGDR_GetSessionInfo(u8* out,u8 ses)
 {
-	GetDriveSessionInfo(out,ses);
+	GetDriveSessionInfo(disc, out,ses);
 }
 /*
 void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)

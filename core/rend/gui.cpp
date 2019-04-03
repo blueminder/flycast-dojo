@@ -35,6 +35,8 @@
 #include "gui_util.h"
 #include "gui_android.h"
 #include "version/version.h"
+#include "gui/image_loader.h"
+#include "gui/content_scanner.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -338,6 +340,7 @@ static void gui_display_commands()
 		gui_state = Main;
 		game_started = false;
 		cfgSetVirtual("config", "image", "");
+		ContentScanner::GetInstance()->StartScan();
 	}
 
 #if 0
@@ -604,14 +607,12 @@ static void error_popup()
 	}
 }
 
-static bool game_list_done;		// Set to false to refresh the game list
-
 void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
 		settings.dreamcast.ContentPath.push_back(selection);
-		game_list_done = false;
+		ContentScanner::GetInstance()->ReScan();
 	}
 }
 
@@ -770,7 +771,7 @@ static void gui_display_settings()
             	if (to_delete >= 0)
             	{
             		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
-        			game_list_done = false;
+            		ContentScanner::GetInstance()->ReScan();
             	}
             }
             ImGui::SameLine();
@@ -1145,92 +1146,6 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
-#ifdef _ANDROID
-static std::string current_library_path("/storage/emulated/0/Download");
-#else
-static std::string current_library_path("/home/raph/RetroPie/roms/dreamcast/");
-#endif
-struct GameMedia {
-	std::string name;
-	std::string path;
-};
-
-static bool operator<(const GameMedia &left, const GameMedia &right)
-{
-	return left.name < right.name;
-}
-
-static void add_game_directory(const std::string& path, std::vector<GameMedia>& game_list)
-{
-	//printf("Exploring %s\n", path.c_str());
-	DIR *dir = opendir(path.c_str());
-	if (dir == NULL)
-		return;
-	while (true)
-	{
-		struct dirent *entry = readdir(dir);
-		if (entry == NULL)
-			break;
-		std:string name(entry->d_name);
-		if (name == "." || name == "..")
-			continue;
-		std::string child_path = path + "/" + name;
-		bool is_dir = false;
-#ifndef _WIN32
-		if (entry->d_type == DT_DIR)
-			is_dir = true;
-		if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-#endif
-		{
-			struct stat st;
-			if (stat(child_path.c_str(), &st) != 0)
-				continue;
-			if (S_ISDIR(st.st_mode))
-				is_dir = true;
-		}
-		if (is_dir)
-		{
-			add_game_directory(child_path, game_list);
-		}
-		else
-		{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-			if (name.size() >= 4)
-			{
-				std::string extension = name.substr(name.size() - 4).c_str();
-				//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
-				if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
-					continue;
-				game_list.push_back({ name, child_path });
-			}
-#else
-			std::string::size_type dotpos = name.find_last_of(".");
-			if (dotpos == std::string::npos || dotpos == name.size() - 1)
-				continue;
-			std::string extension = name.substr(dotpos);
-			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
-					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
-				continue;
-			game_list.push_back({ name, child_path });
-#endif
-		}
-	}
-	closedir(dir);
-}
-
-static std::vector<GameMedia> game_list;
-
-static void fetch_game_list()
-{
-	if (game_list_done)
-		return;
-	game_list.clear();
-	for (auto path : settings.dreamcast.ContentPath)
-		add_game_directory(path, game_list);
-	std::stable_sort(game_list.begin(), game_list.end());
-	game_list_done = true;
-}
-
 static void gui_display_demo()
 {
 	ImGui_Impl_NewFrame();
@@ -1243,6 +1158,7 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
+	ContentScanner::GetInstance()->StopScan();
 	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
@@ -1261,8 +1177,11 @@ static void gui_start_game(const std::string& path)
 		default:
 			break;
 		}
+		ContentScanner::GetInstance()->StartScan();
 	}
 }
+
+static ImTextureID boxart_tex_id;
 
 static void gui_display_content()
 {
@@ -1291,13 +1210,13 @@ static void gui_display_content()
     	gui_state = Settings;
     ImGui::PopStyleVar();
 
-    fetch_game_list();
+    std::shared_ptr<const GameMedia> focused_game;
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(ImGui::GetContentRegionAvailWidth() * 2 / 3 - ImGui::GetStyle().FramePadding.x, 0), true);
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
-
+		focused_game = nullptr;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
@@ -1309,20 +1228,100 @@ static void gui_display_content()
 		ImGui::PopID();
 #endif
 
-        for (auto game : game_list)
-        	if (filter.PassFilter(game.name.c_str()))
+		int game_count = ContentScanner::GetInstance()->GetMediaCount();
+        for (int i = 0; i < game_count; i++)
+        {
+        	std::shared_ptr<const GameMedia> game = ContentScanner::GetInstance()->GetMedia(i);
+        	if (game == NULL)
+        		continue;
+        	if (filter.PassFilter(game->name.c_str()))
         	{
-    			ImGui::PushID(game.path.c_str());
-				if (ImGui::Selectable(game.name.c_str()))
+    			ImGui::PushID(game->game_path.c_str());
+				if (ImGui::Selectable(game->name.c_str()))
 				{
 					gui_state = ClosedNoResume;
-					gui_start_game(game.path);
+					gui_start_game(game->game_path);
 				}
+				if (ImGui::IsItemFocused() || ImGui::IsItemHovered())
+					focused_game = game;
 				ImGui::PopID();
         	}
+        }
         ImGui::PopStyleVar();
     }
 	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	float detail_panel_width = ImGui::GetContentRegionAvailWidth() - ImGui::GetStyle().FramePadding.x;
+	ImGui::BeginChild(ImGui::GetID("detail"), ImVec2(detail_panel_width, 0), true, ImGuiWindowFlags_NoScrollbar);
+	if (focused_game != nullptr)
+	{
+		float pix_width = ImGui::GetWindowContentRegionWidth();
+		ImGui::BeginChild(ImGui::GetID("boxart"), ImVec2(pix_width, pix_width), false, ImGuiWindowFlags_NoScrollbar);
+		static std::string boxart_path;
+		static int width, height;
+
+		if (boxart_tex_id == 0 || boxart_path != focused_game->boxart_path)
+		{
+			boxart_path.clear();
+			if (boxart_tex_id != 0)
+			{
+				ImGui_ImplOpenGL3_DeleteTexture(boxart_tex_id);
+				boxart_tex_id = 0;
+			}
+			u8 *data;
+			if (!focused_game->boxart_path.empty())
+				data = load_image(focused_game->boxart_path, width, height);
+			else
+				data = load_reicast_logo(width, height);
+			if (data != NULL)
+			{
+				boxart_tex_id = ImGui_ImplOpenGL3_CreateRgbaTexture((u32*)data, width, height);
+				boxart_path = focused_game->boxart_path;
+				free_image(focused_game->boxart_path, data);
+			}
+		}
+		if (boxart_tex_id != 0)
+		{
+			ImVec2 size;
+			if (width > height)
+			{
+				ImGui::Dummy(ImVec2(0, (1.f - (float)height / width) * pix_width / 2));
+				size = ImVec2(pix_width, pix_width * height / width);
+			}
+			else if (width < height)
+			{
+				ImGui::Indent((1.f - (float)width / height) * pix_width / 2);
+				size = ImVec2(pix_width * width / height, pix_width);
+			}
+			else
+				size = ImVec2(pix_width, pix_width);
+			ImGui::Image(boxart_tex_id, size);
+		}
+		ImGui::EndChild();
+
+		ImGui::BeginChild(ImGui::GetID("metadata"), ImVec2(pix_width, 0), false);
+		ImGui::TextDisabled("Name:");
+		ImGui::SameLine();
+		ImGui::Text("%s", focused_game->name.c_str());
+
+		ImGui::TextDisabled("Release date:");
+		ImGui::SameLine();
+		ImGui::Text("%s", focused_game->release_date.c_str());
+
+		ImGui::TextDisabled("File:");
+		ImGui::SameLine();
+		ImGui::Text("%s", focused_game->file_name.c_str());
+
+		ImGui::TextDisabled("Overview:");
+		ImGui::TextWrapped("%s", focused_game->overview.c_str());
+		ImGui::EndChild();
+
+		focused_game = nullptr;
+	}
+	ImGui::EndChild();
+
 	ImGui::End();
     ImGui::PopStyleVar();
 
@@ -1501,6 +1500,11 @@ void gui_term()
 {
 	inited = false;
 	term_vmus();
+	if (boxart_tex_id != 0)
+	{
+		ImGui_ImplOpenGL3_DeleteTexture(boxart_tex_id);
+		boxart_tex_id = 0;
+	}
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
@@ -1523,7 +1527,7 @@ extern bool subfolders_read;
 
 void gui_refresh_files()
 {
-	game_list_done = false;
+	ContentScanner::GetInstance()->ReScan();
 	subfolders_read = false;
 }
 
@@ -1572,8 +1576,8 @@ static void display_vmus()
 			continue;
 
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
-		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
+		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateRgbaTexture(vmu_lcd_data[i], 48, 32, false);
 
 	    int x = vmu_coords[i][0];
 	    int y = vmu_coords[i][1];
@@ -1612,7 +1616,7 @@ static void term_vmus()
 	{
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
 		{
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
 			vmu_lcd_tex_ids[i] = (ImTextureID)0;
 		}
 	}

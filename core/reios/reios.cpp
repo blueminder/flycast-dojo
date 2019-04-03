@@ -37,8 +37,23 @@
 
 u8* biosrom;
 u8* flashrom;
-u32 base_fad = 45150;
-bool descrambl = false;
+
+void reios_get_base_fad(Disc *disk, u32& base_fad, bool& descrambl)
+{
+	if (disk == NULL)
+		return;
+
+	if (disk->type == GdRom) {
+		base_fad = 45150;
+		descrambl = false;
+	} else {
+		u8 ses[6];
+		GetDriveSessionInfo(disk, ses, 0);
+		GetDriveSessionInfo(disk, ses, ses[2]);
+		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
+		descrambl = true;
+	}
+}
 
 //Read 32 bit 'bi-endian' integer
 //Uses big-endian bytes, that's what the dc bios does too
@@ -49,6 +64,10 @@ u32 read_u32bi(u8* ptr) {
 static bool bootfile_inited = false;
 
 bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
+	u32 base_fad;
+	bool descrambl;
+	reios_get_base_fad(disc, base_fad, descrambl);
+
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
 
@@ -101,59 +120,43 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	return false;
 }
 
-char ip_bin[256];
-char reios_hardware_id[17];
-char reios_maker_id[17];
-char reios_device_info[17];
-char reios_area_symbols[9];
-char reios_peripherals[9];
-char reios_product_number[11];
-char reios_product_version[7];
-char reios_releasedate[17];
-char reios_boot_filename[17];
-char reios_software_company[17];
-char reios_software_name[129];
-char reios_bootfile[32];
-bool reios_windows_ce = false;
+DiskIdentifier CurrentDiskIdentifier;
 
-bool pre_init = false;
-
-void reios_pre_init()
-{
-	if (libGDR_GetDiscType() == GdRom) {
-		base_fad = 45150;
-		descrambl = false;
-	} else {
-		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
-		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		descrambl = true;
-	}
-	pre_init = true;
+const DiskIdentifier& reios_disk_id() {
+	CurrentDiskIdentifier = reios_disk_id(disc, GetMemPtr(0x8c008000, 0), 16);
+	bootfile_inited = true;
+	return CurrentDiskIdentifier;
 }
 
-char* reios_disk_id() {
+DiskIdentifier reios_disk_id(Disc *disk, u8 *dest /* = NULL */, int nsectors /* = 1 */)
+{
+	struct DiskIdentifier diskId = { 0 };
 
-	if (!pre_init) reios_pre_init();
+	if (disk == NULL)
+		return diskId;
 
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
-	memset(ip_bin, 0, sizeof(ip_bin));
-	memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
-	memcpy(&reios_hardware_id[0], &ip_bin[0], 16 * sizeof(char));
-	memcpy(&reios_maker_id[0], &ip_bin[16],   16 * sizeof(char));
-	memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
-	memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
-	memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
-	memcpy(&reios_product_number[0], &ip_bin[64],   10 * sizeof(char));
-	memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
-	memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
-	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
-	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
-	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
-	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
+	u32 base_fad;
+	bool descrambl;
+	reios_get_base_fad(disk, base_fad, descrambl);
 
-	return reios_product_number;
+	u8 buf[2048];
+	u8 *data = dest == NULL ? buf : dest;
+
+	disk->ReadSectors(base_fad, nsectors, data, 2048);
+	memcpy(&diskId.hardware_id[0], &data[0], 16 * sizeof(char));
+	memcpy(&diskId.maker_id[0], &data[16],   16 * sizeof(char));
+	memcpy(&diskId.device_info[0], &data[32],   16 * sizeof(char));
+	memcpy(&diskId.area_symbols[0], &data[48],   8 * sizeof(char));
+	memcpy(&diskId.peripherals[0], &data[56],   8 * sizeof(char));
+	memcpy(&diskId.product_number[0], &data[64],   10 * sizeof(char));
+	memcpy(&diskId.product_version[0], &data[74],   6 * sizeof(char));
+	memcpy(&diskId.releasedate[0], &data[80],   16 * sizeof(char));
+	memcpy(&diskId.boot_filename[0], &data[96],   16 * sizeof(char));
+	memcpy(&diskId.software_company[0], &data[112],   16 * sizeof(char));
+	memcpy(&diskId.software_name[0], &data[128],   128 * sizeof(char));
+	diskId.windows_ce = memcmp("0WINCEOS.BIN", &diskId.boot_filename[0], 12) == 0;
+
+	return diskId;
 }
 
 void reios_sys_system() {
@@ -691,7 +694,6 @@ bool reios_init(u8* rom, u8* flash) {
 }
 
 void reios_reset() {
-	pre_init = false;
 }
 
 void reios_term() {

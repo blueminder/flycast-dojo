@@ -80,6 +80,7 @@ enum SubcodeFormat
 	SUBFMT_NONE,				//No subcode info
 	SUBFMT_96					//raw 96-byte subcode info
 };
+struct Disc;
 
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector);
 
@@ -97,7 +98,7 @@ void ConvToc(u32* to,TocInfo* from);
 void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
-void GetDriveSessionInfo(u8* to,u8 session);
+void GetDriveSessionInfo(Disc *disc, u8* to, u8 session);
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0);
 int msgboxf(wchar* text,unsigned int type,...);
 void printtoc(TocInfo* toc,SessionInfo* ses);

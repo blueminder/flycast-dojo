@@ -23,6 +23,7 @@
 #include "rend/gui.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
+#include "gui/content_scanner.h"
 
 void FlushCache();
 void LoadCustom();
@@ -129,13 +130,14 @@ void plugins_Reset(bool Manual)
 void LoadSpecialSettings()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	printf("Game ID is [%s]\n", reios_product_number);
+	const char *product_number = CurrentDiskIdentifier.product_number;
+	printf("Game ID is [%s]\n", product_number);
 	rtt_to_buffer_game = false;
 	safemode_game = false;
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
 	
-	if (reios_windows_ce)
+	if (CurrentDiskIdentifier.windows_ce)
 	{
 		printf("Enabling Extra depth scaling for Windows CE games\n");
 		settings.rend.ExtraDepthScale = 0.1;
@@ -143,48 +145,48 @@ void LoadSpecialSettings()
 	}
 
 	// Tony Hawk's Pro Skater 2
-	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
+	if (!strncmp("T13008D", product_number, 7) || !strncmp("T13006N", product_number, 7)
 			// Tony Hawk's Pro Skater 1
-			|| !strncmp("T40205N", reios_product_number, 7)
+			|| !strncmp("T40205N", product_number, 7)
 			// Tony Hawk's Skateboarding
-			|| !strncmp("T40204D", reios_product_number, 7)
+			|| !strncmp("T40204D", product_number, 7)
 			// Skies of Arcadia
-			|| !strncmp("MK-51052", reios_product_number, 8)
+			|| !strncmp("MK-51052", product_number, 8)
 			// Flag to Flag
-			|| !strncmp("MK-51007", reios_product_number, 8))
+			|| !strncmp("MK-51007", product_number, 8))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;
 	}
-	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+	if (!strncmp("HDR-0176", product_number, 8) || !strncmp("RDC-0057", product_number, 8))
 	{
 		// Cosmic Smash
 		settings.rend.TranslucentPolygonDepthMask = 1;
 		tr_poly_depth_mask_game = true;
 	}
 	// Pro Pinball Trilogy
-	if (!strncmp("T30701D", reios_product_number, 7)
+	if (!strncmp("T30701D", product_number, 7)
 		// Demolition Racer
-		|| !strncmp("T15112N", reios_product_number, 7)
+		|| !strncmp("T15112N", product_number, 7)
 		// Star Wars - Episode I - Racer (United Kingdom)
-		|| !strncmp("T23001D", reios_product_number, 7)
+		|| !strncmp("T23001D", product_number, 7)
 		// Star Wars - Episode I - Racer (USA)
-		|| !strncmp("T23001N", reios_product_number, 7)
+		|| !strncmp("T23001N", product_number, 7)
 		// Record of Lodoss War (EU)
-		|| !strncmp("T7012D", reios_product_number, 6)
+		|| !strncmp("T7012D", product_number, 6)
 		// Record of Lodoss War (USA)
-		|| !strncmp("T40218N", reios_product_number, 7)
+		|| !strncmp("T40218N", product_number, 7)
 		// Surf Rocket Racers
-		|| !strncmp("T40216N", reios_product_number, 7))
+		|| !strncmp("T40216N", product_number, 7))
 	{
-		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
+		printf("Enabling Dynarec safe mode for game %s\n", product_number);
 		settings.dynarec.safemode = 1;
 		safemode_game = true;
 	}
 	// NHL 2K2
-	if (!strncmp("MK-51182", reios_product_number, 8))
+	if (!strncmp("MK-51182", product_number, 8))
 	{
-		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
+		printf("Enabling Extra depth scaling for game %s\n", product_number);
 		settings.rend.ExtraDepthScale = 10000;
 		extra_depth_game = true;
 	}
@@ -452,6 +454,8 @@ void* dc_run(void*)
 void dc_term()
 {
 	sh4_cpu.Term();
+	ContentScanner::Shutdown();
+
 #if DC_PLATFORM != DC_PLATFORM_DREAMCAST
 	naomi_cart_Close();
 #endif
@@ -668,16 +672,18 @@ void LoadSettings(bool game_specific)
 void LoadCustom()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	char *reios_id = reios_disk_id();
+	DiskIdentifier discId = reios_disk_id();
 
+	char reios_id[128];
+	strcpy(reios_id, discId.product_number);
 	char *p = reios_id + strlen(reios_id) - 1;
 	while (p >= reios_id && *p == ' ')
 		*p-- = '\0';
 	if (*p == '\0')
 		return;
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	char *reios_id = naomi_game_id;
-	char *reios_software_name = naomi_game_id;
+	const char *reios_id = naomi_game_id;
+	const char *reios_software_name = naomi_game_id;
 #endif
 
 	// Default per-game settings

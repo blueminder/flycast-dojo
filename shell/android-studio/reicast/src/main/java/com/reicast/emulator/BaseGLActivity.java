@@ -26,6 +26,7 @@ import android.view.ViewConfiguration;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.AudioBackend;
+import com.reicast.emulator.emu.HttpClient;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.SipEmulator;
@@ -84,6 +85,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
             return;
         }
+        new HttpClient().nativeInit();
 
         setStorageDirectories();
 

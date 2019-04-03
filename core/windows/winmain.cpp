@@ -752,6 +752,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 {
 	Entry=function;
 	param=prm;
+	hThread = NULL;
 }
 
 

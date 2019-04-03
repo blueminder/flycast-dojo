@@ -1,0 +1,3 @@
+[submodule "shell/android-studio/reicast/src/main/jni/libjpeg-turbo/src"]
+	path = shell/android-studio/reicast/src/main/jni/libjpeg-turbo/src
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git

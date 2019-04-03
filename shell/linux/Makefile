@@ -287,7 +287,7 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCX
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lpthread
+LIBS += -lm -lpthread -lcurl -lturbojpeg
 ifdef FOR_LINUX
 LIBS += -lrt -ldl
 endif
