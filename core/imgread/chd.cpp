@@ -85,11 +85,10 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (err!=CHDERR_NONE)
 	{
-		printf("chd: chd_open failed for file %s: %d\n", file, err);
+		if (!stricmp(".chd", file + strlen(file) - 4))
+			printf("chd: chd_open failed for file %s: %d\n", file, err);
 		return false;
 	}
-
-	printf("chd: parsing file %s\n",file);
 
 	const chd_header* head = chd_get_header(chd);
 
@@ -152,7 +151,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 			printf("chd: track type %s is not supported\n",type);
 			return false;
 		}
-		printf("%s\n",temp);
+		//printf("%s\n",temp);
 		Track t;
 		t.StartFAD = total_frames;
 		total_frames += frames;
@@ -173,7 +172,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (total_frames!=549300 || tracks.size()<3)
 	{
-		printf("WARNING: chd: Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
+		printf("WARNING: chd: Total frames is wrong: %u frames in %zu tracks\n",total_frames,tracks.size());
 #ifndef NOT_REICAST
 		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
 #endif
