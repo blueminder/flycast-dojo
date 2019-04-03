@@ -555,6 +555,11 @@ void x11_window_create()
 		x11_disp = (void*)x11Display;
 		x11_win = (void*)x11Window;
 		x11_vis = (void*)x11Visual->visual;
+#ifdef GLES
+		delete x11Visual;
+#else
+		XFree(x11Visual);
+#endif
 
 		x11_window_set_text("Reicast");
 	}
