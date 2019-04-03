@@ -23,7 +23,7 @@
 #include "http_client.h"
 #include "reios/reios.h"
 
-#define gdb_printf printf
+#define gdb_printf(...)
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
 

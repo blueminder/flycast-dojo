@@ -57,7 +57,7 @@ std::string Scraper::make_unique_filename(const std::string& url)
 		extension = url.substr(dot);
 	char path[512];
 	do {
-		sprintf(path, "%s/%ld%s", _save_dir.c_str(), random(), extension.c_str());
+		sprintf(path, "%s/%d%s", _save_dir.c_str(), rand(), extension.c_str());
 	} while (file_exists(path));
 	return path;
 }

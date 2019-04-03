@@ -18,7 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _ANDROID
+#if !defined(_ANDROID) && !defined(_WIN32)
 #include <string>
 #include <map>
 #include <sstream>
@@ -80,3 +80,68 @@ void http_term()
 }
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#include "wininet.h"
+#pragma comment(lib, "wininet.lib")
+
+#include "types.h"
+
+static HINTERNET hInet;
+
+bool http_init()
+{
+	if (hInet == NULL)
+		hInet = InternetOpen("Reicast",			// User Agent
+				INTERNET_OPEN_TYPE_PRECONFIG,	// Preconfig or Proxy
+				NULL,							// Proxy name
+				NULL,							// Proxy bypass, do not bypass any address
+				0);								// Synchronous
+	return hInet != NULL;
+}
+
+int http_open_url(const std::string& url, std::vector<u8>& content, std::string& content_type)
+{
+	HINTERNET hUrl = InternetOpenUrl(hInet, url.c_str(), NULL, 0, INTERNET_FLAG_EXISTING_CONNECT|INTERNET_FLAG_NO_AUTH|INTERNET_FLAG_NO_UI, 0);
+	if (hUrl == NULL)
+	{
+		DWORD error;
+		char msg[256];
+		DWORD msg_size = sizeof(msg);
+		if (InternetGetLastResponseInfo(&error, msg, &msg_size))
+			printf("Open URL failed: %x %s\n", error, msg);
+		return 500;
+	}
+	u8 buffer[4096];
+	DWORD bytes_read;
+
+	bytes_read = sizeof(buffer);
+	if (HttpQueryInfo(hUrl, HTTP_QUERY_CONTENT_TYPE, buffer, &bytes_read, 0))
+		content_type = (const char *)buffer;
+
+	while (true)
+	{
+		if (!InternetReadFile(hUrl, buffer, sizeof(buffer), &bytes_read))
+		{
+			printf("InternetReadFile failed: %lx\n", GetLastError());
+			InternetCloseHandle(hUrl);
+			return 500;
+		}
+		if (bytes_read == 0)
+			break;
+		content.insert(content.end(), buffer, buffer + bytes_read);
+	}
+	InternetCloseHandle(hUrl);
+
+	return 200;
+}
+
+void http_term()
+{
+	if (hInet != NULL)
+	{
+		InternetCloseHandle(hInet);
+		hInet = NULL;
+	}
+}
+#endif
