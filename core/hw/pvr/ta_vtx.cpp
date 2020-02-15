@@ -4,7 +4,7 @@
 
 	Parsing of the TA stream and generation of vertex data !
 */
-
+#include <cmath>
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
@@ -746,37 +746,29 @@ public:
 	template<class T>
 	static void glob_param_bdc_(T* pp)
 	{
-		if (CurrentPP == NULL
-			|| CurrentPPlist == &vdrc.global_param_tr
-			|| CurrentPP->pcw.full != pp->pcw.full
-			|| CurrentPP->tcw.full != pp->tcw.full
-			|| CurrentPP->tsp.full != pp->tsp.full
-			|| CurrentPP->isp.full != pp->isp.full)
+		PolyParam* d_pp = CurrentPP;
+		if (d_pp == NULL || d_pp->count != 0)
 		{
-			PolyParam* d_pp = CurrentPP;
-			if (d_pp == NULL || d_pp->count != 0)
-			{
-				d_pp = CurrentPPlist->Append();
-				CurrentPP = d_pp;
-			}
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
-
-			d_pp->isp=pp->isp; 
-			d_pp->tsp=pp->tsp; 
-			d_pp->tcw=pp->tcw;
-			d_pp->pcw=pp->pcw; 
-			d_pp->tileclip=tileclip_val;
-
-			d_pp->texid = -1;
-
-			if (d_pp->pcw.Texture) {
-				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-			}
-			d_pp->tsp1.full = -1;
-			d_pp->tcw1.full = -1;
-			d_pp->texid1 = -1;
+			d_pp = CurrentPPlist->Append();
+			CurrentPP = d_pp;
 		}
+		d_pp->first = vdrc.verts.used();
+		d_pp->count = 0;
+
+		d_pp->isp = pp->isp;
+		d_pp->tsp = pp->tsp;
+		d_pp->tcw = pp->tcw;
+		d_pp->pcw = pp->pcw;
+		d_pp->tileclip = tileclip_val;
+
+		d_pp->texid = -1;
+
+		if (d_pp->pcw.Texture)
+			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+
+		d_pp->tsp1.full = -1;
+		d_pp->tcw1.full = -1;
+		d_pp->texid1 = -1;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
@@ -873,28 +865,15 @@ public:
 	__forceinline
 		static void EndPolyStrip()
 	{
-		CurrentPP->count = vdrc.idx.used() - CurrentPP->first;
+		CurrentPP->count = vdrc.verts.used() - CurrentPP->first;
 
 		if (CurrentPP->count > 0)
 		{
-			if (CurrentPPlist == &vdrc.global_param_tr)
-			{
-				PolyParam* d_pp = CurrentPPlist->Append();
-				*d_pp = *CurrentPP;
-				CurrentPP = d_pp;
-				d_pp->first = vdrc.idx.used();
-				d_pp->count = 0;
-			}
-			else
-			{
-				int vbase = vdrc.verts.used();
-
-				*vdrc.idx.Append() = vbase - 1;
-				*vdrc.idx.Append() = vbase;
-
-				if (CurrentPP->count & 1)
-					*vdrc.idx.Append() = vbase;
-			}
+			PolyParam* d_pp = CurrentPPlist->Append();
+			*d_pp = *CurrentPP;
+			CurrentPP = d_pp;
+			d_pp->first = vdrc.verts.used();
+			d_pp->count = 0;
 		}
 	}
 
@@ -912,7 +891,6 @@ public:
 	static Vertex* vert_cvt_base_(T* vtx)
 	{
 		f32 invW=vtx->xyz[2];
-		*vdrc.idx.Append()=vdrc.verts.used();
 		Vertex* cv=vdrc.verts.Append();
 		cv->x=vtx->xyz[0];
 		cv->y=vtx->xyz[1];
@@ -1239,7 +1217,7 @@ public:
 			CurrentPP=d_pp;
 		}
 
-		d_pp->first=vdrc.idx.used(); 
+		d_pp->first = vdrc.verts.used();
 		d_pp->count=0;
 		d_pp->isp=spr->isp; 
 		d_pp->tsp=spr->tsp; 
@@ -1281,17 +1259,7 @@ public:
 	__forceinline
 		static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
-		u32* idx = vdrc.idx.Append(6);
-		u32 vbase=vdrc.verts.used();
-
-		idx[0]=vbase+0;
-		idx[1]=vbase+1;
-		idx[2]=vbase+2;
-		idx[3]=vbase+3;
-        idx[4]=vbase+3;
-        idx[5]=vbase+4;
-
-        CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
+        CurrentPP->count = 4;
 
 		Vertex* cv = vdrc.verts.Append(4);
 
@@ -1384,24 +1352,11 @@ public:
 
 		update_fz(cv[0].z);
 
-		/*
-		if (CurrentPP->count)
-		{
-			Vertex* vert=vert_reappend;
-			vert[-1].x=vert[0].x;
-			vert[-1].y=vert[0].y;
-			vert[-1].z=vert[0].z;
-			CurrentPP->count+=2;
-		}*/
-
-		if (CurrentPPlist==&vdrc.global_param_tr)
-		{
-			PolyParam* d_pp =CurrentPPlist->Append(); 
-			*d_pp=*CurrentPP;
-			CurrentPP=d_pp;
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0;
-		}
+		PolyParam* d_pp = CurrentPPlist->Append();
+		*d_pp = *CurrentPP;
+		CurrentPP = d_pp;
+		d_pp->first = vdrc.verts.used();
+		d_pp->count = 0;
 	}
 
 	// Modifier Volumes Vertex handlers
@@ -1477,13 +1432,6 @@ public:
 
 		//allocate storage for BG poly
 		vd_rc.global_param_op.Append();
-		u32* idx = vd_rc.idx.Append(4);
-		int vbase=vd_rc.verts.used();
-
-		idx[0]=vbase+0;
-		idx[1]=vbase+1;
-		idx[2]=vbase+2;
-		idx[3]=vbase+3;
 		vd_rc.verts.Append(4);
 	}
 };
@@ -1494,9 +1442,98 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
-/*
-	Also: gotta stage textures here
-*/
+//
+// Check if a vertex has huge x,y,z values or negative z
+//
+static bool is_vertex_inf(const Vertex& vtx)
+{
+	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
+			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
+			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+}
+
+//
+// Create the vertex index, eliminating invalid vertices and merging strips when possible.
+//
+static void make_index(const List<PolyParam> *polys, bool merge, rend_context* ctx)
+{
+	const u32 *indices = ctx->idx.head();
+	const Vertex *vertices = ctx->verts.head();
+
+	PolyParam *last_poly = nullptr;
+	for (PolyParam *poly = polys->head(); poly != polys->LastPtr(0); poly++)
+	{
+		int first_index;
+		bool dupe_next_vtx = false;
+		if (merge
+				&& last_poly != nullptr
+				&& poly->pcw.full == last_poly->pcw.full
+				&& poly->tcw.full == last_poly->tcw.full
+				&& poly->tsp.full == last_poly->tsp.full
+				&& poly->isp.full == last_poly->isp.full
+				// FIXME tcw1, tsp1, tileclip?
+				)
+		{
+			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
+			*ctx->idx.Append() = last_vtx;
+			dupe_next_vtx = true;
+			first_index = last_poly->first;
+		}
+		else
+		{
+			last_poly = poly;
+			first_index = ctx->idx.used();
+		}
+		int last_good_vtx = -1;
+		for (int i = 0; i < poly->count; i++)
+		{
+			const Vertex& vtx = vertices[poly->first + i];
+			if (is_vertex_inf(vtx))
+			{
+				while (i < poly->count - 1)
+				{
+					const Vertex& next_vtx = vertices[poly->first + i + 1];
+					if (!is_vertex_inf(next_vtx))
+					{
+						// repeat last and next vertices to link strips
+						if (last_good_vtx >= 0)
+						{
+							verify(!dupe_next_vtx);
+							*ctx->idx.Append() = last_good_vtx;
+							dupe_next_vtx = true;
+						}
+						break;
+					}
+					i++;
+				}
+			}
+			else
+			{
+				last_good_vtx = poly->first + i;
+				if (dupe_next_vtx)
+				{
+					*ctx->idx.Append() = last_good_vtx;
+					dupe_next_vtx = false;
+				}
+				const u32 count = ctx->idx.used() - first_index;
+				if ((i ^ count) & 1)
+					*ctx->idx.Append() = last_good_vtx;
+				*ctx->idx.Append() = last_good_vtx;
+			}
+		}
+		if (last_poly == poly)
+		{
+			poly->first = first_index;
+			poly->count = ctx->idx.used() - first_index;
+		}
+		else
+		{
+			last_poly->count = ctx->idx.used() - last_poly->first;
+			poly->count = 0;
+		}
+	}
+}
+
 bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
@@ -1532,6 +1569,10 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 			if (pass == 0 || !empty_pass)
 			{
+				make_index(&vd_rc.global_param_op, true, &vd_rc);
+				make_index(&vd_rc.global_param_pt, true, &vd_rc);
+				make_index(&vd_rc.global_param_tr, false, &vd_rc);
+
 				RenderPass *render_pass = vd_rc.render_passes.Append();
 				render_pass->op_count = vd_rc.global_param_op.used();
 				render_pass->mvo_count = vd_rc.global_param_mvo.used();
