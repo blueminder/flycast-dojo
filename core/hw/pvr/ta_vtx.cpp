@@ -1455,13 +1455,14 @@ static bool is_vertex_inf(const Vertex& vtx)
 //
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 //
-static void make_index(const List<PolyParam> *polys, bool merge, rend_context* ctx)
+static void make_index(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx)
 {
 	const u32 *indices = ctx->idx.head();
 	const Vertex *vertices = ctx->verts.head();
 
 	PolyParam *last_poly = nullptr;
-	for (PolyParam *poly = polys->head(); poly != polys->LastPtr(0); poly++)
+	const PolyParam *end_poly = &polys->head()[end];
+	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
 	{
 		int first_index;
 		bool dupe_next_vtx = false;
@@ -1547,6 +1548,10 @@ bool ta_parse_vdrc(TA_context* ctx)
 	{
 		TAFifo0.vdec_init();
 		
+		int op_poly_count = 0;
+		int pt_poly_count = 0;
+		int tr_poly_count = 0;
+
 		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
 		{
 			ctx->MarkRend(pass);
@@ -1569,15 +1574,20 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 			if (pass == 0 || !empty_pass)
 			{
-				make_index(&vd_rc.global_param_op, true, &vd_rc);
-				make_index(&vd_rc.global_param_pt, true, &vd_rc);
-				make_index(&vd_rc.global_param_tr, false, &vd_rc);
-
 				RenderPass *render_pass = vd_rc.render_passes.Append();
 				render_pass->op_count = vd_rc.global_param_op.used();
+				make_index(&vd_rc.global_param_op, op_poly_count,
+						render_pass->op_count, true, &vd_rc);
+				op_poly_count = render_pass->op_count;
 				render_pass->mvo_count = vd_rc.global_param_mvo.used();
 				render_pass->pt_count = vd_rc.global_param_pt.used();
+				make_index(&vd_rc.global_param_pt, pt_poly_count,
+						render_pass->pt_count, true, &vd_rc);
+				pt_poly_count = render_pass->pt_count;
 				render_pass->tr_count = vd_rc.global_param_tr.used();
+				make_index(&vd_rc.global_param_tr, tr_poly_count,
+						render_pass->tr_count, false, &vd_rc);
+				tr_poly_count = render_pass->tr_count;
 				render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
 				render_pass->autosort = UsingAutoSort(pass);
 				render_pass->z_clear = ClearZBeforePass(pass);
