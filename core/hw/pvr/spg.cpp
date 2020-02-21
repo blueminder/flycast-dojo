@@ -33,7 +33,6 @@ void CalculateSync()
 
 	//We need to calculate the pixel clock
 
-	u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
 	pvr_numscanlines=SPG_LOAD.vcount+1;
 	
 	Line_Cycles=(u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
@@ -42,8 +41,8 @@ void CalculateSync()
 	{
 		//this is a temp hack
 		Line_Cycles/=2;
-		u32 interl_mode=VO_CONTROL.field_mode;
-		
+
+		//u32 interl_mode=VO_CONTROL.field_mode;
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
 		//else
@@ -277,10 +276,10 @@ void spg_Reset(bool hard)
 
 void SetREP(TA_context* cntx)
 {
-	if (cntx && !cntx->rend.Overrun)
+	if (cntx)
 	{
-		VertexCount+= cntx->rend.verts.used();
-		int render_end_pending_cycles= cntx->rend.verts.used()*60;
+		VertexCount += cntx->rend.verts.size();
+		int render_end_pending_cycles = cntx->rend.verts.size() * 60;
 		//if (render_end_pending_cycles<500000)
 		render_end_pending_cycles+=500000*3;
 

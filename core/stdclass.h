@@ -154,6 +154,7 @@ void *mem_region_reserve(void *start, size_t len);
 bool mem_region_release(void *start, size_t len);
 void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
 bool mem_region_unmap_file(void *start, size_t len);
+void* aligned_malloc(size_t size, size_t alignment);
 
 class VArray2 {
 public:

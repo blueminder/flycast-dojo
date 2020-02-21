@@ -91,8 +91,6 @@ cResetEvent rs, re;
 static bool swap_pending;
 static bool do_swap;
 
-int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
-
 static bool render_called = false;
 u32 fb_watch_addr_start;
 u32 fb_watch_addr_end;
@@ -118,8 +116,8 @@ static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
 	fwrite(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fwrite(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
-	fwrite(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
-	fwrite(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
+	fwrite(&ctx->rend.global_param_op.front(), 1, sizeof(PolyParam), fw);
+	fwrite(&ctx->rend.verts.front(), 1, 4 * sizeof(Vertex), fw);
 
 	u32 t = VRAM_SIZE;
 	fwrite(&t, 1, sizeof(t), fw);
@@ -201,8 +199,10 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	verify(fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw) == sizeof(ctx->rend.fb_X_CLIP.full));
 	verify(fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw) == sizeof(ctx->rend.fb_Y_CLIP.full));
 
-	verify(fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw) == sizeofPolyParam);
-	Vertex *vtx = ctx->rend.verts.Append(4);
+	ctx->rend.global_param_op.emplace_back();
+	verify(fread(&ctx->rend.global_param_op.back(), 1, sizeofPolyParam, fw) == sizeofPolyParam);
+	ctx->rend.verts.resize(ctx->rend.verts.size() + 4);
+	Vertex *vtx = &ctx->rend.verts.back() - 3;
 	for (int i = 0; i < 4; i++)
 		verify(fread(vtx + i, 1, sizeofVertex, fw) == sizeofVertex);
 
@@ -508,49 +508,28 @@ void rend_start_render()
 			*/
 		}
 
-		if (!ctx->rend.Overrun)
+		//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
+		//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+		if (!ctx->rend.isRenderFramebuffer)
+			FillBGP(ctx);
+
+		ctx->rend.isRTT=is_rtt;
+
+		ctx->rend.fb_X_CLIP=FB_X_CLIP;
+		ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
+
+		ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
+		ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
+
+		if (QueueRender(ctx))
 		{
-			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
-			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-			if (!ctx->rend.isRenderFramebuffer)
-				FillBGP(ctx);
-			
-			ctx->rend.isRTT=is_rtt;
-
-			ctx->rend.fb_X_CLIP=FB_X_CLIP;
-			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
-			
-			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
-			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
-			
-			max_idx=max(max_idx,ctx->rend.idx.used());
-			max_vtx=max(max_vtx,ctx->rend.verts.used());
-			max_op=max(max_op,ctx->rend.global_param_op.used());
-			max_pt=max(max_pt,ctx->rend.global_param_pt.used());
-			max_tr=max(max_tr,ctx->rend.global_param_tr.used());
-			
-			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
-			max_modt=max(max_modt,ctx->rend.modtrig.used());
-
-#if defined(_WIN32) && 0
-			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
-#endif
-			if (QueueRender(ctx))
-			{
-				palette_update();
+			palette_update();
 #if !defined(TARGET_NO_THREADS)
-				rs.Set();
+			rs.Set();
 #else
-				rend_single_frame();
+			rend_single_frame();
 #endif
-				pend_rend = true;
-			}
-		}
-		else
-		{
-			ovrn++;
-			INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
-			tactx_Recycle(ctx);
+			pend_rend = true;
 		}
 	}
 }

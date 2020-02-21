@@ -55,41 +55,34 @@ static bool operator<(const PolyParam& left, const PolyParam& right)
 
 void SortPParams(int first, int count)
 {
-	if (pvrrc.verts.used() == 0 || count <= 1)
+	if (pvrrc.verts.empty() || count <= 1)
 		return;
 
-	Vertex* vtx_base=pvrrc.verts.head();
-	u32* idx_base = pvrrc.idx.head();
-
-	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
+	PolyParam* pp = &pvrrc.global_param_tr[first];
 	PolyParam* pp_end = pp + count;
 
-	while(pp!=pp_end)
+	while (pp != pp_end)
 	{
-		if (pp->count<2)
+		if (pp->count < 3)
 		{
-			pp->zvZ=0;
+			pp->zvZ = 0;
 		}
 		else
 		{
-			u32* idx = idx_base + pp->first;
+			const u32 idx_end = pp->first + pp->count;
 
-			Vertex* vtx=vtx_base+idx[0];
-			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
-
-			u32 zv=0xFFFFFFFF;
-			while(vtx!=vtx_end)
+			u32 zv = 0xFFFFFFFF;
+			for (u32 idx = pp->first; idx != idx_end; idx++)
 			{
-				zv=min(zv,(u32&)vtx->z);
-				vtx++;
+				Vertex* vtx = &pvrrc.verts[pvrrc.idx[idx]];
+				zv = min(zv, (u32&)vtx->z);
 			}
-
-			pp->zvZ=(f32&)zv;
+			pp->zvZ = (f32&)zv;
 		}
 		pp++;
 	}
 
-	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
+	std::stable_sort(pvrrc.global_param_tr.begin() + first, pvrrc.global_param_tr.begin() + first + count);
 }
 
 const static Vertex *vtx_sort_base;
@@ -208,13 +201,13 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 	pidx_sort.clear();
 
-	if (pvrrc.verts.used() == 0 || count <= 1)
+	if (pvrrc.verts.empty() || count <= 1)
 		return;
 
-	const Vertex *vtx_base = pvrrc.verts.head();
-	const u32 *idx_base = pvrrc.idx.head();
+	const Vertex *vtx_base = &pvrrc.verts.front();
+	const u32 *idx_base = &pvrrc.idx.front();
 
-	const PolyParam *pp_base = &pvrrc.global_param_tr.head()[first];
+	const PolyParam *pp_base = &pvrrc.global_param_tr[first];
 	const PolyParam *pp = pp_base;
 	const PolyParam *pp_end = pp + count;
 
@@ -222,7 +215,7 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 	static u32 vtx_cnt;
 
-	int vtx_count = pvrrc.verts.used() - idx_base[pp->first];
+	int vtx_count = pvrrc.verts.size() - idx_base[pp->first];
 	if (vtx_count>vtx_cnt)
 		vtx_cnt=vtx_count;
 

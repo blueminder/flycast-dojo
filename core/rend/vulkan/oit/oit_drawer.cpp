@@ -52,9 +52,9 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			},
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
-			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()
-					: listType == ListType_Punch_Through ? pvrrc.global_param_pt.head()
-					: pvrrc.global_param_tr.head())),
+			(int)(&poly - (listType == ListType_Opaque ? &pvrrc.global_param_op.front()
+					: listType == ListType_Punch_Through ? &pvrrc.global_param_pt.front()
+					: &pvrrc.global_param_tr.front())),
 	};
 	if (twoVolumes)
 	{
@@ -83,11 +83,11 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 }
 
 void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-		const List<PolyParam>& polys, u32 first, u32 last)
+		const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
 	for (u32 i = first; i < last; i++)
 	{
-		const PolyParam &pp = polys.head()[i];
+		const PolyParam &pp = polys[i];
 		if (pp.count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, pass, pp, pp.first, pp.count);
 	}
@@ -96,14 +96,14 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 template<bool Translucent>
 void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !settings.rend.ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
-	ModifierVolumeParam* params = Translucent ? &pvrrc.global_param_mvo_tr.head()[first] : &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = Translucent ? &pvrrc.global_param_mvo_tr[first] : &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
@@ -117,7 +117,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.size());
 
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -174,28 +174,28 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	std::vector<u32> chunkSizes;
 
 	// Vertex
-	chunks.push_back(pvrrc.verts.head());
-	chunkSizes.push_back(pvrrc.verts.bytes());
+	chunks.push_back(pvrrc.verts.data());
+	chunkSizes.push_back(pvrrc.verts.size() * sizeof(Vertex));
 
-	u32 padding = align(pvrrc.verts.bytes(), 4);
-	offsets.modVolOffset = pvrrc.verts.bytes() + padding;
+	u32 padding = align(chunkSizes.back(), 4);
+	offsets.modVolOffset = chunkSizes.back() + padding;
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
 	// Modifier Volumes
-	chunks.push_back(pvrrc.modtrig.head());
-	chunkSizes.push_back(pvrrc.modtrig.bytes());
-	padding = align(offsets.modVolOffset + pvrrc.modtrig.bytes(), 4);
-	offsets.indexOffset = offsets.modVolOffset + pvrrc.modtrig.bytes() + padding;
+	chunks.push_back(pvrrc.modtrig.data());
+	chunkSizes.push_back(pvrrc.modtrig.size() * sizeof(ModTriangle));
+	padding = align(offsets.modVolOffset + chunkSizes.back(), 4);
+	offsets.indexOffset = offsets.modVolOffset + chunkSizes.back() + padding;
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
 	// Index
-	chunks.push_back(pvrrc.idx.head());
-	chunkSizes.push_back(pvrrc.idx.bytes());
+	chunks.push_back(pvrrc.idx.data());
+	chunkSizes.push_back(pvrrc.idx.size() * sizeof(u32));
 
 	// Uniform buffers
-	u32 indexSize = pvrrc.idx.bytes();
+	u32 indexSize = chunkSizes.back();
 	padding = align(offsets.indexOffset + indexSize, std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
 	offsets.vertexUniformOffset = offsets.indexOffset + indexSize + padding;
 	chunks.push_back(nullptr);
@@ -217,14 +217,14 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
-	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-	if (pvrrc.global_param_tr.used() == 0)
+	std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+	if (pvrrc.global_param_tr.empty())
 		trPolyParams.push_back(0);	// makes the validation layers happy
 	else
 	{
-		for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+		for (int i = 0; i < pvrrc.global_param_tr.size(); i++)
 		{
-			const PolyParam& pp = pvrrc.global_param_tr.head()[i];
+			const PolyParam& pp = pvrrc.global_param_tr[i];
 			trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
 			trPolyParams[i * 2 + 1] = pp.tsp1.full;
 		}
@@ -296,9 +296,9 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	};
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -311,11 +311,11 @@ bool OITDrawer::Draw(const Texture *fogTexture)
     	oitBuffers->ResetPixelCounter(cmdBuffer);
 
     	const bool initialPass = render_pass == 0;
-    	const bool finalPass = render_pass == pvrrc.render_passes.used() - 1;
+    	const bool finalPass = render_pass == pvrrc.render_passes.size() - 1;
 
     	vk::Framebuffer targetFramebuffer;
     	if (!finalPass)
-    		targetFramebuffer = *tempFramebuffers[(pvrrc.render_passes.used() - 1 - render_pass) % 2];
+    		targetFramebuffer = *tempFramebuffers[(pvrrc.render_passes.size() - 1 - render_pass) % 2];
     	else
     		targetFramebuffer = GetFinalFramebuffer();
     	cmdBuffer.beginRenderPass(
@@ -347,7 +347,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.size() - 1 - render_pass) % 2);
 		SetScissor(cmdBuffer, baseScissor);
 
 		if (!oitBuffers->isFirstFrameAfterInit())

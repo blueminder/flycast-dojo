@@ -794,7 +794,7 @@ static void gui_display_settings()
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
             	if (ImGui::Button("Add"))
             		ImGui::OpenPopup("Select Directory");
-        		select_directory_popup("Select Directory", scaling, &directory_selected_callback);
+            	select_directory_popup("Select Directory", scaling, &directory_selected_callback);
         		ImGui::PopStyleVar();
 
         		ImGui::ListBoxFooter();
@@ -1408,8 +1408,8 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-    if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
-    	pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
+	if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
+		pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
 	renderer_changed = pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }

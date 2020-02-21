@@ -1,3 +1,4 @@
+#include <mutex>
 #include "ta.h"
 #include "ta_ctx.h"
 
@@ -8,39 +9,9 @@ extern u32 fskip;
 extern u32 FrameCount;
 
 TA_context* ta_ctx;
-tad_context ta_tad;
+tad_context* ta_tad;
 
-TA_context*  vd_ctx;
-rend_context vd_rc;
-
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size)
-{
-#ifdef __MINGW32__
-	return __mingw_aligned_malloc(size, align);
-#elif defined(_WIN32)
-	return _aligned_malloc(size, align);
-#else
-	void *result;
-	if (posix_memalign(&result, align, size))
-		return NULL;
-	else
-		return result;
-#endif
-}
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr)
-{
-#ifdef __MINGW32__
-	__mingw_aligned_free(ptr);
-#elif defined(_WIN32)
-	_aligned_free(ptr);
-#else
-	free(ptr);
-#endif
-}
-
+rend_context* vd_rc;
 
 void SetCurrentTARC(u32 addr)
 {
@@ -49,55 +20,21 @@ void SetCurrentTARC(u32 addr)
 		if (ta_ctx)
 			SetCurrentTARC(TACTX_NONE);
 
-		verify(ta_ctx == 0);
+		verify(ta_ctx == nullptr);
 		//set new context
 		ta_ctx = tactx_Find(addr,true);
 
-		//copy cached params
-		ta_tad = ta_ctx->tad;
+		// set current TA data context
+		ta_tad = &ta_ctx->tad;
 	}
 	else
 	{
-		//Flush cache to context
-		verify(ta_ctx != 0);
-		ta_ctx->tad=ta_tad;
+		verify(ta_ctx != nullptr);
 		
 		//clear context
-		ta_ctx=0;
-		ta_tad.Reset(0);
+		ta_ctx = nullptr;
+		ta_tad = nullptr;
 	}
-}
-
-bool TryDecodeTARC()
-{
-	verify(ta_ctx != 0);
-
-	if (vd_ctx == 0)
-	{
-		vd_ctx = ta_ctx;
-
-		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
-		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-			
-		vd_ctx->rend_inuse.Lock();
-		vd_rc = vd_ctx->rend;
-
-		//signal the vdec thread
-		return true;
-	}
-	else
-		return false;
-}
-
-void VDecEnd()
-{
-	verify(vd_ctx != 0);
-
-	vd_ctx->rend = vd_rc;
-
-	vd_ctx->rend_inuse.Unlock();
-
-	vd_ctx = 0;
 }
 
 static cMutex mtx_rqueue;
@@ -191,50 +128,37 @@ static vector<TA_context*> ctx_list;
 
 TA_context* tactx_Alloc()
 {
-	TA_context* rv = 0;
-
-	mtx_pool.Lock();
-	if (ctx_pool.size())
 	{
-		rv = ctx_pool[ctx_pool.size()-1];
-		ctx_pool.pop_back();
+		std::lock_guard<cMutex> lock(mtx_pool);
+		if (!ctx_pool.empty())
+		{
+			TA_context *rv = ctx_pool.back();
+			ctx_pool.pop_back();
+			return rv;
+		}
 	}
-	mtx_pool.Unlock();
 	
-	if (!rv)
-	{
-		rv = new TA_context();
-		rv->Alloc();
-	}
-
-	return rv;
+	return new TA_context();
 }
 
 void tactx_Recycle(TA_context* poped_ctx)
 {
-	mtx_pool.Lock();
+	std::lock_guard<cMutex> lock(mtx_pool);
+
+	if (ctx_pool.size() > 2)
+		delete poped_ctx;
+	else
 	{
-		if (ctx_pool.size()>2)
-		{
-			poped_ctx->Free();
-			delete poped_ctx;
-		}
-		else
-		{
-			poped_ctx->Reset();
-			ctx_pool.push_back(poped_ctx);
-		}
+		poped_ctx->Reset();
+		ctx_pool.push_back(poped_ctx);
 	}
-	mtx_pool.Unlock();
 }
 
 TA_context* tactx_Find(u32 addr, bool allocnew)
 {
-	for (size_t i=0; i<ctx_list.size(); i++)
-	{
-		if (ctx_list[i]->Address==addr)
-			return ctx_list[i];
-	}
+	for (TA_context *context : ctx_list)
+		if (context->Address == addr)
+			return context;
 
 	if (allocnew)
 	{
@@ -244,47 +168,37 @@ TA_context* tactx_Find(u32 addr, bool allocnew)
 
 		return rv;
 	}
-	else
-	{
-		return 0;
-	}
+	return nullptr;
 }
 
 TA_context* tactx_Pop(u32 addr)
 {
-	for (size_t i=0; i<ctx_list.size(); i++)
+	for (auto it = ctx_list.begin(); it != ctx_list.end(); it++)
 	{
-		if (ctx_list[i]->Address==addr)
+		if ((*it)->Address == addr)
 		{
-			TA_context* rv = ctx_list[i];
+			TA_context* rv = *it;
 			
 			if (ta_ctx == rv)
 				SetCurrentTARC(TACTX_NONE);
 
-			ctx_list.erase(ctx_list.begin() + i);
+			ctx_list.erase(it);
 
 			return rv;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void tactx_Term()
 {
-	for (size_t i = 0; i < ctx_list.size(); i++)
-	{
-		ctx_list[i]->Free();
-		delete ctx_list[i];
-	}
+	for (TA_context *context : ctx_list)
+		delete context;
 	ctx_list.clear();
-	mtx_pool.Lock();
 	{
-		for (size_t i = 0; i < ctx_pool.size(); i++)
-		{
-			ctx_pool[i]->Free();
-			delete ctx_pool[i];
-		}
+		std::lock_guard<cMutex> lock(mtx_pool);
+		for (TA_context *context : ctx_pool)
+			delete context;
+		ctx_pool.clear();
 	}
-	ctx_pool.clear();
-	mtx_pool.Unlock();
 }

@@ -14,10 +14,10 @@ u32 ta_type_lut[256];
 
 
 #define TACALL DYNACALL
-#ifdef RELEASE
-#undef verify
-#define verify(x)
-#endif
+//#ifdef RELEASE
+//#undef verify
+//#define verify(x)
+//#endif
 #define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
 #define TA_VTX 
@@ -59,7 +59,7 @@ static u8 float_to_satu8_math(float val)
 static ModTriangle* lmr;
 
 static PolyParam* CurrentPP;
-static List<PolyParam>* CurrentPPlist;
+static std::vector<PolyParam>* CurrentPPlist;
 
 //TA state vars	
 DECL_ALIGN(4) static u8 FaceBaseColor[4];
@@ -91,11 +91,10 @@ static f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-#define vdrc vd_rc
+#define vdrc (*vd_rc)
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
-template<u32 instance>
 class FifoSplitter
 {
 public:
@@ -270,7 +269,7 @@ case num : {\
 					//If SZ64 && > 32 bytes
 #define HAS_FULL_DATA (poly_size==SZ32 ? (data<=data_end) : (data<data_end))
 
-#define ITER verify(data->pcw.ParaType==ParamType_Vertex_Parameter);\
+#define ITER if(data->pcw.ParaType!=ParamType_Vertex_Parameter) WARN_LOG(PVR, "data->pcw.ParaType is %d", data->pcw.ParaType);\
 PLD(data,128); \
 ta_handle_poly<poly_type,0>(data,0); \
 if (data->pcw.EndOfStrip) \
@@ -732,8 +731,6 @@ public:
 	__forceinline
 		static void EndList(u32 ListType)
 	{
-		if (CurrentPP != NULL && CurrentPP->count == 0)
-			CurrentPPlist->PopLast();
 		CurrentPP = NULL;
 		CurrentPPlist = NULL;
 
@@ -746,29 +743,28 @@ public:
 	template<class T>
 	static void glob_param_bdc_(T* pp)
 	{
-		PolyParam* d_pp = CurrentPP;
-		if (d_pp == NULL || d_pp->count != 0)
+		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
-			d_pp = CurrentPPlist->Append();
-			CurrentPP = d_pp;
+			CurrentPPlist->emplace_back();
+			CurrentPP = &CurrentPPlist->back();
 		}
-		d_pp->first = vdrc.verts.used();
-		d_pp->count = 0;
+		CurrentPP->first = vdrc.verts.size();
+		CurrentPP->count = 0;
 
-		d_pp->isp = pp->isp;
-		d_pp->tsp = pp->tsp;
-		d_pp->tcw = pp->tcw;
-		d_pp->pcw = pp->pcw;
-		d_pp->tileclip = tileclip_val;
+		CurrentPP->isp = pp->isp;
+		CurrentPP->tsp = pp->tsp;
+		CurrentPP->tcw = pp->tcw;
+		CurrentPP->pcw = pp->pcw;
+		CurrentPP->tileclip = tileclip_val;
 
-		d_pp->texid = -1;
+		CurrentPP->texid = -1;
 
-		if (d_pp->pcw.Texture)
-			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+		if (CurrentPP->pcw.Texture)
+			CurrentPP->texid = renderer->GetTexture(CurrentPP->tsp, CurrentPP->tcw);
 
-		d_pp->tsp1.full = -1;
-		d_pp->tcw1.full = -1;
-		d_pp->texid1 = -1;
+		CurrentPP->tsp1.full = -1;
+		CurrentPP->tcw1.full = -1;
+		CurrentPP->texid1 = -1;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
@@ -860,20 +856,17 @@ public:
 	}
 
 	//Poly Strip handling
-	//We unite Strips together by duplicating the [last,first].On odd sized strips
-	//a second [first] vert is needed to make sure Culling works fine :)
 	__forceinline
 		static void EndPolyStrip()
 	{
-		CurrentPP->count = vdrc.verts.used() - CurrentPP->first;
+		CurrentPP->count = vdrc.verts.size() - CurrentPP->first;
 
 		if (CurrentPP->count > 0)
 		{
-			PolyParam* d_pp = CurrentPPlist->Append();
-			*d_pp = *CurrentPP;
-			CurrentPP = d_pp;
-			d_pp->first = vdrc.verts.used();
-			d_pp->count = 0;
+			CurrentPPlist->emplace_back(*CurrentPP);
+			CurrentPP = &CurrentPPlist->back();
+			CurrentPP->first = vdrc.verts.size();
+			CurrentPP->count = 0;
 		}
 	}
 
@@ -891,7 +884,8 @@ public:
 	static Vertex* vert_cvt_base_(T* vtx)
 	{
 		f32 invW=vtx->xyz[2];
-		Vertex* cv=vdrc.verts.Append();
+		vdrc.verts.emplace_back();
+		Vertex* cv = &vdrc.verts.back();
 		cv->x=vtx->xyz[0];
 		cv->y=vtx->xyz[1];
 		cv->z=invW;
@@ -903,7 +897,7 @@ public:
 
 		//Resume vertex base (for B part)
 	#define vert_res_base \
-		Vertex* cv=vdrc.verts.LastPtr();
+		Vertex* cv = &vdrc.verts.back();
 
 		//uv 16/32
 	#define vert_uv_32(u_name,v_name) \
@@ -1210,41 +1204,38 @@ public:
 		static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
 		//printf("Sprite\n");
-		PolyParam* d_pp=CurrentPP;
 		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
-			d_pp=CurrentPPlist->Append(); 
-			CurrentPP=d_pp;
+			CurrentPPlist->emplace_back();
+			CurrentPP = &CurrentPPlist->back();
 		}
 
-		d_pp->first = vdrc.verts.used();
-		d_pp->count=0;
-		d_pp->isp=spr->isp; 
-		d_pp->tsp=spr->tsp; 
-		d_pp->tcw=spr->tcw; 
-		d_pp->pcw=spr->pcw; 
-		d_pp->tileclip=tileclip_val;
+		CurrentPP->first = vdrc.verts.size();
+		CurrentPP->count=0;
+		CurrentPP->isp=spr->isp;
+		CurrentPP->tsp=spr->tsp;
+		CurrentPP->tcw=spr->tcw;
+		CurrentPP->pcw=spr->pcw;
+		CurrentPP->tileclip=tileclip_val;
 
-		d_pp->texid = -1;
+		CurrentPP->texid = -1;
 		
-		if (d_pp->pcw.Texture) {
-			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+		if (CurrentPP->pcw.Texture) {
+			CurrentPP->texid = renderer->GetTexture(CurrentPP->tsp, CurrentPP->tcw);
 		}
-		d_pp->tcw1.full = -1;
-		d_pp->tsp1.full = -1;
-		d_pp->texid1 = -1;
+		CurrentPP->tcw1.full = -1;
+		CurrentPP->tsp1.full = -1;
+		CurrentPP->texid1 = -1;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
         
-        d_pp->isp.CullMode ^= 1;
+		CurrentPP->isp.CullMode ^= 1;
 	}
 
 	#define append_sprite(indx) \
 		vert_packed_color_(cv[indx].col,SFaceBaseColor)\
 		vert_packed_color_(cv[indx].spc,SFaceOffsColor)
-		//cv[indx].base_int=1;\
-		//cv[indx].offset_int=1;
 
 	#define append_sprite_yz(indx,set,st2) \
 		cv[indx].y=sv->y##set; \
@@ -1261,7 +1252,8 @@ public:
 	{
         CurrentPP->count = 4;
 
-		Vertex* cv = vdrc.verts.Append(4);
+        vdrc.verts.resize(vdrc.verts.size() + 4);
+		Vertex* cv = &vdrc.verts.back() - 3;
 
 		//Fill static stuff
 		append_sprite(0);
@@ -1294,7 +1286,7 @@ public:
 			AB_x=B.x-A.x,AB_y=B.y-A.y,AB_z=B.z-A.z,
 			AP_x=P.x-A.x,AP_y=P.y-A.y;
 
-		float P_y=P.y,P_x=P.x,P_z=P.z,A_x=A.x,A_y=A.y,A_z=A.z;
+		float P_y=P.y,P_x=P.x,A_x=A.x,A_y=A.y,A_z=A.z;
 
 		float AB_v=B.v-A.v,AB_u=B.u-A.u,
 			AC_v=C.v-A.v,AC_u=C.u-A.u;
@@ -1352,31 +1344,27 @@ public:
 
 		update_fz(cv[0].z);
 
-		PolyParam* d_pp = CurrentPPlist->Append();
-		*d_pp = *CurrentPP;
-		CurrentPP = d_pp;
-		d_pp->first = vdrc.verts.used();
-		d_pp->count = 0;
+		CurrentPPlist->emplace_back(*CurrentPP);
+		CurrentPP = &CurrentPPlist->back();
+		CurrentPP->first = vdrc.verts.size();
+		CurrentPP->count = 0;
 	}
 
 	// Modifier Volumes Vertex handlers
 	
 	static void EndModVol()
 	{
-		List<ModifierVolumeParam> *list = NULL;
+		std::vector<ModifierVolumeParam> *list = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
 			list = &vdrc.global_param_mvo;
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
 			list = &vdrc.global_param_mvo_tr;
 		else
 			return;
-		if (list->used() > 0)
+		if (!list->empty())
 		{
-			ModifierVolumeParam *p = list->LastPtr();
-			p->count = vdrc.modtrig.used() - p->first;
-			if (p->count == 0)
-				list->PopLast();
-
+			ModifierVolumeParam *p = &list->back();
+			p->count = vdrc.modtrig.size() - p->first;
 		}
 	}
 
@@ -1387,21 +1375,28 @@ public:
 
 		ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
-			p = vdrc.global_param_mvo.Append();
+		{
+			vdrc.global_param_mvo.emplace_back();
+			p = &vdrc.global_param_mvo.back();
+		}
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
-			p = vdrc.global_param_mvo_tr.Append();
+		{
+			vdrc.global_param_mvo_tr.emplace_back();
+			p = &vdrc.global_param_mvo_tr.back();
+		}
 		else
 			return;
 		p->isp.full = param->isp.full;
 		p->isp.VolumeLast = param->pcw.Volume != 0;
-		p->first = vdrc.modtrig.used();
+		p->first = vdrc.modtrig.size();
 	}
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
 		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
-		lmr=vdrc.modtrig.Append();
+		vdrc.modtrig.emplace_back();
+		lmr = &vdrc.modtrig.back();
 
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
@@ -1428,42 +1423,55 @@ public:
 
 	static void VDECInit()
 	{
-		vd_rc.Clear();
+		vdrc.Clear();
 
 		//allocate storage for BG poly
-		vd_rc.global_param_op.Append();
-		vd_rc.verts.Append(4);
+		vdrc.global_param_op.emplace_back();
+		vdrc.verts.resize(4);
 	}
 };
 
 static bool ClearZBeforePass(int pass_number);
 
-FifoSplitter<0> TAFifo0;
+static FifoSplitter TAFifo;
 
-int ta_parse_cnt = 0;
+static int ta_parse_cnt = 0;
+
+static bool isbig_fast(float f)
+{
+	return (reinterpret_cast<u32&>(f) & 0x7fffffff) > 0x7dcca14b;	// ~3.4e37
+}
 
 //
 // Check if a vertex has huge x,y,z values or negative z
 //
 static bool is_vertex_inf(const Vertex& vtx)
 {
-	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
-			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
-			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+//	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
+//			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
+//			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+	return isbig_fast(vtx.x) || isbig_fast(vtx.y) || isbig_fast(vtx.z)
+			|| reinterpret_cast<const int&>(vtx.z) < 0;
 }
 
 //
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 //
-static void make_index(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx)
+static int make_index(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context* ctx)
 {
-	const u32 *indices = ctx->idx.head();
-	const Vertex *vertices = ctx->verts.head();
+	const Vertex *vertices = &ctx->verts.front();
+	int valid_polys = 0;
 
 	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys->head()[end];
-	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
+	const PolyParam *end_poly = &polys[end];
+	for (PolyParam *poly = &polys[first]; poly != end_poly; poly++)
 	{
+		if (poly->count < 3)
+		{
+			poly->count = 0;
+			continue;
+		}
+		valid_polys++;
 		int first_index;
 		bool dupe_next_vtx = false;
 		if (merge
@@ -1475,18 +1483,17 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 				// FIXME tcw1, tsp1, tileclip?
 				)
 		{
-			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-			*ctx->idx.Append() = last_vtx;
+			ctx->idx.push_back(ctx->idx.back());
 			dupe_next_vtx = true;
 			first_index = last_poly->first;
 		}
 		else
 		{
 			last_poly = poly;
-			first_index = ctx->idx.used();
+			first_index = ctx->idx.size();
 		}
-		int last_good_vtx = -1;
-		for (int i = 0; i < poly->count; i++)
+		bool good_vtx_seen = false;
+		for (u32 i = 0; i < poly->count; i++)
 		{
 			const Vertex& vtx = vertices[poly->first + i];
 			if (is_vertex_inf(vtx))
@@ -1497,10 +1504,10 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 					if (!is_vertex_inf(next_vtx))
 					{
 						// repeat last and next vertices to link strips
-						if (last_good_vtx >= 0)
+						if (good_vtx_seen)
 						{
 							verify(!dupe_next_vtx);
-							*ctx->idx.Append() = last_good_vtx;
+							ctx->idx.push_back(ctx->idx.back());
 							dupe_next_vtx = true;
 						}
 						break;
@@ -1510,100 +1517,92 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 			}
 			else
 			{
-				last_good_vtx = poly->first + i;
+				good_vtx_seen = true;
+				u32 vtx_id = poly->first + i;
 				if (dupe_next_vtx)
 				{
-					*ctx->idx.Append() = last_good_vtx;
+					ctx->idx.push_back(vtx_id);
 					dupe_next_vtx = false;
 				}
-				const u32 count = ctx->idx.used() - first_index;
+				const u32 count = ctx->idx.size() - first_index;
 				if ((i ^ count) & 1)
-					*ctx->idx.Append() = last_good_vtx;
-				*ctx->idx.Append() = last_good_vtx;
+					ctx->idx.push_back(vtx_id);
+				ctx->idx.push_back(vtx_id);
 			}
 		}
 		if (last_poly == poly)
 		{
 			poly->first = first_index;
-			poly->count = ctx->idx.used() - first_index;
+			poly->count = ctx->idx.size() - first_index;
 		}
 		else
 		{
-			last_poly->count = ctx->idx.used() - last_poly->first;
+			last_poly->count = ctx->idx.size() - last_poly->first;
 			poly->count = 0;
 		}
 	}
+
+	return valid_polys;
 }
 
 bool ta_parse_vdrc(TA_context* ctx)
 {
-	bool rv=false;
-	verify( vd_ctx == 0);
-	vd_ctx = ctx;
-	vd_rc = vd_ctx->rend;
+	vd_rc = &ctx->rend;
 	bool empty_context = true;
 	
 	ta_parse_cnt++;
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
-		TAFifo0.vdec_init();
+		TAFifo.vdec_init();
+		vd_rc->global_param_op.push_back(ctx->background);
+		vd_rc->verts.push_back(ctx->bgnd_vtx[0]);
+		vd_rc->verts.push_back(ctx->bgnd_vtx[1]);
+		vd_rc->verts.push_back(ctx->bgnd_vtx[2]);
+		vd_rc->verts.push_back(ctx->bgnd_vtx[3]);
 		
 		int op_poly_count = 0;
 		int pt_poly_count = 0;
 		int tr_poly_count = 0;
 
-		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
+		for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
 		{
 			ctx->MarkRend(pass);
-			vd_rc.proc_start = ctx->rend.proc_start;
-			vd_rc.proc_end = ctx->rend.proc_end;
 
-			Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
-			Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+			Ta_Dma *ta_data = (Ta_Dma *)vd_rc->proc_start;
+			Ta_Dma *ta_data_end = ((Ta_Dma *)vd_rc->proc_end) - 1;
 
 			do
 			{
-				ta_data =TaCmd(ta_data,ta_data_end);
+				ta_data = TaCmd(ta_data, ta_data_end);
 			}
-			while(ta_data<=ta_data_end);
+			while(ta_data <= ta_data_end);
 
-			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : vd_rc.render_passes.LastPtr()->op_count)
-					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->pt_count)
-					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->tr_count);
-			empty_context = empty_context && empty_pass;
-
+			RenderPass render_pass;
+			render_pass.op_count = vd_rc->global_param_op.size();
+			bool empty_pass = make_index(vd_rc->global_param_op, op_poly_count,
+					render_pass.op_count, true, vd_rc) == (pass == 0 ? 1 : 0);
+			op_poly_count = render_pass.op_count;
+			render_pass.mvo_count = vd_rc->global_param_mvo.size();
+			render_pass.pt_count = vd_rc->global_param_pt.size();
+			empty_pass = make_index(vd_rc->global_param_pt, pt_poly_count,
+					render_pass.pt_count, true, vd_rc) == 0 && empty_pass;
+			pt_poly_count = render_pass.pt_count;
+			render_pass.tr_count = vd_rc->global_param_tr.size();
+			empty_pass = make_index(vd_rc->global_param_tr, tr_poly_count,
+					render_pass.tr_count, false, vd_rc) == 0 && empty_pass;
+			tr_poly_count = render_pass.tr_count;
+			render_pass.mvo_tr_count = vd_rc->global_param_mvo_tr.size();
+			render_pass.autosort = UsingAutoSort(pass);
+			render_pass.z_clear = ClearZBeforePass(pass);
 			if (pass == 0 || !empty_pass)
-			{
-				RenderPass *render_pass = vd_rc.render_passes.Append();
-				render_pass->op_count = vd_rc.global_param_op.used();
-				make_index(&vd_rc.global_param_op, op_poly_count,
-						render_pass->op_count, true, &vd_rc);
-				op_poly_count = render_pass->op_count;
-				render_pass->mvo_count = vd_rc.global_param_mvo.used();
-				render_pass->pt_count = vd_rc.global_param_pt.used();
-				make_index(&vd_rc.global_param_pt, pt_poly_count,
-						render_pass->pt_count, true, &vd_rc);
-				pt_poly_count = render_pass->pt_count;
-				render_pass->tr_count = vd_rc.global_param_tr.used();
-				make_index(&vd_rc.global_param_tr, tr_poly_count,
-						render_pass->tr_count, false, &vd_rc);
-				tr_poly_count = render_pass->tr_count;
-				render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-				render_pass->autosort = UsingAutoSort(pass);
-				render_pass->z_clear = ClearZBeforePass(pass);
-			}
+				vd_rc->render_passes.push_back(render_pass);
+			empty_context = empty_context && empty_pass;
 		}
-		rv = !empty_context;
 	}
-	bool overrun = ctx->rend.Overrun;
-
-	vd_ctx->rend = vd_rc;
-	vd_ctx = 0;
+	vd_rc = nullptr;
 	ctx->rend_inuse.Unlock();
 
-	ctx->rend.Overrun = overrun;
-
-	return rv;
+	return !empty_context;
 }
 
 
@@ -1615,12 +1614,8 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//TSP
 	//TCW
 	ISP_TSP isp;
-	TSP tsp;
-	TCW tcw;
 
 	isp.full=vri(base);
-	tsp.full=vri(base+4);
-	tcw.full=vri(base+8);
 
 	//XYZ
 	//UV
@@ -1695,14 +1690,12 @@ static OnLoad ol_vtxdec(&vtxdec_init);
 
 void FillBGP(TA_context* ctx)
 {
-	
 	//Render pre-code
 	//--BG poly
 	u32 param_base=PARAM_BASE & 0xF00000;
 
-
-	PolyParam* bgpp=ctx->rend.global_param_op.head();
-	Vertex* cv=ctx->rend.verts.head();
+	PolyParam* bgpp = &ctx->background;
+	Vertex* cv = ctx->bgnd_vtx;
 
 	bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0; //double parameters for volumes
 
@@ -1754,7 +1747,6 @@ void FillBGP(TA_context* ctx)
 		vertex_ptr+=strip_vs;
 	}
 
-	float ZV=0;
 	f32 bg_depth = ISP_BACKGND_D.f;
 	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
 

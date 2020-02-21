@@ -2,11 +2,7 @@
 #include "ta.h"
 #include "pvr_regs.h"
 
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size);
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr);
+#define TA_DATA_SIZE (8 * 1024 * 1024)
 
 //Vertex storage types
 struct Vertex
@@ -56,8 +52,21 @@ struct ModTriangle
 	f32 x0,y0,z0,x1,y1,z1,x2,y2,z2;
 };
 
-struct  tad_context
+struct tad_context
 {
+	tad_context()
+	{
+		thd_data = thd_root = thd_old_data = (u8*)aligned_malloc(TA_DATA_SIZE, 32);
+		render_pass_count = 0;
+	}
+	~tad_context()
+	{
+		free(thd_root);
+	}
+	// No copy
+	tad_context(const tad_context&) = delete;
+	tad_context& operator=(const tad_context &) = delete;
+
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
@@ -87,13 +96,6 @@ struct  tad_context
 	{
 		return thd_data == thd_root ? thd_old_data : thd_data;
 	}
-
-	void Reset(u8* ptr)
-	{
-		thd_data = thd_root = thd_old_data = ptr;
-		render_pass_count = 0;
-	}
-
 };
 
 struct RenderPass {
@@ -108,53 +110,61 @@ struct RenderPass {
 
 struct rend_context
 {
-	u8* proc_start;
-	u8* proc_end;
+	u8* proc_start = nullptr;
+	u8* proc_end = nullptr;
 
-	f32 fZ_min;
-	f32 fZ_max;
+	f32 fZ_min = 0.f;
+	f32 fZ_max = 0.f;
 
-	bool Overrun;
-	bool isRTT;
-	bool isRenderFramebuffer;
+	bool isRTT = false;
+	bool isRenderFramebuffer = false;
 	
 	FB_X_CLIP_type    fb_X_CLIP;
 	FB_Y_CLIP_type    fb_Y_CLIP;
 	
-	u32 fog_clamp_min;
-	u32 fog_clamp_max;
+	u32 fog_clamp_min = 0;
+	u32 fog_clamp_max = 0;
 
-	List<Vertex>      verts;
-	List<u32>         idx;
-	List<ModTriangle> modtrig;
-	List<ModifierVolumeParam>  global_param_mvo;
-	List<ModifierVolumeParam>  global_param_mvo_tr;
+	std::vector<Vertex>      verts;
+	std::vector<u32>         idx;
+	std::vector<ModTriangle> modtrig;
+	std::vector<ModifierVolumeParam>  global_param_mvo;
+	std::vector<ModifierVolumeParam>  global_param_mvo_tr;
 
-	List<PolyParam>   global_param_op;
-	List<PolyParam>   global_param_pt;
-	List<PolyParam>   global_param_tr;
-	List<RenderPass>  render_passes;
+	std::vector<PolyParam>   global_param_op;
+	std::vector<PolyParam>   global_param_pt;
+	std::vector<PolyParam>   global_param_tr;
+	std::vector<RenderPass>  render_passes;
+
+	rend_context()
+	{
+		verts.reserve(32768);
+		idx.reserve(32768);
+		global_param_op.reserve(4096);
+		global_param_pt.reserve(2048);
+		global_param_tr.reserve(4096);
+		global_param_mvo.reserve(2048);
+		global_param_mvo_tr.reserve(2048);
+		modtrig.reserve(4096);
+	}
 
 	void Clear()
 	{
-		verts.Clear();
-		idx.Clear();
-		global_param_op.Clear();
-		global_param_pt.Clear();
-		global_param_tr.Clear();
-		modtrig.Clear();
-		global_param_mvo.Clear();
-		global_param_mvo_tr.Clear();
-		render_passes.Clear();
+		verts.clear();
+		idx.clear();
+		global_param_op.clear();
+		global_param_pt.clear();
+		global_param_tr.clear();
+		modtrig.clear();
+		global_param_mvo.clear();
+		global_param_mvo_tr.clear();
+		render_passes.clear();
 
-		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
 		isRenderFramebuffer = false;
 	}
 };
-
-#define TA_DATA_SIZE (8 * 1024 * 1024)
 
 //vertex lists
 struct TA_context
@@ -162,13 +172,14 @@ struct TA_context
 	u32 Address;
 	u32 LastUsed;
 
-	cMutex thd_inuse;
 	cMutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
-
 	
+	PolyParam background;
+	Vertex bgnd_vtx[4];
+
 	/*
 		Dreamcast games use up to 20k vtx, 30k idx, 1k (in total) parameters.
 		at 30 fps, thats 600kvtx (900 stripped)
@@ -193,57 +204,32 @@ struct TA_context
 		rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : tad.render_passes[render_pass];
 	}
 
-	void Alloc()
+	TA_context()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
-
-		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(8192, &rend.Overrun, "global_param_op");
-		rend.global_param_pt.Init(4096, &rend.Overrun, "global_param_pt");
-		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
-		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
-		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
-
-		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
-		
-		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
-
 		Reset();
 	}
 
 	void Reset()
 	{
+		rend_inuse.Lock();
 		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
 		tad.Clear();
-		rend_inuse.Lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
 		rend_inuse.Unlock();
 	}
 
-	void Free()
+	~TA_context()
 	{
 		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
-		OS_aligned_free(tad.thd_root);
-		rend.verts.Free();
-		rend.idx.Free();
-		rend.global_param_op.Free();
-		rend.global_param_pt.Free();
-		rend.global_param_tr.Free();
-		rend.modtrig.Free();
-		rend.global_param_mvo.Free();
-		rend.global_param_mvo_tr.Free();
-		rend.render_passes.Free();
 	}
 };
 
 
 extern TA_context* ta_ctx;
-extern tad_context ta_tad;
+extern tad_context* ta_tad;
 
-extern TA_context*  vd_ctx;
-extern rend_context vd_rc;
+extern rend_context* vd_rc;
 
 TA_context* tactx_Find(u32 addr, bool allocnew=false);
 TA_context* tactx_Pop(u32 addr);
@@ -263,8 +249,6 @@ void SetCurrentTARC(u32 addr);
 bool QueueRender(TA_context* ctx);
 TA_context* DequeueRender();
 void FinishRender(TA_context* ctx);
-bool TryDecodeTARC();
-void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);

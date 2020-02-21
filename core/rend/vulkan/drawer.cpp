@@ -24,14 +24,14 @@
 
 void Drawer::SortTriangles()
 {
-	sortedPolys.resize(pvrrc.render_passes.used());
-	sortedIndexes.resize(pvrrc.render_passes.used());
+	sortedPolys.resize(pvrrc.render_passes.size());
+	sortedIndexes.resize(pvrrc.render_passes.size());
 	sortedIndexCount = 0;
 	RenderPass previousPass = {};
 
-	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+	for (int render_pass = 0; render_pass < pvrrc.render_passes.size(); render_pass++)
 	{
-		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+		const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 		sortedIndexes[render_pass].clear();
 		if (current_pass.autosort)
 		{
@@ -157,16 +157,16 @@ void BaseDrawer::SetBaseScissor()
 // On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
 void BaseDrawer::SetProvokingVertices()
 {
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-		for (int i = 0; i < list.used(); i++)
+	auto setProvokingVertex = [](const std::vector<PolyParam>& list) {
+		for (int i = 0; i < list.size(); i++)
 		{
-			const PolyParam& pp = list.head()[i];
+			const PolyParam& pp = list[i];
 			if (!pp.pcw.Gouraud && pp.count > 2)
 			{
 				for (int i = 0; i < pp.count - 2; i++)
 				{
-					Vertex *vertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i]];
-					Vertex *lastVertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i + 2]];
+					Vertex *vertex = &pvrrc.verts[pvrrc.idx[pp.first + i]];
+					Vertex *lastVertex = &pvrrc.verts[pvrrc.idx[pp.first + i + 2]];
 					memcpy(vertex->col, lastVertex->col, 4);
 					memcpy(vertex->spc, lastVertex->spc, 4);
 					memcpy(vertex->col1, lastVertex->col1, 4);
@@ -225,15 +225,15 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 {
 	for (const SortTrigDrawParam& param : polys)
 	{
-		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.used() + param.first, param.count);
+		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.size() + param.first, param.count);
 	}
 }
 
-void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
+void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
 	for (u32 i = first; i < last; i++)
 	{
-		const PolyParam &pp = polys.head()[i];
+		const PolyParam &pp = polys[i];
 		if (pp.count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, pp, pp.first, pp.count);
 	}
@@ -241,14 +241,14 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !settings.rend.ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
@@ -299,25 +299,25 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	std::vector<u32> chunkSizes;
 
 	// Vertex
-	chunks.push_back(pvrrc.verts.head());
-	chunkSizes.push_back(pvrrc.verts.bytes());
+	chunks.push_back(pvrrc.verts.data());
+	chunkSizes.push_back(pvrrc.verts.size() * sizeof(Vertex));
 
-	u32 padding = align(pvrrc.verts.bytes(), 4);
-	offsets.modVolOffset = pvrrc.verts.bytes() + padding;
+	u32 padding = align(chunkSizes.back(), 4);
+	offsets.modVolOffset = chunkSizes.back() + padding;
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
 	// Modifier Volumes
-	chunks.push_back(pvrrc.modtrig.head());
-	chunkSizes.push_back(pvrrc.modtrig.bytes());
-	padding = align(offsets.modVolOffset + pvrrc.modtrig.bytes(), 4);
-	offsets.indexOffset = offsets.modVolOffset + pvrrc.modtrig.bytes() + padding;
+	chunks.push_back(pvrrc.modtrig.data());
+	chunkSizes.push_back(pvrrc.modtrig.size() * sizeof(ModTriangle));
+	padding = align(offsets.modVolOffset + chunkSizes.back(), 4);
+	offsets.indexOffset = offsets.modVolOffset + chunkSizes.back() + padding;
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
 	// Index
-	chunks.push_back(pvrrc.idx.head());
-	chunkSizes.push_back(pvrrc.idx.bytes());
+	chunks.push_back(pvrrc.idx.data());
+	chunkSizes.push_back(pvrrc.idx.size() * sizeof(u32));
 	for (const std::vector<u32>& idx : sortedIndexes)
 	{
 		if (!idx.empty())
@@ -327,7 +327,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 		}
 	}
 	// Uniform buffers
-	u32 indexSize = pvrrc.idx.bytes() + sortedIndexCount * sizeof(u32);
+	u32 indexSize = pvrrc.idx.size() * sizeof(u32) + sortedIndexCount * sizeof(u32);
 	padding = align(offsets.indexOffset + indexSize, std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
 	offsets.vertexUniformOffset = offsets.indexOffset + indexSize + padding;
 	chunks.push_back(nullptr);
@@ -382,9 +382,9 @@ bool Drawer::Draw(const Texture *fogTexture)
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,

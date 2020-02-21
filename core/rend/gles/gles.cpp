@@ -971,27 +971,21 @@ bool ProcessFrame(TA_context* ctx)
 	}
 	TexCache.CollectCleanup();
 
-	if (ctx->rend.Overrun)
-		WARN_LOG(PVR, "ERROR: TA context overrun");
-
-	return !ctx->rend.Overrun;
+	return true;
 }
 
 static void upload_vertex_indices()
 {
 	if (gl.index_type == GL_UNSIGNED_SHORT)
 	{
-		static bool overrun;
-		static List<u16> short_idx;
-		if (short_idx.daty != NULL)
-			short_idx.Free();
-		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
-		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
-			*(short_idx.Append()) = *p;
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.bytes(), short_idx.head(), GL_STREAM_DRAW);
+		std::vector<u16> short_idx;
+		short_idx.reserve(pvrrc.idx.size());
+		for (u32 i : pvrrc.idx)
+			short_idx.push_back(i);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.size() * 2, short_idx.data(), GL_STREAM_DRAW);
 	}
 	else
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.size() * 4, pvrrc.idx.data(), GL_STREAM_DRAW);
 	glCheck();
 }
 
@@ -1153,15 +1147,15 @@ bool RenderFrame()
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.size() * sizeof(Vertex), pvrrc.verts.data(), GL_STREAM_DRAW); glCheck();
 
 		upload_vertex_indices();
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
+		if (!pvrrc.modtrig.empty())
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
-			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+			glBufferData(GL_ARRAY_BUFFER, pvrrc.modtrig.size() * sizeof(ModTriangle), pvrrc.modtrig.data(), GL_STREAM_DRAW); glCheck();
 		}
 
 		if (!wide_screen_on)

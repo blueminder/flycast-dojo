@@ -207,7 +207,7 @@ static const HollyInterruptID ListEndInterrupt[5]=
 
 static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 {
-	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
+	Ta_Dma *dat = (Ta_Dma *)(ta_tad->thd_data - 32);
 
 	u32 cmd = trans>>4;
 	trans&=7;
@@ -264,7 +264,7 @@ static OnLoad ol_fillfsm(&fill_fsm);
 void ta_vtx_ListCont()
 {
 	SetCurrentTARC(TA_CURRENT_CTX);
-	ta_tad.Continue();
+	ta_tad->Continue();
 
 	ta_cur_state=TAS_NS;
 	ta_fsm_cl = 7;
@@ -272,7 +272,7 @@ void ta_vtx_ListCont()
 void ta_vtx_ListInit()
 {
 	SetCurrentTARC(TA_CURRENT_CTX);
-	ta_tad.ClearPartial();
+	ta_tad->ClearPartial();
 
 	ta_cur_state=TAS_NS;
 	ta_fsm_cl = 7;
@@ -290,23 +290,23 @@ void DYNACALL ta_thd_data32_i(void* data)
 		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Ignored");
 		return;
 	}
-	if (ta_tad.End() - ta_tad.thd_root >= TA_DATA_SIZE)
+	if (ta_tad->End() - ta_tad->thd_root >= TA_DATA_SIZE)
 	{
 		INFO_LOG(PVR, "Warning: TA data buffer overflow");
 		asic_RaiseInterrupt(holly_MATR_NOMEM);
 		return;
 	}
 
-	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
+	simd256_t* dst = (simd256_t*)ta_tad->thd_data;
 	simd256_t* src = (simd256_t*)data;
 
-	// First byte is PCW
+	// First word is PCW
 	PCW pcw = *(PCW*)data;
 	
 	// Copy the TA data
 	*dst = *src;
 
-	ta_tad.thd_data += 32;
+	ta_tad->thd_data += 32;
 
 	//process TA state
 	u32 state_in = (ta_cur_state << 8) | (pcw.ParaType << 5) | ((pcw.obj_ctrl >> 2) & 31);

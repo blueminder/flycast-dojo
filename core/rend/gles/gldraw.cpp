@@ -243,9 +243,9 @@ __forceinline
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply, int first, int count)
+void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params = &gply.head()[first];
+	const PolyParam* params = &gply[first];
 
 
 	if (count==0)
@@ -286,23 +286,20 @@ static void SortTriangles(int first, int count)
 	GenSorted(first, count, pidx_sort, vidx_sort);
 
 	//Upload to GPU if needed
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		if (gl.index_type == GL_UNSIGNED_SHORT)
 		{
-			static bool overrun;
-			static List<u16> short_vidx;
-			if (short_vidx.daty != NULL)
-				short_vidx.Free();
-			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
-			for (int i = 0; i < vidx_sort.size(); i++)
-				*(short_vidx.Append()) = vidx_sort[i];
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
+			std::vector<u16> short_vidx;
+			short_vidx.reserve(vidx_sort.size());
+			for (u32 i : vidx_sort)
+				short_vidx.push_back(i);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.size() * sizeof(u16), short_vidx.data(), GL_STREAM_DRAW);
 		}
 		else
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), vidx_sort.data(), GL_STREAM_DRAW);
 		glCheck();
 	}
 }
@@ -310,7 +307,7 @@ static void SortTriangles(int first, int count)
 void DrawSorted(bool multipass)
 {
 	//if any drawing commands, draw them
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		u32 count=pidx_sort.size();
 		
@@ -523,7 +520,7 @@ void SetupModvolVBO()
 }
 void DrawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0)
+	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 
 	SetupModvolVBO();
@@ -539,7 +536,7 @@ void DrawModVols(int first, int count)
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 
@@ -605,8 +602,8 @@ void DrawStrips()
 	glActiveTexture(GL_TEXTURE0);
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+    for (int render_pass = 0; render_pass < pvrrc.render_passes.size(); render_pass++) {
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -635,7 +632,7 @@ void DrawStrips()
 				if (!settings.rend.PerStripSorting)
 				{
 					SortTriangles(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-					DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+					DrawSorted(render_pass < pvrrc.render_passes.size() - 1);
 				}
 				else
 				{

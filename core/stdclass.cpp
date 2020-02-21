@@ -207,30 +207,18 @@ cResetEvent::~cResetEvent()
 }
 void cResetEvent::Set()//Signal
 {
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
 	SetEvent(hEvent);
 }
 void cResetEvent::Reset()//reset
 {
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
 	ResetEvent(hEvent);
 }
 bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
 	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
 	WaitForSingleObject(hEvent,(u32)-1);
 }
 #else
@@ -299,4 +287,18 @@ void cResetEvent::Wait()//Wait for signal , then reset
 }
 #endif
 
+void* aligned_malloc(size_t size, size_t alignment)
+{
+#ifdef _WIN32
+	return _aligned_malloc(size, alignment);
+#elif defined(_ISOC11_SOURCE)
+	return aligned_alloc(alignment, size);
+#else
+	void *data;
+	if (posix_memalign(&data, alignment, size) != 0)
+		return NULL;
+	else
+		return data;
+#endif
+}
 

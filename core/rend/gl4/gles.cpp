@@ -745,20 +745,20 @@ static bool RenderFrame()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
 		//move vertex to gpu
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.size() * sizeof(Vertex), pvrrc.verts.data(), GL_STREAM_DRAW); glCheck();
 
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.size() * sizeof(u32), pvrrc.idx.data(), GL_STREAM_DRAW);
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
+		if (!pvrrc.modtrig.empty())
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
-			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+			glBufferData(GL_ARRAY_BUFFER, pvrrc.modtrig.size() * sizeof(ModTriangle), pvrrc.modtrig.data(), GL_STREAM_DRAW); glCheck();
 		}
 
 		// TR PolyParam data
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.size(), pvrrc.global_param_tr.data(), GL_STATIC_DRAW);
 		glCheck();
 
 		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped())
