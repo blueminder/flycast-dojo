@@ -1424,10 +1424,6 @@ public:
 	static void VDECInit()
 	{
 		vdrc.Clear();
-
-		//allocate storage for BG poly
-		vdrc.global_param_op.emplace_back();
-		vdrc.verts.resize(4);
 	}
 };
 
@@ -1554,11 +1550,14 @@ bool ta_parse_vdrc(TA_context* ctx)
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo.vdec_init();
-		vd_rc->global_param_op.push_back(ctx->background);
-		vd_rc->verts.push_back(ctx->bgnd_vtx[0]);
-		vd_rc->verts.push_back(ctx->bgnd_vtx[1]);
-		vd_rc->verts.push_back(ctx->bgnd_vtx[2]);
-		vd_rc->verts.push_back(ctx->bgnd_vtx[3]);
+		if (!ctx->rend.isRTT)
+		{
+			vd_rc->global_param_op.push_back(ctx->background);
+			vd_rc->verts.push_back(ctx->bgnd_vtx[0]);
+			vd_rc->verts.push_back(ctx->bgnd_vtx[1]);
+			vd_rc->verts.push_back(ctx->bgnd_vtx[2]);
+			vd_rc->verts.push_back(ctx->bgnd_vtx[3]);
+		}
 		
 		int op_poly_count = 0;
 		int pt_poly_count = 0;
