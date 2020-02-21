@@ -295,9 +295,9 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize
+CFLAGS += -ftree-vectorize -Wno-unused-result
 
-CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
+CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
@@ -389,10 +389,6 @@ ifdef USE_LIBAO
 	LIBS += `pkg-config --libs ao`
 endif
 
-ifdef HAS_SOFTREND
-    CFLAGS += -msse4.1
-endif
-
 # these are also handled on core.mk, but ignored here
 
 # GLES on x11?
@@ -401,11 +397,6 @@ ifdef USE_GLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
-endif
-
-#softrend?
-ifdef HAS_SOFTREND
-    CXXFLAGS += -DTARGET_SOFTREND
 endif
 
 ifdef TEST_AUTOMATION

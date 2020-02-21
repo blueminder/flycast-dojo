@@ -1,8 +1,6 @@
 #pragma once
-#include "drkPvr.h"
 #include "ta_ctx.h"
 
-extern u32 VertexCount;
 extern u32 FrameCount;
 
 void rend_init_renderer();
@@ -54,7 +52,6 @@ Renderer* rend_GLES2();
 Renderer* rend_GL4();
 #endif
 Renderer* rend_norend();
-Renderer* rend_softrend();
 #ifdef USE_VULKAN
 Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();

@@ -244,7 +244,6 @@
     <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
     <ClCompile Include="..\core\reios\reios.cpp" />
     <ClCompile Include="..\core\reios\reios_elf.cpp" />
-    <ClCompile Include="..\core\rend\d3d11\d3d11.cpp" />
     <ClCompile Include="..\core\rend\gles\CustomTexture.cpp" />
     <ClCompile Include="..\core\rend\gles\gl32funcs.c" />
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
@@ -257,7 +256,6 @@
     <ClCompile Include="..\core\rend\gles\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\core\rend\gui.cpp" />
     <ClCompile Include="..\core\rend\gui_util.cpp" />
-    <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
@@ -390,8 +388,6 @@
     <ClInclude Include="..\core\hw\naomi\naomi_roms.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_roms_input.h" />
     <ClInclude Include="..\core\hw\pvr\config.h" />
-    <ClInclude Include="..\core\hw\pvr\drkPvr.h" />
-    <ClInclude Include="..\core\hw\pvr\helper_classes.h" />
     <ClInclude Include="..\core\hw\pvr\pvr_mem.h" />
     <ClInclude Include="..\core\hw\pvr\pvr_regs.h" />
     <ClInclude Include="..\core\hw\pvr\pvr_sb_regs.h" />

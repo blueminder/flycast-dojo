@@ -177,7 +177,6 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
 endif()
 
 if(WINDOWS)
-  add_directory(core/rend/d3d11)
   add_directory(core/rend/norend)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
   add_directory(core/linux)

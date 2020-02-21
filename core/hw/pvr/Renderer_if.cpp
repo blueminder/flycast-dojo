@@ -9,74 +9,6 @@
 
 #include <zlib.h>
 
-#include "deps/crypto/md5.h"
-
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
-
-#define FRAME_MD5 0x1
-FILE* fLogFrames;
-FILE* fCheckFrames;
-
-/*
-
-	rendv3 ideas
-	- multiple backends
-	  - ESish
-	    - OpenGL ES2.0
-	    - OpenGL ES3.0
-	    - OpenGL 3.1
-	  - OpenGL 4.x
-	  - Direct3D 10+ ?
-	- correct memory ordering model
-	- resource pools
-	- threaded ta
-	- threaded rendering
-	- rtts
-	- framebuffers
-	- overlays
-
-
-	PHASES
-	- TA submition (memops, dma)
-
-	- TA parsing (defered, rend thread)
-
-	- CORE render (in-order, defered, rend thread)
-
-
-	submition is done in-order
-	- Partial handling of TA values
-	- Gotchas with TA contexts
-
-	parsing is done on demand and out-of-order, and might be skipped
-	- output is only consumed by renderer
-
-	render is queued on RENDER_START, and won't stall the emulation or might be skipped
-	- VRAM integrity is an issue with out-of-order or delayed rendering.
-	- selective vram snapshots require ta parsing to complete in order with REND_START / REND_END
-
-
-	Complications
-	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
-	- multiple versions of different time snapshots of the same texture are required
-	- ta parsing vs frameskip logic
-
-
-	Texture versioning and staging
-	 A memory copy of the texture can be used to temporary store the texture before upload to vram
-	 This can be moved to another thread
-	 If the api supports async resource creation, we don't need the extra copy
-	 Texcache lookups need to be versioned
-
-
-	rendv2x hacks
-	- Only a single pending render. Any renders while still pending are dropped (before parsing)
-	- wait and block for parse/texcache. Render is async
-*/
-
-u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
@@ -358,11 +290,6 @@ static void rend_create_renderer()
 	case 0:
 		renderer = rend_GLES2();
 		break;
-#if FEAT_HAS_SOFTREND
-	case 2:
-		renderer = rend_softrend();
-		break;
-#endif
 #if !defined(GLES) && HOST_OS != OS_DARWIN
 	case 3:
 		renderer = rend_GL4();
@@ -419,9 +346,6 @@ void* rend_thread(void* p)
 
 	rend_init_renderer();
 
-	//we don't know if this is true, so let's not speculate here
-	//renderer->Resize(640, 480);
-
 	while (renderer_enabled)
 	{
 		if (rend_single_frame())
@@ -467,50 +391,7 @@ void rend_start_render()
 	{
 		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
 		
-		if (fLogFrames || fCheckFrames) {
-			MD5Context md5;
-			u8 digest[16];
-
-			MD5Init(&md5);
-			MD5Update(&md5, ctx->tad.thd_root, ctx->tad.End() - ctx->tad.thd_root);
-			MD5Final(digest, &md5);
-
-			if (fLogFrames) {
-				fputc(FRAME_MD5, fLogFrames);
-				fwrite(digest, 1, 16, fLogFrames);
-				fflush(fLogFrames);
-			}
-
-			if (fCheckFrames) {
-				u8 digest2[16];
-				int ch = fgetc(fCheckFrames);
-
-				if (ch == EOF) {
-					INFO_LOG(PVR, "Testing: TA Hash log matches, exiting");
-					exit(1);
-				}
-				
-				verify(ch == FRAME_MD5);
-
-				verify(fread(digest2, 1, 16, fCheckFrames) == 16);
-
-				verify(memcmp(digest, digest2, 16) == 0);
-
-				
-			}
-
-			/*
-			u8* dig = digest;
-			printf("FRAME: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
-				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]
-				);
-			*/
-		}
-
-		//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
-		//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-		if (!ctx->rend.isRenderFramebuffer)
+		if (!ctx->rend.isRenderFramebuffer && !is_rtt)
 			FillBGP(ctx);
 
 		ctx->rend.isRTT=is_rtt;
@@ -537,14 +418,6 @@ void rend_start_render()
 
 void rend_end_render()
 {
-#if 1 //also disabled the printf, it takes quite some time ...
-	#if !defined(_WIN32) && !(defined(__ANDROID__) || defined(TARGET_PANDORA))
-		//too much console spam.
-		//TODO: how about a counter?
-		//if (!re.state) printf("Render > Extended time slice ...\n");
-	#endif
-#endif
-
 	if (pend_rend) {
 #if !defined(TARGET_NO_THREADS)
 		re.Wait();

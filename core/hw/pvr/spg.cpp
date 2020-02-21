@@ -145,22 +145,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 				double spd_cpu=spd_vbs*Frame_Cycles;
 				spd_cpu/=1000000;	//mrhz kthx
 				double fullvbs=(spd_vbs/spd_cpu)*200;
-				double mv=VertexCount/ts/(spd_cpu/200);
-				char mv_c=' ';
 
 				Last_FC=FrameCount;
 
-				if (mv>750)
-				{
-					mv/=1000;	//KV
-					mv_c='K';
-				}
-				if (mv>750)
-				{
-					mv/=1000;	//
-					mv_c='M';
-				}
-				VertexCount=0;
 				vblk_cnt=0;
 
 				const char* mode=0;
@@ -183,11 +170,11 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 				full_rps=(spd_fps+fskip/ts);
 
-				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f",
+				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f MIPS: %.2f",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
-					spd_fps,fskip/ts
-					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
+					spd_fps,fskip/ts,
+					mips_counter/ 1024.0 / 1024.0);
 					mips_counter = 0;
 				
 				fskip=0;
@@ -278,7 +265,6 @@ void SetREP(TA_context* cntx)
 {
 	if (cntx)
 	{
-		VertexCount += cntx->rend.verts.size();
 		int render_end_pending_cycles = cntx->rend.verts.size() * 60;
 		//if (render_end_pending_cycles<500000)
 		render_end_pending_cycles+=500000*3;

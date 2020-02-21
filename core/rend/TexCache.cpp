@@ -221,7 +221,7 @@ bool VramLockedWriteOffset(size_t offset)
 		{
 			if (list[i] != nullptr)
 			{
-				libPvr_LockedBlockWrite(list[i], (u32)offset);
+				rend_text_invl(list[i]);
 
 				if (list[i] != nullptr)
 				{

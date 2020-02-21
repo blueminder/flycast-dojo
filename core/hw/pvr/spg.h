@@ -1,5 +1,4 @@
 #pragma once
-#include "drkPvr.h"
 
 bool spg_Init();
 void spg_Term();

@@ -291,9 +291,6 @@
     <ClCompile Include="..\core\rend\TexCache.cpp">
       <Filter>rend</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\rend\d3d11\d3d11.cpp">
-      <Filter>rend\d3d11</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\deps\coreio\coreio.cpp">
       <Filter>deps\coreio</Filter>
     </ClCompile>
@@ -332,9 +329,6 @@
     </ClCompile>
     <ClCompile Include="..\core\rec-cpp\rec_cpp.cpp">
       <Filter>rec-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\rend\soft\softrend.cpp">
-      <Filter>rend\soft</Filter>
     </ClCompile>
     <ClCompile Include="..\core\hw\naomi\naomi.cpp">
       <Filter>hw\naomi</Filter>
@@ -679,9 +673,6 @@
     <Filter Include="rend\gles">
       <UniqueIdentifier>{cd2c89fd-7a5b-43c8-a940-6ea0d29e9b5d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="rend\d3d11">
-      <UniqueIdentifier>{cc05f61b-c484-40e6-9859-6ca0cd64735c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="deps\coreio">
       <UniqueIdentifier>{23cfa286-fe88-439d-89de-a6a5a23cacc9}</UniqueIdentifier>
     </Filter>
@@ -814,12 +805,6 @@
       <Filter>hw\sh4</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\pvr\config.h">
-      <Filter>hw\pvr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\hw\pvr\drkPvr.h">
-      <Filter>hw\pvr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\hw\pvr\helper_classes.h">
       <Filter>hw\pvr</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\pvr\Renderer_if.h">

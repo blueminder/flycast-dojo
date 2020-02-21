@@ -111,8 +111,6 @@ elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
     list(APPEND core_SRCS ${d_core}/rec-cpp/rec_cpp.cpp)
 endif()
 
-add_definitions(/DFEAT_HAS_SOFTREND=0)
-
 
 ### deps.cmake #################################################################################
 
