@@ -6,6 +6,7 @@
 #include "hw/mem/_vmem.h"
 #include "cheats.h"
 #include "wsi/context.h"
+#include "spg.h"
 
 #include <zlib.h>
 
@@ -29,7 +30,6 @@ u32 fb_watch_addr_end;
 bool fb_dirty;
 
 TA_context* _pvrrc;
-void SetREP(TA_context* cntx);
 static void rend_create_renderer();
 
 static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {

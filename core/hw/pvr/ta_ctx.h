@@ -170,7 +170,6 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
-	u32 LastUsed;
 
 	cMutex rend_inuse;
 
@@ -252,5 +251,4 @@ void FinishRender(TA_context* ctx);
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort(int pass_number);
 bool rend_framePending();

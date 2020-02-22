@@ -129,7 +129,6 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
-text_info raw_GetTexture(TSP tsp, TCW tcw);
 void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
@@ -199,7 +198,6 @@ extern struct ShaderUniforms_t
 struct TextureCacheData : BaseTextureCacheData
 {
 	GLuint texID;   //gl texture
-	u16* pData;
 	virtual std::string GetId() override { return std::to_string(texID); }
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped) override;
 	virtual bool Delete() override;

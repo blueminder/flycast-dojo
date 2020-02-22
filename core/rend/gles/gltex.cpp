@@ -385,31 +385,6 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 	return tf->texID;
 }
 
-
-text_info raw_GetTexture(TSP tsp, TCW tcw)
-{
-	text_info rv = { 0 };
-
-	//lookup texture
-	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
-
-	if (tf->pData == nullptr)
-		tf->Create();
-
-	//update if needed
-	if (tf->NeedsUpdate())
-		tf->Update();
-
-	//return gl texture
-	rv.height = tf->h;
-	rv.width = tf->w;
-	rv.pdata = tf->pData;
-	rv.textype = (u32)tf->tex_type;
-	
-	
-	return rv;
-}
-
 void DoCleanup() {
 
 }

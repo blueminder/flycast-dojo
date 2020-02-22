@@ -4,10 +4,7 @@ bool spg_Init();
 void spg_Term();
 void spg_Reset(bool Manual);
 
-//#define Frame_Cycles (DCclock/60)
-
-//need to replace 511 with correct value
-//#define Line_Cycles (Frame_Cycles/511)
-
 void CalculateSync();
 void read_lightgun_position(int x, int y);
+struct TA_context;
+void SetREP(TA_context* cntx);
