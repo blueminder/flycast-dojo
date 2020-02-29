@@ -167,21 +167,15 @@ void ExecuteDelayslot_RTE()
 
 //General update
 
-//3584 Cycles
-#define AICA_SAMPLE_GCM 441
-#define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
-
 int aica_schid = -1;
 int rtc_schid = -1;
 
-//14336 Cycles
-
-const int AICA_TICK=145124;
+const int AICA_TICK = (u64)SH4_MAIN_CLOCK * 32 / 44100;
 
 static int AicaUpdate(int tag, int c, int j)
 {
-	UpdateArm(512*32);
-	UpdateAica(1*32);
+	libARM_Update(32);
+	libAICA_Update(32);
 
 	return AICA_TICK;
 }

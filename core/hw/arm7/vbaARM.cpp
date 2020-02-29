@@ -4,6 +4,8 @@
 #include "types.h"
 #include "arm7.h"
 
+void libAICA_TimeStep();
+
 //called when plugin is used by emu (you should do first time init here)
 s32 libARM_Init()
 {
@@ -31,7 +33,11 @@ void libARM_SetResetState(u32 state)
 }
 
 //Mainloop
-void libARM_Update(u32 Cycles)
+void libARM_Update(u32 samples)
 {
-	arm_Run(Cycles/arm_sh4_bias);
+	for (int i = 0; i < samples; i++)
+	{
+		arm_Run(512 / arm_sh4_bias);
+		libAICA_TimeStep();
+	}
 }

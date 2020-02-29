@@ -1,6 +1,7 @@
 #include "arm7.h"
 #include "arm_mem.h"
 #include "virt_arm.h"
+#include "hw/mem/_vmem.h"
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
@@ -58,14 +59,13 @@ void CPUUpdateCPSR();
 void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
-void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
 
 //
 // ARM7 interpreter
 //
-void arm_Run_(u32 CycleCount)
+void arm_Run(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
@@ -80,14 +80,6 @@ void arm_Run_(u32 CycleCount)
 
 		reg[15].I = armNextPC + 8;
 		#include "arm-new.h"
-	}
-}
-
-void arm_Run(u32 CycleCount) {
-	for (int i=0;i<32;i++)
-	{
-		arm_Run_(CycleCount/32);
-		libAICA_TimeStep();
 	}
 }
 #endif
@@ -122,7 +114,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 	case 0x1F:
 		reg[R13_USR].I = reg[13].I;
 		reg[R14_USR].I = reg[14].I;
-		reg[17].I = reg[16].I;
+		reg[RN_SPSR].I = reg[RN_CPSR].I;
 		break;
 	case 0x11:
 		CPUSwap(&reg[R8_FIQ].I, &reg[8].I);
@@ -132,32 +124,32 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 		CPUSwap(&reg[R12_FIQ].I, &reg[12].I);
 		reg[R13_FIQ].I = reg[13].I;
 		reg[R14_FIQ].I = reg[14].I;
-		reg[SPSR_FIQ].I = reg[17].I;
+		reg[SPSR_FIQ].I = reg[RN_SPSR].I;
 		break;
 	case 0x12:
 		reg[R13_IRQ].I  = reg[13].I;
 		reg[R14_IRQ].I  = reg[14].I;
-		reg[SPSR_IRQ].I =  reg[17].I;
+		reg[SPSR_IRQ].I =  reg[RN_SPSR].I;
 		break;
 	case 0x13:
 		reg[R13_SVC].I  = reg[13].I;
 		reg[R14_SVC].I  = reg[14].I;
-		reg[SPSR_SVC].I =  reg[17].I;
+		reg[SPSR_SVC].I =  reg[RN_SPSR].I;
 		break;
 	case 0x17:
 		reg[R13_ABT].I  = reg[13].I;
 		reg[R14_ABT].I  = reg[14].I;
-		reg[SPSR_ABT].I =  reg[17].I;
+		reg[SPSR_ABT].I =  reg[RN_SPSR].I;
 		break;
 	case 0x1b:
 		reg[R13_UND].I  = reg[13].I;
 		reg[R14_UND].I  = reg[14].I;
-		reg[SPSR_UND].I =  reg[17].I;
+		reg[SPSR_UND].I =  reg[RN_SPSR].I;
 		break;
 	}
 
-	u32 CPSR = reg[16].I;
-	u32 SPSR = reg[17].I;
+	u32 CPSR = reg[RN_CPSR].I;
+	u32 SPSR = reg[RN_SPSR].I;
 
 	switch(mode)
 	{
@@ -165,7 +157,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 	case 0x1F:
 		reg[13].I = reg[R13_USR].I;
 		reg[14].I = reg[R14_USR].I;
-		reg[16].I = SPSR;
+		reg[RN_CPSR].I = SPSR;
 		break;
 	case 0x11:
 		CPUSwap(&reg[8].I, &reg[R8_FIQ].I);
@@ -176,45 +168,45 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 		reg[13].I = reg[R13_FIQ].I;
 		reg[14].I = reg[R14_FIQ].I;
 		if(saveState)
-			reg[17].I = CPSR;
+			reg[RN_SPSR].I = CPSR;
 		else
-			reg[17].I = reg[SPSR_FIQ].I;
+			reg[RN_SPSR].I = reg[SPSR_FIQ].I;
 		break;
 	case 0x12:
 		reg[13].I = reg[R13_IRQ].I;
 		reg[14].I = reg[R14_IRQ].I;
-		reg[16].I = SPSR;
+		reg[RN_CPSR].I = SPSR;
 		if(saveState)
-			reg[17].I = CPSR;
+			reg[RN_SPSR].I = CPSR;
 		else
-			reg[17].I = reg[SPSR_IRQ].I;
+			reg[RN_SPSR].I = reg[SPSR_IRQ].I;
 		break;
 	case 0x13:
 		reg[13].I = reg[R13_SVC].I;
 		reg[14].I = reg[R14_SVC].I;
-		reg[16].I = SPSR;
+		reg[RN_CPSR].I = SPSR;
 		if(saveState)
-			reg[17].I = CPSR;
+			reg[RN_SPSR].I = CPSR;
 		else
-			reg[17].I = reg[SPSR_SVC].I;
+			reg[RN_SPSR].I = reg[SPSR_SVC].I;
 		break;
 	case 0x17:
 		reg[13].I = reg[R13_ABT].I;
 		reg[14].I = reg[R14_ABT].I;
-		reg[16].I = SPSR;
+		reg[RN_CPSR].I = SPSR;
 		if(saveState)
-			reg[17].I = CPSR;
+			reg[RN_SPSR].I = CPSR;
 		else
-			reg[17].I = reg[SPSR_ABT].I;
+			reg[RN_SPSR].I = reg[SPSR_ABT].I;
 		break;
 	case 0x1b:
 		reg[13].I = reg[R13_UND].I;
 		reg[14].I = reg[R14_UND].I;
-		reg[16].I = SPSR;
+		reg[RN_CPSR].I = SPSR;
 		if(saveState)
-			reg[17].I = CPSR;
+			reg[RN_SPSR].I = CPSR;
 		else
-			reg[17].I = reg[SPSR_UND].I;
+			reg[RN_SPSR].I = reg[SPSR_UND].I;
 		break;
 	default:
 		ERROR_LOG(AICA_ARM, "Unsupported ARM mode %02x", mode);
@@ -232,23 +224,23 @@ void CPUUpdateCPSR()
 
 	CPSR.I = reg[RN_CPSR].I & 0x40;
 
-	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
+	CPSR.PSR.NZCV = reg[RN_PSR_FLAGS].FLG.NZCV;
 
 	if (!armFiqEnable)
 		CPSR.I |= 0x40;
 	if(!armIrqEnable)
 		CPSR.I |= 0x80;
 
-	CPSR.PSR.M=armMode;
+	CPSR.PSR.M = armMode;
 	
-	reg[16].I = CPSR.I;
+	reg[RN_CPSR].I = CPSR.I;
 }
 
 void CPUUpdateFlags()
 {
-	u32 CPSR = reg[16].I;
+	u32 CPSR = reg[RN_CPSR].I;
 
-	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
+	reg[RN_PSR_FLAGS].FLG.NZCV = reg[RN_CPSR].PSR.NZCV;
 
 	armIrqEnable = (CPSR & 0x80) ? false : true;
 	armFiqEnable = (CPSR & 0x40) ? false : true;
@@ -292,11 +284,11 @@ void arm_Reset()
 	// clean registers
 	memset(&arm_Reg[0], 0, sizeof(arm_Reg));
 
-	armMode = 0x1F;
+	armMode = 0x13;
 
 	reg[13].I = 0x03007F00;
 	reg[15].I = 0x0000000;
-	reg[16].I = 0x00000000;
+	reg[RN_CPSR].I = 0x00000000;
 	reg[R13_IRQ].I = 0x03007FA0;
 	reg[R13_SVC].I = 0x03007FE0;
 	armIrqEnable = true;      
@@ -306,7 +298,7 @@ void arm_Reset()
 	C_FLAG = V_FLAG = N_FLAG = Z_FLAG = false;
 
 	// disable FIQ
-	reg[16].I |= 0x40;
+	reg[RN_CPSR].I |= 0x40;
 
 	CPUUpdateCPSR();
 
@@ -580,14 +572,6 @@ void InitHash()
 }
 
 
-
-
-/*
- *	
- *	X86 Compiler
- *
- */
-
 void  armEmit32(u32 emit32);
 void *armGetEmitPtr();
 
@@ -598,15 +582,15 @@ void *armGetEmitPtr();
 u8* icPtr;
 u8* ICache;
 
-extern const u32 ICacheSize=1024*1024;
+extern const u32 ICacheSize = 1024 * 1024;
 #ifdef _WIN32
-u8 ARM7_TCB[ICacheSize+4096];
+alignas(4096) u8 ARM7_TCB[ICacheSize];
 #elif HOST_OS == OS_LINUX
 
-u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
+alignas(4096) u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 
 #elif HOST_OS==OS_DARWIN
-u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
+alignas(4096) u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
 #endif
@@ -648,12 +632,12 @@ void armv_prof(OpType opt,u32 op,u32 flg);
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
 extern "C" void DYNACALL
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__llvm__)
 	// Avoid inlining / duplicating / whatever
 	__attribute__ ((optimize(0)))
 #endif
 		arm_mainloop(u32 cycl, void* regs, void* entrypoints);
-extern "C" void DYNACALL arm_compilecode();
+extern "C" u32 DYNACALL arm_compilecode();
 
 template <bool Load, bool Byte>
 u32 DYNACALL DoMemOp(u32 addr,u32 data)
@@ -907,13 +891,13 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 
 			Everything else handled
 		*/
-		arm_printf("ARM: MEM %08X L/S:%d, AWB:%d!\n",opcd,(opcd>>20)&1,(opcd>>21)&1);
+		arm_printf("ARM: MEM %08X L/S:%d, AWB:%d!",opcd,(opcd>>20)&1,(opcd>>21)&1);
 
 		return VOT_Read;
 	}
 	else if ((opcd>>25)==(0xE6/2) && CHK_BTS(0x7,4,0) )
 	{
-		arm_printf("ARM: MEM REG to Reg %08X\n",opcd);
+		arm_printf("ARM: MEM REG to Reg %08X",opcd);
 		
 		/*
 			I=1
@@ -960,7 +944,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//Offset
 		opcd |= 4;
 
-		arm_printf("ARM: MEM TFX R %08X\n",opcd);
+		arm_printf("ARM: MEM TFX R %08X",opcd);
 
 		return VOT_Read;
 	}
@@ -1002,7 +986,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//Offset
 		opcd |= 4;
 
-		arm_printf("ARM: MEM TFX W %08X\n",opcd);
+		arm_printf("ARM: MEM TFX W %08X",opcd);
 
 		return VOT_Read;
 	}
@@ -1016,12 +1000,12 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 	}
 	else if ((opcd>>25)==(0xE8/2) && CHK_BTS(32768,0,0))
 	{
-		arm_printf("ARM: MEM FB %08X\n",opcd);
+		arm_printf("ARM: MEM FB %08X",opcd);
 		flags|=OP_MFB; //(flag Just for the fallback counters)
 	}
 	else
 	{
-		arm_printf("ARM: FB %08X\n",opcd);
+		arm_printf("ARM: FB %08X",opcd);
 	}
 
 	//by default fallback to interpr
@@ -1029,7 +1013,8 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 }
 
 //helpers ...
-#if HOST_CPU == CPU_ARM64
+#if HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64
+
 extern void LoadReg(eReg rd,u32 regn,ConditionCode cc=CC_AL);
 extern void StoreReg(eReg rd,u32 regn,ConditionCode cc=CC_AL);
 extern void armv_mov(ARM::eReg regd, ARM::eReg regn);
@@ -1040,9 +1025,13 @@ extern void armv_lsl(ARM::eReg regd, ARM::eReg regn, u32 imm);
 extern void armv_bic(ARM::eReg regd, ARM::eReg regn, u32 imm);
 extern void *armv_start_conditional(ARM::ConditionCode cc);
 extern void armv_end_conditional(void *ref);
+#if HOST_CPU == CPU_ARM64
 // Use w25 for temp mem save because w9 is not callee-saved
 #define r9 ((ARM::eReg)25)
-#else
+#endif
+
+#elif HOST_CPU == CPU_ARM
+
 void LoadReg(eReg rd,u32 regn,ConditionCode cc=CC_AL)
 {
 	LDR(rd,r8,(u8*)&reg[regn].I-(u8*)&reg[0].I,Offset,cc);
@@ -1156,10 +1145,10 @@ void StoreAndRename(u32 opcd, u32 bitpos)
 	StoreReg((eReg)nreg,reg);
 }
 
-#if HOST_CPU == CPU_ARM64
+#if HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64
 extern void LoadFlags();
 extern void StoreFlags();
-#else
+#elif HOST_CPU == CPU_ARM
 //For COND
 void LoadFlags()
 {
@@ -1187,9 +1176,9 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 	//Load arm flags, RS0/8/16, RD12/16 (as indicated by the decoder flags)
 
 	if (flag & OP_HAS_FLAGS_READ)
-	{
 		LoadFlags();
-	}
+
+	void *cond_op_label = armv_start_conditional((ARM::ConditionCode)(opcd >> 28));
 
 	// Dynamic LSL/LSR/ASR/ROR adds +4 to pc due to delay
 	bool shiftByReg = !(opcd & (1 << 25)) && (opcd & (1 << 4));
@@ -1211,7 +1200,7 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 
 	//Opcode has been modified to use the new regs
 	//Emit it ...
-	arm_printf("Arm Virtual: %08X -> %08X\n",orig,opcd);
+	arm_printf("Arm Virtual: %08X -> %08X",orig,opcd);
 	armEmit32(opcd);
 
 	//Store arm flags, rd12/rd16 (as indicated by the decoder flags)
@@ -1229,6 +1218,8 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 
 	if (flag & OP_HAS_FLAGS_WRITE)
 		StoreFlags();
+
+	armv_end_conditional(cond_op_label);
 }
 
 u32 nfb,ffb,bfb,mfb;
@@ -1238,6 +1229,8 @@ void *armGetEmitPtr()
 	if (icPtr < (ICache+ICacheSize-1024))	//ifdebug
 		return static_cast<void *>(icPtr);
 
+	ERROR_LOG(AICA_ARM, "JIT buffer full: %zd bytes free", ICacheSize - (icPtr - ICache));
+	die("AICA ARM code buffer full");
 	return NULL;
 }
 
@@ -1391,7 +1384,7 @@ void armv_prof(OpType opt,u32 op,u32 flags)
 	}
 }
 
-naked void DYNACALL arm_compilecode()
+naked u32 DYNACALL arm_compilecode()
 {
 #if HOST_OS == OS_LINUX
 	__asm ( "call CompileCode	\n\t"
@@ -1587,12 +1580,8 @@ void armv_MOV32(eReg regn, u32 imm)
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
 void arm_Run(u32 CycleCount)
 {
-	for (int i = 0; i < 32; i++)
-	{
-		if (Arm7Enabled)
-			arm_mainloop(CycleCount / 32, arm_Reg, EntryPoints);
-		libAICA_TimeStep();
-	}
+	if (Arm7Enabled)
+		arm_mainloop(CycleCount, arm_Reg, EntryPoints);
 }
 
 
@@ -1638,14 +1627,14 @@ void DYNACALL MSR_do(u32 v)
 	{
 		if(armMode > 0x10 && armMode < 0x1f) /* !=0x10 ?*/
 		{
-			reg[17].I = (reg[17].I & 0x00FFFF00) | (v & 0xFF0000FF);
+			reg[RN_SPSR].I = (reg[RN_SPSR].I & 0x00FFFF00) | (v & 0xFF0000FF);
 		}
 	}
 	else
 	{
 		CPUUpdateCPSR();
 	
-		u32 newValue = reg[16].I;
+		u32 newValue = reg[RN_CPSR].I;
 		if(armMode > 0x10)
 		{
 			newValue = (newValue & 0xFFFFFF00) | (v & 0x000000FF);
@@ -1657,7 +1646,7 @@ void DYNACALL MSR_do(u32 v)
 		{
 			CPUSwitchMode(newValue & 0x1f, false);
 		}
-		reg[16].I = newValue;
+		reg[RN_CPSR].I = newValue;
 		CPUUpdateFlags();
 	}
 }
@@ -1681,16 +1670,12 @@ extern "C" void CompileCode()
 	//emitter/block setup
 	armv_setup();
 
-	//the ops counter is used to terminate the block (max op count for a single block is 32 currently)
-	//We don't want too long blocks for timing accuracy
-	u32 ops=0;
-
 	u32 Cycles=0;
 
-	for(;;)
+	//the ops counter is used to terminate the block (max op count for a single block is 32 currently)
+	//We don't want too long blocks for timing accuracy
+	for (u32 ops = 0; ops < 32; ops++)
 	{
-		ops++;
-
 		// Each opcode takes at least 6 cycles
 		Cycles += 6;
 
@@ -1745,13 +1730,13 @@ extern "C" void CompileCode()
 					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
 				}
 
+				void *ref = armv_start_conditional(cc);
 				LoadReg(r0,opcd&0xF);
 #if HOST_CPU==CPU_X86
 				x86e->Emit(op_and32, &virt_arm_reg(0), 0xfffffffc);
 #else
 				armv_bic(r0, r0, 3);
 #endif
-				void *ref = armv_start_conditional(cc);
 				StoreReg(r0,R15_ARM_NEXT,cc);
 				armv_end_conditional(ref);
 				Cycles += 3;
@@ -1910,13 +1895,9 @@ extern "C" void CompileCode()
 				armv_call((void*)&CPUUpdateCPSR);
 
 				if (opcd & (1<<22))
-				{
-					LoadReg(r0,17);
-				}
+					LoadReg(r0, RN_SPSR);
 				else
-				{
-					LoadReg(r0,16);
-				}
+					LoadReg(r0, RN_CPSR);
 
 				StoreReg(r0,Rd);
 			}
@@ -2020,7 +2001,7 @@ extern "C" void CompileCode()
 			break;
 
 		default:
-			die("can't happen\n");
+			die("can't happen");
 		}
 
 #if HOST_CPU==CPU_X86
@@ -2033,7 +2014,7 @@ extern "C" void CompileCode()
 		if (op_flags & OP_SETS_PC)
 		{
 			//x86e->Emit(op_call,x86_ptr_imm(DumpRegs)); // great debugging tool
-			arm_printf("ARM: %06X: Block End %d\n",pc,ops);
+			arm_printf("ARM: %06X: Block End %d",pc,ops);
 
 #if HOST_CPU==CPU_X86 && 0
 			//Great fallback finder, also spams console
@@ -2047,16 +2028,15 @@ extern "C" void CompileCode()
 		}
 
 		//block size limit ?
-		if (ops>32)
+		if (ops == 31)
 		{
-			arm_printf("ARM: %06X: Block split %d\n",pc,ops);
+			arm_printf("ARM: %06X: Block split", pc);
 
-			armv_imm_to_reg(R15_ARM_NEXT,pc+4);
-			break;
+			armv_imm_to_reg(R15_ARM_NEXT, pc + 4);
 		}
 		
 		//Goto next opcode
-		pc+=4;
+		pc += 4;
 	}
 
 	armv_end((void*)rv,Cycles);
@@ -2101,24 +2081,10 @@ void armt_init()
 {
 	InitHash();
 
-	//align to next page ..
-	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
+	if (!vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache))
+		die("vmem_platform_prepare_jit_block failed");
 
-#ifdef TARGET_IPHONE
-	//Can't just mprotect on iOS
-	munmap(ICache, ICacheSize);
-	ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-#endif
-
-	mem_region_set_exec(ICache, ICacheSize);
-
-#ifdef TARGET_IPHONE
-	memset((u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,ICacheSize);
-#else
-	memset(ICache,0xFF,ICacheSize);
-#endif
-
-	icPtr=ICache;
+	icPtr = ICache;
 }
 
 

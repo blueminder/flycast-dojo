@@ -1,0 +1,728 @@
+#include "gtest/gtest.h"
+#include "types.h"
+#include "hw/mem/_vmem.h"
+#include "hw/arm7/arm7.h"
+#include "hw/aica/aica_if.h"
+
+extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
+extern void *EntryPoints[];
+extern "C" void CompileCode();
+void FlushCache();
+
+void dc_init();
+void dc_reset(bool hard);
+
+static const u32 N_FLAG = 1 << 31;
+static const u32 Z_FLAG = 1 << 30;
+static const u32 C_FLAG = 1 << 29;
+static const u32 V_FLAG = 1 << 28;
+static const u32 NZCV_MASK = N_FLAG | Z_FLAG | C_FLAG | V_FLAG;
+
+class AicaArmTest : public ::testing::Test {
+protected:
+	void SetUp() override {
+		if (!_vmem_reserve())
+			die("_vmem_reserve failed");
+		dc_init();
+		dc_reset(true);
+	}
+
+	void PrepareOp(u32 op)
+	{
+		arm_Reg[R15_ARM_NEXT].I = 0;
+		*(u32*)&aica_ram[0] = op;
+		*(u32*)&aica_ram[4] = 0xeafffffd;	// b pc+8-12
+		FlushCache();
+		CompileCode();
+	}
+	void RunOp()
+	{
+		((void (*)())EntryPoints[0])();
+	}
+	void ResetNZCV()
+	{
+		arm_Reg[RN_PSR_FLAGS].I &= ~NZCV_MASK;
+	}
+};
+#define ASSERT_NZCV_EQ(expected) ASSERT_EQ(arm_Reg[RN_PSR_FLAGS].I & NZCV_MASK, (expected));
+
+TEST_F(AicaArmTest, ArithmeticOpsTest)
+{
+	PrepareOp(0xe0810002);	// add r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xbaad0000;
+	arm_Reg[2].I = 0x0000cafe;
+	arm_Reg[RN_PSR_FLAGS].I |= NZCV_MASK;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+	ASSERT_NZCV_EQ(NZCV_MASK);
+
+	PrepareOp(0xe0810000);	// add r0, r1, r0
+	arm_Reg[0].I = 11;
+	arm_Reg[1].I = 22;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 33);
+
+	PrepareOp(0xe0410002);	// sub r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xbaadcafe;
+	arm_Reg[2].I = 0x0000cafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaad0000);
+	ASSERT_NZCV_EQ(NZCV_MASK);
+
+	PrepareOp(0xe0410000);	// sub r0, r1, r0
+	arm_Reg[0].I = 11;
+	arm_Reg[1].I = 22;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 11);
+
+	PrepareOp(0xe0910002);	// adds r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x80000000;
+	arm_Reg[2].I = 0x80000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG | V_FLAG);	// Z,C,V
+
+	PrepareOp(0xe0510002);	// subs r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xbaadcafe;
+	arm_Reg[2].I = 0x0000cafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaad0000);
+	ASSERT_NZCV_EQ(N_FLAG | C_FLAG);	// N,C
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xbaadcafe;
+	arm_Reg[2].I = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);	// Z,C
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x80000000;
+	arm_Reg[2].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x7fffffff);
+	ASSERT_NZCV_EQ(C_FLAG | V_FLAG);	// C,V
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xffffffff;
+	arm_Reg[2].I = 0xffffffff;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);	// Z,C
+
+	PrepareOp(0xe0b10002);	// adcs r0, r1, r2
+	arm_Reg[RN_PSR_FLAGS].I &= ~NZCV_MASK;
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 3);
+	ASSERT_NZCV_EQ(0);	//
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG; // set C
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 4);
+	ASSERT_NZCV_EQ(0);	//
+
+	// from armwrestler
+	PrepareOp(0xe0d22002);	// sbcs r2,r2,r2
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;	// set C
+	arm_Reg[2].I = 0xFFFFFFFF;
+	RunOp();
+	ASSERT_EQ(arm_Reg[2].I, 0);
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);
+
+	// from armwrestler
+	PrepareOp(0xe2d22000);	// sbcs r2,r2,#0
+	ResetNZCV();
+	arm_Reg[2].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[2].I, -1);
+	ASSERT_NZCV_EQ(N_FLAG);
+
+	PrepareOp(0xe0d10002);	// sbcs r0, r1, r2
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, -2);
+	ASSERT_NZCV_EQ(N_FLAG);	// N
+
+	PrepareOp(0xe0710002);	// rsbs r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_NZCV_EQ(0);	//
+
+	PrepareOp(0xe0f10002);	// rscs r0, r1, r2
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ASSERT_NZCV_EQ(0x60000000);	// Z,C
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG; // C set
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_NZCV_EQ(0x20000000);	// C
+
+	PrepareOp(0xe1500001);	// cmp r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 2;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(0x20000000);	// C
+
+	PrepareOp(0xe1700001);	// cmn r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 2;
+	arm_Reg[1].I = -1;
+	RunOp();
+	ASSERT_NZCV_EQ(0x20000000);	// C
+}
+
+TEST_F(AicaArmTest, LogicOpsTest)
+{
+	PrepareOp(0xe1a00001);	// mov r0, r1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+
+	PrepareOp(0xe3c100ff);	// bic r0, r1, 0xff
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xffff;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xff00);
+
+	PrepareOp(0xe0010002);	// and r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xff0f;
+	arm_Reg[2].I = 0xf0f0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xf000);
+
+	PrepareOp(0xe0010000);	// and r0, r1, r0
+	arm_Reg[0].I = 0xf0f0f0f0;
+	arm_Reg[1].I = 0xffffffff;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xf0f0f0f0);
+
+	PrepareOp(0xe1a00251);	// asr r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xfffffff8;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xfffffffe);
+
+	PrepareOp(0xe1a00241); // asr r0, r1, 4
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x0ffffff0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x00ffffff);
+
+	PrepareOp(0xe0210002);	// eor r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0xffff0000;
+	arm_Reg[2].I = 0xf0f0f0f0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x0f0ff0f0);
+
+	PrepareOp(0xe0210000);	// eor r0, r1, r0
+	arm_Reg[0].I = 0xf0f0f0f0;
+	arm_Reg[1].I = 0xffffffff;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x0f0f0f0f);
+
+	PrepareOp(0xe1810000);	// orr r0, r1, r0
+	arm_Reg[0].I = 0xf0f0f0f0;
+	arm_Reg[1].I = 0x0f0f0f0f;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xffffffff);
+
+	PrepareOp(0xe1a00211);	// lsl r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 8;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x100);
+
+	PrepareOp(0xe1a00231);	// lsr r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x100;
+	arm_Reg[2].I = 4;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x10);
+
+	PrepareOp(0xe1a00271);	// ror r0, r1, r2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x12345678;
+	arm_Reg[2].I = 16;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x56781234);
+
+	PrepareOp(0xe1300001);	// teq r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(0);
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG | V_FLAG;	// set C,V
+	arm_Reg[0].I = 1;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG | V_FLAG);	// Z,C,V
+
+	PrepareOp(0xe1100001);	// tst r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 1;
+	arm_Reg[1].I = 2;
+	RunOp();
+	ASSERT_NZCV_EQ(0x40000000);	// Z
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG | V_FLAG;	// set C,V
+	arm_Reg[0].I = 3;
+	arm_Reg[1].I = 2;
+	RunOp();
+	ASSERT_NZCV_EQ(C_FLAG | V_FLAG);	// C,V
+}
+
+TEST_F(AicaArmTest, Operand2ImmTest)
+{
+	PrepareOp(0xe0810202);	// add r0, r1, r2, LSL #4
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x21);
+
+	PrepareOp(0xe0810142); // add r0, r1, r2, ASR #2
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = -8;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, -1);
+
+	PrepareOp(0xe08100a2); // add r0, r1, r2, LSR #1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x40000001);
+
+	PrepareOp(0xe0810862); // add r0, r1, r2, ROR #16
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x56771234;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x12345678);
+
+	PrepareOp(0xe0810062);	// add r0, r1, r2, RRX
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x22222221;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x11111111);
+	ASSERT_NZCV_EQ(0);	//
+
+	PrepareOp(0xe1910062);	// orrs r0, r1, r2, RRX
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;	// set C
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x22222221;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x91111111);
+	ASSERT_NZCV_EQ(0xA0000000); // N,C
+
+	// When an Operand2 constant is used with the instructions MOVS, MVNS, ANDS, ORRS, ORNS, EORS, BICS, TEQ or TST, the carry flag is updated to bit[31] of the constant,
+	// if the constant is greater than 255 and can be produced by shifting an 8-bit value.
+	PrepareOp(0xe3b00102);	// movs r0, #0x80000000
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x80000000);
+	ASSERT_NZCV_EQ(N_FLAG | C_FLAG); // N,C
+
+	PrepareOp(0xe3f00000);	// mvns r0, #0
+	arm_Reg[RN_PSR_FLAGS].I &= ~NZCV_MASK;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xffffffff);
+	ASSERT_NZCV_EQ(N_FLAG); // N
+}
+
+TEST_F(AicaArmTest, Operand2RegShiftTest)
+{
+	PrepareOp(0xe1810312);	// orr r0, r1, r2, LSL r3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x10;
+	arm_Reg[3].I = 8;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x1001);
+
+	PrepareOp(0xe1810352);	// orr r0, r1, r2, ASR r3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80000000;
+	arm_Reg[3].I = 30;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xffffffff);
+
+	PrepareOp(0xe1810332);	// orr r0, r1, r2, LSR r3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80000000;
+	arm_Reg[3].I = 30;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 3);
+
+	PrepareOp(0xe1810372);	// orr r0, r1, r2, ROR r3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x43208765;
+	arm_Reg[3].I = 16;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x87654321);
+}
+
+TEST_F(AicaArmTest, CarryTest)
+{
+	PrepareOp(0xe1910022); // orrs r0, r1, r2, LSR #32
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_NZCV_EQ(C_FLAG); // C
+
+	PrepareOp(0xe1910822); // orrs r0, r1, r2, LSR #16
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80008000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x8001);
+	ASSERT_NZCV_EQ(C_FLAG); // C
+
+	PrepareOp(0xe1910042); // orrs r0, r1, r2, ASR #32
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x80000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xffffffff);
+	ASSERT_NZCV_EQ(N_FLAG | C_FLAG); // N,C
+
+	PrepareOp(0xe1910842); // orrs r0, r1, r2, ASR #16
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x00008000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_NZCV_EQ(C_FLAG); // C
+	arm_Reg[RN_PSR_FLAGS].I &= ~NZCV_MASK;
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x00004000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_NZCV_EQ(0); //
+
+	PrepareOp(0xe1910802); // orrs r0, r1, r2, LSL #16
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	arm_Reg[2].I = 0x00010001;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0x10001);
+	ASSERT_NZCV_EQ(C_FLAG); // C
+}
+
+TEST_F(AicaArmTest, MemoryTest)
+{
+	PrepareOp(0xe5910004); // ldr r0, [r1, #4]
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x10000;
+	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+
+	PrepareOp(0xe5810008); // str r0, [r1, #8]
+	arm_Reg[0].I = 0xbaadcafe;
+	arm_Reg[1].I = 0x10000;
+	*(u32*)&aica_ram[0x10008] = 0;
+	RunOp();
+	ASSERT_EQ(*(u32*)&aica_ram[0x10008], 0xbaadcafe);
+
+	PrepareOp(0xe5b10004);	// ldr r0, [r1, #4]!
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x10000;
+	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+	ASSERT_EQ(arm_Reg[1].I, 0x10004);
+
+	PrepareOp(0xe5b10004);	// ldr r0, [r1], #4
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x10004;
+	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+	ASSERT_EQ(arm_Reg[1].I, 0x10008);
+
+	PrepareOp(0xe4900004);	// ldr r0, [r0], #4
+	arm_Reg[0].I = 0x10004;
+	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+
+	PrepareOp(0xe4900004);	// ldr r0, [r0], #4
+	arm_Reg[0].I = 0x10004;
+	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+
+	PrepareOp(0xe5b00004);	// ldr r0, [r0, #4]!
+	arm_Reg[0].I = 0x10000;
+	*(u32*)&aica_ram[0x10000] = 0xbaadcafe;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+}
+
+TEST_F(AicaArmTest, PcRelativeTest)
+{
+	PrepareOp(0xe38f0010);	// orr r0, r15, #16
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 8 + 16);
+
+	PrepareOp(0xe180011f); // orr r0, r15, LSL r1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 12 << 1);
+}
+
+TEST_F(AicaArmTest, ConditionalTest)
+{
+	PrepareOp(0x01a00001);	// moveq r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0x11a00001);	// movne r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0x21a00001);	// movcs r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0x31a00001);	// movcc r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0x41a00001);	// movmi r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0x51a00001);	// movpl r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0x61a00001);	// movvs r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0x71a00001);	// movvc r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0x81a00001);	// movhi r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0x91a00001);	// movls r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I = Z_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0xa1a00001);	// movge r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0xb1a00001);	// movlt r0, r1
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+
+	PrepareOp(0xc1a00001);	// movgt r0, r1
+	// Z==0 && N==V
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0xd1a00001);	// movle r0, r1
+	// Z==1 || N!=V
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[RN_PSR_FLAGS].I |= V_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	arm_Reg[0].I = 0;
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+}
+
+TEST_F(AicaArmTest, JumpTest)
+{
+	PrepareOp(0xea00003e);	// b +248
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+
+	PrepareOp(0xeb00003e);	// bl +248
+	arm_Reg[14].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+	ASSERT_EQ(arm_Reg[14].I, 4);
+
+	PrepareOp(0xe1a0f000);	// mov pc, r0
+	arm_Reg[0].I = 0x100;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+
+	PrepareOp(0xc1a0f000);	// movgt pc, r0
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
+	arm_Reg[0].I = 0x100;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 4);
+	ResetNZCV();
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+}

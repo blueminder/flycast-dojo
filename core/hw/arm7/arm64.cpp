@@ -236,9 +236,6 @@ void armEmit32(u32 opcode)
 			 || op_type == 12 || op_type == 13 || op_type == 15 || op_type == 14;	// ORR, MOV, MVN, BIC
 	bool set_carry_bit = false;
 
-	ARM::ConditionCode condition = (ARM::ConditionCode)(opcode >> 28);
-	void *cond_op_label = armv_start_conditional(condition);
-
 	if (opcode & (1 << 25))
 	{
 		// op2 is imm8r4
@@ -256,12 +253,7 @@ void armEmit32(u32 opcode)
 		if (opcode & (1 << 4))
 		{
 			// shift by register
-			// FIXME Carry must be set based on shift/rotate
-			//if (set_flags && logical_op)
-			//	die("shift by register with set flags C - not implemented");
 			const Register& shift_reg = Register::GetWRegFromCode((opcode >> 8) & 15);
-
-			Label shift_by_32_label;
 
 			switch (shift)
 			{
@@ -468,7 +460,6 @@ void armEmit32(u32 opcode)
 		assembler->Bfi(x0, x14, 29, 1);		// C is bit 29 in NZCV
 		assembler->Msr(NZCV, x0);
 	}
-	armv_end_conditional(cond_op_label);
 }
 
 //
