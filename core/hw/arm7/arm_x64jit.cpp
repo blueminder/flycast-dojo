@@ -57,13 +57,13 @@ static Xbyak::Reg32 arm_to_x86_reg(ARM::eReg reg)
 void LoadReg(ARM::eReg rd, u32 regn, ARM::ConditionCode cc = ARM::CC_AL)
 {
 	DEBUG_LOG(AICA_ARM, "Loading r%d into %s", regn, arm_to_x86_reg(rd).toString());
-	assembler->mov(arm_to_x86_reg(rd), dword[&arm_Reg[regn].I]);
+	assembler->mov(arm_to_x86_reg(rd), dword[rip + &arm_Reg[regn].I]);
 }
 
 void StoreReg(ARM::eReg rd, u32 regn, ARM::ConditionCode cc = ARM::CC_AL)
 {
 	DEBUG_LOG(AICA_ARM, "Storing %s to r%d", arm_to_x86_reg(rd).toString(), regn);
-	assembler->mov(dword[&arm_Reg[regn].I], arm_to_x86_reg(rd));
+	assembler->mov(dword[rip + &arm_Reg[regn].I], arm_to_x86_reg(rd));
 }
 
 const u32 N_FLAG = 1 << 31;
@@ -77,7 +77,7 @@ void *armv_start_conditional(ARM::ConditionCode cc)
 		return NULL;
 	Xbyak::Label *label = new Xbyak::Label();
 	cc = (ARM::ConditionCode)((u32)cc ^ 1);	// invert the condition
-	assembler->mov(eax, dword[&arm_Reg[RN_PSR_FLAGS].I]);
+	assembler->mov(eax, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 	switch (cc)
 	{
 	case ARM::EQ:	// Z==1
@@ -187,7 +187,7 @@ void StoreFlags()
 void armv_imm_to_reg(u32 regn, u32 imm)
 {
 	assembler->mov(eax, imm);
-	assembler->mov(dword[&arm_Reg[regn].I], eax);
+	assembler->mov(dword[rip + &arm_Reg[regn].I], eax);
 }
 
 void armv_call(void* loc)
@@ -211,7 +211,7 @@ void armv_intpr(u32 opcd)
 	//Call interpreter
 	assembler->mov(x86_regs[0], opcd);
 	armv_call((void*)&arm_single_op);
-	assembler->sub(dword[&arm_Reg[CYCL_CNT].I], eax);
+	assembler->sub(dword[rip + &arm_Reg[CYCL_CNT].I], eax);
 }
 
 void armv_end(void* codestart, u32 cycles)
@@ -221,7 +221,7 @@ void armv_end(void* codestart, u32 cycles)
 
 	/*
 	//pop registers & return
-	assembler->sub(dword[&arm_Reg[CYCL_CNT].I], cycles);
+	assembler->sub(dword[rip + &arm_Reg[CYCL_CNT].I], cycles);
 	assembler->js((void*)&arm_exit);
 
 	assembler->jmp((void*)&arm_dispatch);
@@ -410,7 +410,7 @@ void armEmit32(u32 opcode)
 					else if (shift == ARM::S_ROR)
 					{
 						// RRX
-						assembler->mov(r10d, dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I]);
+						assembler->mov(r10d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 						assembler->shl(r10d, 2);
 						assembler->and_(r10d, 0x80000000);		// ecx[31] = C
 						assembler->mov(eax, rm);
@@ -558,7 +558,7 @@ void armEmit32(u32 opcode)
 		save_v_flag = false;
 		break;
 	case 5:		// ADC
-		assembler->mov(r11d, dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I]);
+		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		assembler->and_(r11d, C_FLAG);
 		assembler->neg(r11d);
 		if (op2 == rd)
@@ -577,7 +577,7 @@ void armEmit32(u32 opcode)
 		break;
 	case 6:		// SBC
 		// rd = rn - op2 - !C
-		assembler->mov(r11d, dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I]);
+		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		assembler->and_(r11d, C_FLAG);
 		assembler->xor_(r11d, C_FLAG);	// on arm, -1 if carry is clear
 		assembler->neg(r11d);
@@ -601,7 +601,7 @@ void armEmit32(u32 opcode)
 		break;
 	case 7:		// RSC
 		// rd = op2 - rn - !C
-		assembler->mov(r11d, dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I]);
+		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		assembler->and_(r11d, C_FLAG);
 		assembler->xor_(r11d, C_FLAG);	// on arm, -1 if carry is clear
 		assembler->neg(r11d);
@@ -681,7 +681,7 @@ void armEmit32(u32 opcode)
 		if (save_v_flag)
 			assembler->or_(eax, r11d);
 
-		assembler->mov(r11d, dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I]);
+		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		if (set_carry_bit)
 		{
 			if (save_v_flag)
@@ -699,7 +699,7 @@ void armEmit32(u32 opcode)
 				assembler->and_(r11d, ~(Z_FLAG | N_FLAG));
 		}
 		assembler->or_(r11d, eax);
-		assembler->mov(dword[(u8*)&arm_Reg[RN_PSR_FLAGS].I], r11d);
+		assembler->mov(dword[rip + &arm_Reg[RN_PSR_FLAGS].I], r11d);
 	}
 }
 
