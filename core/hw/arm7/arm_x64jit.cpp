@@ -802,13 +802,13 @@ void arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 #define _U
 #endif
 __asm__ (
-		".globl arm_compilecode				\n"
-	"arm_compilecode:						\n\t"
+		".globl " _U"arm_compilecode		\n"
+	_U"arm_compilecode:						\n\t"
 		"call " _U"CompileCode				\n\t"
 		"jmp " _U"arm_dispatch				\n\t"
 
-		".globl arm_mainloop				\n"
-	"arm_mainloop:							\n\t"	//  arm_mainloop(cycles, regs, entry points)
+		".globl " _U"arm_mainloop			\n"
+	_U"arm_mainloop:						\n\t"	//  arm_mainloop(cycles, regs, entry points)
 		"pushq %r14							\n\t"
 		"pushq %r15							\n\t"
 		"pushq %rbx							\n\t"
@@ -816,20 +816,20 @@ __asm__ (
 		"subq $32, %rsp						\n\t"
 #endif
 
-		"movl arm_Reg + 192(%rip), %r14d	\n\t"	// CYCL_CNT
+		"movl " _U"arm_Reg + 192(%rip), %r14d \n\t"	// CYCL_CNT
 #ifdef _WIN32
 		"add %ecx, %r14d					\n\t"	// add cycles for this timeslice
 		"movq %r8, entry_points(%rip)		\n\t"
 #else
 		"add %edi, %r14d					\n\t"	// add cycles for this timeslice
-		"movq %rdx, entry_points(%rip)		\n\t"
+		"movq %rdx, " _U"entry_points(%rip)	\n\t"
 #endif
 
-		".globl arm_dispatch				\n"
-	"arm_dispatch:							\n\t"
-		"movq entry_points(%rip), %rdx		\n\t"
-		"movl arm_Reg + 184(%rip), %ecx		\n\t"	// R15_ARM_NEXT
-		"movl arm_Reg + 188(%rip), %eax		\n\t"	// INTR_PEND
+		".globl " _U"arm_dispatch			\n"
+	_U"arm_dispatch:						\n\t"
+		"movq " _U"entry_points(%rip), %rdx	\n\t"
+		"movl " _U"arm_Reg + 184(%rip), %ecx \n\t"	// R15_ARM_NEXT
+		"movl " _U"arm_Reg + 188(%rip), %eax \n\t"	// INTR_PEND
 		"cmp $0, %r14d						\n\t"
 		"jle 2f								\n\t"	// timeslice is over
 		"test %eax, %eax					\n\t"
@@ -843,7 +843,7 @@ __asm__ (
 		"jmp " _U"arm_dispatch				\n"
 
 	"2:										\n\t"	// arm_exit:
-		"movl %r14d, arm_Reg + 192(%rip)	\n\t"	// CYCL_CNT: save remaining cycles
+		"movl %r14d, " _U"arm_Reg + 192(%rip) \n\t"	// CYCL_CNT: save remaining cycles
 #ifdef _WIN32
 		"addq $32, %rsp						\n\t"
 #endif
