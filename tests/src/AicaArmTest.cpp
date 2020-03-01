@@ -297,6 +297,104 @@ TEST_F(AicaArmTest, LogicOpsTest)
 
 TEST_F(AicaArmTest, Operand2ImmTest)
 {
+	PrepareOp(0xe2810003);	// add r0, r1, #3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 4);
+
+	PrepareOp(0xe2a10003);	// adc r0, r1, #3
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 5);
+
+	PrepareOp(0xe2410003);	// sub r0, r1, #3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 7;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 4);
+
+	PrepareOp(0xe2610003);	// rsb r0, r1, #3
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 2);
+
+	PrepareOp(0xe2c10003);	// sbc r0, r1, #3
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 10;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 6);
+
+	PrepareOp(0xe2e10010);	// rsc r0, r1, #16
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 6;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 9);
+
+	PrepareOp(0xe3500010);	// cmp r0, #16
+	ResetNZCV();
+	arm_Reg[0].I = 16;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);
+
+	PrepareOp(0xe3700001);	// cmn r0, #1
+	ResetNZCV();
+	arm_Reg[0].I = 0xffffffff;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);
+
+	PrepareOp(0xe2010001);	// and r0, r1, #1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 3;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 1);
+
+	PrepareOp(0xe3810001);	// orr r0, r1, #1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 3);
+
+	PrepareOp(0xe2210001);	// eor r0, r1, #1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 3;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 2);
+
+	PrepareOp(0xe3c10001);	// bic r0, r1, #1
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 3;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 2);
+
+	PrepareOp(0xe3100001);	// tst r0, #1
+	ResetNZCV();
+	arm_Reg[0].I = 2;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG);
+	ResetNZCV();
+	arm_Reg[0].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(0);
+
+	PrepareOp(0xe3300001);	// teq r0, #1
+	ResetNZCV();
+	arm_Reg[0].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG);
+	ResetNZCV();
+	arm_Reg[0].I = 2;
+	RunOp();
+	ASSERT_NZCV_EQ(0);
+}
+
+TEST_F(AicaArmTest, Operand2ShiftImmTest)
+{
 	PrepareOp(0xe0810202);	// add r0, r1, r2, LSL #4
 	arm_Reg[0].I = 0;
 	arm_Reg[1].I = 1;

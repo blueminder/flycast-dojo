@@ -124,7 +124,6 @@
     <ClCompile Include="..\core\hw\arm7\arm7.cpp" />
     <ClCompile Include="..\core\hw\arm7\arm_mem.cpp" />
     <ClCompile Include="..\core\hw\arm7\vbaARM.cpp" />
-    <ClCompile Include="..\core\hw\arm7\virt_arm.cpp" />
     <ClCompile Include="..\core\hw\gdrom\gdromv3.cpp" />
     <ClCompile Include="..\core\hw\gdrom\gdrom_response.cpp" />
     <ClCompile Include="..\core\hw\holly\holly_intc.cpp" />
@@ -361,7 +360,6 @@
     <ClInclude Include="..\core\hw\arm7\arm-new.h" />
     <ClInclude Include="..\core\hw\arm7\arm7.h" />
     <ClInclude Include="..\core\hw\arm7\arm_mem.h" />
-    <ClInclude Include="..\core\hw\arm7\virt_arm.h" />
     <ClInclude Include="..\core\hw\flashrom\flashrom.h" />
     <ClInclude Include="..\core\hw\gdrom\gdromv3.h" />
     <ClInclude Include="..\core\hw\gdrom\gdrom_if.h" />

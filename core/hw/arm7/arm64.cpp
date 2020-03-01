@@ -104,7 +104,7 @@ void armv_imm_to_reg(u32 regn, u32 imm)
 	assembler->Str(w0, arm_reg_operand(regn));
 }
 
-void armv_call(void* loc)
+void armv_call(void* loc, bool expect_result)
 {
 	ptrdiff_t offset = reinterpret_cast<uintptr_t>(loc) - assembler->GetBuffer()->GetStartAddress<uintptr_t>();
 	Label function_label;
@@ -121,7 +121,7 @@ void armv_intpr(u32 opcd)
 {
 	//Call interpreter
 	assembler->Mov(w0, opcd);
-	armv_call((void*)&arm_single_op);
+	armv_call((void*)&arm_single_op, true);
 	assembler->Sub(w27, w27, w0);
 }
 

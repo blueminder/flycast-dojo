@@ -19,6 +19,10 @@
 
 #include "build.h"
 
+#ifndef UNIT_TESTS
+#define TAIL_CALLING 1
+#endif
+
 #if	HOST_CPU == CPU_X64 && FEAT_AREC != DYNAREC_NONE
 
 #include "deps/xbyak/xbyak.h"
@@ -30,6 +34,7 @@ using namespace Xbyak::util;
 extern u32 arm_single_op(u32 opcode);
 extern "C" void CompileCode();
 extern "C" void CPUFiq();
+extern "C" void arm_dispatch();
 
 extern u8* icPtr;
 extern u8* ICache;
@@ -37,11 +42,14 @@ extern const u32 ICacheSize;
 extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
 #ifdef _WIN32
-static const Xbyak::Reg32 x86_regs[] = { ecx, edx, r8d, r9d, ebx, ebp, r12d, r13d, r14d, r15d };
+static const Xbyak::Reg32 x86_regs[] = { ecx, edx, r8d, r9d, ebx, eax, eax, eax, eax, r15d };
 #else
-static const Xbyak::Reg32 x86_regs[] = { edi, esi, edx, ecx, ebx, ebp, r12d, r13d, r14d, r15d };
+static const Xbyak::Reg32 x86_regs[] = { edi, esi, edx, ecx, ebx, eax, eax, eax, eax, r15d };
 #endif
-static u32 (**entry_points)();
+#ifdef TAIL_CALLING
+extern "C" u32 (**entry_points)();
+#endif
+u32 (**entry_points)();
 static Xbyak::CodeGenerator *assembler;
 
 extern "C" void armFlushICache(void *bgn, void *end) {
@@ -50,6 +58,7 @@ extern "C" void armFlushICache(void *bgn, void *end) {
 static Xbyak::Reg32 arm_to_x86_reg(ARM::eReg reg)
 {
 	verify((int)reg < ARRAY_SIZE(x86_regs));
+	verify(x86_regs[(int)reg] != eax);
 	return x86_regs[(int)reg];
 }
 
@@ -190,19 +199,22 @@ void armv_imm_to_reg(u32 regn, u32 imm)
 	assembler->mov(dword[rip + &arm_Reg[regn].I], eax);
 }
 
-void armv_call(void* loc)
+void armv_call(void* loc, bool expect_result)
 {
 	assembler->call(loc);
-	assembler->mov(x86_regs[0], eax);	// FIXME get rid of this
+	if (expect_result)
+		assembler->mov(x86_regs[0], eax);
 }
 
 void armv_setup()
 {
 	assembler = new Xbyak::CodeGenerator(ICache + ICacheSize - icPtr, icPtr);
+#ifndef TAIL_CALLING
 #ifdef _WIN32
-	assembler->sub(rsp, 40);	// 32-byte alignment + 32-byte shadow area
+	assembler->sub(rsp, 40);	// 16-byte alignment + 32-byte shadow area
 #else
-	assembler->sub(rsp, 8);		// 32-byte alignment
+	assembler->sub(rsp, 8);		// 16-byte alignment
+#endif
 #endif
 }
 
@@ -210,22 +222,20 @@ void armv_intpr(u32 opcd)
 {
 	//Call interpreter
 	assembler->mov(x86_regs[0], opcd);
-	armv_call((void*)&arm_single_op);
+	armv_call((void*)&arm_single_op, false);	// no need to move eax into edi/ecx
+#ifdef TAIL_CALLING
+	assembler->sub(r14d, eax);
+#else
 	assembler->sub(dword[rip + &arm_Reg[CYCL_CNT].I], eax);
+#endif
 }
 
 void armv_end(void* codestart, u32 cycles)
 {
-	//Normal block end
-	//cycle counter rv
-
-	/*
-	//pop registers & return
-	assembler->sub(dword[rip + &arm_Reg[CYCL_CNT].I], cycles);
-	assembler->js((void*)&arm_exit);
-
+#ifdef TAIL_CALLING
+	assembler->sub(r14d, cycles);
 	assembler->jmp((void*)&arm_dispatch);
-	*/
+#else
 	assembler->mov(eax, cycles);
 #ifdef _WIN32
 	assembler->add(rsp, 40);
@@ -233,6 +243,7 @@ void armv_end(void* codestart, u32 cycles)
 	assembler->add(rsp, 8);
 #endif
 	assembler->ret();
+#endif
 	assembler->ready();
 	icPtr += assembler->getSize();
 
@@ -290,24 +301,25 @@ void armEmit32(u32 opcode)
 {
 	const Xbyak::Reg32 rd = arm_to_x86_reg((ARM::eReg)((opcode >> 12) & 15));
 	const Xbyak::Reg32 rn = arm_to_x86_reg((ARM::eReg)((opcode >> 16) & 15));
-	bool set_flags = opcode & (1 << 20);
-	Xbyak::Reg32 op2;
-	int op_type = (opcode >> 21) & 15;
-	bool logical_op = op_type == 0 || op_type == 1 || op_type == 8 || op_type == 9	// AND, EOR, TST, TEQ
-			 || op_type == 12 || op_type == 13 || op_type == 15 || op_type == 14;	// ORR, MOV, MVN, BIC
+	const int op_type = (opcode >> 21) & 15;
+	const bool set_flags = opcode & (1 << 20);
+	const bool logical_op_set_flags = set_flags &&
+			(op_type == 0 || op_type == 1 || op_type == 8 || op_type == 9			// AND, EOR, TST, TEQ
+			 || op_type == 12 || op_type == 13 || op_type == 15 || op_type == 14);	// ORR, MOV, MVN, BIC
 	bool set_carry_bit = false;
+	Xbyak::Operand op2;
+	u32 imm_value;
 
 	if (opcode & (1 << 25))
 	{
 		// op2 is imm8r4
 		u32 rotate = ((opcode >> 8) & 15) << 1;
 		u32 imm8 = opcode & 0xff;
-		assembler->mov(eax, (imm8 >> rotate) | (imm8 << (32 - rotate)));
-		op2 = eax;
-		if (set_flags && logical_op && rotate != 0)
+		imm_value = (imm8 >> rotate) | (imm8 << (32 - rotate));
+		if (logical_op_set_flags && rotate != 0)
 		{
 			set_carry_bit = true;
-			assembler->mov(r10d, eax);
+			assembler->mov(r10d, imm_value);
 			assembler->shr(r10d, 31);
 		}
 	}
@@ -360,7 +372,7 @@ void armEmit32(u32 opcode)
 		{
 			// shift by immediate
 			u32 shift_imm = (opcode >> 7) & 0x1f;
-			if (shift != ARM::S_ROR && shift_imm != 0 && !(set_flags && logical_op))
+			if (shift != ARM::S_ROR && shift_imm != 0 && !logical_op_set_flags)
 			{
 				assembler->mov(eax, rm);
 				switch (shift)
@@ -386,7 +398,7 @@ void armEmit32(u32 opcode)
 				else
 				{
 					// Shift by 32
-					if (set_flags && logical_op)
+					if (logical_op_set_flags)
 						set_carry_bit = true;
 					if (shift == ARM::S_LSR)
 					{
@@ -430,7 +442,7 @@ void armEmit32(u32 opcode)
 			else
 			{
 				// Carry must be preserved or Ror shift
-				if (set_flags && logical_op)
+				if (logical_op_set_flags)
 					set_carry_bit = true;
 				if (shift == ARM::S_LSL)
 				{
@@ -477,7 +489,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->and_(rd, op2);
+			if (!op2.isNone())
+				assembler->and_(rd, op2);
+			else
+				assembler->and_(rd, imm_value);
 		}
 		save_v_flag = false;
 		break;
@@ -488,7 +503,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->xor_(rd, op2);
+			if (!op2.isNone())
+				assembler->xor_(rd, op2);
+			else
+				assembler->xor_(rd, imm_value);
 		}
 		save_v_flag = false;
 		break;
@@ -503,7 +521,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->sub(rd, op2);
+			if (op2.isNone())
+				assembler->sub(rd, imm_value);
+			else
+				assembler->sub(rd, op2);
 		}
 		if (set_flags)
 		{
@@ -519,7 +540,10 @@ void armEmit32(u32 opcode)
 			if (rd != rn)
 				assembler->mov(rd, rn);
 			assembler->neg(rd);
-			assembler->add(rd, op2);
+			if (op2.isNone())
+				assembler->add(rd, imm_value);
+			else
+				assembler->add(rd, op2);
 		}
 		if (set_flags)
 		{
@@ -534,7 +558,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->add(rd, op2);
+			if (op2.isNone())
+				assembler->add(rd, imm_value);
+			else
+				assembler->add(rd, op2);
 		}
 		if (set_flags)
 		{
@@ -549,12 +576,20 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->or_(rd, op2);
+			if (!op2.isNone())
+				assembler->or_(rd, op2);
+			else
+				assembler->or_(rd, imm_value);
 		}
 		save_v_flag = false;
 		break;
 	case 14:	// BIC
-		assembler->andn(rd, op2, rn);
+		if (op2.isNone())
+		{
+			assembler->mov(eax, imm_value);
+			op2 = eax;
+		}
+		assembler->andn(rd, static_cast<Xbyak::Reg32&>(op2), rn);
 		save_v_flag = false;
 		break;
 	case 5:		// ADC
@@ -567,7 +602,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->adc(rd, op2);
+			if (op2.isNone())
+				assembler->adc(rd, imm_value);
+			else
+				assembler->adc(rd, op2);
 		}
 		if (set_flags)
 		{
@@ -579,8 +617,8 @@ void armEmit32(u32 opcode)
 		// rd = rn - op2 - !C
 		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		assembler->and_(r11d, C_FLAG);
-		assembler->xor_(r11d, C_FLAG);	// on arm, -1 if carry is clear
 		assembler->neg(r11d);
+		assembler->cmc();		// on arm, -1 if carry is clear
 		if (op2 == rd)
 		{
 			assembler->sbb(rn, op2);
@@ -591,7 +629,10 @@ void armEmit32(u32 opcode)
 		{
 			if (rd != rn)
 				assembler->mov(rd, rn);
-			assembler->sbb(rd, op2);
+			if (op2.isNone())
+				assembler->sbb(rd, imm_value);
+			else
+				assembler->sbb(rd, op2);
 		}
 		if (set_flags)
 		{
@@ -603,13 +644,15 @@ void armEmit32(u32 opcode)
 		// rd = op2 - rn - !C
 		assembler->mov(r11d, dword[rip + &arm_Reg[RN_PSR_FLAGS].I]);
 		assembler->and_(r11d, C_FLAG);
-		assembler->xor_(r11d, C_FLAG);	// on arm, -1 if carry is clear
 		assembler->neg(r11d);
+		assembler->cmc();		// on arm, -1 if carry is clear
 		if (op2 == rd)
 			assembler->sbb(rd, rn);
 		else
 		{
-			if (rd != op2)
+			if (op2.isNone())
+				assembler->mov(rd, imm_value);
+			else if (rd != op2)
 				assembler->mov(rd, op2);
 			assembler->sbb(rd, rn);
 		}
@@ -620,16 +663,24 @@ void armEmit32(u32 opcode)
 		}
 		break;
 	case 8:		// TST
-		assembler->test(rn, op2);
+		if (!op2.isNone())
+			assembler->test(rn, static_cast<Xbyak::Reg32&>(op2));
+		else
+			assembler->test(rn, imm_value);
 		save_v_flag = false;
 		break;
 	case 9:		// TEQ
-		assembler->xor_(rn, op2);
-		assembler->test(rn, rn);
+		if (!op2.isNone())
+			assembler->xor_(rn, op2);
+		else
+			assembler->xor_(rn, imm_value);
 		save_v_flag = false;
 		break;
 	case 10:	// CMP
-		assembler->cmp(rn, op2);
+		if (!op2.isNone())
+			assembler->cmp(rn, op2);
+		else
+			assembler->cmp(rn, imm_value);
 		if (set_flags)
 		{
 			assembler->setnb(r10b);
@@ -637,7 +688,10 @@ void armEmit32(u32 opcode)
 		}
 		break;
 	case 11:	// CMN
-		assembler->add(rn, op2);
+		if (!op2.isNone())
+			assembler->add(rn, op2);
+		else
+			assembler->add(rn, imm_value);
 		if (set_flags)
 		{
 			assembler->setb(r10b);
@@ -645,7 +699,9 @@ void armEmit32(u32 opcode)
 		}
 		break;
 	case 13:	// MOV
-		if (op2 != rd)
+		if (op2.isNone())
+			assembler->mov(rd, imm_value);
+		else if (op2 != rd)
 			assembler->mov(rd, op2);
 		if (set_flags)
 		{
@@ -654,9 +710,14 @@ void armEmit32(u32 opcode)
 		}
 		break;
 	case 15:	// MVN
-		if (op2 != rd)
-			assembler->mov(rd, op2);
-		assembler->not_(rd);
+		if (op2.isNone())
+			assembler->mov(rd, ~imm_value);
+		else
+		{
+			if (op2 != rd)
+				assembler->mov(rd, op2);
+			assembler->not_(rd);
+		}
 		if (set_flags)
 		{
 			assembler->test(rd, rd);
@@ -703,6 +764,7 @@ void armEmit32(u32 opcode)
 	}
 }
 
+#ifndef TAIL_CALLING
 extern "C"
 u32 arm_compilecode()
 {
@@ -716,12 +778,8 @@ void arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 	entry_points = (u32 (**)())entrypoints;
 	arm_Reg[CYCL_CNT].I += cycl;
 	__asm__ (
-			"push %r12				\n\t"
-			"push %r13				\n\t"
-			"push %r14				\n\t"
 			"push %r15				\n\t"
 			"push %rbx				\n\t"
-			"push %rbp				\n\t"
 	);
 	while ((int)arm_Reg[CYCL_CNT].I > 0)
 	{
@@ -731,71 +789,68 @@ void arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 		arm_Reg[CYCL_CNT].I -= entry_points[(arm_Reg[R15_ARM_NEXT].I & (ARAM_SIZE_MAX - 1)) / 4]();
 	}
 	__asm__ (
-			"pop %rbp				\n\t"
 			"pop %rbx				\n\t"
 			"pop %r15				\n\t"
-			"pop %r14				\n\t"
-			"pop %r13				\n\t"
-			"pop %r12				\n\t"
 	);
 }
 
-#if 0
-//
-// Dynarec main loop
-//
-// w25 is used for temp mem save (post increment op2)
-// x26 is the entry points table
-// w27 is the cycle counter
-// x28 points to the arm7 registers base
+#else
+
 #ifdef __MACH__
 #define _U "_"
 #else
 #define _U
 #endif
-
+__asm__ (
 		".globl arm_compilecode				\n"
 	"arm_compilecode:						\n\t"
-		"call " _U "CompileCode				\n\t"
-		"jmp " _U "arm_dispatch				\n\t"
+		"call " _U"CompileCode				\n\t"
+		"jmp " _U"arm_dispatch				\n\t"
 
 		".globl arm_mainloop				\n"
 	"arm_mainloop:							\n\t"	//  arm_mainloop(cycles, regs, entry points)
-		"push r12							\n\t"
-		"push r13							\n\t"
-		"push r14							\n\t"
-		"push r15							\n\t"
+		"pushq %r14							\n\t"
+		"pushq %r15							\n\t"
+		"pushq %rbx							\n\t"
+#ifdef _WIN32
+		"subq $32, %rsp						\n\t"
+#endif
 
-//		"mov x28, x1						\n\t"	// arm7 registers
-//		"mov x26, x2						\n\t"	// lookup base
+		"movl arm_Reg + 192(%rip), %r14d	\n\t"	// CYCL_CNT
+#ifdef _WIN32
+		"add %ecx, %r14d					\n\t"	// add cycles for this timeslice
+		"movq %r8, entry_points(%rip)		\n\t"
+#else
+		"add %edi, %r14d					\n\t"	// add cycles for this timeslice
+		"movq %rdx, entry_points(%rip)		\n\t"
+#endif
 
-		"ldr w27, [x28, #192]				\n\t"	// cycle count
-		"add w27, w27, w0					\n\t"	// add cycles for this timeslice
-
-		".globl arm_dispatch				\n\t"
-		".hidden arm_dispatch				\n"
+		".globl arm_dispatch				\n"
 	"arm_dispatch:							\n\t"
-		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
-		"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
-		"cbnz w1, arm_dofiq					\n\t"	// if interrupt pending, handle it
+		"movq entry_points(%rip), %rdx		\n\t"
+		"movl arm_Reg + 184(%rip), %ecx		\n\t"	// R15_ARM_NEXT
+		"movl arm_Reg + 188(%rip), %eax		\n\t"	// INTR_PEND
+		"cmp $0, %r14d						\n\t"
+		"jle 2f								\n\t"	// timeslice is over
+		"test %eax, %eax					\n\t"
+		"jne 1f								\n\t"	// if interrupt pending, handle it
 
-		"add x2, x26, x2, lsl #3			\n\t"	// x2 = EntryPoints + pc << 1
-		"ldr x3, [x2]						\n\t"
-		"br x3								\n"
+		"and $0x7ffffc, %ecx				\n\t"
+		"jmp *(%rdx, %rcx, 2)				\n"
 
-	"arm_dofiq:								\n\t"
-		"bl CPUFiq							\n\t"
-		"b arm_dispatch						\n\t"
+	"1:										\n\t"	// arm_dofiq:
+		"call " _U"CPUFiq					\n\t"
+		"jmp " _U"arm_dispatch				\n"
 
-		".globl arm_exit					\n\t"
-		".hidden arm_exit					\n"
-	"arm_exit:								\n\t"
-		"str w27, [x28, #192]				\n\t"	// if timeslice is over, save remaining cycles
-		"pop r15							\n\t"
-		"pop r14							\n\t"
-		"pop r13							\n\t"
-		"pop r12							\n\t"
+	"2:										\n\t"	// arm_exit:
+		"movl %r14d, arm_Reg + 192(%rip)	\n\t"	// CYCL_CNT: save remaining cycles
+#ifdef _WIN32
+		"addq $32, %rsp						\n\t"
+#endif
+		"popq %rbx							\n\t"
+		"popq %r15							\n\t"
+		"popq %r14							\n\t"
 		"ret								\n"
 );
-#endif // 0
+#endif // TAIL_CALLING
 #endif // X64 && DYNAREC_JIT

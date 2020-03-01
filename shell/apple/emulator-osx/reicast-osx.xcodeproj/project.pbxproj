@@ -114,7 +114,6 @@
 		84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD41B72720100F9733F /* arm7.cpp */; };
 		84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD61B72720100F9733F /* arm_mem.cpp */; };
 		84B7BF2C1B72720200F9733F /* vbaARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD91B72720100F9733F /* vbaARM.cpp */; };
-		84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDDA1B72720100F9733F /* virt_arm.cpp */; };
 		84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE01B72720100F9733F /* gdrom_response.cpp */; };
 		84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE11B72720100F9733F /* gdromv3.cpp */; };
 		84B7BF301B72720200F9733F /* holly_intc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE41B72720100F9733F /* holly_intc.cpp */; };
@@ -528,8 +527,6 @@
 		84B7BDD61B72720100F9733F /* arm_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm_mem.cpp; sourceTree = "<group>"; };
 		84B7BDD71B72720100F9733F /* arm_mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_mem.h; sourceTree = "<group>"; };
 		84B7BDD91B72720100F9733F /* vbaARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vbaARM.cpp; sourceTree = "<group>"; };
-		84B7BDDA1B72720100F9733F /* virt_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = virt_arm.cpp; sourceTree = "<group>"; };
-		84B7BDDB1B72720100F9733F /* virt_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virt_arm.h; sourceTree = "<group>"; };
 		84B7BDDD1B72720100F9733F /* flashrom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = flashrom.h; sourceTree = "<group>"; };
 		84B7BDDF1B72720100F9733F /* gdrom_if.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdrom_if.h; sourceTree = "<group>"; };
 		84B7BDE01B72720100F9733F /* gdrom_response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_response.cpp; sourceTree = "<group>"; };
@@ -1500,8 +1497,6 @@
 				84B7BDD71B72720100F9733F /* arm_mem.h */,
 				AE7BCB53240AFCD0007285F8 /* arm_x64jit.cpp */,
 				84B7BDD91B72720100F9733F /* vbaARM.cpp */,
-				84B7BDDA1B72720100F9733F /* virt_arm.cpp */,
-				84B7BDDB1B72720100F9733F /* virt_arm.h */,
 			);
 			path = arm7;
 			sourceTree = "<group>";
@@ -2963,7 +2958,6 @@
 				AE649BF4218C552500EF4A81 /* bitreader.c in Sources */,
 				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
 				AE649BFB218C552500EF4A81 /* format.c in Sources */,
-				84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */,
 				AE43537222C9420C005E19CE /* ConsoleListenerDroid.cpp in Sources */,
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,

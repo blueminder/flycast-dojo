@@ -25,9 +25,6 @@
     <ClCompile Include="..\core\hw\arm7\vbaARM.cpp">
       <Filter>hw\arm7</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\hw\arm7\virt_arm.cpp">
-      <Filter>hw\arm7</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\hw\gdrom\gdrom_response.cpp">
       <Filter>hw\gdrom</Filter>
     </ClCompile>
@@ -775,9 +772,6 @@
       <Filter>hw\arm7</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\arm7\arm-new.h">
-      <Filter>hw\arm7</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\hw\arm7\virt_arm.h">
       <Filter>hw\arm7</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\gdrom\gdrom_if.h">
