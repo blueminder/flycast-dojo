@@ -26,8 +26,8 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "cheats.h"
+#include "hw/arm7/arm7_rec.h"
 
-void FlushCache();
 void LoadCustom();
 void* dc_run(void*);
 void dc_resume();
@@ -1219,7 +1219,7 @@ void dc_loadstate()
 	data_ptr = data ;
 
 #if FEAT_AREC == DYNAREC_JIT
-    FlushCache();
+	arm7rec_flush();
 #endif
 #ifndef NO_MMU
     mmu_flush_table();
