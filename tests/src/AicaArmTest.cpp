@@ -3,11 +3,11 @@
 #include "hw/mem/_vmem.h"
 #include "hw/arm7/arm7.h"
 #include "hw/aica/aica_if.h"
+#include "hw/arm7/arm7_rec.h"
 
 extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
-extern void *EntryPoints[];
+extern bool Arm7Enabled;
 extern "C" void CompileCode();
-void FlushCache();
 
 void dc_init();
 void dc_reset(bool hard);
@@ -25,19 +25,22 @@ protected:
 			die("_vmem_reserve failed");
 		dc_init();
 		dc_reset(true);
+		Arm7Enabled = true;
 	}
 
 	void PrepareOp(u32 op)
 	{
-		arm_Reg[R15_ARM_NEXT].I = 0;
-		*(u32*)&aica_ram[0] = op;
-		*(u32*)&aica_ram[4] = 0xeafffffd;	// b pc+8-12
-		FlushCache();
+		arm_Reg[R15_ARM_NEXT].I = 0x1000;
+		*(u32*)&aica_ram[0x1000] = op;
+		*(u32*)&aica_ram[0x1004] = 0xeafffffd;	// b pc+8-12
+		arm7rec_flush();
 		CompileCode();
 	}
 	void RunOp()
 	{
-		((void (*)())EntryPoints[0])();
+		arm_Reg[R15_ARM_NEXT].I = 0x1000;
+		arm_Reg[CYCL_CNT].I = 0;
+		arm_Run(1);
 	}
 	void ResetNZCV()
 	{
@@ -157,7 +160,7 @@ TEST_F(AicaArmTest, ArithmeticOpsTest)
 	arm_Reg[2].I = 2;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 1);
-	ASSERT_NZCV_EQ(0);	//
+	ASSERT_NZCV_EQ(C_FLAG);	// C, confirmed by interpreter and online arm sim
 
 	PrepareOp(0xe0f10002);	// rscs r0, r1, r2
 	ResetNZCV();
@@ -491,6 +494,22 @@ TEST_F(AicaArmTest, Operand2RegShiftTest)
 	arm_Reg[3].I = 16;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0x87654321);
+
+	PrepareOp(0xe1b0431f);	// movs r4, r15, lsl r3
+	ResetNZCV();
+	arm_Reg[3].I = 0;
+	arm_Reg[4].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[4].I, 0x1000 + 12);
+	ASSERT_NZCV_EQ(0);
+
+	PrepareOp(0xe1b0400f);	// movs r4, r15, lsl #0
+	ResetNZCV();
+	arm_Reg[3].I = 0;
+	arm_Reg[4].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[4].I, 0x1000 + 8);
+	ASSERT_NZCV_EQ(0);
 }
 
 TEST_F(AicaArmTest, CarryTest)
@@ -557,12 +576,12 @@ TEST_F(AicaArmTest, MemoryTest)
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
 
-	PrepareOp(0xe5810008); // str r0, [r1, #8]
+	PrepareOp(0xe5010008); // str r0, [r1, #-8]
 	arm_Reg[0].I = 0xbaadcafe;
-	arm_Reg[1].I = 0x10000;
-	*(u32*)&aica_ram[0x10008] = 0;
+	arm_Reg[1].I = 0x10008;
+	*(u32*)&aica_ram[0x10000] = 0;
 	RunOp();
-	ASSERT_EQ(*(u32*)&aica_ram[0x10008], 0xbaadcafe);
+	ASSERT_EQ(*(u32*)&aica_ram[0x10000], 0xbaadcafe);
 
 	PrepareOp(0xe5b10004);	// ldr r0, [r1, #4]!
 	arm_Reg[0].I = 0;
@@ -572,19 +591,13 @@ TEST_F(AicaArmTest, MemoryTest)
 	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
 	ASSERT_EQ(arm_Reg[1].I, 0x10004);
 
-	PrepareOp(0xe5b10004);	// ldr r0, [r1], #4
+	PrepareOp(0xe4110004);	// ldr r0, [r1], #-4
 	arm_Reg[0].I = 0;
 	arm_Reg[1].I = 0x10004;
 	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
-	ASSERT_EQ(arm_Reg[1].I, 0x10008);
-
-	PrepareOp(0xe4900004);	// ldr r0, [r0], #4
-	arm_Reg[0].I = 0x10004;
-	*(u32*)&aica_ram[0x10004] = 0xbaadcafe;
-	RunOp();
-	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+	ASSERT_EQ(arm_Reg[1].I, 0x10000);
 
 	PrepareOp(0xe4900004);	// ldr r0, [r0], #4
 	arm_Reg[0].I = 0x10004;
@@ -597,6 +610,115 @@ TEST_F(AicaArmTest, MemoryTest)
 	*(u32*)&aica_ram[0x10000] = 0xbaadcafe;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0xbaadcafe);
+
+	PrepareOp(0xe51f0004);	// ldr r0, [r15, #-4]
+	arm_Reg[0].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+
+	PrepareOp(0xe79000a4);	// ldr r0, [r0, r4, LSR #1]
+	arm_Reg[0].I = 0x1003;
+	arm_Reg[4].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+
+	PrepareOp(0xe7900084);	// ldr r0, [r0, r4, LSL #1]
+	arm_Reg[0].I = 0x1002;
+	arm_Reg[4].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+
+	PrepareOp(0xe7900024);	// ldr r0, [r0, r4, LSR #32]
+	arm_Reg[0].I = 0x1004;
+	arm_Reg[4].I = 0x12345678;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[4].I, 0x12345678);
+
+	PrepareOp(0xe7900044);	// ldr r0, [r0, r4, ASR #32]
+	arm_Reg[0].I = 0x1005;
+	arm_Reg[4].I = 0x80000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[4].I, 0x80000000);
+
+	PrepareOp(0xe7920002);	// ldr r0,[r2,r2]
+	arm_Reg[0].I = 5;
+	arm_Reg[2].I = 0x1004 / 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1004 / 2);
+
+	PrepareOp(0xe7920063);	// ldr r0,[r2,r3, rrx]
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;	// set C
+	arm_Reg[0].I = 5;
+	arm_Reg[2].I = 0x1006;
+	arm_Reg[3].I = -4;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1006);
+	ASSERT_EQ(arm_Reg[3].I, -4);
+
+	// unaligned read
+	PrepareOp(0xe7900002);	// ldr r0,[r0,r2]
+	arm_Reg[0].I = 0x1004;
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, (*(u32*)&aica_ram[0x1004]) >> 16 | (*(u32*)&aica_ram[0x1004]) << 16);
+	ASSERT_EQ(arm_Reg[2].I, 2);
+
+	PrepareOp(0xe69000a4);	// ldr r0,[r0],r4, lsr #1
+	arm_Reg[0].I = 0x1004;
+	arm_Reg[4].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[4].I, 2);
+
+	PrepareOp(0xe6920104);	// ldr r0,[r2],r4, lsl #2
+	arm_Reg[0].I = 0;
+	arm_Reg[2].I = 0x1004;
+	arm_Reg[4].I = 2;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1004 + 8);
+	ASSERT_EQ(arm_Reg[4].I, 2);
+
+	PrepareOp(0xe6920000);	// ldr r0,[r2],r0
+	arm_Reg[0].I = 123;
+	arm_Reg[2].I = 0x1004;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1004 + 123);
+
+	PrepareOp(0xe6920043);	// ldr r0,[r2],r3, asr #32
+	arm_Reg[0].I = 0;
+	arm_Reg[2].I = 0x1004;
+	arm_Reg[3].I = 0xc0000000;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1004 - 1);
+	ASSERT_EQ(arm_Reg[3].I, 0xc0000000);
+
+	PrepareOp(0xe6920063);	// ldr r0,[r2],r3, rrx
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG;	// set C
+	arm_Reg[0].I = 5;
+	arm_Reg[2].I = 0x1004;
+	arm_Reg[3].I = 0xfffffffc;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, *(u32*)&aica_ram[0x1004]);
+	ASSERT_EQ(arm_Reg[2].I, 0x1002);
+	ASSERT_NZCV_EQ(C_FLAG); // C
+	ASSERT_EQ(arm_Reg[3].I, 0xfffffffc);
+
+	// unaligned read
+	PrepareOp(0xe6900002);	// ldr r0,[r0],r2
+	arm_Reg[0].I = 0x1006;
+	arm_Reg[2].I = 1;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, (*(u32*)&aica_ram[0x1004]) >> 16 | (*(u32*)&aica_ram[0x1004]) << 16);
+	ASSERT_EQ(arm_Reg[2].I, 1);
 }
 
 TEST_F(AicaArmTest, PcRelativeTest)
@@ -604,13 +726,18 @@ TEST_F(AicaArmTest, PcRelativeTest)
 	PrepareOp(0xe38f0010);	// orr r0, r15, #16
 	arm_Reg[0].I = 0;
 	RunOp();
-	ASSERT_EQ(arm_Reg[0].I, 8 + 16);
+	ASSERT_EQ(arm_Reg[0].I, 0x1008 + 16);
 
 	PrepareOp(0xe180011f); // orr r0, r15, LSL r1
 	arm_Reg[0].I = 0;
 	arm_Reg[1].I = 1;
 	RunOp();
-	ASSERT_EQ(arm_Reg[0].I, 12 << 1);
+	ASSERT_EQ(arm_Reg[0].I, 0x100C << 1);
+
+	PrepareOp(0xe28f5c7d); // add r5, r15, #32000
+	arm_Reg[5].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[5].I, 32000 + 0x1008);
 }
 
 TEST_F(AicaArmTest, ConditionalTest)
@@ -801,13 +928,13 @@ TEST_F(AicaArmTest, JumpTest)
 {
 	PrepareOp(0xea00003e);	// b +248
 	RunOp();
-	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1100);
 
 	PrepareOp(0xeb00003e);	// bl +248
 	arm_Reg[14].I = 0;
 	RunOp();
-	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
-	ASSERT_EQ(arm_Reg[14].I, 4);
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1100);
+	ASSERT_EQ(arm_Reg[14].I, 0x1004);
 
 	PrepareOp(0xe1a0f000);	// mov pc, r0
 	arm_Reg[0].I = 0x100;
@@ -819,8 +946,14 @@ TEST_F(AicaArmTest, JumpTest)
 	arm_Reg[RN_PSR_FLAGS].I |= N_FLAG;
 	arm_Reg[0].I = 0x100;
 	RunOp();
-	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 4);
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1004);
 	ResetNZCV();
 	RunOp();
 	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x100);
+
+	PrepareOp(0xe590f000); // ldr r15, [r0]
+	arm_Reg[0].I = 0x10000;
+	*(u32*)&aica_ram[0x10000] = 0xbaadcafc;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0xbaadcafc);
 }
