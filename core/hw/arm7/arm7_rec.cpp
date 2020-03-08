@@ -60,39 +60,37 @@ union ArmOpBits
 {
 	ArmOpBits(u32 opcode) : full(opcode) {}
 
-	struct {
-		union {
-            struct {
-    			u32 imm12:12;
-                u32 rd:4;
-            };
-            // Register
-            struct
-            {
-                u32 rm:4;
-                u32 shift_by_reg:1;
-                u32 shift_type:2;
-                // Shift by immediate
-                u32 shift_imm:5;
-                u32 :4;
-             };
-            // Immediate value
-            struct
-            {
-                u32 imm8:8;
-                u32 rotate:4;
-                u32 :4;
-            };
-		};
-		u32 rn:4;
-    	// data processing
-		u32 set_flags:1;
-		u32 op_type:4;
+    struct {
+    	// immediate (str/ldr)
+    	u32 imm12:12;
+        u32 rd:4;
+		// common
+		u32 rn : 4;
+		// data processing
+		u32 set_flags : 1;
+		u32 op_type : 4;
 		//
-		u32 imm_op:1;
-		u32 op_group:2;
-		u32 condition:4;
+		u32 imm_op : 1;
+		u32 op_group : 2;
+		u32 condition : 4;
 	};
+    // Register
+    struct
+    {
+        u32 rm:4;
+        u32 shift_by_reg:1;
+        u32 shift_type:2;
+        // Shift by immediate
+        u32 shift_imm:5;
+        u32 :4;
+    };
+    // Immediate value
+    struct
+    {
+        u32 imm8:8;
+        u32 rotate:4;
+        u32 :4;
+    };
 	struct {
 		u32 :7;
 		// op2 Shift by reg

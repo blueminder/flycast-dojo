@@ -19,9 +19,7 @@
 
 #include "build.h"
 
-#ifndef UNIT_TESTS
-//#define TAIL_CALLING 1
-#endif
+#define TAIL_CALLING 1
 
 #if	HOST_CPU == CPU_X64 && FEAT_AREC != DYNAREC_NONE
 
@@ -52,13 +50,31 @@ u32 (**entry_points)();
 
 class Arm7Compiler;
 
+#ifdef TAIL_CALLING
 #ifdef _WIN32
-#define MAX_REGS 8
+static const std::array<Xbyak::Reg32, 7> alloc_regs {
+		ebx, ebp, edi, esi, r12d, r13d, r15d
+};
 #else
-#define MAX_REGS 6
+static const std::array<Xbyak::Reg32, 5> alloc_regs {
+		ebx, ebp, r12d, r13d, r15d
+};
 #endif
-class X64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, X64ArmRegAlloc>
+#else
+#ifdef _WIN32
+static const std::array<Xbyak::Reg32, 8> alloc_regs {
+		ebx, ebp, edi, esi, r12d, r13d, r14d, r15d
+};
+#else
+static const std::array<Xbyak::Reg32, 6> alloc_regs {
+		ebx, ebp, r12d, r13d, r14d, r15d
+};
+#endif
+#endif
+
+class X64ArmRegAlloc : public ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>
 {
+	using super = ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>;
 	Arm7Compiler& assembler;
 
 	void LoadReg(int host_reg, Arm7Reg armreg);
@@ -66,29 +82,21 @@ class X64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, X64ArmRegAlloc>
 
 	static const Xbyak::Reg32& getReg32(int i)
 	{
-		static const Xbyak::Reg32 regs[] = {
-#ifdef _WIN32
-				ebx, ebp, edi, esi, r12d, r13d, r14d, r15d
-#else
-				ebx, ebp, r12d, r13d, r14d, r15d
-#endif
-		};
-		static_assert(MAX_REGS == ARRAY_SIZE(regs), "MAX_REGS == ARRAY_SIZE(regs)");
-		verify(i >= 0 && (u32)i < ARRAY_SIZE(regs));
-		return regs[i];
+		verify(i >= 0 && (u32)i < alloc_regs.size());
+		return alloc_regs[i];
 	}
 
 public:
 	X64ArmRegAlloc(Arm7Compiler& assembler, const std::vector<ArmOp>& block_ops)
-		: ArmRegAlloc<MAX_REGS, X64ArmRegAlloc>(block_ops), assembler(assembler) {}
+		: super(block_ops), assembler(assembler) {}
 
 	const Xbyak::Reg32& map(Arm7Reg r)
 	{
-		int i = ArmRegAlloc<MAX_REGS, X64ArmRegAlloc>::map(r);
+		int i = super::map(r);
 		return getReg32(i);
 	}
 
-	friend class ArmRegAlloc<MAX_REGS, X64ArmRegAlloc>;
+	friend super;
 };
 
 class Arm7Compiler : public Xbyak::CodeGenerator
@@ -959,11 +967,20 @@ __asm__ (
 
 		".globl " _U"arm_mainloop			\n"
 	_U"arm_mainloop:						\n\t"	//  arm_mainloop(cycles, regs, entry points)
+#ifdef _WIN32
+		"pushq %rdi							\n\t"
+		"pushq %rsi							\n\t"
+#endif
+		"pushq %r12							\n\t"
+		"pushq %r13							\n\t"
 		"pushq %r14							\n\t"
 		"pushq %r15							\n\t"
 		"pushq %rbx							\n\t"
+		"pushq %rbp							\n\t"
 #ifdef _WIN32
-		"subq $32, %rsp						\n\t"
+		"subq $40, %rsp						\n\t"	// 32-byte shadow space + 16-byte stack alignment
+#else
+		"subq $8, %rsp						\n\t"	// 16-byte stack alignment
 #endif
 
 		"movl " _U"arm_Reg + 192(%rip), %r14d \n\t"	// CYCL_CNT
@@ -995,11 +1012,20 @@ __asm__ (
 	"2:										\n\t"	// arm_exit:
 		"movl %r14d, " _U"arm_Reg + 192(%rip) \n\t"	// CYCL_CNT: save remaining cycles
 #ifdef _WIN32
-		"addq $32, %rsp						\n\t"
+		"addq $40, %rsp						\n\t"
+#else
+		"addq $8, %rsp						\n\t"
 #endif
+		"popq %rbp							\n\t"
 		"popq %rbx							\n\t"
 		"popq %r15							\n\t"
 		"popq %r14							\n\t"
+		"popq %r13							\n\t"
+		"popq %r12							\n\t"
+#ifdef _WIN32
+		"popq %rsi							\n\t"
+		"popq %rdi							\n\t"
+#endif
 		"ret								\n"
 );
 #endif // TAIL_CALLING
