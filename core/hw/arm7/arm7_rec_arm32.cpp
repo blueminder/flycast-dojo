@@ -40,14 +40,14 @@ extern u8* ICache;
 extern const u32 ICacheSize;
 extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
-static void loadReg(eReg host_reg, Arm7Reg guest_reg)
+static void loadReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = ArmOp::AL)
 {
-	LDR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I);
+	LDR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I, ARM::Offset, (ARM::ConditionCode)cc);
 }
 
-static void storeReg(eReg host_reg, Arm7Reg guest_reg)
+static void storeReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = ArmOp::AL)
 {
-	STR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I);
+	STR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I, ARM::Offset, (ARM::ConditionCode)cc);
 }
 
 static const std::array<eReg, 5> alloc_regs{
@@ -58,16 +58,16 @@ class Arm32ArmRegAlloc : public ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>
 {
 	using super = ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>;
 
-	void LoadReg(int host_reg, Arm7Reg armreg)
+	void LoadReg(int host_reg, Arm7Reg armreg, ArmOp::Condition cc = ArmOp::AL)
 	{
 		// printf("LoadReg R%d <- r%d\n", host_reg, armreg);
-		loadReg(getReg(host_reg), armreg);
+		loadReg(getReg(host_reg), armreg, cc);
 	}
 
-	void StoreReg(int host_reg, Arm7Reg armreg)
+	void StoreReg(int host_reg, Arm7Reg armreg, ArmOp::Condition cc = ArmOp::AL)
 	{
 		// printf("StoreReg R%d -> r%d\n", host_reg, armreg);
-		storeReg(getReg(host_reg), armreg);
+		storeReg(getReg(host_reg), armreg, cc);
 	}
 
 	static eReg getReg(int i)
@@ -107,27 +107,24 @@ static void *armGetEmitPtr()
 }
 
 static Arm32ArmRegAlloc *regalloc;
-static bool set_flags;
-static bool logical_op_set_flags;
-static bool set_carry_bit;
 
 static void loadFlags()
 {
 	//Load flags
-	loadReg(r0, RN_PSR_FLAGS);
+	loadReg(r3, RN_PSR_FLAGS);
 	//move them to flags register
-	MSR(0, 8, r0);
+	MSR(0, 8, r3);
 }
 
 static void storeFlags()
 {
 	//get results from flags register
-	MRS(r1, 0);
+	MRS(r3, 0);
 	//Store flags
-	storeReg(r1, RN_PSR_FLAGS);
+	storeReg(r3, RN_PSR_FLAGS);
 }
 
-u32 *startConditional(ArmOp::Condition cc)
+static u32 *startConditional(ArmOp::Condition cc)
 {
 	if (cc == ArmOp::AL)
 		return nullptr;
@@ -139,7 +136,7 @@ u32 *startConditional(ArmOp::Condition cc)
 	return code;
 }
 
-void endConditional(u32 *pos)
+static void endConditional(u32 *pos)
 {
 	if (pos != nullptr)
 	{
@@ -151,7 +148,7 @@ void endConditional(u32 *pos)
 	}
 }
 
-eReg getOperand(ArmOp::Operand arg, eReg scratch_reg)
+static eReg getOperand(ArmOp::Operand arg, eReg scratch_reg)
 {
 	if (arg.isNone())
 		return (eReg)-1;
@@ -173,119 +170,16 @@ eReg getOperand(ArmOp::Operand arg, eReg scratch_reg)
 	{
 		// Shift by register
 		eReg shift_reg = regalloc->map(arg.shift_reg.armreg);
-
-		switch (arg.shift_type)
-		{
-		case ArmOp::LSL:
-		case ArmOp::LSR:
-			verify(scratch_reg != r0);
-			MRS(r0, 0);
-			CMP(shift_reg, 32);
-			if (arg.shift_type == ArmOp::LSL)
-				LSL(scratch_reg, scratch_reg, shift_reg);
-			else
-				LSR(scratch_reg, scratch_reg, shift_reg);
-			MOV(scratch_reg, 0, GE);			// LSL and LSR by 32 or more gives 0
-			MSR(0, 8, r0);
-			break;
-		case ArmOp::ASR:
-			verify(scratch_reg != r0);
-			MRS(r0, 0);
-			CMP(shift_reg, 32);
-			verify(scratch_reg != r1);
-			SBFX(r1, scratch_reg, 31, 1);
-			ASR(scratch_reg, scratch_reg, shift_reg);
-			MOV(scratch_reg, r1, GE);		// ASR by 32 or more gives 0 or -1 depending on operand sign
-			MSR(0, 8, r0);
-			break;
-		case ArmOp::ROR:
-			ROR(scratch_reg, scratch_reg, shift_reg);
-			break;
-		default:
-			die("Invalid shift");
-			break;
-		}
-		return scratch_reg;
+		MOV(scratch_reg, scratch_reg, (ARM::ShiftOp)arg.shift_type, shift_reg);
 	}
 	else
 	{
 		// Shift by immediate
-		// FIXME this case can be handled directly if op2 and DataProcOp
-//		if (arg.shift_type != ArmOp::ROR && arg.shift_value != 0 && !logical_op_set_flags)
-//		{
-//			rv = Operand(rm, (Shift)arg.shift_type, arg.shift_value);
-//		}
-//		else
-		if (arg.shift_value == 0)
-		{
-			if (arg.shift_type == ArmOp::LSL)
-			{
-				return scratch_reg;		// LSL 0 is a no-op
-			}
-			else
-			{
-				// Shift by 32
-				if (logical_op_set_flags)
-					set_carry_bit = true;
-				if (arg.shift_type == ArmOp::LSR)
-				{
-					if (logical_op_set_flags)
-						UBFX(r12, scratch_reg, 31, 1);				// w14 = rm[31]
-					MOV32(scratch_reg, 0);					// scratch = 0
-				}
-				else if (arg.shift_type == ArmOp::ASR)
-				{
-					if (logical_op_set_flags)
-						UBFX(r12, scratch_reg, 31, 1);				// w14 = rm[31]
-					SBFX(scratch_reg, scratch_reg, 31, 1);			// scratch = rm < 0 ? -1 : 0
-				}
-				else if (arg.shift_type == ArmOp::ROR)
-				{
-					// RRX
-					MOV32(r12, 0);
-					MOV32(r12, 1, CS);							// w14 = C
-					if (logical_op_set_flags)
-					{
-						verify(scratch_reg != r1);
-						MOV(r1, scratch_reg);						// save scratch_reg
-					}
-					MOV(scratch_reg, scratch_reg, S_LSR, 1);	// scratch = rm >> 1
-					BFI(scratch_reg, r12, 31, 1);			// scratch[31] = C
-					if (logical_op_set_flags)
-						UBFX(r12, r1, 0, 1);				// w14 = rm[0] (new C)
-				}
-				else
-					die("Invalid shift");
-				return scratch_reg;
-			}
-		}
-		else
-		{
-			// Carry must be preserved or Ror shift
-			if (logical_op_set_flags)
-				set_carry_bit = true;
-			if (arg.shift_type == ArmOp::LSL)
-			{
-				UBFX(r12, scratch_reg, 32 - arg.shift_value, 1);		// w14 = rm[lsb]
-				LSL(scratch_reg, scratch_reg, arg.shift_value);		// scratch <<= shift
-			}
-			else
-			{
-				if (logical_op_set_flags)
-					UBFX(r12, scratch_reg, arg.shift_value - 1, 1);	// w14 = rm[msb]
-
-				if (arg.shift_type == ArmOp::LSR)
-					LSR(scratch_reg, scratch_reg, arg.shift_value);	// scratch >>= shift
-				else if (arg.shift_type == ArmOp::ASR)
-					ASR(scratch_reg, scratch_reg, arg.shift_value);
-				else if (arg.shift_type == ArmOp::ROR)
-					ROR(scratch_reg, scratch_reg, arg.shift_value);
-				else
-					die("Invalid shift");
-			}
-			return scratch_reg;
-		}
+		if (arg.shift_value != 0 || arg.shift_type != ArmOp::LSL)	// LSL 0 is a no-op
+			MOV(scratch_reg, scratch_reg, (ARM::ShiftOp)arg.shift_type, arg.shift_value);
 	}
+
+	return scratch_reg;
 }
 
 template <void (*OpImmediate)(eReg rd, eReg rn, s32 imm8, bool S, ConditionCode cc),
@@ -305,6 +199,7 @@ void emit3ArgOp(const ArmOp& op)
 
 	eReg rd = regalloc->map(op.rd.getReg().armreg);
 
+	bool set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
 	eReg rm;
 	if (op2->isImmediate())
 	{
@@ -346,6 +241,8 @@ void emit2ArgOp(const ArmOp& op)
 		op2 = &op.arg[0];
 		rd = regalloc->map(op.rd.getReg().armreg);
 	}
+
+	bool set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
 	eReg rm;
 	if (op2->isImmediate())
 	{
@@ -426,13 +323,13 @@ static void emitDataProcOp(const ArmOp& op)
 		die("invalid op");
 		break;
 	}
+}
 
-	if (set_carry_bit)
-	{
-		MRS(r0, 0);
-		BFI(r0, r12, 29, 1);		// C is bit 29 in NZCV
-		MSR(0, 8, r0);
-	}
+static void call(u32 addr, ARM::ConditionCode cc = ARM::CC_AL)
+{
+	storeFlags();
+	CALL(addr, cc);
+	loadFlags();
 }
 
 static void emitMemOp(const ArmOp& op)
@@ -443,47 +340,49 @@ static void emitMemOp(const ArmOp& op)
 		const ArmOp::Operand& offset = op.arg[1];
 		if (offset.isReg())
 		{
-			if (addr_reg != r2)
-				MOV(r2, addr_reg);
-			addr_reg = r2;
 			eReg offset_reg = getOperand(offset, r3);
 			if (op.add_offset)
-				ADD(addr_reg, addr_reg, offset_reg);
+				ADD(r0, addr_reg, offset_reg);
 			else
-				SUB(addr_reg, addr_reg, offset_reg);
+				SUB(r0, addr_reg, offset_reg);
+			addr_reg = r0;
 		}
 		else if (offset.isImmediate() && offset.getImmediate() != 0)
 		{
-			if (addr_reg != r2)
-				MOV(r2, addr_reg);
-			addr_reg = r2;
 			if (is_i8r4(offset.getImmediate()))
 			{
 				if (op.add_offset)
-					ADD(addr_reg, addr_reg, offset.getImmediate());
+					ADD(r0, addr_reg, offset.getImmediate());
 				else
-					SUB(addr_reg, addr_reg, offset.getImmediate());
+					SUB(r0, addr_reg, offset.getImmediate());
 			}
 			else
 			{
 				MOV32(r0, offset.getImmediate());
 				if (op.add_offset)
-					ADD(addr_reg, addr_reg, r0);
+					ADD(r0, addr_reg, r0);
 				else
-					SUB(addr_reg, addr_reg, r0);
+					SUB(r0, addr_reg, r0);
 			}
+			addr_reg = r0;
 		}
 	}
-	MOV(r0, addr_reg);
+	if (addr_reg != r0)
+		MOV(r0, addr_reg);
 	if (op.op_type == ArmOp::STR)
 	{
 		if (op.arg[2].isImmediate())
-			MOV(r1, op.arg[2].getImmediate());
+		{
+			if (is_i8r4(op.arg[2].getImmediate()))
+				MOV(r1, op.arg[2].getImmediate());
+			else
+				MOV32(r1, op.arg[2].getImmediate());
+		}
 		else
 			MOV(r1, regalloc->map(op.arg[2].getReg().armreg));
 	}
 
-	CALL((u32)arm7rec_getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
+	call((u32)arm7rec_getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
 
 	if (op.op_type == ArmOp::LDR)
 		MOV(regalloc->map(op.rd.getReg().armreg), r0);
@@ -504,7 +403,7 @@ static void emitBranch(const ArmOp& op)
 
 static void emitMRS(const ArmOp& op)
 {
-	CALL((u32)CPUUpdateCPSR);
+	call((u32)CPUUpdateCPSR);
 
 	if (op.spsr)
 		loadReg(regalloc->map(op.rd.getReg().armreg), RN_SPSR);
@@ -518,17 +417,18 @@ static void emitMSR(const ArmOp& op)
 		MOV32(r0, op.arg[0].getImmediate());
 	else
 		MOV(r0, regalloc->map(op.arg[0].getReg().armreg));
+
 	if (op.spsr)
-		CALL((u32)MSR_do<1>);
+		call((u32)MSR_do<1>);
 	else
-		CALL((u32)MSR_do<0>);
+		call((u32)MSR_do<0>);
 }
 
 static void emitFallback(const ArmOp& op)
 {
 	//Call interpreter
 	MOV32(r0, op.arg[0].getImmediate());
-	CALL((u32)arm_single_op);
+	call((u32)arm_single_op);
 	SUB(r5, r5, r0, false);
 }
 
@@ -537,19 +437,14 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 	regalloc = new Arm32ArmRegAlloc(block_ops);
 	void *codestart = icPtr;
 
+	loadFlags();
+
 	for (u32 i = 0; i < block_ops.size(); i++)
 	{
 		const ArmOp& op = block_ops[i];
 		DEBUG_LOG(AICA_ARM, "-> %s", op.toString().c_str());
 
-		set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
-		logical_op_set_flags = op.isLogicalOp() && set_flags;
-		set_carry_bit = false;
-
 		u32 *condPos = nullptr;
-
-		if (op.flags & (ArmOp::OP_READS_FLAGS|ArmOp::OP_SETS_FLAGS))	// TODO OP_READS_FLAGS needed?
-			loadFlags();
 
 		if (op.op_type != ArmOp::FALLBACK)
 			condPos = startConditional(op.condition);
@@ -574,13 +469,11 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 		else
 			die("invalid");
 
-		if (set_flags)
-			storeFlags();
-
 		regalloc->store(i);
 
 		endConditional(condPos);
 	}
+	storeFlags();
 
 	if (is_i8r4(cycles))
 		SUB(r5, r5, cycles, true);

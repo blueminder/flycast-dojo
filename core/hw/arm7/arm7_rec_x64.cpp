@@ -279,59 +279,59 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 		{
 		case ArmOp::EQ:	// Z==1
 			and_(eax, Z_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::NE:	// Z==0
 			and_(eax, Z_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::CS:	// C==1
 			and_(eax, C_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::CC:	// C==0
 			and_(eax, C_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::MI:	// N==1
 			and_(eax, N_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::PL:	// N==0
 			and_(eax, N_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::VS:	// V==1
 			and_(eax, V_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::VC:	// V==0
 			and_(eax, V_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::HI:	// (C==1) && (Z==0)
 			and_(eax, C_FLAG | Z_FLAG);
 			cmp(eax, C_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::LS:	// (C==0) || (Z==1)
 			and_(eax, C_FLAG | Z_FLAG);
 			cmp(eax, C_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::GE:	// N==V
 			mov(ecx, eax);
 			shl(ecx, 3);
 			xor_(eax, ecx);
 			and_(eax, N_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::LT:	// N!=V
 			mov(ecx, eax);
 			shl(ecx, 3);
 			xor_(eax, ecx);
 			and_(eax, N_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		case ArmOp::GT:	// (Z==0) && (N==V)
 			mov(ecx, eax);
@@ -341,7 +341,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			xor_(eax, ecx);
 			or_(eax, edx);
 			and_(eax, N_FLAG);
-			jz(*label);
+			jz(*label, T_NEAR);
 			break;
 		case ArmOp::LE:	// (Z==1) || (N!=V)
 			mov(ecx, eax);
@@ -351,7 +351,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			xor_(eax, ecx);
 			or_(eax, edx);
 			and_(eax, N_FLAG);
-			jnz(*label);
+			jnz(*label, T_NEAR);
 			break;
 		default:
 			die("Invalid condition code");
@@ -363,7 +363,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 
 	void endConditional(Xbyak::Label *label)
 	{
-		if (label != NULL)
+		if (label != nullptr)
 		{
 			L(*label);
 			delete label;
@@ -821,6 +821,9 @@ public:
 		sub(rsp, 8);	// 16-byte alignment
 #endif
 #endif
+		ArmOp::Condition currentCondition = ArmOp::AL;
+		Xbyak::Label *condLabel = nullptr;
+
 		for (u32 i = 0; i < block_ops.size(); i++)
 		{
 			const ArmOp& op = block_ops[i];
@@ -831,10 +834,18 @@ public:
 			set_carry_bit = false;
 			bool save_v_flag = true;
 
-			Xbyak::Label *condLabel = nullptr;
-
-			if (op.op_type != ArmOp::FALLBACK)
+			if (op.op_type == ArmOp::FALLBACK)
+			{
+				endConditional(condLabel);
+				condLabel = nullptr;
+				currentCondition = ArmOp::AL;
+			}
+			else if (op.condition != currentCondition)
+			{
+				endConditional(condLabel);
+				currentCondition = op.condition;
 				condLabel = startConditional(op.condition);
+			}
 
 			regalloc->load(i);
 
@@ -860,8 +871,14 @@ public:
 
 			regalloc->store(i);
 
-			endConditional(condLabel);
+			if (set_flags)
+			{
+				currentCondition = ArmOp::AL;
+				endConditional(condLabel);
+				condLabel = nullptr;
+			}
 		}
+		endConditional(condLabel);
 #ifdef TAIL_CALLING
 		sub(r14d, cycles);
 #else

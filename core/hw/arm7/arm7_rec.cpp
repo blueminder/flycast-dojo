@@ -112,6 +112,21 @@ union ArmOpBits
 static_assert(sizeof(ArmOpBits) == sizeof(u32), "sizeof(ArmOpBits) == sizeof(u32)");
 
 static std::vector<ArmOp> block_ops;
+static u8 cpuBitsSet[256];
+
+//findfirstset -- used in LDM/STM handling
+#if HOST_CPU==CPU_X86 && !defined(__GNUC__)
+#include <intrin.h>
+
+u32 findfirstset(u32 v)
+{
+	unsigned long rv;
+	_BitScanForward(&rv,v);
+	return rv+1;
+}
+#else
+#define findfirstset __builtin_ffs
+#endif
 
 static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 {
@@ -232,7 +247,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					}
 					else
 					{
-						op.arg[argidx].setImmediate(arm_pc + (op.arg[argidx].shift_imm ? 8 : 12)); // TODO test
+						op.arg[argidx].setImmediate(arm_pc + (op.arg[argidx].shift_imm ? 8 : 12));
 					}
 				}
 			}
@@ -294,6 +309,8 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 			{
 				op.op_type = ArmOp::STR;
 				op.arg[2] = ArmOp::Operand((Arm7Reg)bits.rd);
+				if (op.arg[2].getReg().armreg == RN_PC)
+					op.arg[2] = ArmOp::Operand(arm_pc + 12);
 				op.cycles += 3;
 			}
 			op.arg[0] = ArmOp::Operand((Arm7Reg)bits.rn);
@@ -350,7 +367,75 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 		else
 		{
 			// LDM/STM
-			// FIXME handle trivial cases
+			u32 reg_list = opcode & 0xffff;
+			// one register selected and no PSR
+			if (!(opcode & (1 << 22)) && cpuBitsSet[reg_list & 255] + cpuBitsSet[(reg_list >> 8) & 255] == 1)
+			{
+				if (opcode & (1 << 20))
+				{
+					// LDM
+					//One register xfered
+					//Can be rewriten as normal mem opcode ..
+					ArmOpBits newbits(0x04000000 | (opcode & 0xf0000000));
+
+					//Imm offset
+					//opcd |= 0<<25;
+					//Post incr
+					newbits.pre_index = bits.pre_index;
+					//Up/Dn
+					newbits.up = bits.up;
+					//Word/Byte
+					//newbits.byte = 0;
+					//Write back (must be 0 for post-incr)
+					newbits.write_back = bits.write_back & bits.pre_index;
+					//Load
+					newbits.load = 1;
+
+					//Rn
+					newbits.rn = bits.rn;
+
+					//Rd
+					newbits.rd = findfirstset(reg_list) - 1;
+
+					//Offset
+					newbits.full |= 4;
+
+					arm_printf("ARM: MEM TFX R %08X -> %08X\n", opcode, newbits.full);
+
+					return decodeArmOp(newbits.full, arm_pc);
+				}
+				//STM common case
+				else
+				{
+					ArmOpBits newbits(0x04000000 | (opcode & 0xf0000000));
+
+					//Imm offset
+					//opcd |= 0<<25;
+					//Post incr
+					newbits.pre_index = bits.pre_index;
+					//Up/Dn
+					newbits.up = bits.up;
+					//Word/Byte
+					//newbits.byte = 0;
+					//Write back (must be 0 for PI)
+					newbits.write_back = bits.pre_index;
+					//Load
+					newbits.load = 0;
+
+					//Rn
+					newbits.rn = bits.rn;
+
+					//Rd
+					newbits.rd = findfirstset(reg_list) - 1;
+
+					//Offset
+					newbits.full |= 4;
+
+					arm_printf("ARM: MEM TFX W %08X -> %08X\n", opcode, newbits.full);
+
+					return decodeArmOp(newbits.full, arm_pc);
+				}
+			}
 			op.op_type = ArmOp::FALLBACK;
 			op.arg[0] = ArmOp::Operand(opcode);
 			op.cycles = 0;
@@ -404,6 +489,7 @@ static void block_ssa_pass()
 					newop2.arg[1].setReg(RN_SCRATCH);
 					if (newop2.condition != ArmOp::AL || (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0))
 						newop2.flags |= ArmOp::OP_READS_FLAGS;
+					it->flags &= ~ArmOp::OP_READS_FLAGS;
 					it->write_back = false;
 					it->arg[1] = ArmOp::Operand();
 					// Insert after
@@ -419,6 +505,7 @@ static void block_ssa_pass()
 					newop.arg[1] = it->arg[1];
 					if (newop.condition != ArmOp::AL || (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0))
 						newop.flags |= ArmOp::OP_READS_FLAGS;
+					it->flags &= ~ArmOp::OP_READS_FLAGS;
 					it->write_back = false;
 					it->arg[1] = ArmOp::Operand();
 					if (it->pre_index)
@@ -555,6 +642,16 @@ void arm7rec_init()
 		die("vmem_platform_prepare_jit_block failed");
 
 	icPtr = ICache;
+
+	for (int i = 0; i < 256; i++)
+	{
+		int count = 0;
+		for (int j = 0; j < 8; j++)
+			if (i & (1 << j))
+				count++;
+
+		cpuBitsSet[i] = count;
+	}
 }
 
 template <bool Load, bool Byte>
