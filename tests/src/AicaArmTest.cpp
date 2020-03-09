@@ -957,3 +957,18 @@ TEST_F(AicaArmTest, JumpTest)
 	RunOp();
 	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0xbaadcafc);
 }
+
+TEST_F(AicaArmTest, LdmStmTest)
+{
+	PrepareOp(0xe8bd8000);	// ldm sp!, {pc}
+	arm_Reg[13].I = 0x1100;
+	*(u32*)&aica_ram[0x1100] = 0x1234;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1234);
+
+	PrepareOp(0xe92d8000);	// stmdb sp!, {pc}
+	arm_Reg[13].I = 0x1104;
+	RunOp();
+	ASSERT_EQ(arm_Reg[13].I, 0x1100);
+	ASSERT_EQ(*(u32*)&aica_ram[0x1100], 0x1000 + 12);
+}
