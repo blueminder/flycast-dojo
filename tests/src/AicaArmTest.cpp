@@ -30,12 +30,19 @@ protected:
 
 	void PrepareOp(u32 op)
 	{
+		PrepareOps(1, &op);
+	}
+
+	void PrepareOps(int count, u32 *ops)
+	{
 		arm_Reg[R15_ARM_NEXT].I = 0x1000;
-		*(u32*)&aica_ram[0x1000] = op;
-		*(u32*)&aica_ram[0x1004] = 0xeafffffd;	// b pc+8-12
+		for (int i = 0; i < count; i++)
+			*(u32*)&aica_ram[0x1000 + i * 4] = ops[i];
+		*(u32*)&aica_ram[0x1000 + count * 4] = 0xea000000 | ((u32)(-count * 4 - 8) << 2);	// b pc+8-12
 		arm7rec_flush();
 		CompileCode();
 	}
+
 	void RunOp()
 	{
 		arm_Reg[R15_ARM_NEXT].I = 0x1000;
@@ -971,4 +978,70 @@ TEST_F(AicaArmTest, LdmStmTest)
 	RunOp();
 	ASSERT_EQ(arm_Reg[13].I, 0x1100);
 	ASSERT_EQ(*(u32*)&aica_ram[0x1100], 0x1000 + 12);
+}
+
+TEST_F(AicaArmTest, RegAllocTest)
+{
+	u32 ops[] = {
+			0xe3a00000,	// mov r0, #0
+			0xe3a01001,	// mov r1, #1
+			0xe3a02002,	// mov r2, #2
+			0xe3a03003,	// mov r3, #3
+			0xe3a04004,	// mov r4, #4
+			0xe3a05005,	// mov r5, #5
+			0xe3a06006,	// mov r6, #6
+			0xe0800001,	// add r0, r0, r1
+			0xe0811002,	// add r1, r1, r2
+			0xe0822003,	// add r2, r2, r3
+			0xe0833004,	// add r3, r3, r4
+			0xe0844005,	// add r4, r4, r5
+			0xe0855006,	// add r5, r5, r6
+			0xe0866000,	// add r6, r6, r0
+	};
+	PrepareOps(ARRAY_SIZE(ops), ops);
+	for (int i = 0; i < 15; i++)
+		arm_Reg[i].I = 0;
+
+	RunOp();
+
+	ASSERT_EQ(arm_Reg[0].I, 1);
+	ASSERT_EQ(arm_Reg[1].I, 3);
+	ASSERT_EQ(arm_Reg[2].I, 5);
+	ASSERT_EQ(arm_Reg[3].I, 7);
+	ASSERT_EQ(arm_Reg[4].I, 9);
+	ASSERT_EQ(arm_Reg[5].I, 11);
+	ASSERT_EQ(arm_Reg[6].I, 7);
+}
+
+TEST_F(AicaArmTest, ConditionRegAllocTest)
+{
+	u32 ops1[] = {
+			0x03a0004d,	// moveq r0, #77
+			0xe1a01000	// mov r1, r0
+	};
+	PrepareOps(ARRAY_SIZE(ops1), ops1);
+	arm_Reg[0].I = 22;
+	arm_Reg[1].I = 22;
+	ResetNZCV();
+
+	RunOp();
+
+	ASSERT_EQ(arm_Reg[0].I, 22);
+	ASSERT_EQ(arm_Reg[1].I, 22);
+
+	u32 ops2[] = {
+			0x01a01000,	// moveq r1, r0
+			0xe1a02000	// mov r2, r0
+	};
+	PrepareOps(ARRAY_SIZE(ops2), ops2);
+	arm_Reg[0].I = 22;
+	arm_Reg[1].I = 0;
+	arm_Reg[2].I = 0;
+	ResetNZCV();
+
+	RunOp();
+
+	ASSERT_EQ(arm_Reg[0].I, 22);
+	ASSERT_EQ(arm_Reg[1].I, 0);
+	ASSERT_EQ(arm_Reg[2].I, 22);
 }

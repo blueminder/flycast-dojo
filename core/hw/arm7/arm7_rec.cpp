@@ -19,7 +19,7 @@
 
 #include "build.h"
 
-#if	1 // FIXME FEAT_AREC != DYNAREC_NONE
+#if	FEAT_AREC != DYNAREC_NONE
 
 #include "arm7_rec.h"
 #include "arm7.h"
@@ -160,19 +160,19 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 		{
 			// MSR, MRS
 			op.spsr = bits.op_type & 2;
-			if (bits.rn == 15)
+			if ((bits.full & 0x0FBF0FFF) == 0x010F0000)
 			{
 				op.op_type = ArmOp::MRS;
 				op.rd = ArmOp::Operand((Arm7Reg)bits.rd);
 				verify(bits.rd != 15);
 			}
-			else if (bits.rn == 9)
+			else if ((bits.full & 0x0FBFFFF0) == 0x0129F000)
 			{
 				op.op_type = ArmOp::MSR;
 				op.arg[0] = ArmOp::Operand((Arm7Reg)bits.rm);
 				op.cycles++;
 			}
-			else
+			else if ((bits.full & 0x0DBFF000) == 0x0128F000)
 			{
 				op.op_type = ArmOp::MSR;
 				if (bits.imm_op == 0)
@@ -186,6 +186,15 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					u32 rotate = bits.rotate * 2;
 					op.arg[0] = ArmOp::Operand((bits.imm8 >> rotate) | (bits.imm8 << (32 - rotate)));
 				}
+			}
+			else
+			{
+				// Unsupported op
+				op.op_type = ArmOp::MOV;
+				op.condition = ArmOp::AL;
+				op.flags = 0;
+				op.rd = ArmOp::Operand((Arm7Reg)0);
+				op.arg[0] = op.rd;
 			}
 			return op;
 		}

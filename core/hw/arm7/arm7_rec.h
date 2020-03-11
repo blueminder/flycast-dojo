@@ -243,7 +243,7 @@ class ArmRegAlloc
 							alloc.host_reg = -1;
 							break;
 						}
-						if (nextUse_ > bestRegUse)
+						if (nextUse_ != opidx && nextUse_ > bestRegUse)
 						{
 							bestRegUse = nextUse_;
 							bestReg = (Arm7Reg)i;
@@ -252,9 +252,29 @@ class ArmRegAlloc
 				}
 				if (host_regs.empty())
 				{
-					verify(bestReg != (Arm7Reg)-1);
-					host_regs.push_back(allocs[bestReg].host_reg);
-					allocs[bestReg].host_reg = -1;
+					if (bestReg == (Arm7Reg)-1)
+					{
+						for (u32 i = 0; i < allocs.size(); i++)
+						{
+							auto& alloc = allocs[i];
+							if (alloc.host_reg == -1)
+								continue;
+							int nextUse_ = nextUse((Arm7Reg)i, alloc.version, opidx);
+							if (nextUse_ == -1)
+							{
+								bestReg = (Arm7Reg)i;
+								break;
+							}
+							if (nextUse_ != opidx && nextUse_ > bestRegUse)
+							{
+								bestRegUse = nextUse_;
+								bestReg = (Arm7Reg)i;
+							}
+						}
+						verify(bestReg != (Arm7Reg)-1);
+						DEBUG_LOG(AICA_ARM, "Flushing dirty register r%d", bestReg);
+					}
+					flushReg(allocs[bestReg]);
 				}
 				verify(!host_regs.empty());
 			}
@@ -316,6 +336,8 @@ class ArmRegAlloc
 				if (!arg.shift_imm && arg.shift_reg.armreg == reg)
 					return get_index_or_max(arg.shift_reg, opidx);
 			}
+			if (it->rd.isReg() && it->rd.getReg().armreg == reg)
+				return -1;
 		}
 		return -1;
 	}
