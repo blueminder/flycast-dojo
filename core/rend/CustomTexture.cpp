@@ -20,6 +20,7 @@
 #include "cfg/cfg.h"
 
 #include <algorithm>
+#include <set>
 #include <dirent.h>
 #include <png.h>
 #include <sstream>
@@ -27,6 +28,9 @@
 // TODO Move this out of gles.cpp
 u8* loadPNGData(const std::string& subpath, int &width, int &height);
 CustomTexture custom_texture;
+
+static std::set<u32> loadedTexs;
+static FILE *fp;
 
 void CustomTexture::LoaderThread()
 {
@@ -60,6 +64,18 @@ void CustomTexture::LoaderThread()
 					if (image_data == NULL)
 					{
 						image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
+					}
+					if (image_data == NULL)
+					{
+						image_data = LoadCustomTexture(texture->old_texture_hash2, width, height);
+						if (image_data != NULL && loadedTexs.insert(texture->old_texture_hash2).second)
+						{
+							if (fp == NULL)
+								fp = fopen("convert.txt", "a");
+							std::stringstream path;
+							path << "mv " << std::hex << texture->old_texture_hash2 << ".png ../new/" << texture->texture_hash << ".png";
+							fprintf(fp, "%s\n", path.str().c_str());
+						}
 					}
 					if (image_data != NULL)
 					{
@@ -127,6 +143,8 @@ void CustomTexture::Terminate()
 		loader_thread.WaitToEnd();
 #endif
 	}
+	if (fp)
+		fclose(fp);
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)

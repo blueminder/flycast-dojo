@@ -22,6 +22,8 @@ u32 palette16_ram[1024];
 u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
+u32 old_pal_hash_256[4];
+u32 old_pal_hash_16[64];
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
@@ -89,6 +91,7 @@ void palette_update()
 		return;
 
 	pal_needs_update=false;
+	u32 old_palette_ram[1024];
 
 	switch(PAL_RAM_CTRL&3)
 	{
@@ -97,6 +100,7 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
+			old_palette_ram[i] = OLD_ARGB1555_32(PALETTE_RAM[i]);
 		}
 		break;
 
@@ -105,6 +109,7 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
+			old_palette_ram[i] = OLD_ARGB565_32(PALETTE_RAM[i]);
 		}
 		break;
 
@@ -113,6 +118,7 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
+			old_palette_ram[i] = OLD_ARGB4444_32(PALETTE_RAM[i]);
 		}
 		break;
 
@@ -121,13 +127,20 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
+			old_palette_ram[i] = OLD_ARGB8888_32(PALETTE_RAM[i]);
 		}
 		break;
 	}
 	for (int i = 0; i < 64; i++)
+	{
 		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
+		old_pal_hash_16[i] = XXH32(&old_palette_ram[i << 4], 16 * 4, 7);
+	}
 	for (int i = 0; i < 4; i++)
+	{
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
+		old_pal_hash_256[i] = XXH32(&old_palette_ram[i << 8], 256 * 4, 7);
+	}
 }
 
 std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
@@ -559,9 +572,14 @@ void BaseTextureCacheData::Create()
 void BaseTextureCacheData::ComputeHash()
 {
 	texture_hash = XXH32(&vram[sa], size, 7);
+	old_texture_hash2 = texture_hash;
 	if (IsPaletted())
+	{
 		texture_hash ^= palette_hash;
+		old_texture_hash2 ^= old_palette_hash;
+	}
 	old_texture_hash = texture_hash;
+	old_texture_hash2 ^= tcw.full;
 	texture_hash ^= tcw.full & 0xFC000000;	// everything but texaddr, reserved and stride
 }
 
@@ -582,9 +600,15 @@ void BaseTextureCacheData::Update()
 
 		// Get the palette hash to check for future updates
 		if (tcw.PixelFmt == PixelPal4)
+		{
 			palette_hash = pal_hash_16[tcw.PalSelect];
+			old_palette_hash = old_pal_hash_16[tcw.PalSelect];
+		}
 		else
+		{
 			palette_hash = pal_hash_256[tcw.PalSelect >> 4];
+			old_palette_hash = old_pal_hash_256[tcw.PalSelect >> 4];
+		}
 	}
 
 	::palette_index = this->palette_index; // might be used if pal. tex

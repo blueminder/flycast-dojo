@@ -120,7 +120,7 @@ public:
 
 void palette_update();
 
-#define clamp(minv, maxv, x) (x < minv ? minv : x > maxv ? maxv : x)
+#define clamp(minv, maxv, x) ((x) < (minv) ? (minv) : (x) > (maxv) ? (maxv) : (x))
 
 // Unpack to 16-bit word
 
@@ -150,6 +150,15 @@ void palette_update();
 								(((word >> 0) & 0xF) << 20) | (((word >> 0) & 0xF) << 16) )
 
 #define ARGB8888_32( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
+
+// previous conversion used with uint8888 (lr)
+#define OLD_ARGB1555_32( word )	( ((word & 0x8000) ? 0xFF : 0) | (((word>>10) & 0x1F)<<27)  | (((word>>5) & 0x1F)<<19)  | (((word>>0) & 0x1F)<<11) )
+
+#define OLD_ARGB565_32( word )	( (((word>>11)&0x1F)<<27) | (((word>>5)&0x3F)<<18) | (((word>>0)&0x1F)<<11) | 0xFF )
+
+#define OLD_ARGB4444_32( word ) ( (((word>>12)&0xF)<<4) | (((word>>8)&0xF)<<28) | (((word>>4)&0xF)<<20) | (((word>>0)&0xF)<<12) )
+
+#define OLD_ARGB8888_32( word ) ( ((word >> 24) & 0xFF) | (((word >> 16) & 0xFF) << 24) | (((word >> 8) & 0xFF) << 16) | ((word & 0xFF) << 8) )
 
 template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
@@ -672,9 +681,11 @@ public:
 	u32 palette_index;
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
+	u32 old_palette_hash;
 	u32 vq_codebook;            // VQ quantizers table for compressed textures
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
+	u32 old_texture_hash2;		// v2 hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;
