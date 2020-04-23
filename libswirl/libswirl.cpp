@@ -836,9 +836,11 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         cfgSetVirtual("config", "image", path.c_str());
 
-        if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+        //settings.bios.UseReios = true;
+
+        if (settings.bios.UseReios) 
         {
-#ifdef USE_REIOS
+            
             if (!LoadHle(get_readonly_data_path(DATA_PATH)))
             {
                 return -5;
@@ -847,10 +849,13 @@ struct Dreamcast_impl : VirtualDreamcast {
             {
                 printf("Did not load bios, using reios\n");
             }
-#else
-            printf("Cannot find BIOS files\n");
-            return -5;
-#endif
+ 
+        }
+        else {
+            if (!LoadRomFiles(get_readonly_data_path(DATA_PATH))) {
+                printf("Cannot find BIOS files\n");
+                return -5;
+            }
         }
 
         rend_init_renderer(sh4_cpu->vram.data);

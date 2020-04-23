@@ -68,7 +68,7 @@ static __attribute((used)) void end_slice()
 #endif
 
 static void ngen_blockcheckfail(u32 pc) {
-	printf("X64 JIT: SMC invalidation at %08X\n", pc);
+	//printf("X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 

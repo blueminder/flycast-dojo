@@ -234,11 +234,13 @@ DynarecCodeEntryPtr rdv_CompilePC_OrFail(bool soft_resets)
 
 	if (soft_resets)
 	{
-		if (pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
+		if (pc==0x8c0000e0 || pc==0xac010000 || pc == 0xac008300/*|| pc == 0x800000B0*/) //XXX HOOK ?
 		{
+			LoadHle(get_readonly_data_path(DATA_PATH));
 			bm_printf("rdv_CompilePC: failed (soft jit reset) %08X\n", next_pc);	 	
 			return nullptr;
 		}
+
 	}
 
 	if (emit_FreeSpace()<16*1024)
@@ -356,7 +358,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 	next_pc=pc;
 	auto block = bm_GetBlock(pc);
 
-	printf("Discard: %08X, %p\n", pc, block);
+	//printf("Discard: %08X, %p\n", pc, block);
 
 	bm_DiscardBlock(block);
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());

@@ -20,7 +20,7 @@
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
 //#define debugf printf
-#define debugf(...)
+#define debugf(...) printf( __VA_ARGS__)
 
 void GDROM_HLE_ReadSES(u32 addr)
 {
@@ -84,8 +84,6 @@ void GDROM_HLE_ReadDMA(u32 addr)
 	u32 n = ReadMem32(addr + 0x04);
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
-
-	
 
 	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 	read_sectors_to(b, s, n);

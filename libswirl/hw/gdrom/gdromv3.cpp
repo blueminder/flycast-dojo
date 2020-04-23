@@ -23,13 +23,13 @@
 #include "hw/sh4/sh4_sched.h"
 
 #include "hw/sh4/sh4_sched.h"
-void nilprintf(...) {}
+ 
 
-#define printf_rm nilprintf
-#define printf_ata nilprintf
-#define printf_spi nilprintf
-#define printf_spicmd nilprintf
-#define printf_subcode nilprintf 
+#define printf_rm 
+#define printf_ata 
+#define printf_spi 
+#define printf_spicmd 
+#define printf_subcode  
 
 
 //// TOPO: FIX THIS <<<

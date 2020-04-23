@@ -21,24 +21,24 @@ enum gdrom_opcode_e {
     GDROM_OP_LAST = GDROM_OP_GETSES,
     GDROM_OP_COUNT = (GDROM_OP_LAST - GDROM_OP_FIRST) + 1,
 };
+ 
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void,bios_hle_gdrom_opcodes_impl_,  NOP );
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_PIOREAD);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_DMAREAD);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_GETTOC);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_GETTOC2);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_PLAY);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_PLAY_SECTOR);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_PAUSE);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_RELEASE);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_INIT);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_SEEK);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_READ);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_STOP);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_GETSCD);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_opcodes_impl_, GDROM_OP_GETSES);
 
-void bios_hle_gdrom_opcodes_impl_NOP();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_PIOREAD();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_DMAREAD();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_GETTOC();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_GETTOC2();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_PLAY();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_PLAY_SECTOR();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_PAUSE();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_RELEASE();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_INIT();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_SEEK();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_READ();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_STOP();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_GETSCD();
-void bios_hle_gdrom_opcodes_impl_GDROM_OP_GETSES();
-
-static callback_t bios_hle_gdrom_opcodes_fptr[] = {// respect the ORDER!!!
+static HLE_ALIGN_REGION(32) callback_t bios_hle_gdrom_opcodes_fptr[] = {// respect the ORDER!!!
     {"NOP",-1,&bios_hle_gdrom_opcodes_impl_NOP},//0
     {"NOP",-1,&bios_hle_gdrom_opcodes_impl_NOP},
     {"NOP",-1,&bios_hle_gdrom_opcodes_impl_NOP},

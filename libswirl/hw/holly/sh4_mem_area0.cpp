@@ -119,12 +119,15 @@ void SaveRomFiles(const string& root)
 #endif
 }
 
+//TODO CLEANUP THIS
+#include "reios_v2/bios_hle.hpp"
 bool LoadHle(const string& root) {
 	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
 		printf("No nvmem loaded\n");
 	}
-
-	return reios_init(sys_rom.data, sys_nvmem.data);
+	//TODO CLEANUP THIS
+	extern unique_ptr<GDRomDisc> g_GDRDisc;
+	return bios_hle_init_hybrid(sys_rom.data, sys_nvmem.data, p_sh4rcb, g_GDRDisc.get());
 }
 
 u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }

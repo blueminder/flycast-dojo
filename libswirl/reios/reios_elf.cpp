@@ -5,6 +5,7 @@
 
 
 #include "reios.h"
+#include "reios_v2/bios_hle.hpp"
 
 #include "deps/libelf/elf.h"
 

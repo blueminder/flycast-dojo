@@ -25,23 +25,24 @@ enum gdrom_syscall_info_type_e {
     GDROM_SFUNCTION_LAST = GDROM_NOT_IMPL2
 };
 
-void bios_hle_gdrom_superfunction_impl_GDROM_SEND_COMMAND();
-void bios_hle_gdrom_superfunction_impl_GDROM_CHECK_COMMAND();
-void bios_hle_gdrom_superfunction_impl_GDROM_MAINLOOP();
-void bios_hle_gdrom_superfunction_impl_GDROM_INIT();
-void bios_hle_gdrom_superfunction_impl_GDROM_CHECK_DRIVE();
-void bios_hle_gdrom_superfunction_impl_GDROM_G1_DMA_END();
-void bios_hle_gdrom_superfunction_impl_GDROM_REQ_DMA();
-void bios_hle_gdrom_superfunction_impl_GDROM_ABORT_COMMAND();
-void bios_hle_gdrom_superfunction_impl_GDROM_RESET();
-void bios_hle_gdrom_superfunction_impl_GDROM_SECTOR_MODE();
-void bios_hle_gdrom_superfunction_impl_GDROM_UNK1();
-void bios_hle_gdrom_superfunction_impl_GDROM_UNK2();
-void bios_hle_gdrom_superfunction_impl_GDROM_UNK3();
-void bios_hle_gdrom_superfunction_impl_GDROM_NOT_IMPL1();
-void bios_hle_gdrom_superfunction_impl_GDROM_NOT_IMPL2();
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_SEND_COMMAND);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_CHECK_COMMAND);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_MAINLOOP);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_INIT);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_CHECK_DRIVE);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_G1_DMA_END);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_REQ_DMA);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_CHECK_DMA);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_ABORT_COMMAND);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_RESET);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_SECTOR_MODE);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_UNK1);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_UNK2);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_UNK3);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_NOT_IMPL1);
+HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(void, bios_hle_gdrom_superfunction_impl_, GDROM_NOT_IMPL2);
  
-static callback_t bios_hle_gdrom_superfunctions_fptr[] = {// respect the ORDER!!!
+static HLE_ALIGN_REGION(32) callback_t bios_hle_gdrom_superfunctions_fptr[] = {// respect the ORDER!!!
     {"GDROM_SEND_COMMAND",(int64_t)GDROM_SEND_COMMAND,&bios_hle_gdrom_superfunction_impl_GDROM_SEND_COMMAND},
     {"GDROM_CHECK_COMMAND",(int64_t)GDROM_CHECK_COMMAND,&bios_hle_gdrom_superfunction_impl_GDROM_CHECK_COMMAND},
     {"GDROM_MAINLOOP",(int64_t)GDROM_MAINLOOP,&bios_hle_gdrom_superfunction_impl_GDROM_MAINLOOP},

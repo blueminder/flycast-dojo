@@ -2,13 +2,23 @@
 #include "license/bsd"
 #include <stdint.h>
 #include "hw/sh4/sh4_mem.h"
-
 #include "hw/naomi/naomi_cart.h"
 #include "libswirl.h"
+
 #define bios_hle_trace(__x__ ,...) printf(__x__,__VA_ARGS__)
 #define BIOS_HLE_SAFE_MODE
+#define SH4_EXT_OP_REIOS_V2_TRAP (0x085B)
+#define HLE_GENERATE_FUNCTION_INTERFACE(__ret_type__,__base__,__ext__,__args__) __ret_type__   __base__ ## __ext__ ## (__args__)
+#define HLE_GENERATE_FUNCTION_INTERFACE_NO_ARGS(__ret_type__,__base__,__ext__ ) __ret_type__   __base__ ## __ext__ ## ()
+#define HLE_ALIGN_REGION(__X__) DECL_ALIGN(__X__)
 
-struct callback_t {
+
+#if UINTPTR_MAX == UINT64_MAX
+HLE_ALIGN_REGION(32) struct
+#else
+HLE_ALIGN_REGION(16) struct
+#endif
+callback_t {
     const char* name;
     int64_t id;
     void (*fn)(void);
@@ -38,7 +48,6 @@ enum flashrom_syscall_info_type_e {
     FLASHROM_WRITE,
     FLASHROM_DELETE
 };
- 
 
 enum gdrom_status_e {
     GDROM_STATUS_ERROR = -1,
