@@ -665,8 +665,9 @@ void* libPvr_GetRenderSurface();
 
 //GDR
 void libCore_gdrom_disc_change();
-
+ 
 struct GDRomDisc {
+	
 	virtual s32 Init() = 0;
 	virtual void Reset(bool M) = 0;
 

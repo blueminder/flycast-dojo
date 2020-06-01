@@ -35,8 +35,10 @@
 //// TOPO: FIX THIS <<<
 //// Hotfix for android / travis CI
 
-struct GDRomV3_impl final : MMIODevice {
-    int gdrom_schid;
+GD_SecNumbT SecNumber = { 0 }; //Nasty hack but interface is a MESS
+
+struct GDRomV3_impl final  : MMIODevice {
+   int gdrom_schid;
 
     //Sense: ASC - ASCQ - Key
     signed int sns_asc = 0;
@@ -54,14 +56,7 @@ struct GDRomV3_impl final : MMIODevice {
 
     gd_states gd_state = gds_waitcmd;
     DiscType gd_disk_type = NoDisk;
-    /*
-        GD rom reset -> GDS_WAITCMD
-
-        GDS_WAITCMD -> ATA/SPI command [Command code is on ata_cmd]
-        SPI Command -> GDS_WAITPACKET -> GDS_SPI_* , depending on input
-
-        GDS_SPI_READSECTOR -> Depending on features , it can do quite a few things
-    */
+    
     u32 data_write_mode = 0;
 
     //Registers
@@ -70,12 +65,16 @@ struct GDRomV3_impl final : MMIODevice {
     GD_InterruptReasonT IntReason = { 0 };
     GD_FeaturesT Features = { 0 };
     GD_SecCountT SecCount = { 0 };
-    GD_SecNumbT SecNumber = { 0 };
+    
 
     GD_StatusT GDStatus = { 0 };
 
     ByteCount_t ByteCount = { 0 };
 
+    SystemBus* sb;
+    ASIC* asic;
+    SuperH4Mmr* sh4mmr;
+    
     //end
     void FillReadBuffer()
     {
@@ -1006,9 +1005,7 @@ struct GDRomV3_impl final : MMIODevice {
         SB_GDEN = 0;
     }
 
-    SystemBus* sb;
-    ASIC* asic;
-    SuperH4Mmr* sh4mmr;
+   
     GDRomV3_impl(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) : sh4mmr(sh4mmr), sb(sb), asic(asic) {
        
     }

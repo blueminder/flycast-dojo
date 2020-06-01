@@ -308,9 +308,10 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 	}
 	printf("Session END: FAD END %d\n",ses->SessionsEndFAD);
 }
-
-
+ 
 struct GDRomDisc_impl : GDRomDisc {
+	 
+
 	void ReadSubChannel(u8* buff, u32 format, u32 len)
 	{
 		if (format == 0)

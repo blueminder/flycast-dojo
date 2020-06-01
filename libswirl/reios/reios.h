@@ -1,9 +1,3 @@
-/*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
 #ifndef REIOS_H
 #define REIOS_H
 
@@ -19,9 +13,8 @@ void DYNACALL reios_trap(u32 op);
 
 char* reios_disk_id();
 extern char reios_software_name[129];
+
+#define REIOS_OPCODE (0x085B)
 extern char reios_product_number[11];
 extern bool reios_windows_ce;
-
-#define REIOS_OPCODE 0x085B
-
 #endif //REIOS_H

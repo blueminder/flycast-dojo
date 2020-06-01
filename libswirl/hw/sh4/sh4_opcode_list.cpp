@@ -10,6 +10,7 @@
 #include "dyna/decoder_opcodes.h"
 #include "hw/sh4/dyna/shil.h"
 #include "reios_v2/bios_hle.hpp"
+#include "reios/reios.h"
 
 OpCallFP* OpPtr[0x10000];
 sh4_opcodelistentry* OpDesc[0x10000];
@@ -130,7 +131,11 @@ sh4_opcodelistentry missing_opcode = {0,iNotImplemented,0,0,ReadWritePC,"missing
 sh4_opcodelistentry opcodes[]=
 {
 	//HLE
+#if 0
 	{0, bios_hle_hooks_dyna_trap, Mask_none, SH4_EXT_OP_REIOS_V2_TRAP, Branch_dir, "reios_v2_trap", 100, 100, CO, fix_none },
+#else
+	{0, reios_trap, Mask_none, REIOS_OPCODE, Branch_dir, "reios_orig_trap", 100, 100, CO, fix_none },
+#endif
 	//CPU
 	{dec_i0000_nnnn_0010_0011   ,i0000_nnnn_0010_0011   ,Mask_n         ,0x0023 ,Branch_rel_d   ,"braf <REG_N>"                         ,2,3,CO,fix_none},  //braf <REG_N>
 	{dec_i0000_nnnn_0000_0011   ,i0000_nnnn_0000_0011   ,Mask_n         ,0x0003 ,Branch_rel_d   ,"bsrf <REG_N>"                         ,2,3,CO,fix_none},  //bsrf <REG_N>

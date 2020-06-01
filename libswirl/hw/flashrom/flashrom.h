@@ -461,8 +461,7 @@ struct DCFlashChip : MemChip
 		return 1;
 	}
 
-private:
-	void partition_info(int part_id, int *offset, int *size)
+	void partition_info(int part_id, int* offset, int* size)
 	{
 		switch (part_id)
 		{
@@ -491,6 +490,9 @@ private:
 			break;
 		}
 	}
+
+private:
+
 
 	int crc_block(struct flash_user_block *block)
 	{

@@ -37,10 +37,10 @@ void ExecuteDelayslot()
     try {
 #endif
         u32 addr = next_pc;
-        if (addr == 0x8c0000e0 || addr == 0xac010000 || addr == 0xac008300/*|| pc == 0x800000B0*/) //XXX HOOK ?
+        /*if (addr == 0x8c0000e0 || addr == 0xac010000 || addr == 0xac008300 ) //XXX HOOK ?
         {
             LoadHle(get_readonly_data_path(DATA_PATH));
-        }
+        }*/
         next_pc += 2;
         u32 op = IReadMem16(addr);
 
@@ -90,10 +90,10 @@ struct SH4IInterpreter : SuperH4Backend {
                 do
                 {
                     u32 addr = next_pc;
-                    if (addr == 0x8c0000e0 || addr == 0xac010000 || addr == 0xac008300/*|| pc == 0x800000B0*/) //XXX HOOK ?
+                    /*if (addr == 0x8c0000e0 || addr == 0xac010000 || addr == 0xac008300 ) //XXX HOOK ?
                     {
                         LoadHle(get_readonly_data_path(DATA_PATH));
-                    }
+                    }*/
                     next_pc += 2;
                     u32 op = IReadMem16(addr);
 

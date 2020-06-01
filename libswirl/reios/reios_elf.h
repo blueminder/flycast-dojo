@@ -1,9 +1,3 @@
-/*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
 #ifndef REIOS_ELF_H
 #define REIOS_ELF_H
 

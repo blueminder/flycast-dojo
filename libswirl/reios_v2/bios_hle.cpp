@@ -1,27 +1,6 @@
 
 #include "bios_hle.hpp"
 
-#define reg_ctx p_reg_context->cntx.r
-#define freg_ctx p_reg_context->cntx.xffr
-#define dc_bios_syscall_system				0x8C0000B0
-
-#define dc_bios_syscall_font				0x8C0000B4
-
-#define dc_bios_syscall_flashrom			0x8C0000B8
-
-#define dc_bios_syscall_gd					0x8C0000BC
-
-#define dc_bios_syscall_misc				0x8c0000E0
-
-
-
-//At least one game (ooga) uses this directly
-
-#define dc_bios_entrypoint_gd_do_bioscall	0x8c0010F0
-
-
-
-#define SYSINFO_ID_ADDR 0x8C001010
 struct bios_t {
     uint8_t* rom;
     uint8_t* flash;
@@ -29,6 +8,17 @@ struct bios_t {
     bios_t() : rom(nullptr), flash(nullptr) {}
 };
 
+
+#define reg_ctx p_reg_context->cntx.r
+#define freg_ctx p_reg_context->cntx.xffr
+
+static constexpr uint32_t dc_bios_syscall_system = 0x8C0000B0;
+static constexpr uint32_t dc_bios_syscall_font = 0x8C0000B4;
+static constexpr uint32_t dc_bios_syscall_flashrom = 0x8C0000B8;
+static constexpr uint32_t dc_bios_syscall_gd = 0x8C0000BC;
+static constexpr uint32_t dc_bios_syscall_misc = 0x8c0000E0;
+static constexpr uint32_t dc_bios_entrypoint_gd_do_bioscall = 0x8c0010F0;
+static constexpr uint32_t SYSINFO_ID_ADDR = 0x8C001010;
 static bool b_sysinfo_init_called = false;
 static bool b_initialized = false;
 static Sh4RCB* p_reg_context = nullptr;
@@ -78,35 +68,22 @@ static inline void mtx_unlock() {
 extern char ip_bin[256];
 
 extern char reios_hardware_id[17];
-
 extern char reios_maker_id[17];
-
 extern char reios_device_info[17];
-
 extern char reios_area_symbols[9];
-
 extern char reios_peripherals[9];
-
 extern char reios_product_number[11];
-
 extern char reios_product_version[7];
-
 extern char reios_releasedate[17];
-
 extern char reios_boot_filename[17];
-
 extern char reios_software_company[17];
-
 extern char reios_software_name[129];
-
 extern char reios_bootfile[32];
-
-
 extern u32 base_fad ;
-
 extern bool descrambl ;
+extern const char* reios_locate_ip();
 
-const char* reios_locate_ip() {
+/*const char* reios_locate_ip() {
 
     if (g_GDRDisc->GetDiscType() == GdRom) {
 
@@ -162,8 +139,9 @@ const char* reios_locate_ip() {
     return reios_bootfile;
 
 }
+*/
 
-void bios_hle_boot() {
+bool bios_hle_boot() {
 
     printf("================\n");
     printf("HLE REIOS_V2 BOOT\n");
@@ -173,7 +151,7 @@ void bios_hle_boot() {
      
 
    // bios_hle_hooks_patch_syscall(&bios_hle_func_8C0000B0_sys_fn , 0x8C0000B0);
-    return;
+    //return true;
     //bios_hle_hooks_patch_syscall(&bios_hle_func_8C0000BC_misc_gdrom_fn,0x8C001006  );
 
     //bios_hle_hooks_patch_syscall(&bios_hle_func_8C0000BC_misc_gdrom_fn,0x8C001008);
@@ -188,8 +166,8 @@ void bios_hle_boot() {
 
    // WriteMem32(dc_bios_entrypoint_gd_do_bioscall, REIOS_OPCODE);
     //Infinitive loop for arm !
-    //WriteMem32(0x80800000, 0xEAFFFFFE);
-    
+    //
+    bios_hle_hooks_register_function(0x8C001008, bios_hle_func_8C0000BC_misc_gdrom_fn);
 
     const char* bootfile = reios_locate_ip();
 
@@ -198,6 +176,7 @@ void bios_hle_boot() {
 
 
     printf("\n\nREIOS2 : BOOT\n\n");
+    WriteMem32(0x80800000, 0xEAFFFFFE);
     reios_setup_state(0xac008300);
 
     /*if (settings.reios.ElfFile.size()) {
@@ -253,10 +232,17 @@ void bios_hle_boot() {
         }*/
 
     }
+    return true;
 }
 
 bool bios_hle_init(uint8_t* _rom, uint8_t* _flash ,Sh4RCB* _sh4rcb, GDRomDisc* _gdrom)  {
-    printf("INIT REIOS_V2\n");  
+    
+    extern bool reios_init(u8 * rom, u8 * flash);
+    reios_init(_rom, _flash);
+    return true;
+    printf("====================\n");
+    printf("REIOS_V2_STD INIT\n");
+    printf("====================\n");
     if (b_initialized) {
         bios_hle_shutdown();
     }
@@ -268,21 +254,21 @@ bool bios_hle_init(uint8_t* _rom, uint8_t* _flash ,Sh4RCB* _sh4rcb, GDRomDisc* _
     uint16_t* rom16 = (uint16_t*)_rom;
 
     rom16[0] = SH4_EXT_OP_REIOS_V2_TRAP;
-    //bios_hle_hooks_register(0xA0000000, bios_hle_boot);
+    bios_hle_hooks_register_function(0xA0000000, bios_hle_boot);
 
-  //  bios_hle_hooks_register(0x8C001000, bios_hle_func_8C0000B0_sys_fn);
-
-
-
-   // bios_hle_hooks_register(0x8C001006, bios_hle_func_8C0000BC_misc_gdrom_fn);
-
-    //bios_hle_hooks_register(0x8C001008, bios_hle_func_8C0000BC_misc_gdrom_fn);
+  //  bios_hle_hooks_register_function(0x8C001000, bios_hle_func_8C0000B0_sys_fn);
 
 
 
-    //bios_hle_hooks_register(dc_bios_entrypoint_gd_do_bioscall, &bios_hle_func_8C0000BC_misc_gdrom_fn);
+    //bios_hle_hooks_register_function(0x8C001006, bios_hle_func_8C0000BC_misc_gdrom_fn);
 
-    bios_hle_boot();
+    bios_hle_hooks_register_function(0x8C001008, bios_hle_func_8C0000BC_misc_gdrom_fn);
+
+
+
+    //bios_hle_hooks_register_function(dc_bios_entrypoint_gd_do_bioscall, &bios_hle_func_8C0000BC_misc_gdrom_fn);
+
+   // bios_hle_boot();
 
 
     b_initialized = true;
@@ -291,7 +277,7 @@ bool bios_hle_init(uint8_t* _rom, uint8_t* _flash ,Sh4RCB* _sh4rcb, GDRomDisc* _
 
 bool bios_hle_init_hybrid(uint8_t* _rom, uint8_t* _flash, Sh4RCB* _sh4rcb, GDRomDisc* _gdrom) {
    
-
+    return bios_hle_init(_rom, _flash, _sh4rcb, _gdrom);
     printf("====================\n");
     printf("REIOS_V2_HYBRID INIT\n");
     printf("====================\n");
@@ -348,22 +334,12 @@ void bios_hle_func_8C0000B8_flashrom_fn() {  //@ $8c003d00
     
 }
 
-
-/*
-
-    simple scenario :
-
-    pc = 0 
-
-    old_op = read16(pc)
-    write @op , 
-
-    
-*/
+ 
 
 u32 prev_pr_addr = 0;
 
 bool bios_hle_func_8C0000BC_misc_gdrom_fn_2() {
+    
     //unpatch and let it run
     WriteMem16(0x8C001000, bios_hle_func_8C0000BC_misc_gdrom_fn_original);
 
@@ -389,9 +365,9 @@ bool bios_hle_func_8C0000BC_misc_gdrom_fn() { // @ $8c001000
         r6=1-7 - user defined superfunction
     */
     
-    printf("bios_hle_func_8C0000BC_misc_gdrom_fn r6 %d r7 %d\n", reg_ctx[6], reg_ctx[7]);
-    printf("CALLING GD\n");
-    return true;
+    //printf("bios_hle_func_8C0000BC_misc_gdrom_fn r6 %d r7 %d\n", reg_ctx[6], reg_ctx[7]);
+    //printf("CALLING GD\n");
+   // return true;
     extern void gdrom_hle_op();
     gdrom_hle_op();
     return true;

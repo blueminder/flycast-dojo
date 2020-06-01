@@ -1,9 +1,3 @@
-/*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
 #pragma once
 
 #define SYSCALL_GDROM			(0x00)
@@ -40,4 +34,4 @@
 #define CTOC_TRACK(n) (n<<16)
 
 void gdrom_hle_op();
-void GD_HLE_Command(u32 cc, u32 prm);
+void GD_HLE_Command(u32 cc, u32 prm, const int32_t m = -1);

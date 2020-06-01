@@ -1,10 +1,4 @@
 /*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
-/*
 	Based on work of Marcus Comstedt
 	http://mc.pp.se, http://mc.pp.se/dc/sw.html, http://mc.pp.se/dc/files/scramble.c
 	License: Gotta verify
@@ -14,10 +8,11 @@
 
 #include "descrambl.h"
 #include <algorithm>
-
 #define MAXCHUNK (2048*1024)
 
 static unsigned int seed;
+
+extern unique_ptr<GDRomDisc> g_GDRDisc; 
 
 void my_srand(unsigned int n)
 {
@@ -41,7 +36,7 @@ void load(FILE *fh, unsigned char *ptr, unsigned long sz)
 }
 */
 
-void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
+void load_chunk(u8*& src, unsigned char* ptr, unsigned long sz)
 {
 	verify(sz <= MAXCHUNK);
 
@@ -57,7 +52,7 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 	for (i = 0; i < sz; i++)
 		idx[i] = i;
 
-	for (i = (int)(sz - 1); i >= 0; --i)
+	for (i = sz - 1; i >= 0; --i)
 	{
 		/* Select a replacement index */
 		int x = (my_rand() * i) >> 16;
@@ -78,11 +73,11 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 	}
 }
 
-void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
+void descrambl_buffer(u8* src, unsigned char* dst, unsigned long filesz)
 {
 	unsigned long chunksz;
 
-	my_srand((unsigned int)filesz);
+	my_srand(filesz);
 
 	/* Descramble 2 meg blocks for as long as possible, then
 	gradually reduce the window down to 32 bytes (1 slice) */
@@ -99,9 +94,9 @@ void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
 		memcpy(dst, src, filesz);
 }
 
-void descrambl_file(GDRomDisc* disc, u32 FAD, u32 file_size, u8* dst) {
+void descrambl_file(u32 FAD, u32 file_size, u8* dst) {
 	u8* temp_file = new u8[file_size + 2048];
-	disc->ReadSector(temp_file, FAD, (file_size+2047) / 2048, 2048);
+	g_GDRDisc->ReadSector(temp_file, FAD, (file_size + 2047) / 2048, 2048);
 
 	descrambl_buffer(temp_file, dst, file_size);
 

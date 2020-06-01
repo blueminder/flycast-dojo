@@ -51,8 +51,11 @@ void DYNACALL bios_hle_hooks_dyna_trap(uint32_t op) {
 	uint32_t pc = sh4rcb.cntx.pc - 2;
 	uint32_t mapd = SYSCALL_ADDR_MAP(pc);
 
+	//printf("OP AT 0x%08x : => 0x%08x CALLED from 0x%08x \n", pc, ReadMem16(pc), sh4rcb.cntx.pr);
+	hooks[mapd]();
+	return;
 
-	printf("OP AT 0x%08x : => 0x%08x CALLED from 0x%08x \n", pc  , ReadMem16(pc ), sh4rcb.cntx.pr);
+	
 	if (rehook_address) {
 		 printf("reios: rehook\n");
 

@@ -116,6 +116,10 @@ void gui_settings_advanced()
 			ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
             ImGui::SameLine();
             gui_ShowHelpMarker("Dump all textures into data/texdump/<game id>");
+
+			ImGui::Checkbox("HLE Emulation", &settings.bios.UseReios);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Enable / Disable High level emulation(aka no BIOS required)");
 	    }
 		ImGui::PopStyleVar();
 		ImGui::EndTabItem();
