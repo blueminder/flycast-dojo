@@ -1,11 +1,5 @@
-/*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
 #pragma once
-
+#include "license/bsd"
 #define SYSCALL_GDROM			(0x00)
 
 #define GDROM_SEND_COMMAND		(0x00)

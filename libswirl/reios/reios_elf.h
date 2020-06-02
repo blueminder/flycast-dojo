@@ -1,14 +1,6 @@
-/*
-	This file is part of libswirl
-*/
+#pragma once
 #include "license/bsd"
-
-
-#ifndef REIOS_ELF_H
-#define REIOS_ELF_H
-
 #include "types.h"
 
 bool reios_loadElf(const string& elf);
-
-#endif //REIOS_ELF_H
+ 

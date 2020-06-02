@@ -1,9 +1,4 @@
-/*
-	This file is part of libswirl
-*/
 #include "license/bsd"
-
-
 #include "reios.h"
 
 #include "deps/libelf/elf.h"
@@ -52,7 +47,7 @@ bool reios_loadElf(const string& elf) {
 		len = elf_getProgramHeaderFileSize(elfFile, i);
 		src = (uint64_t)(uintptr_t)elfFile + elf_getProgramHeaderOffset(elfFile, i);
 		
-		u8* ptr = GetMemPtr((u32)dest, (u32)len);
+		u8* ptr = GetMemPtr(dest, len);
 
 		memcpy((void*)ptr, (void*)(uintptr_t)src, len);
 		ptr += len;

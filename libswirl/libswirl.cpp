@@ -21,7 +21,7 @@
 #include "hw/sh4/dyna/ngen.h"
 
 #include "hw/naomi/naomi_cart.h"
-#include "reios2x/reios.h"
+#include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
@@ -40,7 +40,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/aica/aica_mmio.h"
 #include "hw/arm7/SoundCPU.h"
-#include "reios2x/reios_syscalls.h"
+#include "reios/reios_syscalls.h"
 #define fault_printf(...)
 
 #ifdef SCRIPTING

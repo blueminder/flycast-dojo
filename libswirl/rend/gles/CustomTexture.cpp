@@ -19,7 +19,7 @@
 #endif
 
 #include "deps/libpng/png.h"
-#include "reios2x/reios.h"
+#include "reios/reios.h"
 
 #include "scripting/lua_bindings.h"
 

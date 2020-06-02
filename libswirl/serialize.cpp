@@ -23,7 +23,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/gdrom/disc_common.h"
-#include "reios2x/reios.h"
+#include "reios/reios.h"
 #include <map>
 #include <set>
 #include "rend/gles/gles.h"

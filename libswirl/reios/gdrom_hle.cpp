@@ -1,26 +1,21 @@
 /*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
-/*
 	Basic gdrom syscall emulation
 	Adapted from some (very) old pre-nulldc hle code
 */
 
+#include "license/bsd"
 #include <stdio.h>
 #include "types.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
-
 #include "gdrom_hle.h"
-#include "libswirl.h"
+#include "reios.h"
 
+#define r Sh4cntx.r
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
-
-//#define debugf printf
 #define debugf(...)
+
+extern unique_ptr<GDRomDisc> g_GDRDisc;
 
 void GDROM_HLE_ReadSES(u32 addr)
 {
@@ -31,14 +26,13 @@ void GDROM_HLE_ReadSES(u32 addr)
 
 	printf("GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d\n", s, b, ba, bb);
 }
+
 void GDROM_HLE_ReadTOC(u32 Addr)
 {
 	u32 s = ReadMem32(Addr + 0);
 	u32 b = ReadMem32(Addr + 4);
-
 	u32* pDst = (u32*)GetMemPtr(b, 0);
 
-	//
 	debugf("GDROM READ TOC : %X %X \n\n", s, b);
 
 	g_GDRDisc->GetToc(pDst, s);
@@ -70,13 +64,7 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 			count--;
 		}
 	}
-	
 }
-
-#if BUILD_COMPILER==COMPILER_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
 
 void GDROM_HLE_ReadDMA(u32 addr)
 {
@@ -84,8 +72,6 @@ void GDROM_HLE_ReadDMA(u32 addr)
 	u32 n = ReadMem32(addr + 0x04);
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
-
-	
 
 	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 	read_sectors_to(b, s, n);
@@ -112,17 +98,9 @@ void GDCC_HLE_GETSCD(u32 addr) {
 	printf("GDROM: Doing nothing for GETSCD [0]=%d, [1]=%d, [2]=0x%08X, [3]=0x%08X\n", s, n, b, u);
 }
 
-#if BUILD_COMPILER==COMPILER_CLANG
-#pragma clang diagnostic pop
-#endif
-
-#define r Sh4cntx.r
-
-
-u32 SecMode[4];
-
 void GD_HLE_Command(u32 cc, u32 prm)
 {
+	printf("GD_HLE_Command %u %u\n", cc, prm);
 	switch(cc)
 	{
 	case GDCC_GETTOC:
@@ -180,8 +158,8 @@ void GD_HLE_Command(u32 cc, u32 prm)
 
 void gdrom_hle_op()
 {
-	static u32 last_cmd = 0xFFFFFFFF;	// only works for last cmd, might help somewhere
-	static u32 dwReqID=0xF0FFFFFF;		// ReqID, starting w/ high val
+	//static u32 last_cmd = 0xFFFFFFFF;	// only works for last cmd, might help somewhere
+	//static u32 dwReqID=0xF0FFFFFF;		// ReqID, starting w/ high val
 
 	if( SYSCALL_GDROM == r[6] )		// GDROM SYSCALL
 	{
@@ -190,33 +168,53 @@ void gdrom_hle_op()
 			// *FIXME* NEED RET
 		case GDROM_SEND_COMMAND:	// SEND GDROM COMMAND RET: - if failed + req id
 			debugf("\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n",r[4],r[5]);
-			GD_HLE_Command(r[4],r[5]);
-			last_cmd = r[0] = --dwReqID;		// RET Request ID
+			//GD_HLE_Command(r[4],r[5]);
+			//last_cmd = r[0] = --dwReqID;		// RET Request ID
+			r[0] = g_reios_ctx.gd_q.add_cmd(r[4], r[5], k_gd_cmd_st_active)->id;
+
 		break;
 
-		case GDROM_CHECK_COMMAND:	// 
-			r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
+		case GDROM_CHECK_COMMAND: {	// 
+		//	printf("%u r4 %u r5\n", r[4], r[5]); die("");
+			auto p = g_reios_ctx.gd_q.grab_cmd(r[4]);
+
+			r[0] = p ? p->stat : 0;
+
+			if (r[5] != 0) {
+				WriteMem32(r[5] + 0, 0x02);	// STANDBY
+				WriteMem32(r[5] + 4, g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+			}
+			//r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
-			last_cmd = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
+			//last_cmd = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
+		}
 		break;
 
 			// NO return, NO params
-		case GDROM_MAIN:	
+		case GDROM_MAIN: {
+			for (const auto& i : g_reios_ctx.gd_q.get_pending_ops()) {
+				if (!i.allocated)
+					continue;
+				GD_HLE_Command(i.cmd, i.data);
+ 
+				g_reios_ctx.gd_q.rm_cmd(i);
+			}
 			debugf("\nGDROM:\tHLE GDROM_MAIN\n");
+		}
 			break;
 
-		case GDROM_INIT:	printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
+		case GDROM_INIT:g_reios_ctx.gd_q.reset();  printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
 		case GDROM_RESET:	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
 
 		case GDROM_CHECK_DRIVE:		// 
-			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4]);
+			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4]);
+			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
 			r[0]=-1;				// RET FAILURE
 		break;
 
@@ -224,17 +222,17 @@ void gdrom_hle_op()
 		case GDROM_SECTOR_MODE:		// 
 			printf("GDROM:\tHLE GDROM_SECTOR_MODE PTR_r4:%X\n",r[4]);
 			for(int i=0; i<4; i++) {
-				SecMode[i] = ReadMem32(r[4]+(i<<2));
-				printf("%08X%s",SecMode[i],((3==i) ? "\n" : "\t"));
+				g_reios_ctx.SecMode[i] = ReadMem32(r[4]+(i<<2));
+				printf("%08X%s", g_reios_ctx.SecMode[i],((3==i) ? "\n" : "\t"));
 			}
 			r[0]=0;					// RET SUCCESS
 		break;
 
-		default: printf("\nGDROM:\tUnknown SYSCALL: %X\n",r[7]); break;
+		default: return;// printf("\nGDROM:\tUnknown SYSCALL: %X\n", r[7]); break;
 		}
 	}
 	else							// MISC 
 	{
-		printf("SYSCALL:\tSYSCALL: %X\n",r[7]);
+		die("SYSCALL:\tSYSCALL: %X\n",r[7]);
 	}
 }

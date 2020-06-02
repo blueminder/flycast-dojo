@@ -9,7 +9,7 @@
 #include "sh4_opcode_list.h"
 #include "dyna/decoder_opcodes.h"
 #include "hw/sh4/dyna/shil.h"
-#include "reios2x/reios.h"
+#include "reios/reios.h"
 
 OpCallFP* OpPtr[0x10000];
 sh4_opcodelistentry* OpDesc[0x10000];

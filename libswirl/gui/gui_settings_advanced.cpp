@@ -8,7 +8,7 @@
 #include "imgui/imgui.h"
 #include "gui_partials.h"
 #include "gui_util.h"
-#include "reios2x/reios_syscalls.h"
+#include "reios/reios_syscalls.h"
 #include <sstream>
 
 void gui_settings_advanced()

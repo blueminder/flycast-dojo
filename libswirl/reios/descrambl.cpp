@@ -1,30 +1,25 @@
 /*
-	This file is part of libswirl
-*/
-#include "license/bsd"
-
-
-/*
 	Based on work of Marcus Comstedt
 	http://mc.pp.se, http://mc.pp.se/dc/sw.html, http://mc.pp.se/dc/files/scramble.c
 	License: Gotta verify
 
 	Adapted by Stefanos Kornilios Mitsis Poiitidis (skmp) for reicast
 */
-
+#include "license/bsd"
 #include "descrambl.h"
 #include <algorithm>
 
 #define MAXCHUNK (2048*1024)
 
 static unsigned int seed;
+extern unique_ptr<GDRomDisc> g_GDRDisc;
 
-void my_srand(unsigned int n)
+inline void my_srand(unsigned int n)
 {
 	seed = n & 0xffff;
 }
 
-unsigned int my_rand()
+inline constexpr unsigned int my_rand()
 {
 	seed = (seed * 2109 + 9273) & 0x7fff;
 	return (seed + 0xc000) & 0xffff;
@@ -57,7 +52,7 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 	for (i = 0; i < sz; i++)
 		idx[i] = i;
 
-	for (i = (int)(sz - 1); i >= 0; --i)
+	for (i = sz - 1; i >= 0; --i)
 	{
 		/* Select a replacement index */
 		int x = (my_rand() * i) >> 16;
@@ -73,7 +68,7 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 
 		/* Load resulting slice */
 		//load(fh, ptr + 32 * idx[i], 32);
-		memcpy(ptr + 32 * idx[i], src, 32);
+		memcpy(ptr + ((size_t)32 * (size_t)idx[i]), src, 32);
 		src += 32;
 	}
 }
@@ -82,7 +77,7 @@ void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
 {
 	unsigned long chunksz;
 
-	my_srand((unsigned int)filesz);
+	my_srand(filesz);
 
 	/* Descramble 2 meg blocks for as long as possible, then
 	gradually reduce the window down to 32 bytes (1 slice) */
@@ -99,9 +94,9 @@ void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
 		memcpy(dst, src, filesz);
 }
 
-void descrambl_file(GDRomDisc* disc, u32 FAD, u32 file_size, u8* dst) {
-	u8* temp_file = new u8[file_size + 2048];
-	disc->ReadSector(temp_file, FAD, (file_size+2047) / 2048, 2048);
+void descrambl_file(u32 FAD, u32 file_size, u8* dst) {
+	u8* temp_file = new u8[(size_t)file_size + (size_t)2048];
+	g_GDRDisc->ReadSector(temp_file, FAD, (file_size+2047) / 2048, 2048);
 
 	descrambl_buffer(temp_file, dst, file_size);
 
