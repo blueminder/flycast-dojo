@@ -23,7 +23,7 @@
 #include "hw/modem/modem.h"
 
 #include "hw/flashrom/flashrom.h"
-#include "reios/reios.h"
+#include "reios2x/reios.h"
 #include "hw/sh4/sh4_mmio.h"
 #include "hw/sh4/SuperH4_impl.h"
 

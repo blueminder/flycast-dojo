@@ -30,8 +30,6 @@ git_describe(GIT_VERSION --tags)
 configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h @ONLY)
 
 ## reicast build modules #
-#
-
 set(reicast_SRCS "")
 
 include(config)			# configure build settings, must be first
@@ -43,13 +41,14 @@ add_definitions(/DSCRIPTING)
 
 set(d_core ${reicast_core_path})
 
+
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
 file(GLOB_RECURSE lxdream_SRCS	${d_core}/gpl/lxdream/*.cpp			${d_core}/gpl/lxdream/*.h)
 
 file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
 file(GLOB rend_SRCS			${d_core}/rend/*.cpp		${d_core}/rend/*.h)
 file(GLOB input_SRCS		${d_core}/input/*.cpp		${d_core}/input/*.h)
-file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
+file(GLOB reios_SRCS		${d_core}/reios2x/*.cpp		${d_core}/reios2x/*.h)
 file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)

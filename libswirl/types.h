@@ -733,3 +733,5 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
+
+typedef void reios_hook_fp();

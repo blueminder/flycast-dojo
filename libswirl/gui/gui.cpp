@@ -225,6 +225,7 @@ void ImGui_Impl_NewFrame()
 
 std::unique_ptr<GUI> g_GUI;
 
+
 struct ReicastUI_impl : GUI {
     
     ImFont* font17;
@@ -234,6 +235,7 @@ struct ReicastUI_impl : GUI {
     {
         if (inited)
             return;
+        
         inited = true;
 
         // Setup Dear ImGui context

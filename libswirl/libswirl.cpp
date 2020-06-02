@@ -21,7 +21,7 @@
 #include "hw/sh4/dyna/ngen.h"
 
 #include "hw/naomi/naomi_cart.h"
-#include "reios/reios.h"
+#include "reios2x/reios.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
@@ -40,7 +40,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/aica/aica_mmio.h"
 #include "hw/arm7/SoundCPU.h"
-
+#include "reios2x/reios_syscalls.h"
 #define fault_printf(...)
 
 #ifdef SCRIPTING
@@ -148,13 +148,13 @@ void plugins_Reset(bool Manual)
 void LoadSpecialSettings()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    printf("Game ID is [%s]\n", reios_product_number);
+    printf("Game ID is [%s]\n", g_reios_ctx.reios_product_number);
     rtt_to_buffer_game = false;
     safemode_game = false;
     tr_poly_depth_mask_game = false;
     extra_depth_game = false;
 
-    if (reios_windows_ce)
+    if (g_reios_ctx.reios_windows_ce)
     {
         printf("Enabling Extra depth scaling for Windows CE games\n");
         settings.rend.ExtraDepthScale = 0.1;
@@ -162,48 +162,48 @@ void LoadSpecialSettings()
     }
 
     // Tony Hawk's Pro Skater 2
-    if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
+    if (!strncmp("T13008D", g_reios_ctx.reios_product_number, 7) || !strncmp("T13006N", g_reios_ctx.reios_product_number, 7)
         // Tony Hawk's Pro Skater 1
-        || !strncmp("T40205N", reios_product_number, 7)
+        || !strncmp("T40205N", g_reios_ctx.reios_product_number, 7)
         // Tony Hawk's Skateboarding
-        || !strncmp("T40204D", reios_product_number, 7)
+        || !strncmp("T40204D", g_reios_ctx.reios_product_number, 7)
         // Skies of Arcadia
-        || !strncmp("MK-51052", reios_product_number, 8)
+        || !strncmp("MK-51052", g_reios_ctx.reios_product_number, 8)
         // Flag to Flag
-        || !strncmp("MK-51007", reios_product_number, 8))
+        || !strncmp("MK-51007", g_reios_ctx.reios_product_number, 8))
     {
         settings.rend.RenderToTextureBuffer = 1;
         rtt_to_buffer_game = true;
     }
-    if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+    if (!strncmp("HDR-0176", g_reios_ctx.reios_product_number, 8) || !strncmp("RDC-0057", g_reios_ctx.reios_product_number, 8))
     {
         // Cosmic Smash
         settings.rend.TranslucentPolygonDepthMask = 1;
         tr_poly_depth_mask_game = true;
     }
     // Pro Pinball Trilogy
-    if (!strncmp("T30701D", reios_product_number, 7)
+    if (!strncmp("T30701D", g_reios_ctx.reios_product_number, 7)
         // Demolition Racer
-        || !strncmp("T15112N", reios_product_number, 7)
+        || !strncmp("T15112N", g_reios_ctx.reios_product_number, 7)
         // Star Wars - Episode I - Racer (United Kingdom)
-        || !strncmp("T23001D", reios_product_number, 7)
+        || !strncmp("T23001D", g_reios_ctx.reios_product_number, 7)
         // Star Wars - Episode I - Racer (USA)
-        || !strncmp("T23001N", reios_product_number, 7)
+        || !strncmp("T23001N", g_reios_ctx.reios_product_number, 7)
         // Record of Lodoss War (EU)
-        || !strncmp("T7012D", reios_product_number, 6)
+        || !strncmp("T7012D", g_reios_ctx.reios_product_number, 6)
         // Record of Lodoss War (USA)
-        || !strncmp("T40218N", reios_product_number, 7)
+        || !strncmp("T40218N", g_reios_ctx.reios_product_number, 7)
         // Surf Rocket Racers
-        || !strncmp("T40216N", reios_product_number, 7))
+        || !strncmp("T40216N", g_reios_ctx.reios_product_number, 7))
     {
-        printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
+        printf("Enabling Dynarec safe mode for game %s\n", g_reios_ctx.reios_product_number);
         settings.dynarec.safemode = 1;
         safemode_game = true;
     }
     // NHL 2K2
-    if (!strncmp("MK-51182", reios_product_number, 8))
+    if (!strncmp("MK-51182", g_reios_ctx.reios_product_number, 8))
     {
-        printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
+        printf("Enabling Extra depth scaling for game %s\n", g_reios_ctx.reios_product_number);
         settings.rend.ExtraDepthScale = 10000;
         extra_depth_game = true;
     }
@@ -658,6 +658,7 @@ int reicast_init(int argc, char* argv[])
     g_GUI.reset(GUI::Create());
     g_GUI->Init();
 
+    reios_syscalls_init();
 #if BUILD_RETROARCH_CORE == 0
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
 #endif
@@ -842,7 +843,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
         {
-#ifdef USE_REIOS
+#if 1
             if (!LoadHle(get_readonly_data_path(DATA_PATH)))
             {
                 return -5;
@@ -980,6 +981,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         ds_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Dreamcast_impl, DreamcastSecond));
         sh4_sched_request(ds_schid, SH4_MAIN_CLOCK);
 
+       
         return sh4_cpu->Init();
     }
 

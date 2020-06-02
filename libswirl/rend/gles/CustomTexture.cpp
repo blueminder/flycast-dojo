@@ -19,7 +19,7 @@
 #endif
 
 #include "deps/libpng/png.h"
-#include "reios/reios.h"
+#include "reios2x/reios.h"
 
 #include "scripting/lua_bindings.h"
 
@@ -74,7 +74,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id = reios_product_number;
+   std::string game_id = g_reios_ctx.reios_product_number;
    const size_t str_end = game_id.find_last_not_of(" ");
    if (str_end == std::string::npos)
 	  return "";

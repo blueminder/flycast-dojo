@@ -1,13 +1,9 @@
 #include "win_common.h"
-
 #include <windows.h>
- 
 #include "utils/glinit/wgl/wgl.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/mem/_vmem.h"
-
-
 #include "xinput_gamepad.h"
 #include <xinput.h>
 #pragma comment(lib, "XInput9_1_0.lib")

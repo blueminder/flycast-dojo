@@ -2,14 +2,14 @@
 	This file is part of libswirl
 */
 #include "license/bsd"
-
-
 #include "types.h"
 #include "gui.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
 #include "gui_partials.h"
 #include "gui_util.h"
+#include "reios2x/reios_syscalls.h"
+#include <sstream>
 
 void gui_settings_advanced()
 {
@@ -116,7 +116,24 @@ void gui_settings_advanced()
 			ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
             ImGui::SameLine();
             gui_ShowHelpMarker("Dump all textures into data/texdump/<game id>");
+
+			ImGui::Checkbox("HLE Emulation", &settings.bios.UseReios);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Enable / Disable High level emulation(aka no BIOS required)");
 	    }
+
+		if (ImGui::CollapsingHeader("HLE Stubs", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			for (auto i : g_syscalls_mgr.get_map()) {
+				std::stringstream t;
+				t << "(pc:0x" << std::hex << (i.second.addr) << ")";
+				t << "(scall:0x" << std::hex << (i.second.syscall) << ")";
+				ImGui::Checkbox( std::string(i.first  + t.str() ).c_str(), &i.second.enabled);
+				
+			}
+			
+		}
+
 		ImGui::PopStyleVar();
 		ImGui::EndTabItem();
 	}
