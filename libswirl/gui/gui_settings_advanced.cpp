@@ -9,7 +9,10 @@
 #include "gui_partials.h"
 #include "gui_util.h"
 #include "reios/reios_syscalls.h"
+#include "reios/reios_dbg.h"
 #include <sstream>
+
+#include "hw/sh4/sh4_mem.h"
 
 void gui_settings_advanced()
 {
@@ -18,6 +21,9 @@ void gui_settings_advanced()
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 	    if (ImGui::CollapsingHeader("MCPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
+			ImGui::Checkbox("Debugger", &g_reios_dbg_enabled);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Enable / Disable HLE Debugger(Developer only)");
 			ImGui::Columns(2, "sh4_modes", false);
 			ImGui::RadioButton("MCPU Dynarec", &dynarec_enabled, 1);
             ImGui::SameLine();
@@ -28,6 +34,93 @@ void gui_settings_advanced()
             gui_ShowHelpMarker("Use the interpreter. Very slow but may help in case of a dynarec problem");
 			ImGui::Columns(1, NULL, false);
 	    }
+
+#if 0
+		const auto dbg_mode = ( g_reios_dbg_enabled )? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
+
+		if (ImGui::CollapsingHeader("HLE Debugger", dbg_mode)) {
+			if (g_reios_dbg_enabled) {
+				if (ImGui::CollapsingHeader("Registers", dbg_mode)) {
+					ImGui::LabelText("","PC=0x%08x", Sh4cntx.pc);
+					ImGui::LabelText("", "SR=0x%08x", Sh4cntx.sr);
+					ImGui::LabelText("", "oldSR0x%08x", Sh4cntx.old_sr);
+					ImGui::LabelText("", "SP=0x%08x", Sh4cntx.spc);
+					ImGui::LabelText("", "Last opcode=0x%08x", reios_dbg_get_last_op());
+
+					const size_t frc = sizeof(Sh4cntx.xffr) / sizeof(Sh4cntx.xffr[0]);
+					const size_t rc = sizeof(Sh4cntx.r) / sizeof(Sh4cntx.r[0]);
+					const size_t gt = (frc > rc) ? frc : rc;
+
+
+					ImGui::NewLine();
+					ImGui::Text("GPRS:");
+					ImGui::NewLine();
+					for (size_t i = 0; i < rc; ++i) {
+						if ((i) && (0 == (i & 7)))
+							ImGui::NewLine();
+						else
+							ImGui::SameLine();
+
+						ImGui::Text("R[%d]=0x%08x", i, Sh4cntx.r[i]);
+					}
+
+					ImGui::NewLine();
+					ImGui::Text("FPRS:");
+					ImGui::NewLine();
+					for (size_t i = 0; i < frc; ++i) {
+						if ((i) && (0 == (i & 7)))
+							ImGui::NewLine();
+						else
+							ImGui::SameLine();
+						ImGui::Text("FR[%d]=%f", i, Sh4cntx.xffr[i]);
+					}
+					ImGui::NewLine();
+				}
+
+				//mem
+
+				if (ImGui::CollapsingHeader("Memory Editor", dbg_mode)) {
+					ImGui::Checkbox("Hex", &settings.dynarec.safemode);
+					ImGui::SameLine();
+
+					ImGui::Checkbox("char", &settings.dynarec.safemode);
+					ImGui::SameLine();
+
+
+					ImGui::Checkbox("int", &settings.dynarec.safemode);
+					ImGui::SameLine();
+
+					ImGui::Checkbox("float", &settings.dynarec.safemode);
+					ImGui::NewLine();
+
+
+					ImGui::LabelText("", "Displaying range 0x%08x~0x%08x", 0x8021c000, 0x8021c000 + 128);
+					ImGui::NewLine();
+
+					for (size_t i = 0; i < 128; ++i) {
+
+						std::stringstream t;
+						uint8_t ss = ReadMem8(0x8021c000 + i);
+						ImGui::Text("%02x", ss); 
+						
+						
+						if ((i)&& (0==(i & 31)))
+							ImGui::NewLine();
+						else
+							ImGui::SameLine();
+						
+					} 
+
+					ImGui::NewLine();
+					
+				}
+
+				if (ImGui::CollapsingHeader("Callstack", dbg_mode)) {
+				}
+			}
+		}
+
+#endif
 	    if (ImGui::CollapsingHeader("SH4 Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
 	    {
 	    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
@@ -120,6 +213,9 @@ void gui_settings_advanced()
 			ImGui::Checkbox("HLE Emulation", &settings.bios.UseReios);
 			ImGui::SameLine();
 			gui_ShowHelpMarker("Enable / Disable High level emulation(aka no BIOS required)");
+
+
+			
 	    }
 
 		if (ImGui::CollapsingHeader("HLE Stubs", ImGuiTreeNodeFlags_DefaultOpen))

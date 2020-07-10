@@ -63,7 +63,7 @@ gdrom_entry_node_t* gdrom_queue_manager_c::add_cmd(const uint32_t cmd, const uin
 
 	if (g_pending_ops.size() < k_max_kos_qlen) {
 		index = g_pending_ops.size();
-		g_pending_ops.push_back(gdrom_entry_node_t());
+		g_pending_ops.push_back(std::move(gdrom_entry_node_t()));
 	}
 	else {
 		for (size_t i = 0, j = g_pending_ops.size(); i < j; ++i) {
@@ -93,4 +93,7 @@ gdrom_entry_node_t* gdrom_queue_manager_c::add_cmd(const uint32_t cmd, const uin
 
 void gdrom_queue_manager_c::reset() {
 	g_pending_ops.clear();
+
+	for (uint32_t i = 0; i < k_max_kos_qlen; ++i)
+		g_pending_ops.push_back(std::move(gdrom_entry_node_t()));
 }

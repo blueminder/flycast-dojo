@@ -22,8 +22,6 @@
 
 #define debugf(...) 
 
-
-
 reios_context_t g_reios_ctx;
 extern unique_ptr<GDRomDisc> g_GDRDisc;
 
@@ -193,7 +191,7 @@ void reios_sys_flashrom() {
 
 	u32 cmd = Sh4cntx.r[7];
 
-	u32 flashrom_info[][2] = {
+	static constexpr u32 flashrom_info[][2] = {
 		{ 0 * 1024, 8 * 1024 },
 		{ 8 * 1024, 8 * 1024 },
 		{ 16 * 1024, 16 * 1024 },
@@ -220,7 +218,7 @@ void reios_sys_flashrom() {
 				u32 part = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
 
-				u32* pDst = (u32*)GetMemPtr(dest, 8);
+				u32* pDst = (u32*)GetMemPtr(dest, 8); //if not on boundary
 
 				if (part <= 4) {
 					pDst[0] = flashrom_info[part][0];
@@ -245,9 +243,12 @@ void reios_sys_flashrom() {
 				u32 dest = Sh4cntx.r[5];
 				u32 size = Sh4cntx.r[6];
 
+				u8* pp = GetMemPtr(dest, size);
 				memcpy(GetMemPtr(dest, size), g_reios_ctx.flashrom + offs, size);
 
 				Sh4cntx.r[0] = size;
+ 				printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, dest, size, pp[0], pp[1], pp[2], pp[3], pp[4]);
+
 			}
 			break;
 
@@ -269,6 +270,7 @@ void reios_sys_flashrom() {
 				for (u32 i = 0; i < size; i++) {
 					g_reios_ctx.flashrom[offs + i] &= pSrc[i];
 				}
+				printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, src, size,pSrc[0], pSrc[1], pSrc[2], pSrc[3], pSrc[4]);
 			}
 			break;
 
@@ -610,9 +612,6 @@ void reios_boot() {
 	}
 }
 
-
-
-
 void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
 	u32 pc = sh4rcb.cntx.pc - 2;
@@ -625,16 +624,12 @@ void DYNACALL reios_trap(u32 op) {
 	g_reios_ctx.hooks[mapd]();
 }
 
-
-
 bool reios_init(u8* rom, u8* flash) {
-
-	
-
 	printf("reios: Init\n");
 
 	g_reios_ctx.biosrom = rom;
 	g_reios_ctx.flashrom = flash;
+	g_reios_ctx.pre_init = false;
 
 	memset(rom, 0xEA, 2048 * 1024);
 	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
@@ -654,6 +649,7 @@ void reios_reset() {
 
 void reios_term() {
 	g_reios_ctx.reset();
+	g_reios_ctx.pre_init = false;
 }
 
 //reios_context_t non-inl impl
@@ -693,19 +689,7 @@ bool reios_context_t::apply_all_hooks() {
 		++total;
 	}
 	printf("Applied total %llu syscalls\n", total);
-	 
-	 
-	 /*
 	
-	setup_syscall(hook_addr(&reios_sys_system), dc_bios_syscall_system);
-	setup_syscall(hook_addr(&reios_sys_font), dc_bios_syscall_font);
-	setup_syscall(hook_addr(&reios_sys_flashrom), dc_bios_syscall_flashrom);
-	setup_syscall(hook_addr(&reios_sys_gd), dc_bios_syscall_gd);
-	setup_syscall(hook_addr(&reios_sys_misc), dc_bios_syscall_misc);
-
-	WriteMem32(dc_bios_entrypoint_gd_do_bioscall, REIOS_OPCODE);
-	*/
-	 
 	return true;
 }
 
@@ -719,8 +703,10 @@ void reios_context_t::register_hook(u32 pc, reios_hook_fp* fn) {
 }
 
 u32 reios_context_t::hook_addr(reios_hook_fp* fn) {
-	if (g_reios_ctx.hooks_rev.count(fn))
-		return g_reios_ctx.hooks_rev[fn];
+	auto it = g_reios_ctx.hooks_rev.find(fn);
+
+	if (it != g_reios_ctx.hooks_rev.end())
+		return it->second;
 	else {
 		printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
 		verify(false);

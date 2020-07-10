@@ -35,7 +35,7 @@ void DrawTextCentered(const char* text) {
 
 void gui_welcome(ImFont* font64) {
 
-	static auto endTime = os_GetSeconds() + 3;
+	static auto endTime = os_GetSeconds() + 1;
 
 	if (os_GetSeconds() > endTime) {
 		gui_state = Main;

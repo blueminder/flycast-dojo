@@ -10,10 +10,11 @@
 #include "hw/sh4/sh4_mem.h"
 #include "gdrom_hle.h"
 #include "reios.h"
+#include "hw/gdrom/gdromv3.h"
 
 #define r Sh4cntx.r
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
-#define debugf(...)
+#define debugf printf
 
 extern unique_ptr<GDRomDisc> g_GDRDisc;
 
@@ -38,7 +39,7 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	g_GDRDisc->GetToc(pDst, s);
 
 	//The syscall swaps to LE it seems
-	for (int i = 0; i < 102; i++) {
+	for (size_t i = 0; i < 102; i++) {
 		pDst[i] = SWAP32(pDst[i]);
 	}
 }
@@ -59,7 +60,6 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 				WriteMem32(addr, temp[i]);
 				addr += 4;
 			}
-
 			sector++;
 			count--;
 		}
@@ -85,7 +85,6 @@ void GDROM_HLE_ReadPIO(u32 addr)
 	u32 u = ReadMem32(addr + 0x0C);
 
 	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
-
 	read_sectors_to(b, s, n);
 }
 
@@ -108,6 +107,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_GETTOC2:
+		debugf("GDROM:\GDCC_GETTOC2 CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadTOC(r[5]);
 		break;
 
@@ -121,6 +121,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_PIOREAD:
+		printf("GDROM:\tCMD RDPIO CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadPIO(r[5]);
 		break;
 
@@ -128,7 +129,6 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		debugf("GDROM:\tCMD DMAREAD CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadDMA(r[5]);
 		break;
-
 
 	case GDCC_PLAY_SECTOR:
 		printf("GDROM:\tCMD PLAYSEC? CC:%X PRM:%X\n",cc,prm);
@@ -156,34 +156,92 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	}
 }
 
+#include <thread>
+#include <mutex>
+ #include <chrono>
+static std::thread m_main_thread;
+static std::recursive_mutex m_main_mtx;
+
+static void process_cmds() {
+	
+	m_main_mtx.lock();
+	size_t x = 0;
+
+	for (const auto& i : g_reios_ctx.gd_q.get_pending_ops()) {
+		if(i.stat != k_gd_cmd_st_active)//if (!i.allocated)
+			continue;
+		GD_HLE_Command(i.cmd, i.data);
+
+		g_reios_ctx.gd_q.rm_cmd(i);
+		++x;
+	}
+	m_main_mtx.unlock();
+	if (0 != x)
+		printf("process_cmds: handled %lu\n", x);
+}
+
+static void thd() {
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		process_cmds();
+		//printf("Call\n");
+	}
+}
+
 void gdrom_hle_op()
 {
+	static bool init_thd = false;
+	if (!init_thd) {
+		m_main_thread = std::thread(&thd);
+		init_thd = true;
+	}
 	//static u32 last_cmd = 0xFFFFFFFF;	// only works for last cmd, might help somewhere
 	//static u32 dwReqID=0xF0FFFFFF;		// ReqID, starting w/ high val
 
+	static size_t prev_cmd = -1U;
+
+	m_main_mtx.lock();
 	if( SYSCALL_GDROM == r[6] )		// GDROM SYSCALL
 	{
 		switch(r[7])				// COMMAND CODE
 		{
 			// *FIXME* NEED RET
-		case GDROM_SEND_COMMAND:	// SEND GDROM COMMAND RET: - if failed + req id
-			debugf("\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n",r[4],r[5]);
+		case GDROM_SEND_COMMAND: {// SEND GDROM COMMAND RET: - if failed + req id
+			debugf("\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n", r[4], r[5]);
 			//GD_HLE_Command(r[4],r[5]);
 			//last_cmd = r[0] = --dwReqID;		// RET Request ID
-			r[0] = g_reios_ctx.gd_q.add_cmd(r[4], r[5], k_gd_cmd_st_active)->id;
-
+			auto p = g_reios_ctx.gd_q.add_cmd(r[4], r[5], k_gd_cmd_st_active);
+			r[0] = p ? p->id : -1;
+			prev_cmd = r[0];
+			///process_cmds();
+		}
 		break;
 
 		case GDROM_CHECK_COMMAND: {	// 
 		//	printf("%u r4 %u r5\n", r[4], r[5]); die("");
 			auto p = g_reios_ctx.gd_q.grab_cmd(r[4]);
 
-			r[0] = p ? p->stat : 0;
-
-			if (r[5] != 0) {
-				WriteMem32(r[5] + 0, 0x02);	// STANDBY
-				WriteMem32(r[5] + 4, g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+			if (!p) {
+				r[0] = 0;
+				prev_cmd = -1U;
 			}
+			else {
+				if (p->id == prev_cmd)
+					r[0] = 0;
+				else
+					r[0] = p->stat;
+
+				prev_cmd = p->id;
+			} 
+			if (r[5] != 0) {
+				//No error
+				WriteMem32(r[5] + 0, 0); // libCore_gdrom_get_status());	// STANDBY
+				WriteMem32(r[5] + 4, g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+				WriteMem32(r[5] + 8, 0);
+				WriteMem32(r[5] + 12, 0);
+			}
+
+			
 			//r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
 			//last_cmd = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
@@ -192,30 +250,27 @@ void gdrom_hle_op()
 
 			// NO return, NO params
 		case GDROM_MAIN: {
-			for (const auto& i : g_reios_ctx.gd_q.get_pending_ops()) {
-				if (!i.allocated)
-					continue;
-				GD_HLE_Command(i.cmd, i.data);
- 
-				g_reios_ctx.gd_q.rm_cmd(i);
-			}
 			debugf("\nGDROM:\tHLE GDROM_MAIN\n");
+			process_cmds();
+			
 		}
 			break;
 
-		case GDROM_INIT:g_reios_ctx.gd_q.reset();  printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
-		case GDROM_RESET:	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
+		case GDROM_INIT:   printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
+		case GDROM_RESET:g_GDRDisc->Reset(true);  g_reios_ctx.gd_q.reset();	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
 
-		case GDROM_CHECK_DRIVE:		// 
-			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
-			WriteMem32(r[4]+0,0x02);	// STANDBY
-			WriteMem32(r[4]+4,g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
-			r[0]=0;					// RET SUCCESS
+		case GDROM_CHECK_DRIVE: {	// 
+			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X r5:%X (STAT = %u /TYPE = %u /q=%u)\n", r[4], r[5], libCore_gdrom_get_status(), g_GDRDisc->GetDiscType(), g_reios_ctx.gd_q.get_pending_ops().size());
+			WriteMem32(r[4] + 0, 2);	// STANDBY
+			WriteMem32(r[4] + 4, g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+			r[0] = 0;					// RET SUCCESS
+		}
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
+			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X R5:%X\n",r[4],r[5]);
 			r[0]=-1;				// RET FAILURE
+			//die("");
 		break;
 
 
@@ -228,11 +283,14 @@ void gdrom_hle_op()
 			r[0]=0;					// RET SUCCESS
 		break;
 
-		default: return;// printf("\nGDROM:\tUnknown SYSCALL: %X\n", r[7]); break;
+		default: r[0] = 0;  return;// printf("\nGDROM:\tUnknown SYSCALL: %X\n", r[7]); break;
 		}
 	}
 	else							// MISC 
 	{
-		die("SYSCALL:\tSYSCALL: %X\n",r[7]);
+		r[0] = 0;
+		printf("SYSCALL:\tSYSCALL: %X\n",r[7]);
 	}
+	
+	m_main_mtx.unlock();
 }

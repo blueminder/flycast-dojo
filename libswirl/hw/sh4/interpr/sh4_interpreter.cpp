@@ -70,6 +70,8 @@ void ExecuteDelayslot_RTE()
 #endif
 }
 
+#include "reios/reios_dbg.h"
+
 struct SH4IInterpreter : SuperH4Backend {
     s32 l;
 
@@ -88,6 +90,8 @@ struct SH4IInterpreter : SuperH4Backend {
                     u32 addr = next_pc;
                     next_pc += 2;
                     u32 op = IReadMem16(addr);
+                    
+                    reios_dbg_trace_op(addr,op);
 
                     ExecuteOpcode(op);
 

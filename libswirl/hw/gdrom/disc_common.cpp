@@ -313,6 +313,7 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 struct GDRomDisc_impl : GDRomDisc {
 	void ReadSubChannel(u8* buff, u32 format, u32 len)
 	{
+
 		if (format == 0)
 		{
 			memcpy(buff, q_subchannel, len);

@@ -2,7 +2,7 @@
 	This file is part of libswirl
 */
 #include "license/bsd"
-
+#include "reios/reios_dbg_module_stubs.h"
 
 // libswirl.cpp: this is not nullDC anymore. Not that anyone has noticed.
 //
@@ -621,12 +621,20 @@ void SaveSettings()
 #endif
 }
 
-static bool reset_requested;
+static bool reset_requested = false;
+ 
+
+// which = PAUSE button / State = PRessed
+
+static void dgb_on_event(const char* which, const char* state) {
+
+}
+
+int reicast_init(int argc, char* argv[]) {
+   
 
 
 
-int reicast_init(int argc, char* argv[])
-{
 #ifdef _WIN32
     setbuf(stdout, 0);
     setbuf(stderr, 0);
@@ -663,6 +671,12 @@ int reicast_init(int argc, char* argv[])
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
 #endif
 
+    //Sleep(2000);
+    //debugger_push_event("msg_box", "hello");
+    //debugger_push_event("btn_press", "btn_0");
+
+    debugger_entry_point(argc, argv, dgb_on_event);
+
     if (showOnboarding)
         g_GUI->OpenOnboarding();
 
@@ -674,6 +688,7 @@ void reicast_ui_loop() {
 }
 
 void reicast_term() {
+    debugger_shutdown();
     g_GUIRenderer.reset();
 
     g_GUI.reset();

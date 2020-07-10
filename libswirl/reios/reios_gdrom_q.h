@@ -54,14 +54,14 @@ private:
 	std::vector< gdrom_entry_node_t > g_pending_ops;
 public:
 
-	gdrom_queue_manager_c() {}
+	gdrom_queue_manager_c() { reset(); }
 	~gdrom_queue_manager_c() {}
 
 	inline constexpr const std::vector< gdrom_entry_node_t >& get_pending_ops() const { return this->g_pending_ops; }
 
 	inline gdrom_entry_node_t* grab_cmd(const uint32_t which) {
-		//return &g_pending_ops[which];
-		return ((which >= g_pending_ops.size()) || (g_pending_ops[which].stat == k_gd_cmd_st_active) || (g_pending_ops[which].allocated )) ? nullptr : &g_pending_ops[which];
+		return &g_pending_ops[which];
+		//return ((which >= g_pending_ops.size()) || (g_pending_ops[which].stat == k_gd_cmd_st_active) || (g_pending_ops[which].allocated )) ? nullptr : &g_pending_ops[which];
 	}
 
 	inline void  set_stat(const uint32_t which, const uint32_t st) {

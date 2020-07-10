@@ -69,3 +69,5 @@ const uint32_t reios_locate_flash_cfg_addr() {
 	}
 	return res;
 }
+
+

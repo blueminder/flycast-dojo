@@ -10,7 +10,6 @@
 */
 
 #include "gdromv3.h"
-
 #include "types.h"
 #include "libswirl.h"
 #include "hw/sh4/sh4_mem.h"
@@ -18,13 +17,13 @@
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/holly/holly_intc.h"
-
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_sched.h"
-
 #include "hw/sh4/sh4_sched.h"
-void nilprintf(...) {}
+#include <memory>
 
+//void nilprintf(...) {}
+#define nilprintf printf
 #define printf_rm nilprintf
 #define printf_ata nilprintf
 #define printf_spi nilprintf
@@ -1248,9 +1247,6 @@ struct GDRomV3_impl final : MMIODevice {
     }
 };
 
-
-#include <memory>
-
 MMIODevice* Create_GDRomDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) {
     return new GDRomV3_impl(sh4mmr, sb, asic);
 }
@@ -1264,6 +1260,20 @@ void libCore_gdrom_disc_change()
         auto gdd = sh4_cpu->GetA0H<GDRomV3_impl>(A0H_GDROM);
         if (gdd) gdd->gd_setdisc();
     }
+}
+
+uint32_t libCore_gdrom_get_status() {
+    auto gdd = sh4_cpu->GetA0H<GDRomV3_impl>(A0H_GDROM);
+    return gdd ? gdd->SecNumber.Status : GD_OPEN;
+}
+
+
+void libCore_gdrom_serialize(void** dst,unsigned int* sz) {
+    auto gdd = sh4_cpu->GetA0H<GDRomV3_impl>(A0H_GDROM);
+    if (gdd)
+        gdd->serialize(dst, sz);
+    else
+        *sz = 0;
 }
 
 void libCore_CDDA_Sector(s16* sector)

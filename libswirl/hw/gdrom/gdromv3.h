@@ -299,3 +299,6 @@ extern char szExDT[8][32];
 #define SPI_GET_SCD   0x40 // 
 
 MMIODevice* Create_GDRomDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic);
+
+uint32_t libCore_gdrom_get_status();
+extern void libCore_gdrom_serialize(void** dst, unsigned int* sz);
