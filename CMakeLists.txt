@@ -6,6 +6,7 @@ if (CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif()
 
+
 set(TNAME reicast)
 option(LIBRETRO_CORE "Build as libretro core" OFF)
 
@@ -226,7 +227,8 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
-  link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
+  LINK_DIRECTORIES(debugger/lib/)
+  link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib debugger.lib)
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 
     list(APPEND osd_SRCS
