@@ -91,14 +91,15 @@ struct code_field_t {
     uint32_t gpr[16];
     size_t list_index;
     float fpr[32];
+    QListWidgetItem* item;
 
     code_field_t() {
 
     }
 
     code_field_t(const std::string& _diss,const uint32_t _pc = 0,const uint32_t _sp=0,const uint32_t _pr=0,const uint32_t* _gpr  = nullptr,const float* _fpr = nullptr,
-                 const size_t _list_index = 0) :
-        diss(_diss) , pc(_pc) , sp(_sp) , pr (_pr) , list_index(_list_index) {
+                 const size_t _list_index = 0,QListWidgetItem* _item = nullptr) :
+        diss(_diss) , pc(_pc) , sp(_sp) , pr (_pr) , list_index(_list_index),item(_item) {
         if (nullptr == _gpr)
             memset(gpr,0,sizeof(gpr));
         else
@@ -145,6 +146,8 @@ private slots:
 
     void on_btn_rename_breakpoint_clicked();
 
+    void on_chk_active_stateChanged(int arg1);
+
 private:
     void init();
     void upd_cpu_ctx();
@@ -152,11 +155,12 @@ private:
     void update_breakpoint_list();
     void set_selected_breakpoint_marked(const bool marked);
     uint32_t reverse_breakpoint_pc_from_selection()  ;
+    std::string dec_addr_from_codestream(const std::string& cstrm);
 
 private:
     std::unordered_map<uint32_t,std::string> m_breakpoints;
     std::unordered_map<uint32_t,code_field_t> m_code;
-    std::vector<uint32_t> m_reverse_code_indices;
+
     cpu_ctx_t m_cpu_context;
     cpu_diss_t m_cpu_diss;
     code_book_c m_code_book;

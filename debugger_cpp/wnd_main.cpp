@@ -11,6 +11,15 @@ static inline const std::string to_hex(const base_t v) {
     return stream.str();
 }
 
+template <typename base_t>
+static inline const base_t from_hex(const std::string& s) {
+    std::istringstream i(s);
+    base_t t;
+
+    i >> std::hex >> t;
+    return t;
+}
+
 wnd_main::wnd_main(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::wnd_main) {
@@ -35,6 +44,14 @@ void wnd_main::show_msgbox(const std::string& text) {
     msgbox.exec();
 }
 
+std::string wnd_main::dec_addr_from_codestream(const std::string& cstrm) {
+    size_t i = cstrm.find(':');
+    if (i == std::string::npos)
+        return "null";
+
+    return cstrm.substr(0,i);
+}
+
 void wnd_main::add_list_item(const std::string& s) {
     ui->list_cpu_instructions->addItem(s.c_str());
 }
@@ -43,8 +60,8 @@ void wnd_main::highlight_list_item(const size_t index) {
    // show_msgbox(std::to_string(index));
     if (!ui->chk_trace->isChecked())
         return;
+
     ui->list_cpu_instructions->setCurrentRow((int)index);
-    //show_msgbox("OK");
 }
 
 void wnd_main::push_msg(const char* which,const char* data) {
@@ -66,13 +83,15 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
             if (i != std::string::npos) {
                 cc = cc.substr(0,i);
             }
-              add_list_item(std::string( to_hex(m_cpu_diss.pc) + ":" + cc ).c_str());
+            std::string tmp = std::string( to_hex(m_cpu_diss.pc) + ":" + cc );
+            QListWidgetItem* item = new QListWidgetItem ( tmp.c_str()) ;
+            ui->list_cpu_instructions->addItem(item);
+
+            if (ui->chk_trace->isChecked())
+                ui->list_cpu_instructions->setCurrentItem(item);
+
             m_code.insert({m_cpu_diss.pc, code_field_t ( cc  , m_cpu_context.pc , m_cpu_context.sp , m_cpu_context.pr , m_cpu_context.r,
-                          m_cpu_context.fr , m_reverse_code_indices.size())});
-
-             highlight_list_item( m_reverse_code_indices.size() );
-            m_reverse_code_indices.push_back( m_cpu_diss.pc  );
-
+                          m_cpu_context.fr , 0,item )});
         } else {
             std::string cc = m_cpu_diss.buf;
             size_t i = cc.find(';');
@@ -88,7 +107,9 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
                 memcpy(it->second.gpr,m_cpu_context.r,sizeof(m_cpu_context.r));
                 memcpy(it->second.fpr,m_cpu_context.fr,sizeof(m_cpu_context.fr));
             }
-            highlight_list_item( it->second.list_index );
+
+            if (ui->chk_trace->isChecked())
+                ui->list_cpu_instructions->setCurrentItem(it->second.item);
         }
     }
 }
@@ -155,25 +176,14 @@ void wnd_main::on_list_cpu_instructions_itemDoubleClicked(QListWidgetItem *item)
 
 }
 
-void wnd_main::on_list_cpu_instructions_itemClicked(QListWidgetItem *item)
-{
-   int32_t i = ui->list_cpu_instructions->row(item);
-
-   if (i < 0) {
-       m_code_list_index = -1;
+void wnd_main::on_list_cpu_instructions_itemClicked(QListWidgetItem *item) {
+   if (!item || item->text().isEmpty())
        return;
-   }
-   else if ((size_t)i >= m_reverse_code_indices.size()) {
-       m_code_list_index = -1;
-       return;
-   }
 
-   uint32_t pc = m_reverse_code_indices[i];
-   const code_field_t& fld = m_code[pc];
+   const code_field_t& fld =  m_code[ from_hex<uint32_t>(  dec_addr_from_codestream(item->text().toStdString())) ];
 
    std::string lbl_txt;
 
-   m_code_list_index = i;
    lbl_txt = "PC:" + to_hex(fld.pc) + "\n";
    lbl_txt += "PR:" + to_hex(fld.pr) + "\n";
    lbl_txt += "SP:" + to_hex(fld.sp) + "\n";
@@ -210,6 +220,11 @@ void wnd_main::on_pushButton_13_clicked()
 
 void wnd_main::on_chk_active_toggled(bool checked) {
     g_event_func("dbg_enable",(checked) ? "true":"false");
+
+    if (checked) {
+        m_code.clear();
+        ui->list_cpu_instructions->clear();
+    }
 }
 
 void wnd_main::set_selected_breakpoint_marked(const bool marked) {
@@ -237,7 +252,7 @@ uint32_t wnd_main::reverse_breakpoint_pc_from_selection()  {
     if ( (idx < 0) || (idx > ui->list_cpu_instructions->count() ))
          return (uint32_t)-1U;
 
-    return m_code[ m_reverse_code_indices[idx] ].pc;
+    return m_code[ from_hex<uint32_t>(  dec_addr_from_codestream(ui->list_cpu_instructions->item(idx)->text().toStdString() ))  ].pc;
 }
 
 void wnd_main::on_btn_brk_rm_clicked() {
@@ -272,8 +287,6 @@ void wnd_main::on_btn_brk_add_clicked() {
 }
 
 void wnd_main::on_chk_sort_code_path_toggled(bool checked) {
-
-    return;//
     ui->list_breakpoints->sortItems(Qt::AscendingOrder);
     ui->list_cpu_instructions->sortItems(Qt::AscendingOrder);
     ui->list_breakpoints->setSortingEnabled(checked);
@@ -297,5 +310,10 @@ void wnd_main::on_btn_rename_breakpoint_clicked()
          return ;
 
    // const uint32_t pc = m_breakpoints[ ui->list_breakpoints->currentItem()->text().toStdString() ];
+
+}
+
+void wnd_main::on_chk_active_stateChanged(int arg1)
+{
 
 }
