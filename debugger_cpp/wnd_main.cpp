@@ -112,7 +112,7 @@ void wnd_main::upd_cpu_ctx() {
         lbl_txt +=  "fR" + std::to_string(i) + ":" + std::to_string(m_cpu_context.fr[i])  ;
         lbl_txt +=  " | fR" + std::to_string(16+i) + ":" + std::to_string(m_cpu_context.fr[16+i])  +"\n";
     }
-    emit upd_live_ctx(lbl_txt.c_str());
+    upd_live_ctx(lbl_txt.c_str());
 }
 
 void wnd_main::init() {
