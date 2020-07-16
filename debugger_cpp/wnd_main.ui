@@ -1,0 +1,1344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>wnd_main</class>
+ <widget class="QWidget" name="wnd_main">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1282</width>
+    <height>614</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Calibri</family>
+    <pointsize>12</pointsize>
+    <weight>50</weight>
+    <bold>false</bold>
+    <stylestrategy>PreferAntialias</stylestrategy>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>ReiDBG</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color:qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(61, 61, 61, 255), stop:1 rgba(255, 255, 255, 255));
+color:rgba(0, 0, 0,255)</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+       <stylestrategy>PreferAntialias</stylestrategy>
+      </font>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>CPU</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QTabWidget" name="tabWidget_2">
+         <property name="font">
+          <font>
+           <family>Calibri</family>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <stylestrategy>PreferAntialias</stylestrategy>
+          </font>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="tab_3">
+          <attribute name="title">
+           <string>Instructions</string>
+          </attribute>
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="1" column="0">
+            <widget class="QListWidget" name="list_cpu_instructions">
+             <property name="maximumSize">
+              <size>
+               <width>500</width>
+               <height>10000</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Calibri</family>
+               <pointsize>14</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+               <stylestrategy>PreferAntialias</stylestrategy>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color:rgba(255,255,255,0);
+</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::WinPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <property name="lineWidth">
+              <number>4</number>
+             </property>
+             <property name="midLineWidth">
+              <number>4</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QFrame" name="frame_2">
+             <property name="maximumSize">
+              <size>
+               <width>1000</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <stylestrategy>PreferAntialias</stylestrategy>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color:rgba(255,255,255,100);</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::WinPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <property name="lineWidth">
+              <number>4</number>
+             </property>
+             <property name="midLineWidth">
+              <number>4</number>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_7">
+              <item row="0" column="1">
+               <widget class="QFrame" name="frame_3">
+                <property name="minimumSize">
+                 <size>
+                  <width>220</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>1000</width>
+                  <height>500</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::WinPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Plain</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>4</number>
+                </property>
+                <property name="midLineWidth">
+                 <number>4</number>
+                </property>
+                <widget class="QPushButton" name="pushButton_6">
+                 <property name="geometry">
+                  <rect>
+                   <x>80</x>
+                   <y>70</y>
+                   <width>101</width>
+                   <height>23</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>WRITE</string>
+                 </property>
+                </widget>
+                <widget class="QLabel" name="label_2">
+                 <property name="geometry">
+                  <rect>
+                   <x>7</x>
+                   <y>10</y>
+                   <width>131</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <pointsize>10</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgba(0,0,0,0);</string>
+                 </property>
+                 <property name="text">
+                  <string>Register</string>
+                 </property>
+                </widget>
+                <widget class="QLabel" name="label_3">
+                 <property name="geometry">
+                  <rect>
+                   <x>7</x>
+                   <y>40</y>
+                   <width>131</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <pointsize>10</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgba(0,0,0,0);</string>
+                 </property>
+                 <property name="text">
+                  <string>Value:</string>
+                 </property>
+                </widget>
+                <widget class="QLineEdit" name="sel_reg_linedit">
+                 <property name="geometry">
+                  <rect>
+                   <x>80</x>
+                   <y>40</y>
+                   <width>101</width>
+                   <height>20</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgb(255,255,255);</string>
+                 </property>
+                </widget>
+                <widget class="QComboBox" name="reg_combo_box">
+                 <property name="geometry">
+                  <rect>
+                   <x>80</x>
+                   <y>10</y>
+                   <width>101</width>
+                   <height>22</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgb(255,255,255);</string>
+                 </property>
+                </widget>
+                <widget class="QLabel" name="label_4">
+                 <property name="geometry">
+                  <rect>
+                   <x>260</x>
+                   <y>10</y>
+                   <width>131</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <pointsize>10</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgba(0,0,0,0);</string>
+                 </property>
+                 <property name="text">
+                  <string>Jump to:</string>
+                 </property>
+                </widget>
+                <widget class="QLineEdit" name="txt_set_pc">
+                 <property name="geometry">
+                  <rect>
+                   <x>320</x>
+                   <y>10</y>
+                   <width>101</width>
+                   <height>20</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgb(255,255,255);</string>
+                 </property>
+                </widget>
+                <widget class="QPushButton" name="pushButton_7">
+                 <property name="geometry">
+                  <rect>
+                   <x>320</x>
+                   <y>40</y>
+                   <width>101</width>
+                   <height>23</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>JMP</string>
+                 </property>
+                </widget>
+                <widget class="QCheckBox" name="chk_sel">
+                 <property name="geometry">
+                  <rect>
+                   <x>10</x>
+                   <y>70</y>
+                   <width>80</width>
+                   <height>17</height>
+                  </rect>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>80</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>80</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <pointsize>10</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgba(255,255,255,0);</string>
+                 </property>
+                 <property name="text">
+                  <string>SEL</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+                <widget class="QPushButton" name="pushButton_8">
+                 <property name="geometry">
+                  <rect>
+                   <x>320</x>
+                   <y>70</y>
+                   <width>101</width>
+                   <height>23</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>EXPORT BINARY</string>
+                 </property>
+                </widget>
+                <widget class="QCheckBox" name="chk_ptr">
+                 <property name="geometry">
+                  <rect>
+                   <x>10</x>
+                   <y>90</y>
+                   <width>80</width>
+                   <height>17</height>
+                  </rect>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>80</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>80</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <pointsize>10</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">background-color:rgba(255,255,255,0);</string>
+                 </property>
+                 <property name="text">
+                  <string>PTR</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+                <widget class="QPushButton" name="pushButton_10">
+                 <property name="geometry">
+                  <rect>
+                   <x>80</x>
+                   <y>100</y>
+                   <width>101</width>
+                   <height>23</height>
+                  </rect>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <family>Calibri</family>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                   <stylestrategy>PreferAntialias</stylestrategy>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>READ</string>
+                 </property>
+                </widget>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QFrame" name="frame_6">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>600</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color:rgba(255,255,255,0);
+</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::WinPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Plain</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>4</number>
+                </property>
+                <property name="midLineWidth">
+                 <number>4</number>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_8">
+                 <item row="0" column="0">
+                  <widget class="QTabWidget" name="tabWidget_4">
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);
+</string>
+                   </property>
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <widget class="QWidget" name="tab_10">
+                    <attribute name="title">
+                     <string>CPU</string>
+                    </attribute>
+                    <layout class="QGridLayout" name="gridLayout_9">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="lbl_state_data">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>10</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(0,0,0,0);</string>
+                       </property>
+                       <property name="text">
+                        <string>State data</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                   <widget class="QWidget" name="tab_11">
+                    <attribute name="title">
+                     <string>MEM</string>
+                    </attribute>
+                   </widget>
+                   <widget class="QWidget" name="tab_12">
+                    <attribute name="title">
+                     <string>BREAKPOINTS</string>
+                    </attribute>
+                   </widget>
+                   <widget class="QWidget" name="tab_13">
+                    <attribute name="title">
+                     <string>WATCHERS</string>
+                    </attribute>
+                    <widget class="QComboBox" name="reg_combo_box_2">
+                     <property name="geometry">
+                      <rect>
+                       <x>110</x>
+                       <y>10</y>
+                       <width>101</width>
+                       <height>22</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgb(255,255,255);</string>
+                     </property>
+                    </widget>
+                    <widget class="QLabel" name="label_5">
+                     <property name="geometry">
+                      <rect>
+                       <x>10</x>
+                       <y>10</y>
+                       <width>131</width>
+                       <height>16</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Calibri</family>
+                       <pointsize>10</pointsize>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgba(0,0,0,0);</string>
+                     </property>
+                     <property name="text">
+                      <string>Mode:</string>
+                     </property>
+                    </widget>
+                    <widget class="QLabel" name="label_6">
+                     <property name="geometry">
+                      <rect>
+                       <x>8</x>
+                       <y>70</y>
+                       <width>131</width>
+                       <height>16</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Calibri</family>
+                       <pointsize>10</pointsize>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgba(0,0,0,0);</string>
+                     </property>
+                     <property name="text">
+                      <string>Address:</string>
+                     </property>
+                    </widget>
+                    <widget class="QLineEdit" name="sel_reg_linedit_2">
+                     <property name="geometry">
+                      <rect>
+                       <x>110</x>
+                       <y>70</y>
+                       <width>101</width>
+                       <height>20</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgb(255,255,255);</string>
+                     </property>
+                    </widget>
+                    <widget class="QLabel" name="label_7">
+                     <property name="geometry">
+                      <rect>
+                       <x>10</x>
+                       <y>40</y>
+                       <width>131</width>
+                       <height>16</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Calibri</family>
+                       <pointsize>10</pointsize>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgba(0,0,0,0);</string>
+                     </property>
+                     <property name="text">
+                      <string>Type:</string>
+                     </property>
+                    </widget>
+                    <widget class="QComboBox" name="reg_combo_box_3">
+                     <property name="geometry">
+                      <rect>
+                       <x>110</x>
+                       <y>40</y>
+                       <width>101</width>
+                       <height>22</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgb(255,255,255);</string>
+                     </property>
+                    </widget>
+                    <widget class="QLabel" name="label_8">
+                     <property name="geometry">
+                      <rect>
+                       <x>8</x>
+                       <y>100</y>
+                       <width>131</width>
+                       <height>16</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Calibri</family>
+                       <pointsize>10</pointsize>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgba(0,0,0,0);</string>
+                     </property>
+                     <property name="text">
+                      <string>Alias:</string>
+                     </property>
+                    </widget>
+                    <widget class="QLineEdit" name="sel_reg_linedit_3">
+                     <property name="geometry">
+                      <rect>
+                       <x>110</x>
+                       <y>100</y>
+                       <width>101</width>
+                       <height>20</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgb(255,255,255);</string>
+                     </property>
+                    </widget>
+                    <widget class="QPushButton" name="pushButton_9">
+                     <property name="geometry">
+                      <rect>
+                       <x>110</x>
+                       <y>130</y>
+                       <width>101</width>
+                       <height>23</height>
+                      </rect>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Calibri</family>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>ADD</string>
+                     </property>
+                    </widget>
+                   </widget>
+                   <widget class="QWidget" name="tab_14">
+                    <attribute name="title">
+                     <string>HLE Tools</string>
+                    </attribute>
+                   </widget>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="0" column="0" rowspan="2">
+               <widget class="QFrame" name="frame_4">
+                <property name="maximumSize">
+                 <size>
+                  <width>250</width>
+                  <height>800</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::WinPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Plain</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>4</number>
+                </property>
+                <property name="midLineWidth">
+                 <number>4</number>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_6">
+                 <item row="0" column="0">
+                  <widget class="QCheckBox" name="chk_trace">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>TRC</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QCheckBox" name="chk_dec">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>DEC</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QCheckBox" name="chk_flt">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>FLT</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <widget class="QCheckBox" name="chk_str">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>STR</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="4">
+                  <widget class="QCheckBox" name="chk_hex">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(255,255,255,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>HEX</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0" colspan="5">
+                  <widget class="QLabel" name="lbl_reg">
+                   <property name="minimumSize">
+                    <size>
+                     <width>200</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                     <stylestrategy>PreferAntialias</stylestrategy>
+                    </font>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">background-color:rgba(0,0,0,0);</string>
+                   </property>
+                   <property name="text">
+                    <string>DATA</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QFrame" name="frame">
+             <property name="font">
+              <font>
+               <stylestrategy>PreferAntialias</stylestrategy>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color:rgba(255,255,255,100);</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::WinPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <property name="lineWidth">
+              <number>4</number>
+             </property>
+             <property name="midLineWidth">
+              <number>4</number>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_4">
+              <item row="0" column="0">
+               <widget class="QPushButton" name="pushButton">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>STEP</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="pushButton_12">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>START</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="pushButton_11">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>STOP</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QPushButton" name="pushButton_13">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>RESET</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="4">
+               <widget class="QPushButton" name="pushButton_2">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>+BRK</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QPushButton" name="pushButton_3">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>-BRK</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="6">
+               <widget class="QPushButton" name="pushButton_4">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>TRACE-A</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QPushButton" name="pushButton_5">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>TRACE-B</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8">
+               <widget class="QCheckBox" name="chk_active">
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color:rgba(255,255,255,0);</string>
+                </property>
+                <property name="text">
+                 <string>Active</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="9">
+               <widget class="QCheckBox" name="checkBox_2">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color:rgba(255,255,255,0);</string>
+                </property>
+                <property name="text">
+                 <string>Sort code path</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="10">
+               <widget class="QCheckBox" name="checkBox_3">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                  <stylestrategy>PreferAntialias</stylestrategy>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color:rgba(255,255,255,0);</string>
+                </property>
+                <property name="text">
+                 <string>Full state capture per cycle</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_4">
+          <attribute name="title">
+           <string>Breakpoints</string>
+          </attribute>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>Memory / IO</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <widget class="QTabWidget" name="tabWidget_3">
+         <property name="font">
+          <font>
+           <family>Calibri</family>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+           <stylestrategy>PreferAntialias</stylestrategy>
+          </font>
+         </property>
+         <property name="currentIndex">
+          <number>3</number>
+         </property>
+         <widget class="QWidget" name="tab_5">
+          <attribute name="title">
+           <string>RAM</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tab_6">
+          <attribute name="title">
+           <string>PVR</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tab_7">
+          <attribute name="title">
+           <string>AICA</string>
+          </attribute>
+         </widget>
+         <widget class="QWidget" name="tab_8">
+          <attribute name="title">
+           <string>GDROM</string>
+          </attribute>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_9">
+      <attribute name="title">
+       <string>Scripts</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

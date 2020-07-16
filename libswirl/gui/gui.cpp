@@ -770,6 +770,7 @@ struct ReicastUI_impl : GUI {
 
         int rc = virtualDreamcast->StartGame(path);
         
+       
         if (rc != 0)
         {
             gui_state = Main;

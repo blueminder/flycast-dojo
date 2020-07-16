@@ -624,11 +624,8 @@ void SaveSettings()
 static bool reset_requested = false;
  
 
-// which = PAUSE button / State = PRessed
 
-static void dgb_on_event(const char* which, const char* state) {
-
-}
+extern void dgb_on_event(const char* which, const char* state);
 
 int reicast_init(int argc, char* argv[]) {
    
@@ -679,6 +676,9 @@ int reicast_init(int argc, char* argv[]) {
 
     if (showOnboarding)
         g_GUI->OpenOnboarding();
+
+
+    
 
     return 0;
 }
@@ -784,6 +784,7 @@ struct Dreamcast_impl : VirtualDreamcast {
                 luabindings_onreset();
 #endif
             }
+         
         } while (reset_requested);
 
 #ifdef SCRIPTING
@@ -851,6 +852,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->vram.Zero();
         sh4_cpu->aica_ram.Zero();
     }
+
+ 
 
     int StartGame(const string& path)
     {
@@ -1024,8 +1027,11 @@ struct Dreamcast_impl : VirtualDreamcast {
         audio_stream.reset();
     }
 
+
+
     void Stop(function<void()> callback)
     {
+ 
         verify(sh4_cpu->IsRunning());
 
         callback_lock.Lock();
@@ -1048,6 +1054,16 @@ struct Dreamcast_impl : VirtualDreamcast {
         emu_thread.Start();
         emu_started.Wait();
     }
+
+    void Step() {
+        if (!sh4_cpu)
+            return;
+
+        if (sh4_cpu->IsRunning()) {
+            Stop([]{});
+        }
+
+        sh4_cpu->Step();    }
 
     void cleanup_serialize(void* data)
     {

@@ -11,6 +11,7 @@
 #include "sh4_mem.h"
 #include "sh4_sched.h"
 #include "sh4_interrupts.h"
+#include "reios/reios_dbg.h"
 
 // every SH4_TIMESLICE cycles
 int UpdateSystem()
@@ -95,8 +96,12 @@ void SuperH4_impl::Step()
     else
     {
         u32 op = ReadMem16(next_pc);
-        next_pc += 2;
+
+        reios_dbg_begin_op(next_pc, op);
         ExecuteOpcode(op);
+        reios_dbg_end_op(next_pc, op);
+
+        next_pc += 2;
     }
 }
 

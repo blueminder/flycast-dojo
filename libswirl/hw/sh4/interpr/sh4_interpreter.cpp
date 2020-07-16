@@ -15,7 +15,7 @@
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
-
+#include "reios/reios_dbg.h"
 
 #define CPU_RATIO      (8)
 
@@ -70,7 +70,7 @@ void ExecuteDelayslot_RTE()
 #endif
 }
 
-#include "reios/reios_dbg.h"
+
 
 struct SH4IInterpreter : SuperH4Backend {
     s32 l;
@@ -91,9 +91,9 @@ struct SH4IInterpreter : SuperH4Backend {
                     next_pc += 2;
                     u32 op = IReadMem16(addr);
                     
-                    reios_dbg_trace_op(addr,op);
-
+                    reios_dbg_begin_op(addr,op);
                     ExecuteOpcode(op);
+                    reios_dbg_end_op(addr, op);
 
                     l -= CPU_RATIO;
                 } while (l > 0);

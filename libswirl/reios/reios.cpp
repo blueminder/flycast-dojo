@@ -8,7 +8,7 @@
 */
 #include "license/bsd"
 #include "reios.h"
-
+#include "reios_utils.h"
 #include "reios_elf.h"
 
 #include "gdrom_hle.h"
@@ -218,12 +218,13 @@ void reios_sys_flashrom() {
 				u32 part = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
 
-				u32* pDst = (u32*)GetMemPtr(dest, 8); //if not on boundary
+				//u32* pDst = (u32*)GetMemPtr(dest, 8);
 
 				if (part <= 4) {
-					pDst[0] = flashrom_info[part][0];
-					pDst[1] = flashrom_info[part][1];
-					
+					//pDst[0] = flashrom_info[part][0];
+					//pDst[1] = flashrom_info[part][1];
+					WriteMem32(dest, flashrom_info[part][0]);
+					WriteMem32(dest + 4, flashrom_info[part][1]);
 					Sh4cntx.r[0] = 0;
 				}
 				else {
@@ -243,11 +244,15 @@ void reios_sys_flashrom() {
 				u32 dest = Sh4cntx.r[5];
 				u32 size = Sh4cntx.r[6];
 
-				u8* pp = GetMemPtr(dest, size);
-				memcpy(GetMemPtr(dest, size), g_reios_ctx.flashrom + offs, size);
+				//host_to_guest_memcpy(const uint32_t dst_addr, const void* src_addr, const uint32_t sz)
+
+				//u8* pp = GetMemPtr(dest, size);
+				//memcpy(GetMemPtr(dest, size), g_reios_ctx.flashrom + offs, size);
+
+				guest_to_guest_memcpy(dest, offs, size);
 
 				Sh4cntx.r[0] = size;
- 				printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, dest, size, pp[0], pp[1], pp[2], pp[3], pp[4]);
+ 				//printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, dest, size, pp[0], pp[1], pp[2], pp[3], pp[4]);
 
 			}
 			break;
@@ -265,12 +270,12 @@ void reios_sys_flashrom() {
 				u32 src = Sh4cntx.r[5];
 				u32 size = Sh4cntx.r[6];
 
-				u8* pSrc = GetMemPtr(src, size);
+				//u8* pSrc = GetMemPtr(src, size);
 
 				for (u32 i = 0; i < size; i++) {
-					g_reios_ctx.flashrom[offs + i] &= pSrc[i];
+					g_reios_ctx.flashrom[offs + i] &= ReadMem8(src + i); //pSrc[i];
 				}
-				printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, src, size,pSrc[0], pSrc[1], pSrc[2], pSrc[3], pSrc[4]);
+				//printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, src, size,pSrc[0], pSrc[1], pSrc[2], pSrc[3], pSrc[4]);
 			}
 			break;
 

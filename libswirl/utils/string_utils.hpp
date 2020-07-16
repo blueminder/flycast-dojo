@@ -5,6 +5,7 @@
 #include <string.h>
 #include <vector>
 #include <unordered_set>
+#include <string>
 
 namespace string_utils {
 static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<std::string>& out,const bool skip_ws = false) {
