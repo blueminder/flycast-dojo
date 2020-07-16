@@ -51,7 +51,7 @@ void wnd_main::push_msg(const char* which,const char* data) {
 
 }
 
-void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) {
+void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { //THIS SHOULD BECOME NON BLOCKING
 
     std::string tmp = std::string(class_name);
     if (tmp == "cpu_ctx") {
@@ -88,7 +88,7 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) {
                 memcpy(it->second.gpr,m_cpu_context.r,sizeof(m_cpu_context.r));
                 memcpy(it->second.fpr,m_cpu_context.fr,sizeof(m_cpu_context.fr));
             }
-              highlight_list_item( it->second.list_index );
+            highlight_list_item( it->second.list_index );
         }
     }
 }
@@ -208,7 +208,94 @@ void wnd_main::on_pushButton_13_clicked()
     g_event_func("reset","");
 }
 
-void wnd_main::on_chk_active_toggled(bool checked)
-{
+void wnd_main::on_chk_active_toggled(bool checked) {
     g_event_func("dbg_enable",(checked) ? "true":"false");
+}
+
+void wnd_main::set_selected_breakpoint_marked(const bool marked) {
+    const int32_t idx = ui->list_cpu_instructions->currentIndex().row();
+
+    if ( (idx < 0) || (idx > ui->list_cpu_instructions->count() ))
+         return;
+
+    //std::string s = (marked) ?
+      //          "color:#00ff00;\nbackground-color:transparent;\n" : "color:#000000;\nbackground-color:transparent;\n";
+
+    ui->list_cpu_instructions->currentItem()->setTextColor((marked) ? Qt::red : Qt::black);
+}
+
+void wnd_main::update_breakpoint_list() {
+    ui->list_breakpoints->clear();
+
+    for (auto s : m_breakpoints)
+        ui->list_breakpoints->addItem( s.second.c_str());
+}
+
+uint32_t wnd_main::reverse_breakpoint_pc_from_selection()  {
+    const int32_t idx = ui->list_cpu_instructions->currentIndex().row();
+
+    if ( (idx < 0) || (idx > ui->list_cpu_instructions->count() ))
+         return (uint32_t)-1U;
+
+    return m_code[ m_reverse_code_indices[idx] ].pc;
+}
+
+void wnd_main::on_btn_brk_rm_clicked() {
+    const uint32_t pc = reverse_breakpoint_pc_from_selection();
+    if (pc == (uint32_t)-1U)
+        return;
+
+    auto it = m_breakpoints.find(pc);
+    if ( it == m_breakpoints.end())
+        return;
+
+    set_selected_breakpoint_marked(false);
+
+    m_breakpoints.erase(it);
+    update_breakpoint_list();
+}
+
+void wnd_main::on_btn_brk_add_clicked() {
+    const uint32_t pc = reverse_breakpoint_pc_from_selection();
+    if (pc == (uint32_t)-1U)
+        return;
+
+    if (m_breakpoints.find(pc) != m_breakpoints.end())
+        return;
+
+    const std::string s = to_hex(pc);
+
+    set_selected_breakpoint_marked(true);
+    m_breakpoints.insert( {pc,s} );
+
+    update_breakpoint_list();
+}
+
+void wnd_main::on_chk_sort_code_path_toggled(bool checked) {
+
+    return;//
+    ui->list_breakpoints->sortItems(Qt::AscendingOrder);
+    ui->list_cpu_instructions->sortItems(Qt::AscendingOrder);
+    ui->list_breakpoints->setSortingEnabled(checked);
+    ui->list_cpu_instructions->setSortingEnabled(checked);
+}
+
+void wnd_main::on_list_breakpoints_itemClicked(QListWidgetItem *item)
+{
+    ui->txt_rename_breakpoint->setText(item->text());
+}
+
+void wnd_main::on_btn_rename_breakpoint_clicked()
+{
+    if (ui->txt_rename_breakpoint->text().length() < 1)
+        return;
+
+    //XXX check if exists -_-
+
+    const int32_t idx = ui->list_breakpoints->currentIndex().row();
+    if ( (idx < 0) || (idx > ui->list_breakpoints->count() ))
+         return ;
+
+   // const uint32_t pc = m_breakpoints[ ui->list_breakpoints->currentItem()->text().toStdString() ];
+
 }

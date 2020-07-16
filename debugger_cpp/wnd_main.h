@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "shared_contexts.h"
 #include <sstream>
@@ -134,15 +135,26 @@ private slots:
     void on_pushButton_11_clicked();
     void on_pushButton_12_clicked();
     void on_pushButton_13_clicked();
-
     void on_chk_active_toggled(bool checked);
+    void on_btn_brk_rm_clicked();
+    void on_btn_brk_add_clicked();
+
+    void on_chk_sort_code_path_toggled(bool checked);
+
+    void on_list_breakpoints_itemClicked(QListWidgetItem *item);
+
+    void on_btn_rename_breakpoint_clicked();
 
 private:
     void init();
     void upd_cpu_ctx();
     bool export_binary(const std::string& path,const std::string& flags);
+    void update_breakpoint_list();
+    void set_selected_breakpoint_marked(const bool marked);
+    uint32_t reverse_breakpoint_pc_from_selection()  ;
 
 private:
+    std::unordered_map<uint32_t,std::string> m_breakpoints;
     std::unordered_map<uint32_t,code_field_t> m_code;
     std::vector<uint32_t> m_reverse_code_indices;
     cpu_ctx_t m_cpu_context;

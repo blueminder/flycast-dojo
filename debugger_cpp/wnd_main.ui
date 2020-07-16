@@ -98,6 +98,9 @@ color:rgba(0, 0, 0,255)</string>
              <property name="midLineWidth">
               <number>4</number>
              </property>
+             <property name="sortingEnabled">
+              <bool>false</bool>
+             </property>
             </widget>
            </item>
            <item row="1" column="1">
@@ -501,6 +504,12 @@ color:rgba(0, 0, 0,255)</string>
                 <layout class="QGridLayout" name="gridLayout_8">
                  <item row="0" column="0">
                   <widget class="QTabWidget" name="tabWidget_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
@@ -515,7 +524,7 @@ color:rgba(0, 0, 0,255)</string>
 </string>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>3</number>
                    </property>
                    <widget class="QWidget" name="tab_10">
                     <attribute name="title">
@@ -552,6 +561,110 @@ color:rgba(0, 0, 0,255)</string>
                     <attribute name="title">
                      <string>BREAKPOINTS</string>
                     </attribute>
+                    <layout class="QGridLayout" name="gridLayout_10">
+                     <item row="0" column="0" rowspan="3">
+                      <widget class="QListWidget" name="list_breakpoints">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>150</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>200</width>
+                         <height>100000</height>
+                        </size>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>14</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="layoutDirection">
+                        <enum>Qt::LeftToRight</enum>
+                       </property>
+                       <property name="autoFillBackground">
+                        <bool>false</bool>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(255,255,255,0);
+</string>
+                       </property>
+                       <property name="frameShape">
+                        <enum>QFrame::WinPanel</enum>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>4</number>
+                       </property>
+                       <property name="midLineWidth">
+                        <number>4</number>
+                       </property>
+                       <property name="sortingEnabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QLineEdit" name="txt_rename_breakpoint">
+                       <property name="font">
+                        <font>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgb(255,255,255);</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLabel" name="label_9">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>10</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(0,0,0,0);</string>
+                       </property>
+                       <property name="text">
+                        <string>Rename:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <widget class="QPushButton" name="btn_rename_breakpoint">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Rename</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </widget>
                    <widget class="QWidget" name="tab_13">
                     <attribute name="title">
@@ -1115,7 +1228,7 @@ color:rgba(0, 0, 0,255)</string>
                </widget>
               </item>
               <item row="0" column="4">
-               <widget class="QPushButton" name="pushButton_2">
+               <widget class="QPushButton" name="btn_brk_add">
                 <property name="maximumSize">
                  <size>
                   <width>60</width>
@@ -1136,7 +1249,7 @@ color:rgba(0, 0, 0,255)</string>
                </widget>
               </item>
               <item row="0" column="5">
-               <widget class="QPushButton" name="pushButton_3">
+               <widget class="QPushButton" name="btn_brk_rm">
                 <property name="maximumSize">
                  <size>
                   <width>60</width>
@@ -1228,7 +1341,7 @@ color:rgba(0, 0, 0,255)</string>
                </widget>
               </item>
               <item row="0" column="9">
-               <widget class="QCheckBox" name="checkBox_2">
+               <widget class="QCheckBox" name="chk_sort_code_path">
                 <property name="minimumSize">
                  <size>
                   <width>110</width>
@@ -1253,6 +1366,12 @@ color:rgba(0, 0, 0,255)</string>
                 </property>
                 <property name="text">
                  <string>Sort code path</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="tristate">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
