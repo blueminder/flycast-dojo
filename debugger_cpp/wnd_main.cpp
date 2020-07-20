@@ -1,6 +1,7 @@
 #include "wnd_main.h"
 #include "ui_wnd_main.h"
 #include <QMessageBox>
+#include <QFileDialog>
 
 extern void (*g_event_func)(const char* which,const char* state);
 
@@ -35,7 +36,20 @@ wnd_main::~wnd_main()
 }
 
 bool wnd_main::export_binary(const std::string& path,const std::string& flags) {
-    return true;
+    FILE* f;
+    fopen_s(&f,path.c_str(),"wb");
+
+    if (!f)
+        return false;
+
+    size_t wr = 0;
+
+    for (auto c : m_code)
+        wr += fwrite((void*)&c.second.code,sizeof(uint16_t),1,f) ;
+
+    fclose(f);
+
+    return wr == m_code.size();
 }
 
 void wnd_main::show_msgbox(const std::string& text) {
@@ -91,7 +105,7 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
                 ui->list_cpu_instructions->setCurrentItem(item);
 
             m_code.insert({m_cpu_diss.pc, code_field_t ( cc  , m_cpu_context.pc , m_cpu_context.sp , m_cpu_context.pr , m_cpu_context.r,
-                          m_cpu_context.fr , 0,item )});
+                          m_cpu_context.fr , 0,item,m_cpu_diss.op )});
         } else {
             std::string cc = m_cpu_diss.buf;
             size_t i = cc.find(';');
@@ -315,5 +329,14 @@ void wnd_main::on_btn_rename_breakpoint_clicked()
 
 void wnd_main::on_chk_active_stateChanged(int arg1)
 {
+
+}
+
+void wnd_main::on_btn_export_bin_clicked() {
+    QString ff = QFileDialog::getSaveFileName(this,
+            tr("Binary"), "",
+            tr("Binary (*.bin);;All Files (*)"));
+
+    export_binary(ff.toStdString() ,"sh4bin");
 
 }

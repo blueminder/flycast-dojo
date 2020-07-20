@@ -92,14 +92,15 @@ struct code_field_t {
     size_t list_index;
     float fpr[32];
     QListWidgetItem* item;
+    uint16_t code;
 
     code_field_t() {
 
     }
 
     code_field_t(const std::string& _diss,const uint32_t _pc = 0,const uint32_t _sp=0,const uint32_t _pr=0,const uint32_t* _gpr  = nullptr,const float* _fpr = nullptr,
-                 const size_t _list_index = 0,QListWidgetItem* _item = nullptr) :
-        diss(_diss) , pc(_pc) , sp(_sp) , pr (_pr) , list_index(_list_index),item(_item) {
+                 const size_t _list_index = 0,QListWidgetItem* _item = nullptr,const uint16_t _code = 0) :
+        diss(_diss) , pc(_pc) , sp(_sp) , pr (_pr) , list_index(_list_index),item(_item),code(_code) {
         if (nullptr == _gpr)
             memset(gpr,0,sizeof(gpr));
         else
@@ -147,6 +148,9 @@ private slots:
     void on_btn_rename_breakpoint_clicked();
 
     void on_chk_active_stateChanged(int arg1);
+
+
+    void on_btn_export_bin_clicked();
 
 private:
     void init();

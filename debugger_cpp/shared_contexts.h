@@ -43,6 +43,7 @@ namespace shared_contexts_utils {
         strncpy_s(dst->buf,src->buf,sizeof(dst->buf));
         dst->pc = src->pc;
         dst->op = src->op;
+
     }
 }
 #endif // SHARED_CONTEXTS_H

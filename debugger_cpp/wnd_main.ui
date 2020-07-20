@@ -381,7 +381,7 @@ color:rgba(0, 0, 0,255)</string>
                   <bool>false</bool>
                  </property>
                 </widget>
-                <widget class="QPushButton" name="pushButton_8">
+                <widget class="QPushButton" name="btn_export_bin">
                  <property name="geometry">
                   <rect>
                    <x>320</x>

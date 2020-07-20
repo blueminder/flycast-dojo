@@ -669,6 +669,7 @@ public:
 				break;
 
 			case shop_ftrv:
+
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
 #if 0	// vfmadd231ps and vmulps cause rounding proglems
 				if (cpu.has(Xbyak::util::Cpu::tFMA))
@@ -1184,6 +1185,7 @@ private:
 				u32 sa=block->addr;
 
 				void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+
 				if (ptr)
 				{
 					mov(call_regs[0], block->addr);
