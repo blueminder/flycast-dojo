@@ -22,7 +22,7 @@ static void debugger_thread(int argc,char** argv) {
     g_dbg_running = false;
 }
 
-bool DEBUGGER_EXPORT debugger_entry_point(int argc,char** argv,void ( (*event_func) (const char*,const char*))) {
+extern "C" bool debugger_entry_point(int argc,char** argv,void ( (*event_func) (const char*,const char*))) {
     if (g_dbg_running)
         return false;
 
@@ -35,11 +35,11 @@ bool DEBUGGER_EXPORT debugger_entry_point(int argc,char** argv,void ( (*event_fu
     return true;
 }
 
-bool DEBUGGER_EXPORT debugger_running() {
+extern "C" bool debugger_running() {
     return g_dbg_running;
 }
 
-bool DEBUGGER_EXPORT debugger_shutdown() {
+extern "C" bool debugger_shutdown() {
     if (g_dbg_thread.joinable())
         g_dbg_thread.join();
 
@@ -49,7 +49,7 @@ bool DEBUGGER_EXPORT debugger_shutdown() {
     return true;
 }
 
-bool DEBUGGER_EXPORT debugger_pass_data(const char* class_name,void* data,const uint32_t size) {
+extern "C" bool debugger_pass_data(const char* class_name,void* data,const uint32_t size) {
     const std::thread::id tid = std::this_thread::get_id();
 
     if (tid != g_thid)
@@ -60,7 +60,7 @@ bool DEBUGGER_EXPORT debugger_pass_data(const char* class_name,void* data,const 
     return true;
 }
 
-bool DEBUGGER_EXPORT debugger_push_event(const char* which,const char* data) {
+extern "C" bool debugger_push_event(const char* which,const char* data) {
     const std::thread::id tid = std::this_thread::get_id();
 
     if (tid != g_thid)

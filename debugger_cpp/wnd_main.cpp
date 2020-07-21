@@ -37,7 +37,7 @@ wnd_main::~wnd_main()
 
 bool wnd_main::export_binary(const std::string& path,const std::string& flags) {
     FILE* f;
-    fopen_s(&f,path.c_str(),"wb");
+    f = fopen(path.c_str(),"wb");
 
     if (!f)
         return false;

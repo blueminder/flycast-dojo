@@ -623,14 +623,15 @@ void SaveSettings()
 
 static bool reset_requested = false;
  
-
-
 extern void dgb_on_event(const char* which, const char* state);
+extern bool reios_dbg_init();
+extern bool reios_dbg_shutdown() ;
 
 int reicast_init(int argc, char* argv[]) {
    
 
 
+    reios_dbg_init();
 
 #ifdef _WIN32
     setbuf(stdout, 0);
@@ -689,6 +690,7 @@ void reicast_ui_loop() {
 
 void reicast_term() {
     debugger_shutdown();
+    reios_dbg_shutdown();
     g_GUIRenderer.reset();
 
     g_GUI.reset();

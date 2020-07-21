@@ -40,7 +40,7 @@ namespace shared_contexts_utils {
     }
 
     static void deep_copy_diss(cpu_diss_t* dst,const cpu_diss_t* src) {
-        strncpy_s(dst->buf,src->buf,sizeof(dst->buf));
+        strncpy(dst->buf,src->buf,sizeof(dst->buf));
         dst->pc = src->pc;
         dst->op = src->op;
 

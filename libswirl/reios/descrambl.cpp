@@ -19,7 +19,7 @@ inline void my_srand(unsigned int n)
 	seed = n & 0xffff;
 }
 
-inline constexpr unsigned int my_rand()
+inline unsigned int my_rand()
 {
 	seed = (seed * 2109 + 9273) & 0x7fff;
 	return (seed + 0xc000) & 0xffff;

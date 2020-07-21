@@ -23,6 +23,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/libswirl")
 set(reicast_shell_path "${reicast_root_path}/reicast")
+ 
+
+set (EXCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/debugger_cpp")
+
+
+
+
 
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
@@ -99,6 +106,23 @@ set(core_SRCS
   ${d_core}/dispframe.cpp
   ${d_core}/serialize.cpp
 )
+
+FUNCTION (EXCLUDE_FILES_FROM_DIR_IN_LIST _InFileList _excludeDirName _verbose)
+  foreach (ITR ${_InFileList})
+    if ("${_verbose}")
+      message(STATUS "ITR=${ITR}")
+    endif ("${_verbose}")
+
+    if ("${ITR}" MATCHES "(.*)${_excludeDirName}(.*)")                   # Check if the item matches the directory name in _excludeDirName
+      message(STATUS "Remove Item from List:${ITR}")
+      list (REMOVE_ITEM _InFileList ${ITR})                              # Remove the item from the list
+    endif ("${ITR}" MATCHES "(.*)${_excludeDirName}(.*)")
+
+  endforeach(ITR)
+  set(SOURCE_FILES ${_InFileList} PARENT_SCOPE)                          # Return the SOURCE_FILES variable to the calling parent
+ENDFUNCTION (EXCLUDE_FILES_FROM_DIR_IN_LIST)
+
+EXCLUDE_FILES_FROM_DIR_IN_LIST({$core_SRCS} "${d_core}/debugger" TRUE)
 
 if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_DARWIN})) # TODO: Test with Clang on other platforms
   list(APPEND core_SRCS ${archive_SRCS})
