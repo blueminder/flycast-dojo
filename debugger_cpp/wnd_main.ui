@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1282</width>
-    <height>614</height>
+    <height>622</height>
    </rect>
   </property>
   <property name="font">
@@ -24,7 +24,8 @@
   </property>
   <property name="styleSheet">
    <string notr="true">background-color:qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(61, 61, 61, 255), stop:1 rgba(255, 255, 255, 255));
-color:rgba(0, 0, 0,255)</string>
+color:rgba(255, 255, 255,255)
+</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -37,6 +38,12 @@ color:rgba(0, 0, 0,255)</string>
        <bold>true</bold>
        <stylestrategy>PreferAntialias</stylestrategy>
       </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
      </property>
      <property name="currentIndex">
       <number>0</number>
@@ -56,6 +63,9 @@ color:rgba(0, 0, 0,255)</string>
            <bold>true</bold>
            <stylestrategy>PreferAntialias</stylestrategy>
           </font>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
          </property>
          <property name="currentIndex">
           <number>0</number>
@@ -84,7 +94,7 @@ color:rgba(0, 0, 0,255)</string>
              </property>
              <property name="styleSheet">
               <string notr="true">background-color:rgba(255,255,255,0);
-</string>
+color:rgb(0,0,0);</string>
              </property>
              <property name="frameShape">
               <enum>QFrame::WinPanel</enum>
@@ -117,7 +127,8 @@ color:rgba(0, 0, 0,255)</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color:rgba(255,255,255,100);</string>
+              <string notr="true">background-color:rgba(255,255,255,0);
+color:rgb(0,0,0);</string>
              </property>
              <property name="frameShape">
               <enum>QFrame::WinPanel</enum>
@@ -390,9 +401,16 @@ color:rgba(0, 0, 0,255)</string>
                    <height>23</height>
                   </rect>
                  </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
                  <property name="font">
                   <font>
                    <family>Calibri</family>
+                   <pointsize>8</pointsize>
                    <weight>75</weight>
                    <bold>true</bold>
                    <stylestrategy>PreferAntialias</stylestrategy>
@@ -524,7 +542,7 @@ color:rgba(0, 0, 0,255)</string>
 </string>
                    </property>
                    <property name="currentIndex">
-                    <number>3</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_10">
                     <attribute name="title">
@@ -911,20 +929,20 @@ color:rgba(0, 0, 0,255)</string>
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>40</width>
+                     <width>60</width>
                      <height>0</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>40</width>
+                     <width>80</width>
                      <height>16777215</height>
                     </size>
                    </property>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
-                     <pointsize>10</pointsize>
+                     <pointsize>8</pointsize>
                      <weight>75</weight>
                      <bold>true</bold>
                      <stylestrategy>PreferAntialias</stylestrategy>
@@ -951,7 +969,7 @@ color:rgba(0, 0, 0,255)</string>
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>40</width>
+                     <width>60</width>
                      <height>0</height>
                     </size>
                    </property>
@@ -964,7 +982,7 @@ color:rgba(0, 0, 0,255)</string>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
-                     <pointsize>10</pointsize>
+                     <pointsize>8</pointsize>
                      <weight>75</weight>
                      <bold>true</bold>
                      <stylestrategy>PreferAntialias</stylestrategy>
@@ -1001,7 +1019,7 @@ color:rgba(0, 0, 0,255)</string>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
-                     <pointsize>10</pointsize>
+                     <pointsize>8</pointsize>
                      <weight>75</weight>
                      <bold>true</bold>
                      <stylestrategy>PreferAntialias</stylestrategy>
@@ -1023,16 +1041,22 @@ color:rgba(0, 0, 0,255)</string>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>60</width>
+                     <height>0</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
-                     <width>40</width>
+                     <width>70</width>
                      <height>16777215</height>
                     </size>
                    </property>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
-                     <pointsize>10</pointsize>
+                     <pointsize>8</pointsize>
                      <weight>75</weight>
                      <bold>true</bold>
                      <stylestrategy>PreferAntialias</stylestrategy>
@@ -1054,6 +1078,12 @@ color:rgba(0, 0, 0,255)</string>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>60</width>
+                     <height>0</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>40</width>
@@ -1063,7 +1093,7 @@ color:rgba(0, 0, 0,255)</string>
                    <property name="font">
                     <font>
                      <family>Calibri</family>
-                     <pointsize>10</pointsize>
+                     <pointsize>8</pointsize>
                      <weight>75</weight>
                      <bold>true</bold>
                      <stylestrategy>PreferAntialias</stylestrategy>
@@ -1119,7 +1149,8 @@ color:rgba(0, 0, 0,255)</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color:rgba(255,255,255,100);</string>
+              <string notr="true">background-color:rgba(255,255,255,100);
+color:rgb(0,0,0);</string>
              </property>
              <property name="frameShape">
               <enum>QFrame::WinPanel</enum>

@@ -8,15 +8,6 @@
 #include <dlfcn.h>
 #include "libswirl.h"
 
-enum cpu_mode_e {
-	cpu_mode_idle = 0,
-	cpu_mode_step,
-	cpu_mode_stop,
-	cpu_mode_start,
-	cpu_mode_reset,
-	cpu_modes,
-};
-
 bool g_reios_dbg_enabled = true;
 
 static uint32_t last_op = -1U;
@@ -29,19 +20,16 @@ static bool b_stop = false;
 extern sh4_opcodelistentry* OpDesc[0x10000];
 extern SuperH4* sh4_cpu;
 
-bool dummy_debugger_entry_point(int argc, char** argv, void((*event_func) (const char* which, const char* state))) { return true; }
-bool dummy_debugger_running() { return true; }
-bool dummy_debugger_shutdown() { return true; }
-bool dummy_debugger_pass_data(const char* class_name, void* data, const uint32_t size) { return true; }
-bool dummy_debugger_push_event(const char* which, const char* data){ return true; }
-
+static bool dummy_debugger_entry_point(int argc, char** argv, void((*event_func) (const char* which, const char* state))) { return true; }
+static bool dummy_debugger_running() { return true; }
+static bool dummy_debugger_shutdown() { return true; }
+static bool dummy_debugger_pass_data(const char* class_name, void* data, const uint32_t size) { return true; }
+static bool dummy_debugger_push_event(const char* which, const char* data){ return true; }
 bool (*debugger_entry_point)(int argc, char** argv, void((*event_func) (const char* which, const char* state))) = &dummy_debugger_entry_point;
 bool (*debugger_running)() = &dummy_debugger_running;
 bool (*debugger_shutdown)() = &dummy_debugger_shutdown;
 bool (*debugger_pass_data)(const char* class_name, void* data, const uint32_t size) = &dummy_debugger_pass_data;
 bool (*debugger_push_event)(const char* which, const char* data) = &dummy_debugger_push_event;
-
-
 
 static inline constexpr bool is_ins_jmp_type(const uint32_t ins) {
 	return false;
@@ -62,15 +50,27 @@ void dgb_on_event(const char* which, const char* state) {
 		printf("SET PC : %s (=> 0x%08x)\n", state, Sh4cntx.pc);
 		Sh4cntx.pr = Sh4cntx.pc;
 	} else if (strcmp(which, "step") == 0) {
+		//if (!b_stop)
+			//return;
+		if (!sh4_cpu)
+			return;
+		else if (!virtualDreamcast)
+			return;
 		if (sh4_cpu->IsRunning())
 			virtualDreamcast->Stop([] {});
 
 		virtualDreamcast->Step();
 	} else if (strcmp(which, "stop") == 0) {
+		if (!sh4_cpu)
+			return;
+		else if (!virtualDreamcast)
+			return;
 		if (sh4_cpu->IsRunning())
 			virtualDreamcast->Stop([]{  });
 		b_stop = true;
 	} else if (strcmp(which, "start") == 0) {
+		if (!virtualDreamcast)
+			return;
 		if (b_stop) {
 			virtualDreamcast->Resume();
 			b_stop = false;
@@ -78,11 +78,14 @@ void dgb_on_event(const char* which, const char* state) {
 			virtualDreamcast->RequestReset();
 		}
 	} else if (strcmp(which, "reset") == 0) {
-		virtualDreamcast->RequestReset();
 		b_stop = false;
+		if (!virtualDreamcast)
+			return;
+		virtualDreamcast->RequestReset();
 	}
 }
 
+//Called BEFORE execution of given opcode
 void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 	if (!g_reios_dbg_enabled)
 		return;
@@ -112,6 +115,7 @@ void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 	}
 }
 
+//Called AFTER execution of given opcode
 void reios_dbg_end_op(const uint32_t pc, const uint32_t opcode) {
  
 }
