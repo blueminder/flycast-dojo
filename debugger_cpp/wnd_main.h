@@ -11,6 +11,8 @@
 #include "shared_contexts.h"
 #include <sstream>
 #include "../libswirl/utils/string_utils.hpp"
+#include "script/angelscript/include/angelscript.h"
+#include "script/angelscript/add_on/scriptstdstring/scriptstdstring.h"
 
 static constexpr auto k_default_code_history_size = 1024;
 static constexpr auto k_max_code_size = 128*1024;
@@ -160,8 +162,11 @@ private:
     void set_selected_breakpoint_marked(const bool marked);
     uint32_t reverse_breakpoint_pc_from_selection()  ;
     std::string dec_addr_from_codestream(const std::string& cstrm);
+    //void script_cb(const asSMessageInfo *msg, void *param);
+    int script_compile(asIScriptEngine *engine,const std::string& path);
 
 private:
+    asIScriptEngine* m_script_engine;
     std::unordered_map<uint32_t,std::string> m_breakpoints;
     std::unordered_map<uint32_t,code_field_t> m_code;
 
