@@ -17,6 +17,11 @@
 static constexpr auto k_default_code_history_size = 1024;
 static constexpr auto k_max_code_size = 128*1024;
 
+struct gd_data_t {
+    uint64_t time;
+    gdrom_ctx_t data;
+    std::string cname;
+};
 
 struct call_info_t {
 
@@ -154,6 +159,14 @@ private slots:
 
     void on_btn_export_bin_clicked();
 
+    void on_btn_import_script_clicked();
+
+    void on_pushButton_2_clicked();
+
+    void on_pick_gdrom_field_currentIndexChanged(const QString &arg1);
+
+    void on_btn_gdfilter_refresh_clicked();
+
 private:
     void init();
     void upd_cpu_ctx();
@@ -164,12 +177,17 @@ private:
     std::string dec_addr_from_codestream(const std::string& cstrm);
     //void script_cb(const asSMessageInfo *msg, void *param);
     int script_compile(asIScriptEngine *engine,const std::string& path);
+    void refresh_scripts();
+    void upd_gdrom_fields();
 
 private:
+    std::unordered_set<uint32_t> m_reios_syscalls;
+    std::string m_gd_filter;
+    std::vector<asIScriptContext*> m_script_ctxs;
     asIScriptEngine* m_script_engine;
     std::unordered_map<uint32_t,std::string> m_breakpoints;
     std::unordered_map<uint32_t,code_field_t> m_code;
-
+    std::unordered_map<std::string,std::vector<gd_data_t>> m_gd_data;
     cpu_ctx_t m_cpu_context;
     cpu_diss_t m_cpu_diss;
     code_book_c m_code_book;

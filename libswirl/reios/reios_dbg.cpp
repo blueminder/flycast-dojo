@@ -7,6 +7,7 @@
 #include <mutex>
 #include <dlfcn.h>
 #include "libswirl.h"
+#include "reios_syscalls.h"
 
 bool g_reios_dbg_enabled = true;
 
@@ -31,6 +32,9 @@ bool (*debugger_shutdown)() = &dummy_debugger_shutdown;
 bool (*debugger_pass_data)(const char* class_name, void* data, const uint32_t size) = &dummy_debugger_pass_data;
 bool (*debugger_push_event)(const char* which, const char* data) = &dummy_debugger_push_event;
 
+struct syscall_nest_level_t { uint32_t freq; uint32_t is_exit; syscall_nest_level_t() : freq(0),is_exit(0){} };
+std::unordered_map<uint32_t,syscall_nest_level_t> syscalls_nest_lvl;
+
 static inline constexpr bool is_ins_jmp_type(const uint32_t ins) {
 	return false;
 }
@@ -41,6 +45,30 @@ void dgb_on_event(const char* which, const char* state) {
 			g_reios_dbg_enabled = true;
 		else
 			g_reios_dbg_enabled = false;
+	} else if (strcmp(which, "set_reg") == 0) {
+		
+		
+		printf("SET REG : %s  \n", state );
+		std::string tmp = std::string(state);
+		size_t i = tmp.find(':');
+		if (i != std::string::npos) {
+			std::string reg = tmp.substr(0,i);
+			std::string data = tmp.substr(i+1, tmp.length() - (i+1));
+
+			printf("Set REG (%s) => (%s)\n",reg.c_str(),data.c_str());
+
+			if (std::tolower(reg[0]) == 'r') {
+				reg = reg.substr(1,reg.length());
+				std::stringstream ss;
+				ss << std::hex << data;
+				ss >> Sh4cntx.r[std::stoi(reg)];
+			} else if (std::tolower(reg[0]) == 'f') {
+				reg = reg.substr(2,reg.length());
+				std::stringstream ss;
+				ss <<  data;
+				ss >> Sh4cntx.xffr[std::stoi(reg)];
+			}
+		}
 	} else if (strcmp(which, "set_pc") == 0) {
 		
 		std::stringstream ss;
@@ -71,7 +99,7 @@ void dgb_on_event(const char* which, const char* state) {
 	} else if (strcmp(which, "start") == 0) {
 		if (!virtualDreamcast)
 			return;
-		if (b_stop) {
+		if (b_stop || (!sh4_cpu->IsRunning())) {
 			virtualDreamcast->Resume();
 			b_stop = false;
 		} else {
@@ -92,10 +120,10 @@ void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 
 	last_op = opcode;
 
-	cpu_context.pc = Sh4cntx.pc;
+	cpu_context.pc = pc;
 	cpu_context.pr = Sh4cntx.pr;
 	cpu_context.sp = Sh4cntx.spc;
-	cpu_diss.pc = Sh4cntx.pc;
+	cpu_diss.pc = pc;
 	cpu_diss.op = opcode;
 
 	for (size_t i = 0; i < 16; ++i) {
@@ -112,6 +140,32 @@ void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 		std::string tmp = disassemble_op(OpDesc[opcode]->diss, pc, opcode);
 		strncpy(cpu_diss.buf, tmp.c_str(), sizeof(cpu_diss.buf));
 		debugger_pass_data("cpu_diss", (void*)&cpu_diss, sizeof(cpu_diss));
+	}
+
+	if (g_syscalls_mgr.is_syscall(pc)) {
+		printf("Found SC!! %u\n",pc);
+		auto tmp = syscalls_nest_lvl.find(pc);
+		if (tmp == syscalls_nest_lvl.end()) {
+			syscall_nest_level_t snl;
+			snl.freq = 1;
+			snl.is_exit = 0;
+			syscalls_nest_lvl.insert({pc ,snl}); 
+			tmp = syscalls_nest_lvl.find(pc + 2);
+			if (tmp == syscalls_nest_lvl.end()) {
+				snl.is_exit = 1;
+				syscalls_nest_lvl.insert({pc + 2,snl}); 
+			} else ++tmp->second.freq;
+			debugger_pass_data("syscall_enter", nullptr,0);
+		} else {
+			if (tmp->second.is_exit != 0) {
+				++tmp->second.freq;
+				debugger_pass_data("syscall_leave", (void*)&pc,sizeof(pc));
+			} else {
+				++tmp->second.freq;
+				debugger_pass_data("syscall_enter",  (void*)&pc,sizeof(pc));
+			}
+		}
+		
 	}
 }
 

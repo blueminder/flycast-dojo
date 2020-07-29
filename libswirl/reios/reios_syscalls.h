@@ -33,6 +33,7 @@ struct reios_syscall_cfg_t {
 class reios_syscall_mgr_c {
 private:
 	std::unordered_map<std::string, reios_syscall_cfg_t > m_scs;
+	std::unordered_map<uint32_t,std::string> m_scs_rev;
 
 	inline auto grab_syscall(const std::string& name) {
 		auto it = m_scs.find(name);
@@ -57,6 +58,10 @@ public:
 	bool is_activated(const std::string& name);
 	inline constexpr const std::unordered_map<std::string, reios_syscall_cfg_t >& get_map() const {
 		return this->m_scs;
+	}
+
+	inline bool is_syscall(const uint32_t addr) {
+		return (m_scs_rev.find(addr) != m_scs_rev.end());
 	}
 };
 

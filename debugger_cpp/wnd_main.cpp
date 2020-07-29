@@ -2,8 +2,18 @@
 #include "ui_wnd_main.h"
 #include <QMessageBox>
 #include <QFileDialog>
+#include <ctime>
+#include <sys/time.h>
 
 extern void (*g_event_func)(const char* which,const char* state);
+
+
+
+inline uint64_t get_time() {
+    timeval time;
+    gettimeofday(&time, NULL);
+    return (uint64_t)time.tv_sec*1000 + (uint64_t)time.tv_usec/1000;
+}
 
 template <typename base_t>
 static inline const std::string to_hex(const base_t v) {
@@ -32,7 +42,15 @@ void script_cb(const asSMessageInfo *msg, void *param) {
 }
 
 void script_dgb_print(std::string &str) {
+    printf("Script: %s\n",str.c_str());
+}
 
+
+void script_ln_brk(asIScriptContext *ctx, uint32_t *timeOut) {
+
+
+    if( *timeOut < get_time() )
+        ctx->Abort();
 }
 
 int script_compile(asIScriptEngine *engine,const std::string& path)
@@ -104,23 +122,49 @@ int script_compile(asIScriptEngine *engine,const std::string& path)
     return 0;
 }
 
+void wnd_main::refresh_scripts() {
+    this->ui->scripts_list->clear();
+
+
+}
+
 wnd_main::wnd_main(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::wnd_main) {
 
     ui->setupUi(this);
+    m_script_engine = nullptr;
     m_code_list_index = -1;
-    m_script_engine = asCreateScriptEngine();
-    m_script_engine->SetMessageCallback(asFUNCTION( script_cb), 0, asCALL_CDECL);
-    RegisterStdString(m_script_engine);
-    m_script_engine->RegisterGlobalFunction("void dbg_print(string &in)", asFUNCTION(script_dgb_print), asCALL_CDECL);
 
+    static constexpr uint32_t dc_bios_syscall_system = 0x8C0000B0;
+    static constexpr uint32_t dc_bios_syscall_font = 0x8C0000B4;
+    static constexpr uint32_t dc_bios_syscall_flashrom = 0x8C0000B8;
+    static constexpr uint32_t dc_bios_syscall_gd = 0x8C0000BC;
+    static constexpr uint32_t dc_bios_syscall_misc = 0x8c0000E0;
+    static constexpr uint32_t dc_bios_entrypoint_gd_do_bioscall = 0x8c0010F0; //At least one game (ooga) uses this directly
+    static constexpr uint32_t SYSINFO_ID_ADDR = 0x8C001010;
+
+    m_reios_syscalls.insert({dc_bios_syscall_system});
+    m_reios_syscalls.insert({dc_bios_syscall_font});
+    m_reios_syscalls.insert({dc_bios_syscall_flashrom});
+    m_reios_syscalls.insert({dc_bios_syscall_gd});
+    m_reios_syscalls.insert({dc_bios_syscall_misc});
+    m_reios_syscalls.insert({dc_bios_entrypoint_gd_do_bioscall});
+    m_reios_syscalls.insert({SYSINFO_ID_ADDR});
 
     this->init();
 }
 
 wnd_main::~wnd_main()
 {
+    for (auto s:m_script_ctxs) {
+        s->Abort();
+        s->Release();
+    }
+
+    if (m_script_engine != nullptr) {
+        m_script_engine->Release();
+    }
     delete ui;
 }
 
@@ -171,10 +215,48 @@ void wnd_main::push_msg(const char* which,const char* data) {
 
 }
 
-void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { //THIS SHOULD BECOME NON BLOCKING
+void wnd_main::upd_gdrom_fields() {
+    ui->pick_gdrom_field->clear();
 
+    for(auto s : m_gd_data)
+        ui->pick_gdrom_field->addItem(s.first.c_str());
+
+    ui->pick_gdrom_field->addItem("*");
+}
+
+void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { //THIS SHOULD BECOME NON BLOCKING
     std::string tmp = std::string(class_name);
-    if (tmp == "cpu_ctx") {
+
+    if ((tmp == "syscall_enter") || (tmp == "syscall_leave")) {
+        uint32_t t;
+        memcpy(&t,data,sz);
+        auto it = m_code.find(t);
+        if (it == m_code.end())
+            return;
+
+        it->second.item->setTextColor( (tmp == "syscall_enter") ? Qt::green : Qt::red);
+    }
+    else if (tmp.find("gdrom_") != std::string::npos) {
+        auto it = m_gd_data.find(tmp);
+        if (it == m_gd_data.end()) {
+            std::vector<gd_data_t> cc;
+            if (data != nullptr) {
+                cc.push_back(gd_data_t());
+                cc.back().time = get_time();
+                cc.back().cname = tmp;
+                memcpy(&cc.back(),data,sz);
+            }
+            m_gd_data.insert( {tmp,std::move(cc)});
+            upd_gdrom_fields();
+        } else {
+            if (data != nullptr) {
+                it->second.push_back(gd_data_t());
+                it->second.back().cname=tmp;
+                memcpy(&it->second.back(),data,sz);
+            }
+        }
+    }
+    else if (tmp == "cpu_ctx") {
         shared_contexts_utils::deep_copy(&m_cpu_context,static_cast<const cpu_ctx_t*>(data));
         upd_cpu_ctx();
     } else if (tmp == "cpu_diss") { // XXX : WARNING : ASSUMES CPU CONTEXT IS FRESH! (AKA UPDATED BEFORE)
@@ -188,6 +270,13 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
             }
             std::string tmp = std::string( to_hex(m_cpu_diss.pc) + ":" + cc );
             QListWidgetItem* item = new QListWidgetItem ( tmp.c_str()) ;
+
+            if (!m_reios_syscalls.empty()) {
+                if (m_reios_syscalls.find(m_cpu_diss.pc) != m_reios_syscalls.end()) {
+                    item->setTextColor(Qt::yellow);
+                }
+            }
+
             ui->list_cpu_instructions->addItem(item);
 
             if (ui->chk_trace->isChecked())
@@ -211,9 +300,40 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
                 memcpy(it->second.fpr,m_cpu_context.fr,sizeof(m_cpu_context.fr));
             }
 
+
+            if (!m_reios_syscalls.empty()) {
+                if (m_reios_syscalls.find(m_cpu_diss.pc) != m_reios_syscalls.end()) {
+                    it->second.item->setTextColor(Qt::yellow);
+                }
+            }
+
             if (ui->chk_trace->isChecked())
                 ui->list_cpu_instructions->setCurrentItem(it->second.item);
         }
+#if 0
+        if (m_script_ctxs.empty()) {
+            return;
+        }
+
+        for (auto s : m_script_ctxs){
+            uint32_t timeOut;
+            int r = s->SetLineCallback(asFUNCTION(script_ln_brk), &timeOut, asCALL_CDECL);
+            if( r < 0 )
+            {
+
+            }
+
+            timeOut = get_time() + 2000;
+
+            //on_cpu_op(u32* i_regs,float* f_regs,u32 pc,u32 op,u32 sp,u32 pr)
+            s->SetArgAddress(0,m_cpu_context.r);
+            s->SetArgAddress(1,m_cpu_context.fr);
+            s->SetArgDWord(2,m_cpu_context.pc);
+            s->SetArgDWord(2,m_cpu_context.sp);
+            s->SetArgDWord(2,m_cpu_context.pr);
+            s->Execute();
+        }
+#endif
     }
 }
 
@@ -268,9 +388,14 @@ void wnd_main::on_pushButton_7_clicked()
 
 void wnd_main::on_pushButton_6_clicked()
 {
-    uint32_t data[2]; //todo : FPR / SP / PC / ETC
+    int idx = ui->reg_combo_box->currentIndex();
+    if (idx < 0)
+        return ;
 
-    g_event_func("set_reg",(const char*)data);
+    std::string data;
+    data = ui->reg_combo_box->itemText(idx).toStdString() + ":"+
+    ui->sel_reg_linedit->text().toStdString();
+    g_event_func("set_reg",data.c_str());
 }
 
 
@@ -428,4 +553,126 @@ void wnd_main::on_btn_export_bin_clicked() {
 
     export_binary(ff.toStdString() ,"sh4bin");
 
+}
+
+void wnd_main::on_btn_import_script_clicked()
+{
+    QString ff = QFileDialog::getOpenFileName(this,
+            tr("Angel Script"), "",
+            tr("Angel Script (*.as);;All Files (*)"));
+
+    refresh_scripts();
+}
+
+void wnd_main::on_pushButton_2_clicked()
+{
+#if 0
+    printf("Loading AS..\n");
+    try {
+    m_script_engine =  asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+    if (m_script_engine != nullptr) {
+        m_script_engine->SetMessageCallback(asFUNCTION( script_cb), 0, asCALL_CDECL);
+    return;
+        RegisterStdString(m_script_engine);
+        m_script_engine->RegisterGlobalFunction("void dbg_print(string &in)", asFUNCTION(script_dgb_print), asCALL_CDECL);
+
+        int r;
+
+        r = script_compile(m_script_engine,"scripts/main.as");
+        if (r >= 0) {
+
+
+
+            // Create a context that will execute the script.
+            asIScriptContext *ctx = m_script_engine->CreateContext();
+            if( ctx == 0 )
+            {
+
+            } else
+                m_script_ctxs.push_back(ctx);
+
+
+            if (!m_script_engine->GetModule(0))
+                return;
+            asIScriptFunction *func = m_script_engine->GetModule(0)->GetFunctionByDecl("void on_cpu_op(u32* i_regs,float* f_regs,u32 pc,u32 op,u32 sp,u32 pr)");
+            if( func == 0 ) {
+                ctx->Release();
+                m_script_ctxs.clear();
+            } else if (!m_script_ctxs.empty()) {
+                m_script_ctxs[0]->Prepare(func);
+            }
+        }
+    }
+    } catch (...) {
+
+    }
+
+#endif
+}
+
+void wnd_main::on_pick_gdrom_field_currentIndexChanged(const QString &arg1)
+{
+    m_gd_filter = arg1.toStdString();
+}
+
+void wnd_main::on_btn_gdfilter_refresh_clicked()
+{
+    ui->list_gd_field->clear();
+
+    if (m_gd_filter == "*") {
+        std::vector<gd_data_t> tmp;
+        for (auto s : m_gd_data) {
+            for (auto m : s.second)
+                tmp.push_back(m);
+        }
+        std::sort(tmp.begin(),tmp.end(),[](const gd_data_t& a,const gd_data_t& b) -> bool {
+            return b.time < a.time;
+        } );
+
+        for (auto q : tmp) {
+            std::string v = q.cname+":R";
+            for (size_t i = 0;i<16;++i)
+                v += std::to_string(i)+":"+to_hex(q.data.regs[i]) + ",";
+
+            v += "S:";
+
+            for (size_t i = 0;i<4;++i)
+                v += std::to_string(i)+":"+to_hex(q.data.sess[i]) + ",";
+
+            v += "PC:" + to_hex(q.data.pc);
+            v += ",Ra:" + to_hex(q.data.r_addr);
+            v += ",Wa:" + to_hex(q.data.w_addr);
+
+            //for (auto m : q.data)
+              //  v += to_hex(m) + ",";
+
+            ui->list_gd_field->addItem(v.c_str());
+        }
+
+
+
+    } else if (!m_gd_filter.empty()) {
+        auto it = m_gd_data.find(m_gd_filter);
+        if (it == m_gd_data.end())
+            return;
+
+         for (auto q : it->second) {
+
+                std::string v = ":R";
+                for (size_t i = 0;i<16;++i)
+                    v += std::to_string(i)+":"+to_hex(q.data.regs[i]) + ",";
+
+                v += "S:";
+
+                for (size_t i = 0;i<4;++i)
+                    v += std::to_string(i)+":"+to_hex(q.data.sess[i]) + ",";
+
+                v += "PC:" + to_hex(q.data.pc);
+                v += ",Ra:" + to_hex(q.data.r_addr);
+                v += ",Wa:" + to_hex(q.data.w_addr);
+
+                ui->list_gd_field->addItem(v.c_str());
+         }
+    }
 }

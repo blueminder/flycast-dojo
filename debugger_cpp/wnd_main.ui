@@ -542,7 +542,7 @@ color:rgb(0,0,0);</string>
 </string>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>2</number>
                    </property>
                    <widget class="QWidget" name="tab_10">
                     <attribute name="title">
@@ -580,7 +580,7 @@ color:rgb(0,0,0);</string>
                      <string>BREAKPOINTS</string>
                     </attribute>
                     <layout class="QGridLayout" name="gridLayout_10">
-                     <item row="0" column="0" rowspan="3">
+                     <item row="0" column="0" rowspan="4">
                       <widget class="QListWidget" name="list_breakpoints">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -636,18 +636,6 @@ color:rgb(0,0,0);</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="0" column="2">
-                      <widget class="QLineEdit" name="txt_rename_breakpoint">
-                       <property name="font">
-                        <font>
-                         <stylestrategy>PreferAntialias</stylestrategy>
-                        </font>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">background-color:rgb(255,255,255);</string>
-                       </property>
-                      </widget>
-                     </item>
                      <item row="0" column="1">
                       <widget class="QLabel" name="label_9">
                        <property name="font">
@@ -667,6 +655,18 @@ color:rgb(0,0,0);</string>
                        </property>
                       </widget>
                      </item>
+                     <item row="0" column="2">
+                      <widget class="QLineEdit" name="txt_rename_breakpoint">
+                       <property name="font">
+                        <font>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgb(255,255,255);</string>
+                       </property>
+                      </widget>
+                     </item>
                      <item row="1" column="2">
                       <widget class="QPushButton" name="btn_rename_breakpoint">
                        <property name="font">
@@ -679,6 +679,52 @@ color:rgb(0,0,0);</string>
                        </property>
                        <property name="text">
                         <string>Rename</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QLabel" name="label_11">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>10</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(0,0,0,0);</string>
+                       </property>
+                       <property name="text">
+                        <string>Add:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="2">
+                      <widget class="QLineEdit" name="txt_manual_add_brk">
+                       <property name="font">
+                        <font>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgb(255,255,255);</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="2">
+                      <widget class="QPushButton" name="btn_rename_breakpoint_2">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>Manual add</string>
                        </property>
                       </widget>
                      </item>
@@ -882,10 +928,133 @@ color:rgb(0,0,0);</string>
                      </property>
                     </widget>
                    </widget>
+                   <widget class="QWidget" name="tab_15">
+                    <attribute name="title">
+                     <string>GDROM</string>
+                    </attribute>
+                    <layout class="QGridLayout" name="gridLayout_11">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_10">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>10</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(0,0,0,0);</string>
+                       </property>
+                       <property name="text">
+                        <string>Filter</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QComboBox" name="pick_gdrom_field">
+                       <property name="font">
+                        <font>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgb(255,255,255);</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QPushButton" name="btn_gdfilter_refresh">
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="text">
+                        <string>REFRESH</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="0" colspan="3">
+                      <widget class="QListWidget" name="list_gd_field">
+                       <property name="maximumSize">
+                        <size>
+                         <width>500</width>
+                         <height>10000</height>
+                        </size>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <family>Calibri</family>
+                         <pointsize>10</pointsize>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <stylestrategy>PreferAntialias</stylestrategy>
+                        </font>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color:rgba(255,255,255,0);
+color:rgb(0,0,0);</string>
+                       </property>
+                       <property name="frameShape">
+                        <enum>QFrame::WinPanel</enum>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>4</number>
+                       </property>
+                       <property name="midLineWidth">
+                        <number>4</number>
+                       </property>
+                       <property name="sortingEnabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
                    <widget class="QWidget" name="tab_14">
                     <attribute name="title">
                      <string>HLE Tools</string>
                     </attribute>
+                    <widget class="QCheckBox" name="chk_active_2">
+                     <property name="geometry">
+                      <rect>
+                       <x>10</x>
+                       <y>10</y>
+                       <width>60</width>
+                       <height>23</height>
+                      </rect>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>60</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                       <stylestrategy>PreferAntialias</stylestrategy>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">background-color:rgba(255,255,255,0);</string>
+                     </property>
+                     <property name="text">
+                      <string>Capture HLE results</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </widget>
                   </widget>
                  </item>
@@ -1484,6 +1653,62 @@ color:rgb(0,0,0);</string>
       <attribute name="title">
        <string>Scripts</string>
       </attribute>
+      <widget class="QListWidget" name="scripts_list">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>331</width>
+         <height>551</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="geometry">
+        <rect>
+         <x>350</x>
+         <y>10</y>
+         <width>60</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri</family>
+         <weight>75</weight>
+         <bold>true</bold>
+         <stylestrategy>PreferAntialias</stylestrategy>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+      </widget>
+      <widget class="QTextEdit" name="script_log">
+       <property name="geometry">
+        <rect>
+         <x>350</x>
+         <y>40</y>
+         <width>861</width>
+         <height>521</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
     </widget>
    </item>

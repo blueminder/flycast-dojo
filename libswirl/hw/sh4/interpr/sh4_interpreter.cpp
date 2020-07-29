@@ -93,7 +93,7 @@ struct SH4IInterpreter : SuperH4Backend {
                     
                     reios_dbg_begin_op(addr,op);
                     ExecuteOpcode(op);
-                    reios_dbg_end_op(addr, op);
+                    //reios_dbg_end_op(addr, op);
 
                     l -= CPU_RATIO;
                 } while (l > 0);

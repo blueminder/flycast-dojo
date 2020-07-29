@@ -19,7 +19,10 @@ struct cpu_diss_t {
 };
 
 struct gdrom_ctx_t {
-
+    uint32_t regs[16]; //Store all for now :P
+    uint32_t pc,pr;
+    uint32_t sess[4];
+    uint32_t r_addr,w_addr;
 };
 
 struct pvr_ctx_t {
