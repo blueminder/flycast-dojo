@@ -39,6 +39,18 @@ static inline constexpr bool is_ins_jmp_type(const uint32_t ins) {
 	return false;
 }
  
+template <typename base_t>
+static inline void conv_str_to_scalar(const char* s,base_t& res,const bool is_hex = false) {
+		std::stringstream ss;
+		ss << std::hex << s;
+		ss >> res;
+}
+
+template <typename base_t>
+static inline void conv_str_to_scalar(const std::string& s,base_t& res,const bool is_hex = false) {
+	conv_str_to_scalar(s.c_str(),res,is_hex);
+}
+
 void dgb_on_event(const char* which, const char* state) {
 	if (strcmp(which, "dbg_enable") == 0) {
 		if (strcmp(state, "true") == 0) 
@@ -46,35 +58,38 @@ void dgb_on_event(const char* which, const char* state) {
 		else
 			g_reios_dbg_enabled = false;
 	} else if (strcmp(which, "set_reg") == 0) {
-		
-		
-		printf("SET REG : %s  \n", state );
+
+		//printf("SET REG : %s  \n", state );
 		std::string tmp = std::string(state);
 		size_t i = tmp.find(':');
 		if (i != std::string::npos) {
 			std::string reg = tmp.substr(0,i);
 			std::string data = tmp.substr(i+1, tmp.length() - (i+1));
-
 			printf("Set REG (%s) => (%s)\n",reg.c_str(),data.c_str());
+			const char rtype = std::tolower(reg[0]);
 
-			if (std::tolower(reg[0]) == 'r') {
-				reg = reg.substr(1,reg.length());
-				std::stringstream ss;
-				ss << std::hex << data;
-				ss >> Sh4cntx.r[std::stoi(reg)];
-			} else if (std::tolower(reg[0]) == 'f') {
-				reg = reg.substr(2,reg.length());
-				std::stringstream ss;
-				ss <<  data;
-				ss >> Sh4cntx.xffr[std::stoi(reg)];
+			switch (rtype) {
+				case 'r': 
+					reg = reg.substr(1,reg.length());
+					conv_str_to_scalar(data,Sh4cntx.r[std::stoi(reg)],true);
+					break;
+				case 'f': 
+					reg = reg.substr(2,reg.length());
+					conv_str_to_scalar(data,Sh4cntx.xffr[std::stoi(reg)]);
+					break;
+				case 's': 
+					conv_str_to_scalar(data,Sh4cntx.spc,true);
+					break;
+				case 'p': 
+					conv_str_to_scalar(data,(std::tolower(reg[1]) == 'r') ? Sh4cntx.pr : Sh4cntx.pc,true);
+					break;
+				case 't':
+					conv_str_to_scalar(data,Sh4cntx.sr.T,true);
+					break;
 			}
 		}
 	} else if (strcmp(which, "set_pc") == 0) {
-		
-		std::stringstream ss;
-		ss << std::hex << state;
-		ss >> Sh4cntx.pc;
-
+		conv_str_to_scalar(state,Sh4cntx.pc,true);
 		printf("SET PC : %s (=> 0x%08x)\n", state, Sh4cntx.pc);
 		Sh4cntx.pr = Sh4cntx.pc;
 	} else if (strcmp(which, "step") == 0) {
@@ -114,9 +129,49 @@ void dgb_on_event(const char* which, const char* state) {
 }
 
 //Called BEFORE execution of given opcode
+
+template <const bool emit=false>
+bool check_scs(const uint32_t pc) {
+	if (g_syscalls_mgr.is_syscall(pc)) {
+		//printf("Found SC!! 0x%x\n",pc);
+		auto tmp = syscalls_nest_lvl.find(pc);
+		if (tmp == syscalls_nest_lvl.end()) {
+			syscall_nest_level_t snl;
+			snl.freq = 1;
+			snl.is_exit = 0;
+			syscalls_nest_lvl.insert({pc ,snl}); 
+			tmp = syscalls_nest_lvl.find(pc + 2);
+			if (tmp == syscalls_nest_lvl.end()) {
+				snl.is_exit = 1;
+				syscalls_nest_lvl.insert({pc + 2,snl}); 
+			} else ++tmp->second.freq;
+
+			if (emit)
+				debugger_pass_data("syscall_enter", nullptr,0);
+		} else {
+			if (tmp->second.is_exit != 0) {
+				++tmp->second.freq;
+				if (emit)
+					debugger_pass_data("syscall_leave", (void*)&pc,sizeof(pc));
+			} else {
+				++tmp->second.freq;
+				if (emit)
+					debugger_pass_data("syscall_enter",  (void*)&pc,sizeof(pc));
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
-	if (!g_reios_dbg_enabled)
-		return;
+	bool is_sc = false;
+
+	if (!g_reios_dbg_enabled) {
+		if (! (is_sc = check_scs<false>(pc))) {
+			return;
+		}
+	}
 
 	last_op = opcode;
 
@@ -141,32 +196,8 @@ void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 		strncpy(cpu_diss.buf, tmp.c_str(), sizeof(cpu_diss.buf));
 		debugger_pass_data("cpu_diss", (void*)&cpu_diss, sizeof(cpu_diss));
 	}
-
-	if (g_syscalls_mgr.is_syscall(pc)) {
-		printf("Found SC!! %u\n",pc);
-		auto tmp = syscalls_nest_lvl.find(pc);
-		if (tmp == syscalls_nest_lvl.end()) {
-			syscall_nest_level_t snl;
-			snl.freq = 1;
-			snl.is_exit = 0;
-			syscalls_nest_lvl.insert({pc ,snl}); 
-			tmp = syscalls_nest_lvl.find(pc + 2);
-			if (tmp == syscalls_nest_lvl.end()) {
-				snl.is_exit = 1;
-				syscalls_nest_lvl.insert({pc + 2,snl}); 
-			} else ++tmp->second.freq;
-			debugger_pass_data("syscall_enter", nullptr,0);
-		} else {
-			if (tmp->second.is_exit != 0) {
-				++tmp->second.freq;
-				debugger_pass_data("syscall_leave", (void*)&pc,sizeof(pc));
-			} else {
-				++tmp->second.freq;
-				debugger_pass_data("syscall_enter",  (void*)&pc,sizeof(pc));
-			}
-		}
-		
-	}
+ 
+	check_scs<true>(pc);
 }
 
 //Called AFTER execution of given opcode

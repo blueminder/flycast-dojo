@@ -181,7 +181,7 @@ private:
     void upd_gdrom_fields();
 
 private:
-    std::unordered_set<uint32_t> m_reios_syscalls;
+    std::unordered_map<uint32_t,std::string> m_reios_syscalls;
     std::string m_gd_filter;
     std::vector<asIScriptContext*> m_script_ctxs;
     asIScriptEngine* m_script_engine;

@@ -144,13 +144,22 @@ wnd_main::wnd_main(QWidget *parent) :
     static constexpr uint32_t dc_bios_entrypoint_gd_do_bioscall = 0x8c0010F0; //At least one game (ooga) uses this directly
     static constexpr uint32_t SYSINFO_ID_ADDR = 0x8C001010;
 
-    m_reios_syscalls.insert({dc_bios_syscall_system});
-    m_reios_syscalls.insert({dc_bios_syscall_font});
-    m_reios_syscalls.insert({dc_bios_syscall_flashrom});
-    m_reios_syscalls.insert({dc_bios_syscall_gd});
-    m_reios_syscalls.insert({dc_bios_syscall_misc});
-    m_reios_syscalls.insert({dc_bios_entrypoint_gd_do_bioscall});
-    m_reios_syscalls.insert({SYSINFO_ID_ADDR});
+    /*
+    g_syscalls_mgr.register_syscall("reios_boot",&reios_boot, 0xA0000000, k_invalid_syscall);
+    g_syscalls_mgr.register_syscall("reios_sys_system", &reios_sys_system, 0x8C001000 , dc_bios_syscall_system);
+    g_syscalls_mgr.register_syscall("reios_sys_font", &reios_sys_font, 0x8C001002, dc_bios_syscall_font);
+    g_syscalls_mgr.register_syscall("reios_sys_flashrom", &reios_sys_flashrom, 0x8C001004 , dc_bios_syscall_flashrom);
+    g_syscalls_mgr.register_syscall("reios_sys_gd", &reios_sys_gd, 0x8C001006, dc_bios_syscall_gd);
+    g_syscalls_mgr.register_syscall("reios_sys_misc", &reios_sys_misc, 0x8C001008 , dc_bios_syscall_misc);
+    g_syscalls_mgr.register_syscall("gd_do_bioscall", &gd_do_bioscall, 0x8c0010F0, k_invalid_syscall);
+*/
+    m_reios_syscalls.insert({dc_bios_syscall_system,"reios_sys_system"});
+    m_reios_syscalls.insert({dc_bios_syscall_font,"reios_sys_font"});
+    m_reios_syscalls.insert({dc_bios_syscall_flashrom,"reios_sys_flashrom"});
+    m_reios_syscalls.insert({dc_bios_syscall_gd,"reios_sys_gd"});
+    m_reios_syscalls.insert({dc_bios_syscall_misc,"reios_sys_misc"});
+    m_reios_syscalls.insert({dc_bios_entrypoint_gd_do_bioscall,"gd_do_bioscall"});
+    m_reios_syscalls.insert({SYSINFO_ID_ADDR,"SYSINFO_ID_ADDR"});
 
     this->init();
 }
@@ -229,11 +238,17 @@ void wnd_main::pass_data(const char* class_name,void* data,const uint32_t sz) { 
 
     if ((tmp == "syscall_enter") || (tmp == "syscall_leave")) {
         uint32_t t;
-        memcpy(&t,data,sz);
+        memcpy(&t,data,sz); //sz==sizeof(u32)
         auto it = m_code.find(t);
-        if (it == m_code.end())
+        if (it == m_code.end()) {
             return;
-
+        }
+        {
+            auto it2 = m_reios_syscalls.find(t);
+            if (it2 != m_reios_syscalls.end()) {
+                it->second.item->setText( std::string( to_hex(t) + ":" + it2->second).c_str() );
+            }
+        }
         it->second.item->setTextColor( (tmp == "syscall_enter") ? Qt::green : Qt::red);
     }
     else if (tmp.find("gdrom_") != std::string::npos) {
@@ -365,7 +380,7 @@ void wnd_main::init() {
     ui->reg_combo_box->addItem("PC");
     ui->reg_combo_box->addItem("SP");
     ui->reg_combo_box->addItem("PR");
-
+    ui->reg_combo_box->addItem("T");
     lbl_txt = "PC:$0\nSP:$0\nPR:$0\n";
 
     for (size_t i = 0;i < 16;++i) {

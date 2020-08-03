@@ -17,7 +17,7 @@ bool reios_syscall_mgr_c::register_syscall(const std::string& name,reios_hook_fp
 		unlock();
 		return false;
 	}
-	m_scs_rev.insert({syscall,name});
+	m_scs_rev.insert({addr,name});
 	m_scs.insert({ name,(reios_syscall_cfg_t(addr,syscall,enabled,native_func)) });
 	unlock();
 	return true;
