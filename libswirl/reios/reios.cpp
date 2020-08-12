@@ -707,12 +707,15 @@ void reios_context_t::sync_sys_cfg() {
 
 void reios_context_t::identify_disc_type() {
 	//1920 GD-ROM1/1
-	char tmp[sizeof(reios_device_info) + 2];
+	char tmp[sizeof(reios_device_info) + 1];
 	memcpy(tmp,reios_device_info,sizeof(reios_device_info));
 	tmp[sizeof(reios_device_info)] = '\0';
-	std::string lazy = std::string(tmp);
-	for (size_t i = 0;i < lazy.length();++i)
-		lazy[i] = std::tolower(lazy[i]);
+	std::string lazy;
+
+	for (size_t i = 0;i < sizeof(reios_device_info);++i) {
+		if (isalnum(tmp[i]))
+			lazy += std::tolower(tmp[i]);
+	}
 
 	this->is_gdrom = (lazy.find("gd-rom") != std::string::npos) || (lazy.find("gdrom") != std::string::npos) ;
 }
