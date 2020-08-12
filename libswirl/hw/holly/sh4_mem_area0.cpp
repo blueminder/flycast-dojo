@@ -124,7 +124,7 @@ bool LoadHle(const string& root) {
 		printf("No nvmem loaded\n");
 	}
 
-	return reios_init(sys_rom.data, sys_nvmem.data);
+	return reios_init(sys_rom.data, sys_nvmem.data , &sys_nvmem);
 }
 
 u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }

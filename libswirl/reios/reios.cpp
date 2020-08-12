@@ -1,4 +1,14 @@
 /*
+
+	Rev :
+
+	Task : reios_sys_misc   ??
+
+	Sonic loop : Ints ??
+
+*/
+
+/*
 	Extremely primitive bios replacement
 
 	Many thanks to Lars Olsson (jlo@ludd.luth.se) for bios decompile work
@@ -69,6 +79,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			else
 				g_GDRDisc->ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
+			g_reios_ctx.sync_sys_cfg();
 			/*if (false) {
 				FILE* f = fopen("z:\\1stboot.bin", "wb");
 				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
@@ -76,6 +87,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			}*/
 
 			delete[] temp;
+
 			return true;
 		}
 	}
@@ -121,6 +133,7 @@ char* reios_disk_id() {
 	memcpy(&g_reios_ctx.reios_software_company[0], &g_reios_ctx.ip_bin[112],   16 * sizeof(char));
 	memcpy(&g_reios_ctx.reios_software_name[0], &g_reios_ctx.ip_bin[128],   128 * sizeof(char));
 
+	g_reios_ctx.identify_disc_type();
 	return g_reios_ctx.reios_product_number;
 }
 
@@ -153,7 +166,10 @@ void reios_sys_system() {
 
 	switch (cmd) {
 		case 0:	//SYSINFO_INIT
+		{
+			g_reios_ctx.sync_sys_cfg();
 			Sh4cntx.r[0] = 0;
+		}
 			break;
 
 		case 2: //SYSINFO_ICON 
@@ -169,10 +185,10 @@ void reios_sys_system() {
 
 		case 3: //SYSINFO_ID 
 		{
-			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
-			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
+			//WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
+			//WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
 
-			Sh4cntx.r[0] = SYSINFO_ID_ADDR;
+			Sh4cntx.r[0] = SYSINFO_ID_ADDR2;
 		}
 		break;
 
@@ -191,43 +207,20 @@ void reios_sys_flashrom() {
 
 	u32 cmd = Sh4cntx.r[7];
 
-	static constexpr u32 flashrom_info[][2] = {
-		{ 0 * 1024, 8 * 1024 },
-		{ 8 * 1024, 8 * 1024 },
-		{ 16 * 1024, 16 * 1024 },
-		{ 32 * 1024, 32 * 1024 },
-		{ 64 * 1024, 64 * 1024 },
-	};
-
 	switch (cmd) {
 			case 0: // FLASHROM_INFO 
 			{
-				/*
-					r4 = partition number(0 - 4)
-					r5 = pointer to two 32 bit integers to receive the result.
-						The first will be the offset of the partition start, in bytes from the start of the flashrom.
-						The second will be the size of the partition, in bytes.
+				const u32 index = Sh4cntx.r[4];
+				const u32 dest = Sh4cntx.r[5];
+				printf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", index, dest);
 
-						#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K) 
-						#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K) 
-						#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K) 
-						#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K) 
-						#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K) 
-				*/
-
-				u32 part = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
-
-				//u32* pDst = (u32*)GetMemPtr(dest, 8);
-
-				if (part <= 4) {
-					//pDst[0] = flashrom_info[part][0];
-					//pDst[1] = flashrom_info[part][1];
-					WriteMem32(dest, flashrom_info[part][0]);
-					WriteMem32(dest + 4, flashrom_info[part][1]);
+				if (index < 5) {
+					int offset, size;
+					g_reios_ctx.flash_chip->partition_info(index,&offset,&size);
+					WriteMem32(dest, offset);
+					WriteMem32(dest + 4,size);
 					Sh4cntx.r[0] = 0;
-				}
-				else {
+				} else {
 					Sh4cntx.r[0] = -1;
 				}
 			}
@@ -235,70 +228,52 @@ void reios_sys_flashrom() {
 
 			case 1:	//FLASHROM_READ 
 			{
-				/*
-				r4 = read start position, in bytes from the start of the flashrom
-				r5 = pointer to destination buffer
-				r6 = number of bytes to read
-				*/
-				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
+				const u32 addr = Sh4cntx.r[4];
+				const u32 dest = Sh4cntx.r[5];
+				const u32 size = Sh4cntx.r[6];
 
-				//host_to_guest_memcpy(const uint32_t dst_addr, const void* src_addr, const uint32_t sz)
-
-				//u8* pp = GetMemPtr(dest, size);
-				//memcpy(GetMemPtr(dest, size), g_reios_ctx.flashrom + offs, size);
-
-				guest_to_guest_memcpy(dest, offs, size);
+				printf("FLASHROM_READ ADDR %x dest %08x size %x", addr, dest, size);
+				for (u32 i = 0; i < size;++i)
+					WriteMem8(dest + i,g_reios_ctx.flash_chip->Read8(addr + i));
 
 				Sh4cntx.r[0] = size;
- 				//printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, dest, size, pp[0], pp[1], pp[2], pp[3], pp[4]);
-
 			}
 			break;
 
 			
 			case 2:	//FLASHROM_WRITE 
 			{
-				/*
-					r4 = write start position, in bytes from the start of the flashrom
-					r5 = pointer to source buffer
-					r6 = number of bytes to write
-				*/
+				const u32 dst = Sh4cntx.r[4];
+				const u32 src = Sh4cntx.r[5];
+				const u32 size = Sh4cntx.r[6];
 
-				u32 offs = Sh4cntx.r[4];
-				u32 src = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
+				printf("FLASHROM_WRITE offs %x src %08x size %x", dst, src, size);
 
-				//u8* pSrc = GetMemPtr(src, size);
+				for (int i = 0; i < size; i++)
+					g_reios_ctx.flash_chip->data[dst + i] &= ReadMem8(src + i);
 
-				for (u32 i = 0; i < size; i++) {
-					g_reios_ctx.flashrom[offs + i] &= ReadMem8(src + i); //pSrc[i];
-				}
+				Sh4cntx.r[0] = size;
 				//printf("FREAD %u %u %u (%c %c %c %c %c)\n", offs, src, size,pSrc[0], pSrc[1], pSrc[2], pSrc[3], pSrc[4]);
 			}
 			break;
 
 			case 3:	//FLASHROM_DELETE  
 			{			
-				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+				const u32 addr = Sh4cntx.r[4];
 
-				u32 part = 5;
+				printf("FLASHROM_DELETE offs %x", addr);
 
-				for (u32 i = 0; i <= 4; i++) {
-					if ( (offs >= flashrom_info[i][0]) && (offs < (flashrom_info[i][0] + flashrom_info[i][1]))) {
-						part = i;
-						break;
+				Sh4cntx.r[0] = -1;
+
+				for (u32 i = 0;i < 5;++i) {
+					int offs,sz;
+					g_reios_ctx.flash_chip->partition_info(i,&offs,&sz);	
+					if ((u32)offs == addr) {
+						printf("FLASHROM_DELETE offs %x : FOUND!!", addr);
+						memset(g_reios_ctx.flash_chip->data + addr,0xff,sz);
+						Sh4cntx.r[0] = 0;
+						return;
 					}
-				}
-
-				if (part < 5) {
-					memset(g_reios_ctx.flashrom + flashrom_info[part][0], 0xFF, flashrom_info[part][1]);
-					Sh4cntx.r[0] = 0;
-				}
-				else {
-					Sh4cntx.r[0] = -1;
 				}
 			}
 			break;
@@ -321,53 +296,14 @@ void reios_sys_gd() {
 */
 void gd_do_bioscall()
 {
-	//looks like the "real" entrypoint for this on a dreamcast
 	gdrom_hle_op();
-	return;
 
-	/*
-		int func1, func2, arg1, arg2;
-	*/
-
-	switch (Sh4cntx.r[7]) {
-	case 0:	//gdGdcReqCmd, wth is r6 ?
-		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
-		Sh4cntx.r[0] = 0xf344312e;
-		break;
-
-	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
-		Sh4cntx.r[0] = 0; //All good, no status info
-		break;
-
-	case 2: //gdGdcExecServer
-		//nop? returns something, though.
-		//Bios seems to be based on a cooperative threading model
-		//this is the "context" switch entry point
-		break;
-
-	case 3: //gdGdcInitSystem
-		//nop? returns something, though.
-		break;
-	case 4: //gdGdcGetDrvStat
-		/*
-			Looks to same as GDROM_CHECK_DRIVE
-		*/
-		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
-		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
-		Sh4cntx.r[0] = 0;					// RET SUCCESS
-		break;
-
-	default:
-		printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
-		break;
-	}
-	
-	//gdGdcInitSystem
 }
 
 void reios_sys_misc() {
 	printf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
-	Sh4cntx.r[0] = 0;
+
+	//Sh4cntx.r[0] = 0;
 }
 
 void reios_setup_state(u32 boot_addr) {
@@ -439,6 +375,22 @@ void reios_setup_state(u32 boot_addr) {
 
 	sh4rcb.cntx.fpscr.full = 0x00040001;
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
+
+	//reg[SR] = reg[SR] & 0xefffff0f
+	//sh4rcb.cntx.sr &= 0xefffff0f;
+	/*
+		
+		src = (uint16_t *)romcopy; //0xa0....0
+		dst = (uint16_t *)0x8c0000e0; //write ?
+		for (i = 0; i < sizeof(romcopy); i++)
+			*(dst++) = *(src++);
+
+		//copy BootROM to RAM and continue executing at boot2(0) 
+		(*(void (*)(void *, void *))0x8c0000e0)((void *)0x80000100, (void *)0x8c000100);
+	*/
+
+
+	//guest_to_guest_memcpy(0x8c0000e0, 0xa0000000 , 4 * 1024);
 }
 
 void reios_setuo_naomi(u32 boot_addr) {
@@ -619,6 +571,7 @@ void reios_boot() {
 
 void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
+
 	u32 pc = sh4rcb.cntx.pc - 2;
 	sh4rcb.cntx.pc = sh4rcb.cntx.pr;
 
@@ -627,14 +580,16 @@ void DYNACALL reios_trap(u32 op) {
 	debugf("reios: dispatch %08X -> %08X\n", pc, mapd);
 
 	g_reios_ctx.hooks[mapd]();
+
 }
 
-bool reios_init(u8* rom, u8* flash) {
+bool reios_init(u8* rom, u8* flash,DCFlashChip* flash_chip) {
 	printf("reios: Init\n");
 
 	g_reios_ctx.biosrom = rom;
 	g_reios_ctx.flashrom = flash;
 	g_reios_ctx.pre_init = false;
+	g_reios_ctx.flash_chip = flash_chip;
 
 	memset(rom, 0xEA, 2048 * 1024);
 	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
@@ -726,3 +681,37 @@ void reios_context_t::setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	debugf("reios: Patching syscall vector %08X, points to %08X\n", syscall_addr, hook_addr);
 	debugf("reios: - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
+
+void reios_context_t::sync_sys_cfg() {
+	WriteMem8(0x8c000068 + 8 + 0 ,flash_chip->Read8(0x2a000000 + 0));
+	WriteMem8(0x8c000068 + 8 + 1,flash_chip->Read8(0x2a000000 + 1));
+	WriteMem8(0x8c000068 + 8 + 2,flash_chip->Read8(0x2a000000 + 2));
+	WriteMem8(0x8c000068 + 8 + 3,flash_chip->Read8(0x2a000000 + 3));
+	WriteMem8(0x8c000068 + 8 + 4,flash_chip->Read8(0x2a000000 + 3));
+
+	flash_chip->ReadBlock(FLASH_PT_USER,FLASH_USER_SYSCFG,&fsb);
+
+	WriteMem16(0x8c000068 + 16 + 0,fsb.time_lo);
+	WriteMem16(0x8c000068 + 16 + 2,fsb.time_hi);
+	WriteMem8(0x8c000068  + 16 + 4,fsb.unknown1);
+	WriteMem8(0x8c000068  + 16 + 5,fsb.lang);
+	WriteMem8(0x8c000068  + 16 + 6,fsb.mono);
+	WriteMem8(0x8c000068  + 16 + 7,fsb.autostart);
+
+	for (size_t i  = 0;i < 8; ++i)
+		WriteMem8(0x8c000068 + i,flash_chip->Read8(0x2a056000 + i));
+}
+
+
+void reios_context_t::identify_disc_type() {
+	//1920 GD-ROM1/1
+	char tmp[sizeof(reios_device_info) + 2];
+	memcpy(tmp,reios_device_info,sizeof(reios_device_info));
+	tmp[sizeof(reios_device_info)] = '\0';
+	std::string lazy = std::string(tmp);
+	for (size_t i = 0;i < lazy.length();++i)
+		lazy[i] = std::tolower(lazy[i]);
+
+	this->is_gdrom = (lazy.find("gd-rom") != std::string::npos) || (lazy.find("gdrom") != std::string::npos) ;
+}
+ 

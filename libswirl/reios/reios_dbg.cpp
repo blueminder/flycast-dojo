@@ -164,9 +164,30 @@ bool check_scs(const uint32_t pc) {
 	return false;
 }
 
+
+
 void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 	bool is_sc = false;
 
+	{
+		class ee { public:
+			FILE* fp;
+			public:
+			ee() {
+				fp = fopen("out.txt","wb");
+			}
+
+
+			~ee() {
+				fclose(fp);
+			}
+		};
+		static ee e;
+ 
+		std::string tmp = disassemble_op(OpDesc[opcode]->diss, pc, opcode);
+		fprintf(e.fp,"0x%08x:%s\n",pc,tmp.c_str());
+		
+	}
 	if (!g_reios_dbg_enabled) {
 		if (! (is_sc = check_scs<false>(pc))) {
 			return;
@@ -249,6 +270,7 @@ bool reios_dbg_init() {
 }
 
 bool reios_dbg_shutdown() {
+	
 	if (p_mod_handle)
 		dlclose(p_mod_handle);
 

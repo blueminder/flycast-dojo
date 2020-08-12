@@ -81,6 +81,9 @@ bool reios_syscalls_init() {
 	g_syscalls_mgr.register_syscall("reios_sys_font", &reios_sys_font, 0x8C001002, dc_bios_syscall_font);
 	g_syscalls_mgr.register_syscall("reios_sys_flashrom", &reios_sys_flashrom, 0x8C001004 , dc_bios_syscall_flashrom);
 	g_syscalls_mgr.register_syscall("reios_sys_gd", &reios_sys_gd, 0x8C001006, dc_bios_syscall_gd);
+	g_syscalls_mgr.register_syscall("reios_sys_gd2", &reios_sys_gd, 0x8c0010F0, dc_bios_syscall_gdn);
+
+	//static constexpr uint32_t dc_bios_syscall_misc = 0x8c0000E0;
 	g_syscalls_mgr.register_syscall("reios_sys_misc", &reios_sys_misc, 0x8C001008 , dc_bios_syscall_misc);
 	g_syscalls_mgr.register_syscall("gd_do_bioscall", &gd_do_bioscall, 0x8c0010F0, k_invalid_syscall);
 

@@ -461,7 +461,7 @@ struct DCFlashChip : MemChip
 		return 1;
 	}
 
-private:
+
 	void partition_info(int part_id, int *offset, int *size)
 	{
 		switch (part_id)
@@ -571,7 +571,7 @@ private:
 
 	int alloc_block(u32 offset, u32 size)
 	{
-		u8 bitmap[FLASH_BLOCK_SIZE];
+		u8 bitmap[FLASH_BLOCK_SIZE] = {0};
 		int blocks = num_user_blocks(size);
 		int bitmap_id = blocks;
 		int phys_id = 1;
@@ -602,7 +602,7 @@ private:
 
 	int lookup_block(u32 offset, u32 size, u32 block_id)
 	{
-		u8 bitmap[FLASH_BLOCK_SIZE];
+		u8 bitmap[FLASH_BLOCK_SIZE] = {0};
 		int blocks = num_user_blocks(size);
 		int bitmap_id = 1 + blocks;
 		int phys_id = 1;
