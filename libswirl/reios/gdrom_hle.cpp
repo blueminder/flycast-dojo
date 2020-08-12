@@ -51,9 +51,8 @@ void GDROM_HLE_ReadTOC(u32 addr)
 {
 	u32 s = ReadMem32(addr + 0);
 	u32 b = ReadMem32(addr + 4);
-	u32* pDst = (u32*)GetMemPtr(b, 102);
+	u32* pDst = (u32*)GetMemPtr(b, 102 * sizeof(u32));
 
-	
 
 	g_GDRDisc->GetToc(pDst, s);
 	printf("GDROM READ TOC : %X %X  (%c %c %c) \n\n", s, b,pDst[0],pDst[1],pDst[2]);
@@ -192,7 +191,7 @@ void GDCC_HLE_GETSCD(u32 addr) {
 #endif
 }
 
-#include <cassert>
+
 void GD_HLE_Command(u32 cc, u32 prm)
 {
 	{
