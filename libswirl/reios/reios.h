@@ -44,7 +44,8 @@ struct reios_context_t {
 	gdrom_queue_manager_c gd_q;
 	DCFlashChip* flash_chip;
 	flash_syscfg_block fsb;
-
+	uint32_t last_cmd ;	 
+	uint32_t dwReqID;	 
 	std::unordered_map<u32, reios_hook_fp*> hooks;
 	std::unordered_map<reios_hook_fp*, u32> hooks_rev;
 	u32 SecMode[4];

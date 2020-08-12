@@ -212,7 +212,7 @@ void reios_sys_flashrom() {
 			{
 				const u32 index = Sh4cntx.r[4];
 				const u32 dest = Sh4cntx.r[5];
-				printf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", index, dest);
+				//printf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", index, dest);
 
 				if (index < 5) {
 					int offset, size;
@@ -232,7 +232,7 @@ void reios_sys_flashrom() {
 				const u32 dest = Sh4cntx.r[5];
 				const u32 size = Sh4cntx.r[6];
 
-				printf("FLASHROM_READ ADDR %x dest %08x size %x", addr, dest, size);
+				//printf("FLASHROM_READ ADDR %x dest %08x size %x", addr, dest, size);
 				for (u32 i = 0; i < size;++i)
 					WriteMem8(dest + i,g_reios_ctx.flash_chip->Read8(addr + i));
 
@@ -247,7 +247,7 @@ void reios_sys_flashrom() {
 				const u32 src = Sh4cntx.r[5];
 				const u32 size = Sh4cntx.r[6];
 
-				printf("FLASHROM_WRITE offs %x src %08x size %x", dst, src, size);
+				//printf("FLASHROM_WRITE offs %x src %08x size %x", dst, src, size);
 
 				for (int i = 0; i < size; i++)
 					g_reios_ctx.flash_chip->data[dst + i] &= ReadMem8(src + i);
@@ -261,7 +261,7 @@ void reios_sys_flashrom() {
 			{			
 				const u32 addr = Sh4cntx.r[4];
 
-				printf("FLASHROM_DELETE offs %x", addr);
+				//printf("FLASHROM_DELETE offs %x", addr);
 
 				Sh4cntx.r[0] = -1;
 
@@ -269,7 +269,7 @@ void reios_sys_flashrom() {
 					int offs,sz;
 					g_reios_ctx.flash_chip->partition_info(i,&offs,&sz);	
 					if ((u32)offs == addr) {
-						printf("FLASHROM_DELETE offs %x : FOUND!!", addr);
+						//printf("FLASHROM_DELETE offs %x : FOUND!!", addr);
 						memset(g_reios_ctx.flash_chip->data + addr,0xff,sz);
 						Sh4cntx.r[0] = 0;
 						return;
@@ -655,6 +655,8 @@ bool reios_context_t::apply_all_hooks() {
 
 void reios_context_t::reset() {
 	gd_q.reset();
+	last_cmd = 0xFFFFFFFF;	 
+	dwReqID = 0xF0FFFFFF;	 
 }
 
 void reios_context_t::register_hook(u32 pc, reios_hook_fp* fn) {
@@ -687,7 +689,7 @@ void reios_context_t::sync_sys_cfg() {
 	WriteMem8(0x8c000068 + 8 + 1,flash_chip->Read8(0x2a000000 + 1));
 	WriteMem8(0x8c000068 + 8 + 2,flash_chip->Read8(0x2a000000 + 2));
 	WriteMem8(0x8c000068 + 8 + 3,flash_chip->Read8(0x2a000000 + 3));
-	WriteMem8(0x8c000068 + 8 + 4,flash_chip->Read8(0x2a000000 + 3));
+	WriteMem8(0x8c000068 + 8 + 4,flash_chip->Read8(0x2a000000 + 4));
 
 	flash_chip->ReadBlock(FLASH_PT_USER,FLASH_USER_SYSCFG,&fsb);
 

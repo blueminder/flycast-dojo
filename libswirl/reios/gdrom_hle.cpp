@@ -317,19 +317,6 @@ static void thd() {
 */
 void gdrom_hle_op()
 {
-
-	/*
-	static bool init_thd = false;
-	if (!init_thd) {
-		m_main_thread = std::thread(&thd);
-		init_thd = true;
-	}*/
-	static u32 last_cmd = 0xFFFFFFFF;	// only works for last cmd, might help somewhere
-	static u32 dwReqID=0xF0FFFFFF;		// ReqID, starting w/ high val
-
-	static size_t prev_cmd = -1U;
-
-	//m_main_mtx.lock();
 	if( SYSCALL_GDROM == r[6] )		// GDROM SYSCALL
 	{
 		switch(r[7])				// COMMAND CODE
@@ -348,17 +335,8 @@ void gdrom_hle_op()
 
 			debugf("\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n", r[4], r[5]);
 
-			#if 0
-			//GD_HLE_Command(r[4],r[5]);
-			//last_cmd = r[0] = --dwReqID;		// RET Request ID
-			auto p = g_reios_ctx.gd_q.add_cmd(r[4], r[5], k_gd_cmd_st_active);
-			r[0] = p ? p->id : -1;
-			prev_cmd = r[0];
-			///process_cmds();
-			#endif
-			 
 			GD_HLE_Command(r[4],r[5]);
-			last_cmd = r[0] = --dwReqID;		// RET Request ID
+			g_reios_ctx.last_cmd = r[0] = --g_reios_ctx.dwReqID;		// RET Request ID
 		}
 		break;
 
@@ -375,23 +353,10 @@ void gdrom_hle_op()
 	debugger_pass_data("gdrom_chk_cmd",(void*)&ctx,sizeof(ctx));
 #endif
 
-#if 0
-			if (!p) {
-				r[0] = 0;
-				prev_cmd = -1U;
-			}
-			else {
-				if (p->id == prev_cmd)
-					r[0] = 0;
-				else
-					r[0] = p->stat;
-
-				prev_cmd = p->id;
-			} 
-			#endif
-						r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
+#
+			r[0] = g_reios_ctx.last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
-			last_cmd = 0xFFFFFFFF;		
+			g_reios_ctx.last_cmd = 0xFFFFFFFF;		
 			if (r[5] != 0) {
 				//No error
 				WriteMem32(r[5] + 0, libCore_gdrom_get_status());	// STANDBY
@@ -400,8 +365,6 @@ void gdrom_hle_op()
 				WriteMem32(r[5] + 12, 0);
 
 			}
-
-		 
 		}
 		break;
 
@@ -424,9 +387,8 @@ void gdrom_hle_op()
 		 
 			printf("\nGDROM:\tHLE GDROM_INIT 0x%x\n",r[0]);	
 			debugger_pass_data("gdrom_init_cmd",nullptr,0);
-
-			last_cmd = 0xFFFFFFFF;	// only works for last cmd, might help somewhere
-			dwReqID=0xF0FFFFFF;		// ReqID, starting w/ high val
+			g_reios_ctx.last_cmd = 0xFFFFFFFF;
+			g_reios_ctx.dwReqID=0xF0FFFFFF;	
 		}
 		break;
 		case GDROM_RESET:g_GDRDisc->Reset(true);  g_reios_ctx.gd_q.reset();	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
@@ -434,17 +396,17 @@ void gdrom_hle_op()
 		case GDROM_CHECK_DRIVE: {	// 
 			printf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X r5:%X (STAT = %u /TYPE = %u /q=%u)\n", r[4], r[5], libCore_gdrom_get_status(), g_GDRDisc->GetDiscType(), g_reios_ctx.gd_q.get_pending_ops().size());
 		 	WriteMem32(r[4] + 0, libCore_gdrom_get_status());	// STANDBY
-			WriteMem32(r[4] + 4, (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType() );//g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+			WriteMem32(r[4] + 4, (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType());//g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0] = 0;					// RET SUCCESS
 
-#ifdef NULLDBG_ENABLED
-	gdrom_ctx_t ctx;
-	ctx.pc = Sh4cntx.pc;
-	ctx.pr = Sh4cntx.pr;
-	memcpy(ctx.regs,r,sizeof(r));
+		#ifdef NULLDBG_ENABLED
+			gdrom_ctx_t ctx;
+			ctx.pc = Sh4cntx.pc;
+			ctx.pr = Sh4cntx.pr;
+			memcpy(ctx.regs,r,sizeof(r));
 
-	debugger_pass_data("gdrom_chk_drive",(void*)&ctx,sizeof(ctx));
-#endif
+			debugger_pass_data("gdrom_chk_drive",(void*)&ctx,sizeof(ctx));
+		#endif
 		}
 		break;
 
