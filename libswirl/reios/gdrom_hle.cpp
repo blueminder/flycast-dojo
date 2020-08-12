@@ -353,7 +353,6 @@ void gdrom_hle_op()
 	debugger_pass_data("gdrom_chk_cmd",(void*)&ctx,sizeof(ctx));
 #endif
 
-#
 			r[0] = g_reios_ctx.last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
 			g_reios_ctx.last_cmd = 0xFFFFFFFF;		
