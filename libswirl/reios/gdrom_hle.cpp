@@ -13,6 +13,7 @@
 #include "hw/gdrom/gdromv3.h"
 #include "reios_dbg_module_stubs.h"
 #include "../debugger_cpp/shared_contexts.h"
+#include "reios_dbg.h"
 
 #define r Sh4cntx.r
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
@@ -21,6 +22,67 @@
 
 extern unique_ptr<GDRomDisc> g_GDRDisc;
 
+void _at_exit();
+
+struct gd_sess_dmp_t {
+	private:
+	FILE* f;
+	std::vector<uint8_t> pending;
+	const size_t k_buf_sz = 64 * 1024;
+
+	inline void flush(const bool force = false) {
+		if ( (force) || (pending.size() >= k_buf_sz)) {
+			if (!f) {
+				printf("GD_Cmds.txt not open :(\n");
+			} else {
+				fwrite(&pending[0],1,pending.size(),f);
+			}
+			pending.clear();
+		}
+	}
+
+	public:
+
+	gd_sess_dmp_t() {
+		f = fopen("gd_cmds.txt","wb");
+		if (!f) {
+			printf("Wtf %s\n could not be opened\n","gd_cmds.txt");
+		} else {
+			atexit(_at_exit);
+		}
+	}
+
+	~gd_sess_dmp_t() {
+		close();
+	}
+
+	inline void close() {
+		if (!f) 
+			return;
+		flush(true);
+		fclose(f);
+		f = nullptr;
+	}
+
+	inline void write(const uint8_t* data,const size_t sz) {
+		flush(false); //check +sz case -_-
+		printf("Write %llu\n",sz);
+		//optimize this -_-
+		for (size_t i = 0;i < sz;++i)
+			pending.push_back(data[i]);
+	}
+
+	inline void write(const std::string& s) {
+		this->write((const uint8_t*)s.c_str(),s.length());
+	}
+};
+
+static gd_sess_dmp_t gd_sess_dmp;
+
+void _at_exit() {
+	gd_sess_dmp.close();
+
+}
 void GDROM_HLE_ReadSES(u32 addr)
 {
 	uint32_t block[] = {
@@ -79,24 +141,23 @@ void GDROM_HLE_ReadTOC(u32 addr)
 #endif
 }
 
-void read_sectors_to(u32 addr, u32 sector, u32 count) {
-	u8 * pDst = GetMemPtr(addr, 0);
+inline void read_sectors_to(uint32_t addr,const uint32_t sector,const uint32_t count) {
+	u8 * pDst = GetMemPtr(addr, count << 11U);
 
 	if (pDst) {
+		printf("Doing SINGLE MULTI read with : %u cnt @%u sec\n",count,sector);
 		g_GDRDisc->ReadSector(pDst, sector, count, 2048);
+		return;
 	}
-	else {
-		u8 temp[2048];
 
-		while (count > 0) {
-			g_GDRDisc->ReadSector(temp, sector, 1, 2048);
+	{
+		uint32_t temp[2048 / sizeof(uint32_t)]; //could support bulk but who cares :)
 
-			for (int i = 0; i < 2048 / 4; i += 4) {
-				WriteMem32(addr, temp[i]);
-				addr += 4;
-			}
-			sector++;
-			count--;
+        for (uint32_t curr_sector=sector,dest_sector = curr_sector + count;curr_sector < dest_sector;++curr_sector) {
+            g_GDRDisc->ReadSector((uint8_t*)temp, curr_sector, 1, sizeof(temp));
+            for (uint32_t i = 0 , j = sizeof(temp) / sizeof(temp[0]); i < j;++i,addr += 4) {
+                WriteMem32(addr, temp[i]);
+        	}
 		}
 	}
 
@@ -114,6 +175,17 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 
 	debugger_pass_data("gdrom_rdsectors_to",(void*)&ctx,sizeof(ctx));
 #endif
+
+
+	{
+		static std::string s;
+		s = "rd_sec:";
+		s += "addr:" + std::to_string(addr) + "|";
+		s += "sec:" + std::to_string(sector) + "|";
+		s += "cnt:" + std::to_string(count);
+		s+="\n";
+		gd_sess_dmp.write(s);
+	}
 }
 
 void GDROM_HLE_ReadDMA(u32 addr)
@@ -140,6 +212,8 @@ void GDROM_HLE_ReadDMA(u32 addr)
 #endif
 
 	read_sectors_to(b, s, n);
+	g_reios_ctx.st[2].u_32 = n*2048;
+	g_reios_ctx.st[3].u_32 = 0;
 }
 
 void GDROM_HLE_ReadPIO(u32 addr)
@@ -166,10 +240,12 @@ void GDROM_HLE_ReadPIO(u32 addr)
 #endif
 
 	read_sectors_to(b, s, n);
+	g_reios_ctx.st[2].u_32 = 2048;
+	g_reios_ctx.st[3].u_32 = 0;
 }
 
 void GDCC_HLE_GETSCD(u32 addr) {
-	u32 s = ReadMem32(addr + 0x00);
+	u32 s = ReadMem32(addr + 0x00); //format ??
 	u32 n = ReadMem32(addr + 0x04);
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
@@ -189,11 +265,80 @@ void GDCC_HLE_GETSCD(u32 addr) {
 
 	debugger_pass_data("gdrom_getscd",(void*)&ctx,sizeof(ctx));
 #endif
+
+	const auto gdst = g_GDRDisc->GetDiscType();
+	g_reios_ctx.st[2].u_32 = n;
+
+	switch (gdst) {
+		case Open:
+			memset(g_reios_ctx.st,0,sizeof(g_reios_ctx.st));
+			g_reios_ctx.st[0].u_32 = GD_OPEN;
+		break;
+		case NoDisk:
+			memset(g_reios_ctx.st,0,sizeof(g_reios_ctx.st));
+			g_reios_ctx.st[0].u_32 = GD_NODISC;
+		break;
+		default : {
+			g_reios_ctx.st[0].u_32 = libCore_gdrom_get_status();
+			g_reios_ctx.st[1].u_32 = (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType();
+		}
+		break;
+	}
+
 }
 
 
+
+void dbg_diss(const uint32_t pc,const uint32_t epc,const bool exception = true) {
+	std::vector<std::string> tmp;
+
+	reios_dbg_diss_range(tmp,pc,epc);
+	uint32_t pp = pc;
+
+	for (const auto& p : tmp) {
+		printf("0x%x : %s\n", pp , p.c_str());
+		pp += 2;
+	}
+
+	if (!exception)
+		return;
+	verify(0);
+}
+
+void dbg_diss_bw(const uint32_t pc,const uint32_t epc,const bool exception = true) {
+	std::vector<std::string> tmp;
+
+	reios_dbg_diss_range_bw(tmp,pc,epc);
+	uint32_t pp = pc;
+
+	for (const auto& p : tmp) {
+		printf("0x%x : %s\n", pp , p.c_str());
+		pp += 2;
+	}
+
+	if (!exception)
+		return;
+	verify(0);
+}
+
+void dbg_diss_mixed(const uint32_t pc,const uint32_t range,const bool exception = true)  {
+	printf("\n\nShowing DISS BACKWARDS : 0x%x ~ 0x%x\n\n",pc-range,pc);
+	dbg_diss(pc - range,pc,false);
+	printf("\n\nShowing DISS FORWARD : 0x%x ~ 0x%x\n\n",pc,pc+range);
+	dbg_diss(pc,pc + range,false);
+
+	if (!exception)
+		return;
+
+	verify(0);
+}
+
 void GD_HLE_Command(u32 cc, u32 prm)
 {
+	static reios_hle_status_t block[4] = {0x0 ,  0xe10, 0x0 ,0x0};
+ 
+
+
 	{
 	#ifdef NULLDBG_ENABLED
 		gdrom_ctx_t ctx;
@@ -210,14 +355,65 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		debugger_pass_data("gdrom_hle_cmd",(void*)&ctx,sizeof(ctx));
 	#endif
 	}
-	printf("GD_HLE_Command %u %u\n", cc, prm);
+	//printf("GD_HLE_Command %u %u\n", cc, prm);
 	//assert(0);
+
+	{
+		static std::string s;
+		s = "cc:" + std::to_string(cc) + "|prm:" + std::to_string(prm);
+		s += "|";
+		for(size_t i = 4;i <= 7;++i)
+			s += "r("+std::to_string(i)+"):)" + std::to_string(r[i]);
+		s+="\n";
+		gd_sess_dmp.write(s);
+	}
+	
 	switch(cc) {
 		case GDCC_UNK_0x19: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x19 CC:%X PRM:%X\n",cc,prm);break;
 		case GDCC_UNK_0x1a: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x1a CC:%X PRM:%X\n",cc,prm); break;
 		case GDCC_UNK_0x1d: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x1d CC:%X PRM:%X\n",cc,prm); break;
-		case GDCC_UNK_0x1e: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x1e CC:%X PRM:%X\n",cc,prm); break;
-		case GDCC_UNK_0x1f: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x1f CC:%X PRM:%X\n",cc,prm); break;
+		case GDCC_UNK_0x1e:  {
+
+			//dbg_diss_mixed(Sh4cntx.pc,128);
+
+			printf("GDROM:\t MMMM*FIXME* CMD GDCC_UNK_0x1e CC:%X PRM:%X (pc = 0x%X pr = 0x%X r5 = 0x%X)\n",cc,prm,Sh4cntx.pc,Sh4cntx.pr,r[5]); 
+			printf("0x%x 0x%x 0x%x 0x%x\n",block[0],block[1],block[2],block[3]);
+			const uint32_t dst = ReadMem32(r[5]);
+			WriteMem32(dst + 0, block[0].u_32);
+			WriteMem32(dst + 4,block[1].u_32 );
+			WriteMem32(dst + 8, block[2].u_32);
+			WriteMem32(dst + 12, block[3].u_32);
+			g_reios_ctx.st[2].u_32 = 10;
+
+			printf("0x%x 0x%x(~=  0x%02x 0x%02x 0x%02x 0x%02x) 0x%x 0x%x\n",block[0].u_32,block[1].u_32,block[1].u_8[0],block[1].u_8[1],
+			block[1].u_8[2],block[1].u_8[3],block[2],block[3]);
+			
+
+
+			break;
+
+		}
+
+		case GDCC_UNK_0x1f: {
+			printf("GDROM:\t*WWSFIXME* CMD GDCC_UNK_0x1f CC:%X PRM:%X\n",cc,prm); 
+			//if (r[5] == 0)
+			//	break;
+			reios_hle_status_t a; a.u_32 = ReadMem32(r[5]+0);
+			reios_hle_status_t b; b.u_32 = ReadMem32(r[5]+4);
+			reios_hle_status_t c; c.u_32 = ReadMem32(r[5]+8);
+			reios_hle_status_t d; d.u_32 = ReadMem32(r[5]+12);
+ 
+			block[0].u_32 = a.u_32;
+			block[1].u_32 = b.u_32;
+			block[2].u_32 = c.u_32 ;
+			block[3].u_32 = d.u_32;
+
+			g_reios_ctx.st[2].u_32 = 10;
+			
+			printf("0x%x 0x%x(~=  0x%02x 0x%02x 0x%02x 0x%02x) 0x%x 0x%x\n",a,b,b.u_8[0],b.u_8[1],b.u_8[2],b.u_8[3],c,d);
+ 
+			break;
+		}
 		case GDCC_UNK_0x20: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x20 CC:%X PRM:%X\n",cc,prm); break;
 		case GDCC_UNK_0x24: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x24 CC:%X PRM:%X\n",cc,prm); break;
 		case GDCC_UNK_0x25: printf("GDROM:\t*FIXME* CMD GDCC_UNK_0x25 CC:%X PRM:%X\n",cc,prm); break;
@@ -255,8 +451,45 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		GDROM_HLE_ReadDMA(r[5]);
 		break;
 
-	case GDCC_PLAY_SECTOR:
+	case GDCC_PLAY_SECTOR: {
 		printf("GDROM:\tCMD PLAYSEC? CC:%X PRM:%X\n",cc,prm);
+#if 0
+		uint32_t local_10 = ReadMem32(r[4] + 0);
+
+		uint32_t puVar11 = ReadMem32(r[4] + 4);
+
+		uint32_t DAT_8c001d6c = ReadMem32(0x8c001d6c);
+		uint32_t DAT_8c001d70 = ReadMem32(0x8c001d70);
+		uint32_t DAT_8c001d78 = ReadMem32(0x8c001d78);
+
+		WriteMem16(r[5],ReadMem16(r[5] + 0x20) + DAT_8c001d6c);
+
+		uint32_t param2_val_1 = ((DAT_8c001d70>>10) & (local_10 >> 10)) |
+		(local_10  & DAT_8c001d78);
+
+		WriteMem16(r[5] + 4,param2_val_1);
+		WriteMem16(r[5] + 8,local_10 & 0xff);
+		#endif
+
+/*
+		    uVar12 = (ushort)param_1[2];
+    puVar11 = param_1[1];
+    local_10 = *param_1;
+LAB_8c001cf2:
+                    // GDCC_PLAY_SECTOR
+    *param_2 = param_2[0x20] + DAT_8c001d6c;
+    uVar3 = (ushort)DAT_8c001d78;
+    param_2[1] = (ushort)((uint)DAT_8c001d70 >> 0x10) & (ushort)((uint)local_10 >> 0x10) |
+                 (ushort)local_10 & uVar3;
+    param_2[2] = (ushort)local_10 & 0xff;
+    param_2[3] = uVar12 & 0xf;
+    param_2[4] = (ushort)((uint)DAT_8c001d70 >> 0x10) & (ushort)((uint)puVar11 >> 0x10) |
+                 uVar3 & (ushort)puVar11;
+    param_2[5] = (ushort)puVar11 & 0xff;
+    uVar10 = FUN_8c002bb6(param_2);
+    uVar6 = FUN_8c002948(uVar10,param_2);
+    return (uint *)uVar6; */
+	}
 		break;
 
 	case GDCC_RELEASE:
@@ -281,41 +514,29 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	}
 }
 
-/*
-#include <thread>
-#include <mutex>
- #include <chrono>
-static std::thread m_main_thread;
-static std::recursive_mutex m_main_mtx;
-*/
 static void process_cmds() {
-	
-	//m_main_mtx.lock();
-	//size_t x = 0;
-
 	for (const auto& i : g_reios_ctx.gd_q.get_pending_ops()) {
-		if(i.stat != k_gd_cmd_st_active)//if (!i.allocated)
+		if(i.stat != k_gd_cmd_st_active)
 			continue;
 		GD_HLE_Command(i.cmd, i.data);
 
 		g_reios_ctx.gd_q.rm_cmd(i);
-		//++x;
-	}
-	//m_main_mtx.unlock();
-	//if (0 != x)
-	//	printf("process_cmds: handled %lu\n", x);
-}
-/*
-static void thd() {
-	while (true) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-		process_cmds();
-		//printf("Call\n");
 	}
 }
-*/
+
 void gdrom_hle_op()
 {
+	{
+		static std::string s;
+		s = "hle_op:";
+		for(size_t i = 4;i <= 7;++i)
+			s += "r("+std::to_string(i)+"):)" + std::to_string(r[i]);
+		s+="\n";
+		gd_sess_dmp.write(s);
+	}
+
+	if ((r[6]==0))	 g_reios_ctx.last_gd_op = r[4];
+
 	if( SYSCALL_GDROM == r[6] )		// GDROM SYSCALL
 	{
 		switch(r[7])				// COMMAND CODE
@@ -356,12 +577,8 @@ void gdrom_hle_op()
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
 			g_reios_ctx.last_cmd = 0xFFFFFFFF;		
 			if (r[5] != 0) {
-				//No error
-				WriteMem32(r[5] + 0, libCore_gdrom_get_status());	// STANDBY
-				WriteMem32(r[5] + 4, (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
-				WriteMem32(r[5] + 8, 0);
-				WriteMem32(r[5] + 12, 0);
-
+				for (size_t i = 0; i < 4;++i) 
+					WriteMem32(r[5] + (i << 2U), g_reios_ctx.st[i].u_32);
 			}
 		}
 		break;
@@ -372,6 +589,10 @@ void gdrom_hle_op()
 			debugger_pass_data("gdrom_main_cmd",nullptr,0);
 			debugf("\nGDROM:\tHLE GDROM_MAIN\n");
 			//process_cmds();
+			if (-1!=g_reios_ctx.last_gd_op) {
+				GD_HLE_Command(g_reios_ctx.last_gd_op,0);
+				g_reios_ctx.last_gd_op=-1;
+			}
 			
 		}
 			break;
@@ -391,10 +612,21 @@ void gdrom_hle_op()
 		break;
 		case GDROM_RESET:g_GDRDisc->Reset(true);  g_reios_ctx.gd_q.reset();	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
 
+/*
+	CdDA=0x00,
+	CdRom=0x10,
+	CdRom_XA=0x20,
+	CdRom_Extra=0x30,
+	CdRom_CDI=0x40,
+	GdRom=0x80,
+*/
 		case GDROM_CHECK_DRIVE: {	// 
-			printf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X r5:%X (STAT = %u /TYPE = %u /q=%u)\n", r[4], r[5], libCore_gdrom_get_status(), g_GDRDisc->GetDiscType(), g_reios_ctx.gd_q.get_pending_ops().size());
-		 	WriteMem32(r[4] + 0, libCore_gdrom_get_status());	// STANDBY
-			WriteMem32(r[4] + 4, (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType());//g_GDRDisc->GetDiscType());// g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
+			printf("\nGDROM:\tHLE GDROM_CHECK_DRIVE is_gd (%d) r4:%X r5:%X (STAT = %u /TYPE = %u /q=%u)\n", g_reios_ctx.is_gdrom,r[4], r[5], libCore_gdrom_get_status(), g_GDRDisc->GetDiscType(), g_reios_ctx.gd_q.get_pending_ops().size());
+		 	
+			if (r[4] != 0) {
+				WriteMem32(r[4] + 0, libCore_gdrom_get_status());	// STANDBY
+				WriteMem32(r[4] + 4,  (g_reios_ctx.is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType());
+			}
 			r[0] = 0;					// RET SUCCESS
 
 		#ifdef NULLDBG_ENABLED
@@ -449,7 +681,7 @@ void gdrom_hle_op()
 
 	debugger_pass_data("gdrom_syscall",(void*)&ctx,sizeof(ctx));
 #endif
-		r[0] = 0;
+		//r[0] = 0;
 		printf("SYSCALL:\tSYSCALL: %X\n",r[7]);
 	}
 	

@@ -18,6 +18,14 @@ char* reios_disk_id();
 extern char reios_software_name[129];
 
 
+struct reios_hle_status_t {
+	
+	union {
+		uint32_t u_32;
+		uint8_t u_8[4];
+		uint16_t u_16[2];
+	};
+} __attribute__((packed));
 
 struct reios_context_t {
 	uint8_t generic_buffer[128];
@@ -45,16 +53,20 @@ struct reios_context_t {
 	DCFlashChip* flash_chip;
 	flash_syscfg_block fsb;
 	uint32_t last_cmd ;	 
-	uint32_t dwReqID;	 
+	uint32_t dwReqID;	
+	uint32_t last_gd_op; 
 	std::unordered_map<u32, reios_hook_fp*> hooks;
 	std::unordered_map<reios_hook_fp*, u32> hooks_rev;
 	u32 SecMode[4];
+	reios_hle_status_t st[8];
 
 	reios_context_t() {
 		flash_chip = nullptr;
 		base_fad = 45150;
 		reios_windows_ce = descrambl = pre_init =  false;
-		
+		memset(this->st,0,sizeof(this->st));
+		last_gd_op = 0xffffff;
+ 
 	}
 
 	~reios_context_t() {
@@ -75,6 +87,8 @@ struct reios_context_t {
 
 	void sync_sys_cfg() ;
 	void identify_disc_type();
+	void write_hle_res(const uint32_t a);
+	void write_hle_res(const uint32_t a,const uint32_t b);
 	 
 };
 

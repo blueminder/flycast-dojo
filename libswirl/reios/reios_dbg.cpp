@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include "libswirl.h"
 #include "reios_syscalls.h"
+#include "hw/sh4/sh4_mem.h"
 
 bool g_reios_dbg_enabled = true;
 
@@ -165,6 +166,24 @@ bool check_scs(const uint32_t pc) {
 }
 
 
+
+void reios_dbg_diss_range(std::vector<std::string>& buf,const uint32_t start_pc,const uint32_t end_pc) {
+	buf.clear();
+
+	for (uint32_t i = start_pc;i < end_pc;i += 2) {
+		const uint16_t op = ReadMem16(i);
+		buf.push_back( std::move ( disassemble_op(OpDesc[op]->diss, i, op)) );
+	}
+}
+
+void reios_dbg_diss_range_bw(std::vector<std::string>& buf,const uint32_t start_pc,const uint32_t end_pc) {
+	buf.clear();
+
+	for (uint32_t i = end_pc;i >= start_pc;i -= 2) {
+		const uint16_t op = ReadMem16(i);
+		buf.push_back( std::move ( disassemble_op(OpDesc[op]->diss, i, op)) );
+	}
+}
 
 void reios_dbg_begin_op(const uint32_t pc, const uint32_t opcode) {
 	bool is_sc = false;

@@ -1,6 +1,8 @@
 #include "license/bsd"
 #include "reios_syscalls.h"
 
+//https://github.com/reicast/reicast-emulator/blob/37dba034a9fd0a03d8ebfd07c3c7ec85b76f0eb7/libswirl/hw/sh4/interpr/sh4_opcodes.cpp#L872
+
 reios_syscall_mgr_c g_syscalls_mgr;
 
 reios_syscall_mgr_c::reios_syscall_mgr_c() {

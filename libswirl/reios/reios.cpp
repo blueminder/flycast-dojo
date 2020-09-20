@@ -700,8 +700,12 @@ void reios_context_t::sync_sys_cfg() {
 	WriteMem8(0x8c000068  + 16 + 6,fsb.mono);
 	WriteMem8(0x8c000068  + 16 + 7,fsb.autostart);
 
-	for (size_t i  = 0;i < 8; ++i)
+	for (uint32_t i  = 0;i < 8; ++i)
 		WriteMem8(0x8c000068 + i,flash_chip->Read8(0x2a056000 + i));
+
+	memset(this->st,0,sizeof(this->st));
+	this->st[0].u_32 = 2;
+	this->st[1].u_32 = (is_gdrom) ? 0x80 : g_GDRDisc->GetDiscType();
 }
 
 
@@ -716,4 +720,11 @@ void reios_context_t::identify_disc_type() {
 
 	this->is_gdrom = (lazy.find("gd-rom") != std::string::npos) || (lazy.find("gdrom") != std::string::npos) ;
 }
- 
+
+void reios_context_t::write_hle_res(const uint32_t a) {
+
+}
+
+void reios_context_t::write_hle_res(const uint32_t a,const uint32_t b) {
+
+}

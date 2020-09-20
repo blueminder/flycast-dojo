@@ -97,6 +97,9 @@ void SuperH4_impl::Step()
     {
         u32 op = ReadMem16(next_pc);
 
+        if (op == 0x8C00DB54) {
+            printf("OOPS\n");
+        }
         reios_dbg_begin_op(next_pc, op);
         ExecuteOpcode(op);
         reios_dbg_end_op(next_pc, op);
