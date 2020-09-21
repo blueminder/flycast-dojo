@@ -5,7 +5,11 @@
 #include <sstream>
 #include <stack>
 #include <mutex>
+
+
+#if HOST_OS != OS_WINDOWS
 #include <dlfcn.h>
+#endif
 #include "libswirl.h"
 #include "reios_syscalls.h"
 #include "hw/sh4/sh4_mem.h"
@@ -250,6 +254,10 @@ const uint32_t reios_dbg_get_last_op() {
 }
 
 bool reios_dbg_init() {
+
+#if HOST_OS == OS_WINDOWS
+	return false;
+#elif
 	if (p_mod_handle)
 		dlclose(p_mod_handle);
 
@@ -286,13 +294,18 @@ bool reios_dbg_init() {
 	}
 
 	return true;
+#endif
 }
 
 bool reios_dbg_shutdown() {
-	
+
+#if HOST_OS == OS_WINDOWS
+	return false;
+#elif
 	if (p_mod_handle)
 		dlclose(p_mod_handle);
 
 	p_mod_handle = nullptr;
 	return true;
+#endif
 }

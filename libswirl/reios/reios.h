@@ -18,6 +18,10 @@ char* reios_disk_id();
 extern char reios_software_name[129];
 
 
+#if HOST_OS == OS_WINDOWS
+#pragma pack(push,1)
+#endif
+
 struct reios_hle_status_t {
 	
 	union {
@@ -25,7 +29,13 @@ struct reios_hle_status_t {
 		uint8_t u_8[4];
 		uint16_t u_16[2];
 	};
-} __attribute__((packed));
+} 
+#if HOST_OS == OS_WINDOWS
+#pragma pack(pop)
+;
+#elif
+__attribute__((packed));
+#endif
 
 struct reios_context_t {
 	uint8_t generic_buffer[128];

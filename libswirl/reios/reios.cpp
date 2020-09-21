@@ -514,6 +514,29 @@ void reios_setuo_naomi(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 
+void load_the_bin() {
+
+	printf("Load binary...\n");
+	FILE* bin = fopen("C:\\Users\\Dimitris\\Desktop\\syscall32k.bin", "rb");
+
+	fseek(bin, 0, SEEK_END);
+
+	size_t s = ftell(bin);
+	fseek(bin, 0, SEEK_SET);
+	printf("BINARY SIZE %llu\n", s);
+
+	uint8_t* ptr = GetMemPtr(0x8c000000, s);
+
+
+	fread((void*)ptr, s, 1, bin);
+
+	if (ptr != nullptr) {
+		printf("PTR!=NULL\n");
+	}
+	else printf("PTR==NULL\n");
+	fclose(bin);
+}
+
 void reios_boot() {
 	printf("-----------------\n");
 	printf("REIOS: Booting up\n");
@@ -541,6 +564,8 @@ void reios_boot() {
 			const char* bootfile = reios_locate_ip();
 			if (!bootfile || !reios_locate_bootfile(bootfile))
 				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+			load_the_bin();
+			g_reios_ctx.apply_all_hooks();
 			reios_setup_state(0xac008300);
 		}
 		else {
@@ -643,13 +668,18 @@ bool reios_context_t::apply_all_hooks() {
 	for (auto i : g_syscalls_mgr.get_map()) {
 		if ((!i.second.enabled) || (i.second.fn == nullptr) || (i.second.syscall == k_invalid_syscall))
 			continue;
- 
-		printf("apply_all_hooks:Syscall : %s / pc:0x%x sc:0x%x @%p \n", i.first.c_str(), i.second.addr, i.second.addr,i.second.fn);
-		setup_syscall(hook_addr(i.second.fn), i.second.syscall);
+
+		printf("apply_all_hooks:Syscall : %s / pc:0x%x sc:0x%x @%p \n", i.first.c_str(), i.second.addr, i.second.addr, i.second.fn);
+		if (k_no_syscall == i.second.syscall) {
+			WriteMem16(hook_addr(i.second.fn), REIOS_OPCODE);
+		}
+		else
+			setup_syscall(hook_addr(i.second.fn), i.second.syscall);
+
 		++total;
 	}
 	printf("Applied total %llu syscalls\n", total);
-	
+
 	return true;
 }
 

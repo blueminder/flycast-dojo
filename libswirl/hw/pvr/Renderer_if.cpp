@@ -21,6 +21,8 @@
 
 #include <memory>
 #include <atomic>
+#include <iterator>
+
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -548,11 +550,10 @@ bool RegisterRendererBackend(const rendererbackend_t& backend)
 	backends[backend.slug] = backend;
 	return true;
 }
-
 vector<rendererbackend_t> rend_get_backends()
 {
 	vector<rendererbackend_t> vec;
-	transform(backends.begin(), backends.end(), back_inserter(vec), [](const std::pair<string, rendererbackend_t>& x) { return x.second; });
+	transform(backends.begin(), backends.end(), std::back_inserter(vec), [](const std::pair<string, rendererbackend_t>& x) { return x.second; });
 	
 	sort(vec.begin(), vec.end(), [](const rendererbackend_t& a, const rendererbackend_t& b) { return a.priority > b.priority; });
 

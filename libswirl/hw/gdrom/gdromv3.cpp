@@ -23,7 +23,8 @@
 #include <memory>
 
 //void nilprintf(...) {}
-#define nilprintf printf
+#define nilprintf 
+//printf
 #define printf_rm nilprintf
 #define printf_ata nilprintf
 #define printf_spi nilprintf

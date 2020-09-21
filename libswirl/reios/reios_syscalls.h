@@ -8,12 +8,12 @@ static constexpr uint32_t dc_bios_syscall_system = 0x8C0000B0;
 static constexpr uint32_t dc_bios_syscall_font = 0x8C0000B4;
 static constexpr uint32_t dc_bios_syscall_flashrom = 0x8C0000B8;
 static constexpr uint32_t dc_bios_syscall_gd = 0x8C0000BC;
-static constexpr uint32_t dc_bios_syscall_gdn = 0x8C0000C0;
 static constexpr uint32_t dc_bios_syscall_misc = 0x8c0000E0;
 static constexpr uint32_t dc_bios_entrypoint_gd_do_bioscall = 0x8c0010F0; //At least one game (ooga) uses this directly
 static constexpr uint32_t SYSINFO_ID_ADDR = 0x8C001010;
 static constexpr uint32_t SYSINFO_ID_ADDR2 = 0x8C000068;
 static constexpr uint32_t k_invalid_syscall = std::numeric_limits<uint32_t>::max();
+static constexpr uint32_t k_no_syscall = std::numeric_limits<uint32_t>::max() - 1;
 
 struct reios_syscall_cfg_t {
 	uint32_t addr;
