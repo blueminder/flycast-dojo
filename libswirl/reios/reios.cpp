@@ -508,6 +508,7 @@ void reios_setuo_naomi(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 
+#ifndef REIOS_WANT_EXPIREMENTAL_OLD_BUILD
 void load_the_bin() {
 	const char* syscalls_bin_path = "C:\\Users\\Dimitris\\Desktop\\syscall32k.bin";
 
@@ -532,6 +533,7 @@ void load_the_bin() {
 	fread((void*)ptr, s, 1, bin);
 	fclose(bin);
 }
+#endif
 
 void reios_boot() {
 	printf("-----------------\n");
@@ -560,7 +562,9 @@ void reios_boot() {
 			const char* bootfile = reios_locate_ip();
 			if (!bootfile || !reios_locate_bootfile(bootfile))
 				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+#ifndef REIOS_WANT_EXPIREMENTAL_OLD_BUILD
 			load_the_bin();
+#endif
 			g_reios_ctx.apply_all_hooks();
 			reios_setup_state(0xac008300);
 		}
