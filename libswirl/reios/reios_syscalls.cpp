@@ -106,24 +106,16 @@ bool reios_syscalls_init() {
 	extern void reios_sys_flashrom();
 	extern void reios_sys_gd();
 	extern void reios_sys_misc();
-	extern void gd_do_bioscall();
+	
 
 
 	g_syscalls_mgr.register_syscall("reios_boot", &reios_boot, 0xA0000000, k_invalid_syscall);
 
 #ifndef REIOS_WANT_EXPIREMENTAL_OLD_BUILD
-	//8C000776
-	//g_syscalls_mgr.register_syscall("reios_sys_skip", &skip_me, 0x8C000776, 0x8C000776); //*0x8C000776 = go wher e? new 
-
-	/*
-	 
-	 g_syscalls_mgr.register_syscall("reios_sys_font", &reios_sys_font, 0x8C001002, dc_bios_syscall_font);
-	*/
-	 //g_syscalls_mgr.register_syscall("reios_sys_gd", &reios_sys_gd, 0x8C001000, dc_bios_syscall_gd);
-	//g_syscalls_mgr.register_syscall("reios_sys_system", &reios_sys_system, 0x8C001000, dc_bios_syscall_system);
-	//g_syscalls_mgr.register_syscall("reios_sys_flashrom", &reios_sys_flashrom, 0x8C001004, dc_bios_syscall_flashrom);
+	//g_syscalls_mgr.register_syscall("reios_sys_font", &reios_sys_font, 0x8C001002, dc_bios_syscall_font);
+	g_syscalls_mgr.register_syscall("reios_sys_system", &reios_sys_system, 0x8C003C00, dc_bios_syscall_system);
+	g_syscalls_mgr.register_syscall("reios_sys_flashrom", &reios_sys_flashrom, 0x8C003D00 /*0x8C001004*/, dc_bios_syscall_flashrom);
 	g_syscalls_mgr.register_syscall("reios_sys_misc", &reios_sys_misc, 0x8C000800, dc_bios_syscall_misc);
-	//g_syscalls_mgr.register_syscall("gd_do_bioscall", &gd_do_bioscall, 0x8c0010F0, k_invalid_syscall);  
 	g_syscalls_mgr.register_syscall("try_lock_gd_mutex", &try_lock_gd_mutex, 0x8C001970, k_no_syscall);
 	g_syscalls_mgr.register_syscall("release_lock_gd_mutex", &release_lock_gd_mutex, 0x8C00197E, k_no_syscall);
 	g_syscalls_mgr.register_syscall("get_reg_base_addr", &get_reg_base_addr, 0x8C001108, k_no_syscall);

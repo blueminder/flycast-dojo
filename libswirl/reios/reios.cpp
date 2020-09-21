@@ -31,6 +31,7 @@
 //#define debugf printf
 
 #define debugf(...) 
+//printf(__VA_ARGS__)
 
 reios_context_t g_reios_ctx;
 extern unique_ptr<GDRomDisc> g_GDRDisc;
@@ -161,7 +162,7 @@ const char* reios_locate_ip() {
 
 void reios_sys_system() {
 	debugf("reios_sys_system\n");
-
+	Sh4cntx.pc = Sh4cntx.pr;
 	u32 cmd = Sh4cntx.r[7];
 
 	switch (cmd) {
@@ -205,8 +206,13 @@ void reios_sys_font() {
 void reios_sys_flashrom() {
 	debugf("reios_sys_flashrom\n");
 
-	u32 cmd = Sh4cntx.r[7];
+	Sh4cntx.pc = Sh4cntx.pr;
 
+	u32 cmd = Sh4cntx.r[7];
+	if (cmd >= 4) {
+		Sh4cntx.r[0] = -1;
+		return;
+	}
 	switch (cmd) {
 			case 0: // FLASHROM_INFO 
 			{
@@ -279,31 +285,19 @@ void reios_sys_flashrom() {
 			break;
 			
 	default:
-		printf("reios_sys_flashrom: not handled, %d\n", cmd);
+		printf("reios_sys_flashrom: not handled, %d r7 = 0x%x\n", cmd,Sh4cntx.r[7]);
 	}
 }
 
 void reios_sys_gd() {
 	gdrom_hle_op();
 }
-
-/*
-	- gdGdcReqCmd, 0
-	- gdGdcGetCmdStat, 1
-	- gdGdcExecServer, 2
-	- gdGdcInitSystem, 3
-	- gdGdcGetDrvStat, 4
-*/
-void gd_do_bioscall()
-{
-	gdrom_hle_op();
-
-}
+ 
 
 void reios_sys_misc() {
 	printf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
 
-	//Sh4cntx.r[0] = 0;
+	Sh4cntx.pc = Sh4cntx.pr;
 }
 
 void reios_setup_state(u32 boot_addr) {
