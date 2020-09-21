@@ -515,10 +515,14 @@ void reios_setuo_naomi(u32 boot_addr) {
 }
 
 void load_the_bin() {
+	const char* syscalls_bin_path = "C:\\Users\\Dimitris\\Desktop\\syscall32k.bin";
 
 	printf("Load binary...\n");
-	FILE* bin = fopen("C:\\Users\\Dimitris\\Desktop\\syscall32k.bin", "rb");
-
+	FILE* bin = fopen(syscalls_bin_path, "rb");
+	if (!bin) {
+		printf("Could not find %s\n", syscalls_bin_path);
+		return;
+	}
 	fseek(bin, 0, SEEK_END);
 
 	size_t s = ftell(bin);
@@ -526,14 +530,12 @@ void load_the_bin() {
 	printf("BINARY SIZE %llu\n", s);
 
 	uint8_t* ptr = GetMemPtr(0x8c000000, s);
-
-
-	fread((void*)ptr, s, 1, bin);
-
-	if (ptr != nullptr) {
-		printf("PTR!=NULL\n");
+	if (ptr == nullptr) {
+		printf("Could not bind mem \n ");
+		fclose(bin);
+		return;
 	}
-	else printf("PTR==NULL\n");
+	fread((void*)ptr, s, 1, bin);
 	fclose(bin);
 }
 
