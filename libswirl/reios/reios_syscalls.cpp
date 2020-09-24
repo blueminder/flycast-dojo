@@ -588,6 +588,159 @@ loc_8C002722:
 	
 }
 
+void GDCC_HELPER_FUNC3() { //0x8C00266C
+
+	//printf("Helper func 3\n");
+	/*
+	RAM:8C00266C                 mov.l   r14, @-r15
+RAM:8C00266E                 mov     r6, r1
+RAM:8C002670                 mov.l   r13, @-r15
+RAM:8C002672                 mov     r6, r3
+RAM:8C002674                 mov.l   #h'FF00, r14
+RAM:8C002676                 tst     r7, r7
+RAM:8C002678                 mov.l   r11, @-r15
+RAM:8C00267A                 and     r14, r3
+RAM:8C00267C                 mov.l   #h'FF0000, r11
+RAM:8C00267E                 and     r11, r1
+RAM:8C002680                 shlr16  r1
+RAM:8C002682                 or      r3, r1
+RAM:8C002684                 bf/s    loc_8C0026C4
+	*/
+
+	stack_push(r[14]);
+	stack_push(r[13]);
+	stack_push(r[11]);
+
+	r[1] = r[6];
+	r[3] = r[6];
+	r[14] = 0x0000ff00;
+	const bool tst = (r[7] & r[7]) == 0;
+	r[3] &= r[14];
+	r[11] = 0x00FF0000;
+	r[1] &= r[11]  ;
+	r[1] >>= 16;
+	r[1] |= r[3];
+
+	if (!tst) goto loc_8C0026C4;
+
+	/*
+RAM:8C002686                 extu.b  r6, r13
+RAM:8C002688                 mov     #h'4C, r0 ; 'L'
+RAM:8C00268A                 and     r5, r14
+RAM:8C00268C                 mov.w   @(r0,r4), r3
+RAM:8C00268E                 add     #h'7C, r0 ; '|'
+RAM:8C002690                 mov.w   @(r0,r4), r2
+RAM:8C002692                 mov     r1, r0
+RAM:8C002694                 add     r3, r2
+RAM:8C002696                 mov.w   r2, @r4
+RAM:8C002698                 mov.w   r0, @(2,r4)  --
+RAM:8C00269A                 mov     r13, r0
+RAM:8C00269C                 mov.w   r0, @(4,r4) -- 
+RAM:8C00269E                 mov     #0, r0
+RAM:8C0026A0                 mov.w   r0, @(6,r4) --
+RAM:8C0026A2                 mov     r5, r0
+RAM:8C0026A4                 and     r11, r0
+RAM:8C0026A6                 shlr16  r0
+RAM:8C0026A8                 or      r14, r0
+RAM:8C0026AA                 mov.w   r0, @(8,r4)
+RAM:8C0026AC                 bra     loc_8C0026F4
+RAM:8C0026AE                 extu.b  r5, r0
+	*/
+
+	r[13] = (uint8_t)r[6];
+	r[0] = 0x4c;
+	r[14] &= r[5];
+	r[3] = ReadMem16(r[0] + r[4]);
+	r[0] += 0x7c;
+	r[2] = ReadMem16(r[0] + r[4]);
+	r[0] = r[1];
+	r[2] += r[3];
+	WriteMem16(r[4], r[2]);
+	WriteMem16(r[4] + 2, r[0]);
+	r[0] = r[13];
+	WriteMem16(r[4] + 4, r[0]);
+	r[0] = 0;
+	WriteMem16(r[4] + 6, r[0]);
+	r[0] = r[5];
+	r[0] &= r[11];
+	r[0] >>= 16;
+	r[0] |= r[14];
+	WriteMem16(r[4] + 8, r[0]);
+	r[0] = (uint8_t)r[5];
+	goto loc_8C0026F4;
+
+	/*
+RAM:8C0026C4 loc_8C0026C4 : ; CODE XREF : GDCC_HELPER_FUNC3  
+RAM : 8C0026C4                 mov     #h'50, r0 ; 'P'
+RAM:8C0026C6                 mov.w   @(r0, r4), r3
+RAM : 8C0026C8                 add     #h'78, r0 ; 'x'  --OK
+RAM:8C0026CA                 mov.w   @(r0, r4), r2 --ok
+RAM : 8C0026CC                 add     r3, r2
+RAM : 8C0026CE                 mov     r1, r0
+RAM : 8C0026D0                 mov.w   r2, @r4
+RAM : 8C0026D2                 mov     r5, r3
+RAM : 8C0026D4                 mov.w   r0, @(2, r4) --
+RAM : 8C0026D6					and r14, r3
+RAM : 8C0026D8                 mov     r13, r0
+RAM : 8C0026DA                 shlr8   r3  --------------
+RAM : 8C0026DC                 mov.w   r0, @(4, r4) --------
+RAM : 8C0026DE				and r7, r14
+RAM : 8C0026E0                 extu.b  r5, r0
+RAM : 8C0026E2                 shll8   r0  ---
+RAM : 8C0026E4				or r3, r0
+RAM : 8C0026E6                 mov.w   r0, @(6, r4)  --
+RAM : 8C0026E8                 mov     r7, r0
+RAM : 8C0026EA				and r11, r0
+RAM : 8C0026EC                 shlr16  r0
+RAM : 8C0026EE					or r14, r0
+RAM : 8C0026F0                 mov.w   r0, @(8, r4)
+RAM : 8C0026F2                 extu.b  r7, r0
+*/
+
+loc_8C0026C4:
+	r[0] = 0x50;
+	r[3] = ReadMem16(r[0] + r[4]  );
+	r[0] += 0x78;
+	r[2] = ReadMem16(r[0] + r[4] );
+	r[2] += r[3];
+	r[0] = r[1];
+	WriteMem16(r[4], r[2]);
+	r[3] = r[5];
+	WriteMem16(r[4] + 2, r[2]);
+	r[3] &= r[14];
+	r[0] = r[13];
+	r[3] >>= 8;
+	WriteMem16(r[4] + 4, r[0]);
+	r[14] &= r[7];
+	r[0] = (uint8_t)r[5];
+	r[0] <<= 5;
+	r[0] |= r[3];
+	WriteMem16(r[4] + 6, r[0]);
+	r[0] = r[7];
+	r[0] &= r[11];
+	r[0] >> 16;
+	r[0] |= r[14];
+	WriteMem16(r[4] + 8, r[0]);
+	r[0] = (uint8_t)r[7];
+/*
+
+RAM : 8C0026F4
+RAM : 8C0026F4 loc_8C0026F4 : ; CODE XREF : GDCC_HELPER_FUNC3 
+RAM : 8C0026F4                 mov.w   r0, @(h'A,r4)
+	RAM:8C0026F6                 mov.l   @r15 + , r11
+	RAM : 8C0026F8                 mov.l   @r15 + , r13
+	RAM : 8C0026FA                 rts
+	RAM : 8C0026FC                 mov.l   @r15 + , r14*/
+
+loc_8C0026F4:
+	WriteMem16(r[4] + 0xa, r[0]);
+	r[11] = stack_pop();
+	r[13] = stack_pop();
+	r[14] = stack_pop();
+
+	Sh4cntx.pc = Sh4cntx.pr;
+
+}
 #undef r
 #endif
  
@@ -634,8 +787,8 @@ bool reios_syscalls_init() {
 
 	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC", &GDCC_HELPER_FUNC, 0x8C001118, k_no_syscall);
 	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC2", &GDCC_HELPER_FUNC2, 0x8C0026FE, k_no_syscall);
-	//GDCC_HELPER_FUNC2() { //0x8C0026FE
-
+	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC3", &GDCC_HELPER_FUNC3, 0x8C00266C, k_no_syscall);
+ 
 
  
 #else
