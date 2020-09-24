@@ -356,7 +356,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 	next_pc=pc;
 	auto block = bm_GetBlock(pc);
 
-	printf("Discard: %08X, %p\n", pc, block);
+	//printf("Discard: %08X, %p\n", pc, block);
 
 	bm_DiscardBlock(block);
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());

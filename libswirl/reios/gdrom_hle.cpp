@@ -109,7 +109,7 @@ void GDROM_HLE_ReadSES(u32 addr)
 #endif
 }
 
-void GDROM_HLE_ReadTOC(u32 addr)
+void GDROM_HLE_ReadTOC(u32 addr)//addr = r[4] ... r[7]
 {
 	u32 s = ReadMem32(addr + 0);
 	u32 b = ReadMem32(addr + 4);

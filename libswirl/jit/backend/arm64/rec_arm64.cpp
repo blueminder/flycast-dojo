@@ -1391,26 +1391,23 @@ u32 DynaRBI::Relink()
 	return code_size;
 }
 
-void Arm64RegAlloc::Preload(u32 reg, eReg nreg)
-{
+void Arm64RegAlloc::Preload(u32 reg, eReg nreg) {
 	assembler->Ldr(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
-void Arm64RegAlloc::Writeback(u32 reg, eReg nreg)
-{
+
+void Arm64RegAlloc::Writeback(u32 reg, eReg nreg) {
 	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
-void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
-{
+
+void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg) {
 	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
-void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
-{
+
+void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg) {
 	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
 
-
-extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
-{
+extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb) {
 	__asm__
 	(
 		"and x12, x0, #0x20			\n\t"	// SQ# selection, isolate
@@ -1429,9 +1426,7 @@ extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 }
 
 static Arm64Assembler* compiler;
-
-struct Arm64NGenBackend: NGenBackend
-{
+struct Arm64NGenBackend: NGenBackend {
 	bool Init()
 	{
 		printf("Initializing the ARM64 dynarec\n");

@@ -15,6 +15,26 @@ static constexpr uint32_t SYSINFO_ID_ADDR2 = 0x8C000068;
 static constexpr uint32_t k_invalid_syscall = std::numeric_limits<uint32_t>::max();
 static constexpr uint32_t k_no_syscall = std::numeric_limits<uint32_t>::max() - 1;
 
+struct reios_syscall_result_args_t {
+
+};
+
+typedef void reios_hook_t (reios_syscall_result_args_t&);
+
+struct reios_syscall_t {
+	const char* name;
+	const uint32_t addr;
+	const bool overrides_pc;
+	const bool overrides_pr;
+	reios_hook_t* fptr;
+	uint32_t pc;
+	uint32_t pr;
+};
+
+static reios_syscall_t funcs[] = {
+	{"",0,NULL} ,
+};
+
 struct reios_syscall_cfg_t {
 	uint32_t addr;
 	uint32_t syscall;

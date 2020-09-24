@@ -598,7 +598,8 @@ void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
 
 	u32 pc = sh4rcb.cntx.pc - 2;
-	sh4rcb.cntx.pc = sh4rcb.cntx.pr;
+
+	//sh4rcb.cntx.pc = sh4rcb.cntx.pr;
 
 	u32 mapd = g_reios_ctx.syscall_addr_map(pc);
 
@@ -679,6 +680,8 @@ bool reios_context_t::apply_all_hooks() {
 		++total;
 	}
 	printf("Applied total %llu syscalls\n", total);
+
+	//verify(0);
 
 	return true;
 }
