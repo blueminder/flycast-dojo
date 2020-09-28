@@ -13,7 +13,7 @@ static constexpr uint32_t dc_bios_entrypoint_gd_do_bioscall = 0x8c0010F0;
 static constexpr uint32_t SYSINFO_ID_ADDR = 0x8C001010;
 static constexpr uint32_t SYSINFO_ID_ADDR2 = 0x8C000068;
 static constexpr uint32_t k_invalid_syscall = std::numeric_limits<uint32_t>::max();
-static constexpr uint32_t k_no_syscall = std::numeric_limits<uint32_t>::max() - 1;
+static constexpr uint32_t k_no_vector_table = std::numeric_limits<uint32_t>::max() - 1;
 
 struct reios_syscall_result_args_t {
 

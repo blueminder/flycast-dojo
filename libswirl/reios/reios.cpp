@@ -671,7 +671,7 @@ bool reios_context_t::apply_all_hooks() {
 			continue;
 
 		printf("apply_all_hooks:Syscall : %s / pc:0x%x sc:0x%x @%p \n", i.first.c_str(), i.second.addr, i.second.addr, i.second.fn);
-		if (k_no_syscall == i.second.syscall) {
+		if (k_no_vector_table == i.second.syscall) {
 			WriteMem16(hook_addr(i.second.fn), REIOS_OPCODE);
 		}
 		else
