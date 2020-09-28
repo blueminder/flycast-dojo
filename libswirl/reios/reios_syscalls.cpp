@@ -744,7 +744,7 @@ loc_8C0026F4:
 }
 
 void GDCC_GENERIC_FUNC() { //0x8C002880
-	printf("GDCC_GENERIC_FUNC\n");
+	//printf("GDCC_GENERIC_FUNC\n");
 	
  
 
@@ -998,6 +998,238 @@ loc_8C002918:
 	r[14] = stack_pop();
 	Sh4cntx.pc = Sh4cntx.pr;
 }
+
+void GDCC_HELPER_FUNC5() { //0x8C002948
+	printf("GDCC_HELPER_FUNC5\n");
+}
+
+void GDCC_HELPER_FUNC10() { //0x8C00377C 
+	printf("GDCC_HELPER_FUNC10\n");
+
+	/*
+RAM:8C00377C                 mov.l   r14, @-r15
+RAM:8C00377E                 mov     r5, r14
+RAM:8C003780                 mov.l   #h'FFFFEF76, r3
+RAM:8C003782                 sts.l   pr, @-r15
+RAM:8C003784                 bsrf    r3 ; GDCC_HELPER_FUNC2_IMPLEMENTED
+RAM:8C003786                 mov     r5, r4
+*/
+	stack_push(r[14]);
+	stack_push(Sh4cntx.pr);
+	r[14] = r[5];
+	r[3] = 0xFFFFEF76;
+	r[4] = r[5];
+	GDCC_HELPER_FUNC2();
+
+
+
+	/*
+RAM:8C003788                 mov.w   #h'BC, r0
+RAM:8C00378A                 mov     #0, r4
+RAM:8C00378C                 mov.w   #h'9C, r3
+RAM:8C00378E                 mov.l   r4, @(r0,r14)
+RAM:8C003790                 add     #-h'1C, r0
+RAM:8C003792                 mov.l   @(r0,r14), r2
+RAM:8C003794                 add     r3, r2
+RAM:8C003796                 mov.b   r4, @r2
+RAM:8C003798                 mov.l   #h'FFFFF01C, r2
+RAM:8C00379A                 bsrf    r2 ; gd_popular_function_IMPLEMENTED
+RAM:8C00379C                 mov     r14, r4
+*/
+	r[0] = 0xbc;
+	r[4] = 0;
+	r[3] = 0x9c;
+	WriteMem32(r[0] + r[14], r[4]);
+	r[0] += -0x1c;
+	r[2] = ReadMem32(r[0] + r[14]);
+	r[2] += r[3];
+	WriteMem8(r[2], r[4]);
+	r[2] = 0xFFFFF01C;
+	r[4] = r[14];
+	gd_popular_function();
+
+	/*
+
+RAM:8C00379E                 mov.w   #h'9C, r3
+RAM:8C0037A0                 mov     r3, r0
+RAM:8C0037A2                 add     #4, r0
+RAM:8C0037A4                 mov.l   @(r0,r14), r4
+RAM:8C0037A6                 add     r3, r4
+RAM:8C0037A8                 mov.b   @r4, r4
+RAM:8C0037AA                 extu.b  r4, r0
+RAM:8C0037AC                 lds.l   @r15+, pr
+RAM:8C0037AE                 rts
+RAM:8C0037B0                 mov.l   @r15+, r14
+	*/
+
+	r[3] = 0x9c;
+	r[0] = r[3];
+	WriteMem32(r[0] + r[14], r[4]);
+	r[4] += r[3];
+	r[4] = ReadMem8(r[4]);
+	r[0] = (uint8_t)r[4];
+	Sh4cntx.pr = stack_pop();
+	r[14] = stack_pop();
+	Sh4cntx.pc = Sh4cntx.pr;
+
+}
+
+void GDCC_HELPER_FUNC9() { //0x8C002818
+	//printf("GDCC_HELPER_FUNC9\n");
+
+
+	/*
+RAM:8C002818 GDCC_HELPER_FUNC9:                      
+RAM:8C002818                                         
+RAM:8C002818                 mov.l   r14, @-r15
+RAM:8C00281A                 mov     r5, r14
+RAM:8C00281C                 mov.l   r13, @-r15
+RAM:8C00281E                 mov.l   r12, @-r15
+RAM:8C002820                 mov.l   r11, @-r15
+RAM:8C002822                 mov     r4, r12
+RAM:8C002824                 sts.l   pr, @-r15
+	*/
+
+	stack_push(r[14]);
+	stack_push(r[13]);
+	stack_push(r[12]);
+	stack_push(r[11]);
+	stack_push(Sh4cntx.pr);
+	r[14] = r[5];
+	r[12] = r[4];
+
+
+
+/*
+RAM:8C002826 loc_8C002826:                         
+RAM:8C002826                                        
+RAM:8C002826                 mov.w   #h'B8, r0
+RAM:8C002828                 mov.l   @(r0,r14), r2
+RAM:8C00282A                 tst     r2, r2
+RAM:8C00282C                 bf      loc_8C00285C
+RAM:8C00282E                 mov     #1, r13
+RAM:8C002830                 mov.w   #h'A8, r0
+RAM:8C002832                 mov.l   r13, @(r0,r14)
+RAM:8C002834                 mov.l   #h'FFFFF088, r11
+RAM:8C002836                 mova    h'8C002838, r0
+RAM:8C002838                 add     r0, r11
+RAM:8C00283A                 jsr     @r11
+*/
+
+	loc_8C002826:
+	r[0] = 0xb8;
+	r[2] = ReadMem32(r[0] + r[14]);
+
+	r[13] = 1;
+	if (0 == (r[2] & r[2])) 
+		goto loc_8C00285C;
+
+	r[0] = 0xa8;
+	WriteMem32(r[0] + r[14], r[13]);
+
+	r[11] = 0xFFFFF088;
+	r[0] = 0x8C002838;
+	r[0] += r[11];
+
+
+	exit_from_gd_thread();
+
+
+/*
+RAM:8C00283C                 nop
+RAM:8C00283E                 mov.w   #h'FFFFF904, r5
+RAM:8C002840                 mov.w   #h'4F8, r4
+RAM:8C002842                 mov.w   #h'A0, r0
+RAM:8C002844                 mov.l   @(r0,r14), r3
+RAM:8C002846                 add     r5, r3
+RAM:8C002848                 mov.l   @r3, r2
+RAM:8C00284A                 tst     r2, r13
+RAM:8C00284C                 bt      loc_8C002864
+RAM:8C00284E                 tst     r12, r12
+RAM:8C002850                 bt      loc_8C00285C
+RAM:8C002852                 mov.l   @(r0,r14), r3
+RAM:8C002854                 add     r3, r4
+RAM:8C002856                 mov.l   @r4, r2
+RAM:8C002858                 add     #4, r0
+RAM:8C00285A                 mov.l   r2, @(r0,r14)
+RAM:8C00285C
+*/
+	r[5] = 0xFFFFF904;
+	r[4] = 0x04f8;
+	r[0] = 0xa0;
+
+	r[3] = ReadMem32(r[0] + r[14]);
+	r[3] += r[5];
+	r[2] = ReadMem32(r[3]);
+	if (0 == (r[2] & r[13]))
+		goto loc_8C002864;
+
+	if (0 == (r[12] & r[12]))
+		goto loc_8C00285C;
+
+	WriteMem32(r[0] + r[14], r[3]);
+	r[4] += r[3];
+	r[2] = ReadMem32(r[4]);
+	r[0] += 4;
+	WriteMem32(r[0] + r[14], r[2]);
+
+	/*
+AM:8C00285C loc_8C00285C : ; CODE XREF : 
+RAM : 8C00285C; 
+RAM : 8C00285C                 mov.w   #h'A8, r0
+RAM:8C00285E                 mov     #0, r4
+RAM : 8C002860                 bra     loc_8C002874
+RAM : 8C002862                 mov.l   r4, @(r0, r14)
+RAM : 8C002864; -------------------------------------------------------------------------- -
+RAM:8C002864*/
+loc_8C00285C:
+	r[0] = 0xa8;
+	r[4] = 0;
+	WriteMem32(r[0] + r[14], r[4]);
+	goto loc_8C002874;
+/*
+RAM : 8C002864 loc_8C002864 : ; CODE XREF : 
+RAM : 8C002864                 tst     r12, r12
+RAM : 8C002866                 bt      loc_8C002826
+RAM : 8C002868                 mov.l   @(r0, r14), r3
+RAM : 8C00286A                 add     r3, r4
+RAM : 8C00286C                 mov.l   @r4, r2
+RAM : 8C00286E                 add     #4, r0
+RAM : 8C002870                 bra     loc_8C002826
+RAM : 8C002872                 mov.l   r2, @(r0, r14)
+RAM : 8C002874; -------------------------------------------------------------------------- -
+RAM:8C002874*/
+
+loc_8C002864:
+	if (0 == (r[12] & r[12]))
+		goto loc_8C002826;
+
+	WriteMem32(r[0] + r[14], r[3]);
+	r[4] += r[3];
+	r[2] = ReadMem32(r[4]);
+	r[0] += 4;
+	WriteMem32(r[0] + r[14], r[2]);
+	goto loc_8C002826;
+
+/*
+RAM : 8C002874 loc_8C002874 : ; CODE XREF :
+RAM : 8C002874                 lds.l   @r15 + , pr
+RAM : 8C002876                 mov.l   @r15 + , r11
+RAM : 8C002878                 mov.l   @r15 + , r12
+RAM : 8C00287A                 mov.l   @r15 + , r13
+RAM : 8C00287C                 rts
+RAM : 8C00287E                 mov.l   @r15 + , r14
+*/
+loc_8C002874:
+	Sh4cntx.pr = stack_pop();
+	
+	r[11] = stack_pop();
+	r[12] = stack_pop();
+	r[13] = stack_pop();
+	r[14] = stack_pop();
+
+	Sh4cntx.pc = Sh4cntx.pr;
+}
 #undef r
 #endif
  
@@ -1015,38 +1247,33 @@ bool reios_syscalls_init() {
 	extern void reios_sys_gd();
 	extern void reios_sys_misc();
 	
-
-
 	g_syscalls_mgr.register_syscall("reios_boot", &reios_boot, 0xA0000000, k_invalid_syscall);
 
 #ifndef REIOS_WANT_EXPIREMENTAL_OLD_BUILD
 	//g_syscalls_mgr.register_syscall("reios_sys_font", &reios_sys_font, 0x8C001002, dc_bios_syscall_font);
-
 	g_syscalls_mgr.register_syscall("reios_sys_misc", &reios_sys_misc, 0x8C000800, dc_bios_syscall_misc);
  	g_syscalls_mgr.register_syscall("reios_sys_system", &reios_sys_system, 0x8C003C00, dc_bios_syscall_system);
-
 	g_syscalls_mgr.register_syscall("reios_sys_flashrom", &reios_sys_flashrom, 0x8C003D00  , dc_bios_syscall_flashrom);
-	
 	g_syscalls_mgr.register_syscall("try_lock_gd_mutex", &try_lock_gd_mutex, 0x8C001970, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("release_lock_gd_mutex", &release_lock_gd_mutex, 0x8C00197E, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("get_reg_base_addr", &get_reg_base_addr, 0x8C001108, k_no_vector_table);
-	 
 	g_syscalls_mgr.register_syscall("exit_from_gd_thread", &exit_from_gd_thread, 0x8C0018C0, k_no_vector_table); 
-
 	g_syscalls_mgr.register_syscall("gd_common_subroutine", &gd_common_subroutine, 0x8C002774, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("gd_common_subroutine_reentry", []() {   gd_common_subroutine(); }, 0x8C0027A8, k_no_vector_table);
 	//g_syscalls_mgr.register_syscall("gd_popular_function_jsr_r10", []() {  gd_popular_function(); }, 0x8C0027D6, k_no_vector_table);
-	
 	g_syscalls_mgr.register_syscall("gd_popular_function", &gd_popular_function, 0x8C0027BA, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("odd_wait_loop_function", &odd_wait_loop_function, 0x8C000772, k_no_vector_table);
-
 	g_syscalls_mgr.register_syscall("hook_and_trace_regs", &hook_and_trace_regs, 0x8C0011F2, k_no_vector_table);
-
 	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC", &GDCC_HELPER_FUNC, 0x8C001118, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC2", &GDCC_HELPER_FUNC2, 0x8C0026FE, k_no_vector_table);
 	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC3", &GDCC_HELPER_FUNC3, 0x8C00266C, k_no_vector_table);
  
 	g_syscalls_mgr.register_syscall("GDCC_GENERIC_FUNC", &GDCC_GENERIC_FUNC, 0x8C002880, k_no_vector_table);
+	
+	//g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC5", &GDCC_HELPER_FUNC5, 0x8C002948, k_no_vector_table);
+ 
+	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC9", &GDCC_HELPER_FUNC9, 0x8C002818, k_no_vector_table);
+	g_syscalls_mgr.register_syscall("GDCC_HELPER_FUNC10", &GDCC_HELPER_FUNC10, 0x8C00377C, k_no_vector_table);
  
  
 #else
