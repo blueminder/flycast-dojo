@@ -34,6 +34,7 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
+#include "network/maplenet/MapleNet.hpp"
 
 void FlushCache();
 static void LoadCustom();
@@ -776,6 +777,13 @@ void InitSettings()
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
 
+	settings.maplenet.Enable = false;
+	settings.maplenet.ActAsServer = false;
+	settings.maplenet.ServerIP = "127.0.0.1";
+	settings.maplenet.ServerPort = "7777";
+	settings.maplenet.Delay = 1;
+	settings.maplenet.Debug = 8;
+
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
 	settings.dispmanx.Height	= 0;
@@ -882,6 +890,13 @@ void LoadSettings(bool game_specific)
 	settings.network.ActAsServer = cfgLoadBool("network", "ActAsServer", settings.network.ActAsServer);
 	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
 	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
+
+	settings.maplenet.Enable = cfgLoadBool("maplenet", "Enable", settings.maplenet.Enable);
+	settings.maplenet.ActAsServer = cfgLoadBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
+	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
+	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
+	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
+	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1043,6 +1058,12 @@ void SaveSettings()
 	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
 	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
 	cfgSaveStr("network", "server", settings.network.server.c_str());
+
+	cfgSaveBool("maplenet", "Enable", settings.maplenet.Enable);
+	cfgSaveBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
+	cfgSaveStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
+	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
+	cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 
 	GamepadDevice::SaveMaplePorts();
 

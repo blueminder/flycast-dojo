@@ -12,6 +12,8 @@
 #include <zlib.h>
 #include <xxhash.h>
 
+#include "network/maplenet/MapleNet.hpp"
+
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
@@ -276,6 +278,10 @@ struct maple_sega_controller: maple_base
 			{
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
+
+				if (settings.maplenet.Enable)
+					maplenet.ApplyNetInputs(&pjs, bus_id);
+
 				//caps
 				//4
 				w32(MFID_0_Input);

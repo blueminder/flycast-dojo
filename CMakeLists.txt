@@ -689,6 +689,12 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/network/maplenet/MapleNet.cpp
+        core/network/maplenet/MapleNet.hpp
+        core/network/maplenet/UDPClient.cpp
+        core/network/maplenet/UDP.hpp)
+
+target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_alsa.cpp
         core/oslib/audiobackend_coreaudio.cpp
         core/oslib/audiobackend_directsound.cpp

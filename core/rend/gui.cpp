@@ -1326,6 +1326,31 @@ static void gui_display_settings()
 					settings.network.server = server_name;
 		    	}
 		    }
+			if (ImGui::CollapsingHeader("MapleNet", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::Checkbox("Enable", &settings.maplenet.Enable);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable netplay");
+				if (settings.maplenet.Enable)
+				{
+					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
+					ImGui::SameLine();
+					ShowHelpMarker("Host netplay game");
+					char ServerIP[256];
+					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
+					ImGui::InputText("Server IP", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The server IP to connect to");
+					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
+					settings.maplenet.ServerIP = ServerIP;
+					char ServerPort[256];
+					strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
+					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The server port to connect to");
+					settings.maplenet.ServerPort = ServerPort;
+				}
+			}
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);

@@ -494,6 +494,15 @@ struct settings_t
 		std::string dns;
 		std::string server;
 	} network;
+
+	struct {
+		bool Enable;
+		bool ActAsServer;
+		std::string ServerIP;
+		std::string ServerPort;
+		int Delay;
+		int Debug;
+	} maplenet;
 };
 
 extern settings_t settings;
