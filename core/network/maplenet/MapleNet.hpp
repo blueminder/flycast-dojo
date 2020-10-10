@@ -66,7 +66,6 @@ public:
 	u16 MapleNet::GetInputData(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
-	u16 GetAnalog(u8* data);
 
 	std::map<u32, std::string> net_inputs[4];
 

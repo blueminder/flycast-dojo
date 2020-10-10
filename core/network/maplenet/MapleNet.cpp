@@ -65,11 +65,6 @@ u16 MapleNet::GetInputData(u8* data)
 	return input;
 }
 
-u16 MapleNet::GetAnalog(u8* data)
-{
-	return (*(u16*)(data + 8));
-}
-
 u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 {
 	return GetFrameNumber(data) + GetDelay(data);
@@ -170,7 +165,7 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs) {
 	if (get_analog_axis(1, *pjs) == 255)
 		data[3] ^= 0x20;
 
-	INFO_LOG(NETWORK, "PACKET DATA CREATED: %s", data);
+	//INFO_LOG(NETWORK, "PACKET DATA CREATED: %s", data);
 
 	return data;
 }

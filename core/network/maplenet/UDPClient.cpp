@@ -170,7 +170,7 @@ void UDPClient::ClientLoop()
 			}
 
 			maplenet.ClientLoopAction();
-			wait_seconds(0.006f);
+			//wait_seconds(0.006f);
 		}
 	}
 }
