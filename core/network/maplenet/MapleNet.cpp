@@ -73,9 +73,9 @@ u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 // packet data format
 // 0: player (u8)
 // 1: delay (u8)
-// 2-6: frame (u32)
-// 7: input[0] (u8)
-// 8: input[1] (u8)
+// 2: input[0] (u8)
+// 3: input[1] (u8)
+// 4-8: frame (u32)
 
 // based on http://mc.pp.se/dc/controller.html
 // data[2] in packet data
@@ -224,10 +224,10 @@ const char* MapleNet::CreateFrame(unsigned int frame_num, int player, int delay,
 	new_frame[0] = player;
 	new_frame[1] = delay;
 
-	// enter current frame count in next 4 bytes
-	memcpy(new_frame + 2, (unsigned char*)&frame_num, sizeof(unsigned int));
+	memcpy(new_frame + 2, (const char*)input, INPUT_SIZE);
 
-	memcpy(new_frame + 6, (const char*)input, INPUT_SIZE);
+	// enter current frame count in next 4 bytes
+	memcpy(new_frame + 4, (unsigned char*)&frame_num, sizeof(unsigned int));
 
 	const char ret_frame[FRAME_SIZE] = { 0 };
 	memcpy((void*)ret_frame, new_frame, FRAME_SIZE);
@@ -342,7 +342,7 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 
 		last_consecutive_common_frame = SkipFrame + delay;
 
-		INFO_LOG(NETWORK, "TEST");
+		//INFO_LOG(NETWORK, "TEST");
 
 		StartMapleNet();
 	}
@@ -358,7 +358,9 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 	}
 
 	// be sure not to duplicate input directed to other ports
-	// or veer from shared source of truth
+	PlainJoystickState blank_pjs;
+	memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
+
 	/*
 		if (local)
 		{
