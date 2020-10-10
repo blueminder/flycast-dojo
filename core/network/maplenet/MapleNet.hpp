@@ -16,9 +16,9 @@
 //#include "Devices.h"
 #include "types.h"
 
-#define FRAME_SIZE 10
-#define PAYLOAD_SIZE 42
-#define INPUT_SIZE 4
+#define FRAME_SIZE 8
+#define PAYLOAD_SIZE 20
+#define INPUT_SIZE 2
 
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
@@ -63,7 +63,7 @@ public:
 	// frame data extraction methods
 	int GetPlayer(u8* data);
 	int GetDelay(u8* data);
-	std::bitset<16> GetInputData(u8* data);
+	u16 MapleNet::GetInputData(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
 	u16 GetAnalog(u8* data);
@@ -86,7 +86,7 @@ public:
 
 	UDPClient client;
 
-	void PrintFrameData(u8* data);
+	void PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);
 	void ClientLoopAction();
 

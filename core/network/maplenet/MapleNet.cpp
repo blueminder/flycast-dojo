@@ -56,12 +56,12 @@ int MapleNet::GetDelay(u8* data)
 
 u32 MapleNet::GetFrameNumber(u8* data)
 {
-	return (int)(*(u32*)(data + 2));
+	return (int)(*(u32*)(data + 4));
 }
 
-std::bitset<16> MapleNet::GetInputData(u8* data)
+u16 MapleNet::GetInputData(u8* data)
 {
-	std::bitset<16> input = data[6] | data[7] << 8;
+	u16 input = data[2] | data[3] << 8;
 	return input;
 }
 
@@ -81,7 +81,6 @@ u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 // 2-6: frame (u32)
 // 7: input[0] (u8)
 // 8: input[1] (u8)
-// 9: analog (u16)
 
 // based on http://mc.pp.se/dc/controller.html
 // data[2] in packet data
@@ -267,8 +266,7 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 				settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
 				settings.maplenet.Debug == DEBUG_ALL)
 			{
-				INFO_LOG(NETWORK, "Backfilled: ");
-				PrintFrameData((u8*)frame_fill);
+				PrintFrameData("Backfilled", (u8 *)frame_fill);
 			}
 		}
 	}
@@ -387,16 +385,18 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 	CurrentFrameData[port] = "";
 }
 
-void MapleNet::PrintFrameData(u8* data)
+void MapleNet::PrintFrameData(const char * prefix, u8 * data)
 {
 	int player = GetPlayer(data);
 	int delay = GetDelay(data);
-	std::bitset<16> input = GetInputData(data);
+	u16 input = GetInputData(data);
 	u32 frame = GetFrameNumber(data);
 	u32 effective_frame = GetEffectiveFrameNumber(data);
 
-	INFO_LOG(NETWORK, "%u: Frame %u Delay %d, Player %d, Input %s\n",
-		effective_frame, frame, delay, player, input.to_string().c_str());
+	std::bitset<16> input_bitset(input);
+
+	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s",
+		prefix, effective_frame, frame, delay, player, input_bitset.to_string().c_str());
 }
 
 // called on by client thread once data is received
@@ -406,8 +406,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		settings.maplenet.Debug == DEBUG_SEND_RECV ||
 		settings.maplenet.Debug == DEBUG_ALL)
 	{
-		INFO_LOG(NETWORK, "Received: ");
-		PrintFrameData((u8*)received_data);
+		PrintFrameData("Received", (u8*)received_data);
 	}
 
 	if (!isMatchStarted)
@@ -463,8 +462,7 @@ void MapleNet::ClientLoopAction()
 						settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
 						settings.maplenet.Debug == DEBUG_ALL)
 					{
-						INFO_LOG(NETWORK, "Applied: ");
-						PrintFrameData((u8*)this_frame.data());
+						PrintFrameData("Applied", (u8 *)this_frame.data());
 					}
 				}
 			}

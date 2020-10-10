@@ -138,8 +138,7 @@ void UDPClient::ClientLoop()
 					settings.maplenet.Debug == DEBUG_SEND_RECV ||
 					settings.maplenet.Debug == DEBUG_ALL)
 				{
-					INFO_LOG(NETWORK, "Sent: ");
-					maplenet.PrintFrameData((u8*)to_send);
+					maplenet.PrintFrameData("Sent", (u8 *)to_send);
 				}
 
 				last_sent = std::string(to_send, to_send + PAYLOAD_SIZE);
