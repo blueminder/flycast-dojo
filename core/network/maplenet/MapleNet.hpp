@@ -7,6 +7,7 @@
 #include <map>
 #include <numeric>
 #include <set>
+#include <sstream>
 #include <thread>
 
 #include <cfg/cfg.h>
