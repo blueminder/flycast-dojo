@@ -32,8 +32,8 @@ MapleNet::MapleNet()
 
 void MapleNet::LoadNetConfig()
 {
-	enabled = settings.network.Enable;
-	hosting = settings.network.ActAsServer;
+	enabled = settings.maplenet.Enable;
+	hosting = settings.maplenet.ActAsServer;
 	host_ip = settings.maplenet.ServerIP;
 	host_port = atoi(settings.maplenet.ServerPort.data());
 	delay = settings.maplenet.Delay;
