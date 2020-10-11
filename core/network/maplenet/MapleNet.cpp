@@ -435,26 +435,28 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 // continuously called on by client thread
 void MapleNet::ClientLoopAction()
 {
+	u32 current_port = InputPort;
+
 	if (last_consecutive_common_frame < (FrameNumber))
 		pause();
 
 	if (last_consecutive_common_frame == FrameNumber)
 		resume();
 
-	if (CurrentFrameData[InputPort].empty())
+	if (CurrentFrameData[current_port].empty())
 	{
 		std::string this_frame = "";
 
-		while (net_input_keys[InputPort].count(FrameNumber - 1) == 0);
+		while (net_input_keys[current_port].count(FrameNumber - 1) == 0);
 
 		while (this_frame.empty())
 		{
 			try {
-				this_frame = net_inputs[InputPort].at(FrameNumber - 1);
+				this_frame = net_inputs[current_port].at(FrameNumber - 1);
 
 				if (!this_frame.empty())
 				{
-					CurrentFrameData[InputPort] = this_frame;
+					CurrentFrameData[current_port] = this_frame;
 
 					if (settings.maplenet.Debug == DEBUG_APPLY ||
 						settings.maplenet.Debug == DEBUG_APPLY_BACKFILL ||
