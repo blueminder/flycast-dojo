@@ -12,12 +12,13 @@
 #include <cfg/cfg.h>
 #include <hw/maple/maple_cfg.h>
 #include <hw/maple/maple_devs.h>
+#include <rend/gui.h>
 
 //#include "Devices.h"
 #include "types.h"
 
 #define FRAME_SIZE 8
-#define PAYLOAD_SIZE 20
+#define PAYLOAD_SIZE 38 
 #define INPUT_SIZE 2
 
 #define DEBUG_APPLY 1

@@ -351,6 +351,8 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 	if (FrameNumber > SkipFrame)
 		while (isPaused);
 
+	PlainJoystickState blank_pjs;
+
 	// advance game state
 	if (port == 0)
 	{
@@ -359,7 +361,6 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 	}
 
 	// be sure not to duplicate input directed to other ports
-	PlainJoystickState blank_pjs;
 	memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
 
 	/*
@@ -471,6 +472,18 @@ void MapleNet::ClientLoopAction()
 
 int MapleNet::StartMapleNet()
 {
+	std::ostringstream NoticeStream;
+	if (settings.maplenet.ActAsServer)
+	{
+		NoticeStream << "Hosting game on port " << host_port;
+		gui_display_notification(NoticeStream.str().data(), 5000);
+	}
+	else
+	{
+		NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
+		gui_display_notification(NoticeStream.str().data(), 5000);
+	}
+
 	try
 	{
 		std::thread t2(&UDPClient::ClientThread, std::ref(client));
