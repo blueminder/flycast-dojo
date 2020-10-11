@@ -2,20 +2,6 @@
 
 #include "../net_platform.h"
 
-#if PLATFORM == PLATFORM_WINDOWS
-
-static void wait_seconds(float seconds)
-{
-	Sleep((int)(seconds * 1000.0f));
-}
-
-#else
-
-#include <unistd.h>
-static void wait_seconds(float seconds) { usleep((int)(seconds * 1000000.0f)); }
-
-#endif
-
 UDPClient::UDPClient()
 {
 	isStarted = false;

@@ -218,7 +218,7 @@ void MapleNet::AddNetFrame(const char* received_data)
 	}
 }
 
-const char* MapleNet::CreateFrame(unsigned int frame_num, int player, int delay, const char* input)
+std::string MapleNet::CreateFrame(unsigned int frame_num, int player, int delay, const char* input)
 {
 	unsigned char new_frame[FRAME_SIZE] = { 0 };
 	new_frame[0] = player;
@@ -229,10 +229,12 @@ const char* MapleNet::CreateFrame(unsigned int frame_num, int player, int delay,
 	// enter current frame count in next 4 bytes
 	memcpy(new_frame + 4, (unsigned char*)&frame_num, sizeof(unsigned int));
 
-	const char ret_frame[FRAME_SIZE] = { 0 };
+	char ret_frame[FRAME_SIZE] = { 0 };
 	memcpy((void*)ret_frame, new_frame, FRAME_SIZE);
 
-	return ret_frame;
+	std::string frame_str(ret_frame, ret_frame + FRAME_SIZE);
+
+	return frame_str;
 }
 
 void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs, int back_inputs_size)
@@ -250,10 +252,9 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 		if (((int)initial_frame_num - i) > 2 &&
 			net_inputs[initial_player].count(initial_frame_num - i) == 0)
 		{
-			const char frame_fill[FRAME_SIZE] = { 0 };
-			memcpy((void*)frame_fill,
-				CreateFrame(initial_frame_num - initial_delay - i,
-					initial_player, initial_delay, back_inputs + (i * INPUT_SIZE)), FRAME_SIZE);
+			char frame_fill[FRAME_SIZE] = { 0 };
+			std::string new_frame = CreateFrame(initial_frame_num - initial_delay - i, initial_player, initial_delay, back_inputs + (i * INPUT_SIZE));
+			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
 
 			if (settings.maplenet.Debug == DEBUG_BACKFILL ||

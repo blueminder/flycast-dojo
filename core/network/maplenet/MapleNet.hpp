@@ -9,9 +9,9 @@
 #include <set>
 #include <thread>
 
-#include <cfg\cfg.h>
-#include <hw\maple\maple_cfg.h>
-#include <hw\maple\maple_devs.h>
+#include <cfg/cfg.h>
+#include <hw/maple/maple_cfg.h>
+#include <hw/maple/maple_devs.h>
 
 //#include "Devices.h"
 #include "types.h"
@@ -63,7 +63,7 @@ public:
 	// frame data extraction methods
 	int GetPlayer(u8* data);
 	int GetDelay(u8* data);
-	u16 MapleNet::GetInputData(u8* data);
+	u16 GetInputData(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
 
@@ -89,7 +89,7 @@ public:
 	void ClientReceiveAction(const char* data);
 	void ClientLoopAction();
 
-	const char* CreateFrame(unsigned int frame_num, int player, int delay, const char* input);
+	std::string CreateFrame(unsigned int frame_num, int player, int delay, const char* input);
 	void AddNetFrame(const char* received_data);
 	void AddBackFrames(const char* initial_frame, const char* back_inputs, int back_inputs_size);
 
