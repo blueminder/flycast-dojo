@@ -15,7 +15,7 @@ MapleNet::MapleNet()
 	opponent = player == 0 ? 1 : 0;
 
 	FrameNumber = 1;
-	SkipFrame = 4;
+	SkipFrame = 1;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -26,7 +26,7 @@ MapleNet::MapleNet()
 	UDPClient client;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 4;
+	last_consecutive_common_frame = 1;
 	started = false;
 }
 
