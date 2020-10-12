@@ -1308,29 +1308,11 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
 		    }
-		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
-		    {
-		    	ImGui::Checkbox("Enable", &settings.network.Enable);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable networking for supported Naomi games");
-		    	if (settings.network.Enable)
-		    	{
-					ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
-					ImGui::SameLine();
-					ShowHelpMarker("Create a local server for Naomi network games");
-					char server_name[256];
-					strcpy(server_name, settings.network.server.c_str());
-					ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
-					settings.network.server = server_name;
-		    	}
-		    }
-			if (ImGui::CollapsingHeader("MapleNet", ImGuiTreeNodeFlags_DefaultOpen))
+			if (ImGui::CollapsingHeader("Local Netplay", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Checkbox("Enable", &settings.maplenet.Enable);
+				ImGui::Checkbox("Enable##MapleNet", &settings.maplenet.Enable);
 				ImGui::SameLine();
-				ShowHelpMarker("Enable netplay");
+				ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
 				if (settings.maplenet.Enable)
 				{
 					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
@@ -1351,6 +1333,24 @@ static void gui_display_settings()
 					settings.maplenet.ServerPort = ServerPort;
 				}
 			}
+		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Checkbox("Enable", &settings.network.Enable);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable networking for supported Naomi games");
+		    	if (settings.network.Enable)
+		    	{
+					ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
+					ImGui::SameLine();
+					ShowHelpMarker("Create a local server for Naomi network games");
+					char server_name[256];
+					strcpy(server_name, settings.network.server.c_str());
+					ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+					settings.network.server = server_name;
+		    	}
+		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);
