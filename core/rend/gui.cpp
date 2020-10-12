@@ -1331,6 +1331,7 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("The server port to connect to");
 					settings.maplenet.ServerPort = ServerPort;
+					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 8);
 				}
 			}
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
