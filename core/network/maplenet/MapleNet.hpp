@@ -18,9 +18,9 @@
 //#include "Devices.h"
 #include "types.h"
 
-#define FRAME_SIZE 8
-#define PAYLOAD_SIZE 38 
-#define INPUT_SIZE 2
+#define FRAME_SIZE 10
+#define PAYLOAD_SIZE 38
+#define INPUT_SIZE 4
 
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
@@ -66,6 +66,8 @@ public:
 	int GetPlayer(u8* data);
 	int GetDelay(u8* data);
 	u16 GetInputData(u8* data);
+	u32 GetAnalogX(u8* data);
+	u32 GetAnalogY(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
 

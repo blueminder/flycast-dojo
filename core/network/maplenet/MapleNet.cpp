@@ -65,6 +65,16 @@ u16 MapleNet::GetInputData(u8* data)
 	return input;
 }
 
+u32 MapleNet::GetAnalogX(u8* data)
+{
+	return (u32)data[8];
+}
+
+u32 MapleNet::GetAnalogY(u8* data)
+{
+	return (u32)data[9];
+}
+
 u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 {
 	return GetFrameNumber(data) + GetDelay(data);
@@ -75,7 +85,9 @@ u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 // 1: delay (u8)
 // 2: input[0] (u8)
 // 3: input[1] (u8)
-// 4-8: frame (u32)
+// 4-7: frame (u32)
+// 8: analog x (u8)
+// 9: analog y (u8)
 
 // based on http://mc.pp.se/dc/controller.html
 // data[2] in packet data
@@ -94,7 +106,7 @@ u16 maple_bitmasks[12] = {
 	1 << 11  // d coin
 };
 
-void MapleNet::TranslateFrameDataToInput(u8 data[8], PlainJoystickState* pjs) {
+void MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs) {
 	int frame = (
 		data[4] << 24 |
 		data[5] << 16 |
@@ -130,13 +142,17 @@ void MapleNet::TranslateFrameDataToInput(u8 data[8], PlainJoystickState* pjs) {
 		if (data[3] & 0x20) {
 			pjs->trigger[0] = 0xFF;
 		}
+
+		// dc analog
+		pjs->joy[PJAI_X1] = data[8];
+		pjs->joy[PJAI_Y1] = data[9];
 	}
 }
 
 u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs) {
-	static u8 data[8];
+	static u8 data[FRAME_SIZE];
 
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < FRAME_SIZE; i++)
 		data[i] = 0;
 
 	data[0] = 8;
@@ -164,6 +180,11 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs) {
 	// l trigger
 	if (get_analog_axis(1, *pjs) == 255)
 		data[3] ^= 0x20;
+
+	// dc analog
+	data[8] = (u8)pjs->joy[PJAI_X1];
+	data[9] = (u8)pjs->joy[PJAI_Y1];
+
 
 	//INFO_LOG(NETWORK, "PACKET DATA CREATED: %s", data);
 
@@ -392,10 +413,14 @@ void MapleNet::PrintFrameData(const char * prefix, u8 * data)
 	u32 frame = GetFrameNumber(data);
 	u32 effective_frame = GetEffectiveFrameNumber(data);
 
+	u32 analogx = GetAnalogX(data);
+	u32 analogy = GetAnalogY(data);
+
 	std::bitset<16> input_bitset(input);
 
-	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s",
-		prefix, effective_frame, frame, delay, player, input_bitset.to_string().c_str());
+	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u",
+		prefix, effective_frame, frame, delay, player, 
+		input_bitset.to_string().c_str(), analogx, analogy);
 }
 
 // called on by client thread once data is received
