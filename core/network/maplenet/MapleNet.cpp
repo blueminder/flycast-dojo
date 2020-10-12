@@ -28,6 +28,8 @@ MapleNet::MapleNet()
 	client_input_authority = true;
 	last_consecutive_common_frame = 1;
 	started = false;
+
+	spectating = false;
 }
 
 void MapleNet::LoadNetConfig()
@@ -38,7 +40,14 @@ void MapleNet::LoadNetConfig()
 	host_port = atoi(settings.maplenet.ServerPort.data());
 	delay = settings.maplenet.Delay;
 	debug = settings.maplenet.Debug;
-	player = settings.maplenet.ActAsServer ? 0 : 1;
+
+	if (spectating)
+	{
+		client_input_authority = false;
+		hosting = true;
+	}
+
+	player = hosting ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 	
 	client.SetHost(host_ip.data(), host_port);
@@ -378,7 +387,9 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 	if (port == 0)
 	{
 		FrameNumber++;
-		CaptureAndSendLocalFrame(pjs);
+		
+		if (!spectating)
+			CaptureAndSendLocalFrame(pjs);
 	}
 
 	// be sure not to duplicate input directed to other ports
@@ -500,7 +511,7 @@ void MapleNet::ClientLoopAction()
 int MapleNet::StartMapleNet()
 {
 	std::ostringstream NoticeStream;
-	if (settings.maplenet.ActAsServer)
+	if (hosting)
 	{
 		NoticeStream << "Hosting game on port " << host_port;
 		gui_display_notification(NoticeStream.str().data(), 5000);

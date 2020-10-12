@@ -163,6 +163,6 @@ void UDPClient::ClientLoop()
 
 void UDPClient::ClientThread()
 {
-	Init(settings.maplenet.ActAsServer);
+	Init(maplenet.hosting);
 	ClientLoop();
 }

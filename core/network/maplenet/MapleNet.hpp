@@ -111,6 +111,8 @@ public:
 	bool hosting;
 
 	int debug;
+
+	bool spectating;
 };
 
 extern MapleNet maplenet;
