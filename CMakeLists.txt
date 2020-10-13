@@ -160,6 +160,9 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
 endif()
 
+find_package(libzip CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
+
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
     pkg_search_module(AO ao)
@@ -427,12 +430,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/7zArchive.cpp
         core/archive/7zArchive.h
         core/archive/archive.cpp
-        core/archive/archive.h)
-if(NOT MSVC)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/archive/ZipArchive.cpp
-            core/archive/ZipArchive.h)
-endif()
+        core/archive/archive.h
+        core/archive/ZipArchive.cpp
+        core/archive/ZipArchive.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/arm_emitter/arm_coding.h
