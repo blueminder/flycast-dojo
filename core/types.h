@@ -498,6 +498,7 @@ struct settings_t
 	struct {
 		bool Enable;
 		bool ActAsServer;
+		bool Spectating;
 		std::string ServerIP;
 		std::string ServerPort;
 		int Delay;

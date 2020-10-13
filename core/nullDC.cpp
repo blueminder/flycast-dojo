@@ -779,6 +779,7 @@ void InitSettings()
 
 	settings.maplenet.Enable = false;
 	settings.maplenet.ActAsServer = false;
+	settings.maplenet.Spectating = false;
 	settings.maplenet.ServerIP = "127.0.0.1";
 	settings.maplenet.ServerPort = "7777";
 	settings.maplenet.Delay = 1;
@@ -893,6 +894,7 @@ void LoadSettings(bool game_specific)
 
 	settings.maplenet.Enable = cfgLoadBool("maplenet", "Enable", settings.maplenet.Enable);
 	settings.maplenet.ActAsServer = cfgLoadBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
+	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);

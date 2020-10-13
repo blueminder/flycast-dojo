@@ -36,10 +36,7 @@ void MapleNet::LoadNetConfig()
 {
 	enabled = settings.maplenet.Enable;
 	hosting = settings.maplenet.ActAsServer;
-	host_ip = settings.maplenet.ServerIP;
-	host_port = atoi(settings.maplenet.ServerPort.data());
-	delay = settings.maplenet.Delay;
-	debug = settings.maplenet.Debug;
+	spectating = settings.maplenet.Spectating;
 
 	if (spectating)
 	{
@@ -47,8 +44,14 @@ void MapleNet::LoadNetConfig()
 		hosting = true;
 	}
 
+	host_ip = settings.maplenet.ServerIP;
+	host_port = atoi(settings.maplenet.ServerPort.data());
+
 	player = hosting ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
+
+	delay = settings.maplenet.Delay;
+	debug = settings.maplenet.Debug;
 	
 	client.SetHost(host_ip.data(), host_port);
 }

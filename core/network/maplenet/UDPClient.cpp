@@ -98,7 +98,7 @@ void UDPClient::ClientLoop()
 	while (true)
 	{
 		// if match has not started, send packet to inform host who the opponent is
-		if (maplenet.FrameNumber > 0 && !settings.maplenet.ActAsServer)
+		if (maplenet.FrameNumber > 0 && !maplenet.hosting)
 		{
 			if (!maplenet.isMatchStarted)
 			{
