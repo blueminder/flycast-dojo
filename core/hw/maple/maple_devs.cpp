@@ -279,8 +279,8 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (settings.maplenet.Enable)
-					maplenet.ApplyNetInputs(&pjs, bus_id);
+				//if (settings.maplenet.Enable)
+					//maplenet.ApplyNetInputs(&pjs, bus_id);
 
 				//caps
 				//4
@@ -2793,6 +2793,16 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
+
+							if (settings.maplenet.Enable)
+							{
+								PlainJoystickState kpjs;
+								kpjs.kcode = kcode[player] | 0xF901;
+
+								maplenet.ApplyNetInputs(&kpjs, player);
+								kcode[player] = kpjs.kcode;
+							}
+
 							u16 cur_btns = read_digital_in(first_player + player);
 							if (player == 0)
 								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
