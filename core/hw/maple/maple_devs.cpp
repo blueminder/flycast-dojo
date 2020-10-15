@@ -279,8 +279,8 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				//if (settings.maplenet.Enable)
-					//maplenet.ApplyNetInputs(&pjs, bus_id);
+				if (settings.platform.system == DC_PLATFORM_DREAMCAST && settings.maplenet.Enable)
+					maplenet.ApplyNetInputs(&pjs, bus_id);
 
 				//caps
 				//4
@@ -1549,6 +1549,7 @@ protected:
 		if (player_num >= (int)ARRAY_SIZE(kcode))
 			return 0;
 		u32 buttons = 0;
+
 		if (player_num > 0 && !p2_mappings.empty())
 		{
 			// Check for P1 buttons mapped to P2 inputs
@@ -1559,6 +1560,7 @@ protected:
 
 			return buttons;
 		}
+
 		u32 keycode = ~kcode[player_num];
 		for (int i = 0; i < 16; i++)
 		{
@@ -2793,17 +2795,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-
-							if (settings.maplenet.Enable)
-							{
-								PlainJoystickState kpjs;
-								kpjs.kcode = kcode[player] | 0xF901;
-
-								maplenet.ApplyNetInputs(&kpjs, player);
-								kcode[player] = kpjs.kcode;
-							}
-
 							u16 cur_btns = read_digital_in(first_player + player);
+							if ((settings.platform.system == DC_PLATFORM_NAOMI || 
+								 settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
+							     settings.maplenet.Enable)
+								cur_btns = maplenet.ApplyNetInputsNAOMI(cur_btns, player);
 							if (player == 0)
 								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);

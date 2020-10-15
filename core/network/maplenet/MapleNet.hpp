@@ -84,6 +84,11 @@ public:
 	void TranslateFrameDataToInput(u8 data[8], PlainJoystickState* pjs);
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs);
 
+	u16 TranslateFrameDataToInputNAOMI(u8 data[FRAME_SIZE], u16 buttons);
+	u8* TranslateInputToFrameDataNAOMI(u16 buttons);
+	void CaptureAndSendLocalFrameNAOMI(u16 buttons);
+	u16 MapleNet::ApplyNetInputsNAOMI(u16 buttons, u32 port);
+
 	void CaptureAndSendLocalFrame(PlainJoystickState* pjs);
 	void ApplyNetInputs(PlainJoystickState* pjs, u32 port);
 
