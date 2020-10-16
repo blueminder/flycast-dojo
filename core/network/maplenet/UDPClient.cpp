@@ -1,7 +1,5 @@
 #include "MapleNet.hpp"
 
-#include "../net_platform.h"
-
 UDPClient::UDPClient()
 {
 	isStarted = false;
@@ -102,7 +100,6 @@ void UDPClient::ClientLoop()
 		{
 			if (!maplenet.isMatchStarted)
 			{
-				//socket.Send(host, to_send, PAYLOAD_SIZE);
 				sendto(local_socket, (const char*)to_send, PAYLOAD_SIZE, 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
 			}
 		}
@@ -116,7 +113,6 @@ void UDPClient::ClientLoop()
 				// send payload until morale improves
 				for (int i = 0; i < 5; i++)
 				{
-					//socket.Send(opponent, to_send, PAYLOAD_SIZE);
 					sendto(local_socket, (const char*)to_send, PAYLOAD_SIZE, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}
 
@@ -135,9 +131,7 @@ void UDPClient::ClientLoop()
 
 			struct sockaddr_in sender;
 			socklen_t senderlen = sizeof(sender);
-			//Address sender;
 			char buffer[256];
-			//int bytes_read = socket.Receive(sender, buffer, sizeof(buffer));
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{

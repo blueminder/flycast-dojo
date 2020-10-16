@@ -3,7 +3,7 @@
 #include <regex>
 #include <string>
 
-#include "../naomi_network.h"
+#include "../net_platform.h"
 
 class UDPClient
 {

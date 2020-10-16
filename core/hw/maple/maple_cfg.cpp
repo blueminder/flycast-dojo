@@ -4,8 +4,6 @@
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
 
-#include "network/maplenet/MapleNet.hpp"
-
 #define HAS_VMU
 /*
 bus_x=0{p0=1{config};p1=2{config};config;}

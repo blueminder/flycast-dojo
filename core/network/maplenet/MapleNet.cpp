@@ -333,9 +333,6 @@ void MapleNet::resume()
 
 void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
 {
-	// GetJoyStatus writes directly to current joystate
-	//GetJoyStatus(0);
-
 	u8 data[PAYLOAD_SIZE] = { 0 };
 	memcpy(data, TranslateInputToFrameData(pjs), FRAME_SIZE);
 	data[0] = player;
@@ -428,9 +425,6 @@ void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 
 void MapleNet::CaptureAndSendLocalFrameNAOMI(u16 buttons)
 {
-	// GetJoyStatus writes directly to current joystate
-	//GetJoyStatus(0);
-
 	u8 data[PAYLOAD_SIZE] = { 0 };
 	memcpy(data, TranslateInputToFrameDataNAOMI(buttons), FRAME_SIZE);
 	data[0] = player;

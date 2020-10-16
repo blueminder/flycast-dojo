@@ -1,5 +1,3 @@
-#include "UDP.hpp"
-
 #include <atomic>
 #include <bitset>
 #include <deque>
@@ -15,8 +13,8 @@
 #include <hw/maple/maple_devs.h>
 #include <rend/gui.h>
 
-//#include "Devices.h"
 #include "types.h"
+#include "UDP.hpp"
 
 #define FRAME_SIZE 10
 #define PAYLOAD_SIZE 38
