@@ -32,7 +32,6 @@
 class MapleNet
 {
 private:
-	
 	std::string host_ip;
 	u32 host_port;
 
@@ -79,18 +78,23 @@ public:
 
 	u32 get_analog_axis(int index, const PlainJoystickState& pjs);
 
-	void TranslateFrameDataToInput(u8 data[8], PlainJoystickState* pjs);
-	u8* TranslateInputToFrameData(PlainJoystickState* pjs);
+	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs);
+	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons);
+	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs, u16 buttons);
 
-	u16 TranslateFrameDataToInputNAOMI(u8 data[FRAME_SIZE], u16 buttons);
-	u8* TranslateInputToFrameDataNAOMI(u16 buttons);
-	void CaptureAndSendLocalFrameNAOMI(u16 buttons);
-	u16 ApplyNetInputsNAOMI(u16 buttons, u32 port);
+	u8* TranslateInputToFrameData(PlainJoystickState* pjs);
+	u8* TranslateInputToFrameData(u16 buttons);
+	u8* TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons);
+
+	void CaptureAndSendLocalFrame(u16 buttons);
+	void CaptureAndSendLocalFrame(PlainJoystickState* pjs);
+	void CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons);
+
+	u16 ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port);
+	u16 ApplyNetInputs(PlainJoystickState* pjs, u32 port);
+	u16 ApplyNetInputs(u16 buttons, u32 port);
 
 	bool net_coin_press;
-
-	void CaptureAndSendLocalFrame(PlainJoystickState* pjs);
-	void ApplyNetInputs(PlainJoystickState* pjs, u32 port);
 
 	UDPClient client;
 
@@ -101,7 +105,6 @@ public:
 	std::string CreateFrame(unsigned int frame_num, int player, int delay, const char* input);
 	void AddNetFrame(const char* received_data);
 	void AddBackFrames(const char* initial_frame, const char* back_inputs, int back_inputs_size);
-
 
 	void pause();
 	void resume();

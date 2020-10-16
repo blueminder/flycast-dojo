@@ -118,7 +118,17 @@ u16 maple_bitmasks[12] = {
 	1 << 11  // d coin
 };
 
-void MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs)
+u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs)
+{
+	return TranslateFrameDataToInput(data, pjs, 0);
+}
+
+u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons)
+{
+	return TranslateFrameDataToInput(data, 0, buttons);
+}
+
+u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs, u16 buttons)
 {
 	int frame = (
 		data[4] << 24 |
@@ -128,82 +138,48 @@ void MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState
 
 	u16 qin = data[2] | data[3] << 8;
 
-	if (pjs != NULL) {
-		for (int i = 0; i < 12; i++) {
-			if (qin & maple_bitmasks[i]) {
-				pjs->kcode ^= maple_bitmasks[i];
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		if (pjs != NULL) {
+			for (int i = 0; i < 12; i++) {
+				if (qin & maple_bitmasks[i]) {
+					pjs->kcode ^= maple_bitmasks[i];
+				}
 			}
+
+			// use naomi p2 section of button bitfield for dc triggers instead
+			if (data[3] & 0x10) {
+				pjs->trigger[1] = 0xFF;
+			}
+
+			if (data[3] & 0x20) {
+				pjs->trigger[0] = 0xFF;
+			}
+
+			// dc analog
+			pjs->joy[PJAI_X1] = data[8];
+			pjs->joy[PJAI_Y1] = data[9];
 		}
 
-		// use naomi p2 section of button bitfield for dc triggers instead
-		if (data[3] & 0x10) {
-			pjs->trigger[1] = 0xFF;
-		}
-
-		if (data[3] & 0x20) {
-			pjs->trigger[0] = 0xFF;
-		}
-
-		// dc analog
-		pjs->joy[PJAI_X1] = data[8];
-		pjs->joy[PJAI_Y1] = data[9];
+		return 0;
+	}
+	else
+	{
+		return qin;
 	}
 }
 
 u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs)
 {
-	static u8 data[FRAME_SIZE];
-
-	for (int i = 0; i < FRAME_SIZE; i++)
-		data[i] = 0;
-
-	data[0] = 8;
-	data[1] = delay;
-
-	// enter current frame count in last 4 bytes
-	int frame = FrameNumber;
-	memcpy(data + 4, (u8*)&frame, 4);
-
-	u16 qout = 0;
-
-	for (int i = 0; i < 12; i++) {
-		if ((pjs->kcode & maple_bitmasks[i]) == 0) {
-			qout ^= maple_bitmasks[i];
-		}
-	}
-
-	data[2] = qout & 0xff;
-	data[3] = (qout >> 8) & 0xff;
-
-	// r trigger
-	if (get_analog_axis(0, *pjs) == 255)
-		data[3] ^= 0x10;
-
-	// l trigger
-	if (get_analog_axis(1, *pjs) == 255)
-		data[3] ^= 0x20;
-
-	// dc analog
-	data[8] = (u8)pjs->joy[PJAI_X1];
-	data[9] = (u8)pjs->joy[PJAI_Y1];
-
-	return data;
+	return TranslateInputToFrameData(pjs, 0);
 }
 
-u16 MapleNet::TranslateFrameDataToInputNAOMI(u8 data[FRAME_SIZE], u16 buttons)
+u8* MapleNet::TranslateInputToFrameData(u16 buttons)
 {
-	int frame = (
-		data[4] << 24 |
-		data[5] << 16 |
-		data[6] << 8 |
-		data[7]);
-
-	u16 qin = data[2] | data[3] << 8;
-
-	return qin;
+	return TranslateInputToFrameData(0, buttons);
 }
 
-u8* MapleNet::TranslateInputToFrameDataNAOMI(u16 cur_btns)
+u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 {
 	static u8 data[FRAME_SIZE];
 
@@ -217,10 +193,40 @@ u8* MapleNet::TranslateInputToFrameDataNAOMI(u16 cur_btns)
 	int frame = FrameNumber;
 	memcpy(data + 4, (u8*)&frame, 4);
 
-	data[2] = cur_btns & 0xff;
-	data[3] = (cur_btns >> 8) & 0xff;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		u16 qout = 0;
 
-	return data;
+		for (int i = 0; i < 12; i++) {
+			if ((pjs->kcode & maple_bitmasks[i]) == 0) {
+				qout ^= maple_bitmasks[i];
+			}
+		}
+
+		data[2] = qout & 0xff;
+		data[3] = (qout >> 8) & 0xff;
+
+		// r trigger
+		if (get_analog_axis(0, *pjs) == 255)
+			data[3] ^= 0x10;
+
+		// l trigger
+		if (get_analog_axis(1, *pjs) == 255)
+			data[3] ^= 0x20;
+
+		// dc analog
+		data[8] = (u8)pjs->joy[PJAI_X1];
+		data[9] = (u8)pjs->joy[PJAI_Y1];
+
+		return data;
+	}
+	else
+	{
+		data[2] = buttons & 0xff;
+		data[3] = (buttons >> 8) & 0xff;
+
+		return data;
+	}
 }
 
 // copied from struct maple_sega_controller: maple_base
@@ -333,8 +339,22 @@ void MapleNet::resume()
 
 void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
 {
+	return CaptureAndSendLocalFrame(pjs, 0);
+}
+void MapleNet::CaptureAndSendLocalFrame(u16 buttons)
+{
+	return CaptureAndSendLocalFrame(0, buttons);
+}
+
+void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
+{
 	u8 data[PAYLOAD_SIZE] = { 0 };
-	memcpy(data, TranslateInputToFrameData(pjs), FRAME_SIZE);
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		memcpy(data, TranslateInputToFrameData(pjs), FRAME_SIZE);
+	else 
+		memcpy(data, TranslateInputToFrameData(buttons), FRAME_SIZE);
+
 	data[0] = player;
 	data[1] = delay;
 
@@ -362,102 +382,19 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
 	}
 }
 
-// intercepts local input, assigns delay, stores in map
-// applies stored input based on current frame count and player
-void MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
+u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 {
-	InputPort = port;
-
-	if (FrameNumber == 1)
-	{
-		LoadNetConfig();
-
-		u8 blank_frame[FRAME_SIZE] = { 0 };
-		blank_frame[0] = player;
-		blank_frame[1] = delay;
-
-		// seed with blank frames == delay amount
-		for (int j = 0; j < MaxPlayers; j++)
-		{
-			for (int i = 0; i < ((int)(SkipFrame + delay + 1)); i++)
-			{
-				int delay_frame = i;
-				blank_frame[0] = 0;
-				blank_frame[1] = delay;
-				memcpy(blank_frame + 2, (u8*)&delay_frame, 4);
-				std::string data_to_queue(blank_frame, blank_frame + FRAME_SIZE);
-				net_inputs[j][delay_frame] = data_to_queue;
-				net_input_keys[j].insert(delay_frame);
-			}
-		}
-
-		last_consecutive_common_frame = SkipFrame + delay;
-
-		StartMapleNet();
-	}
-
-	if (FrameNumber > SkipFrame)
-		while (isPaused);
-
-	PlainJoystickState blank_pjs;
-
-	// advance game state
-	if (port == 0)
-	{
-		FrameNumber++;
-		
-		if (!spectating)
-			CaptureAndSendLocalFrame(pjs);
-	}
-
-	// be sure not to duplicate input directed to other ports
-	memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
-
-	// assign inputs
-	// inputs captured and synced in client thread
-	while (CurrentFrameData[port].empty());
-
-	std::string to_apply(CurrentFrameData[port]);
-	TranslateFrameDataToInput((u8*)to_apply.data(), pjs);
-
-	CurrentFrameData[port] = "";
+	return ApplyNetInputs(pjs, 0, port);
 }
 
-void MapleNet::CaptureAndSendLocalFrameNAOMI(u16 buttons)
+u16 MapleNet::ApplyNetInputs(u16 buttons, u32 port)
 {
-	u8 data[PAYLOAD_SIZE] = { 0 };
-	memcpy(data, TranslateInputToFrameDataNAOMI(buttons), FRAME_SIZE);
-	data[0] = player;
-	data[1] = delay;
-
-	// add current input frame to player slot
-	if (local_input_keys.count(GetEffectiveFrameNumber(data)) == 0)
-	{
-		std::string to_send(data, data + PAYLOAD_SIZE);
-
-		if ((PAYLOAD_SIZE - FRAME_SIZE) > 0)
-		{
-			// cache input to send older frame data
-			last_inputs.push_front(to_send.substr(2, INPUT_SIZE));
-			if (last_inputs.size() > ((PAYLOAD_SIZE - FRAME_SIZE) / INPUT_SIZE))
-				last_inputs.pop_back();
-
-			std::string combined_last_inputs =
-				std::accumulate(last_inputs.begin(), last_inputs.end(), std::string(""));
-
-			// fill rest of payload with cached local inputs
-			to_send.replace(FRAME_SIZE, PAYLOAD_SIZE - FRAME_SIZE, combined_last_inputs);
-		}
-
-		client.SendData(to_send);
-		local_input_keys.insert(GetEffectiveFrameNumber(data));
-	}
+	return ApplyNetInputs(0, buttons, port);
 }
-
 
 // intercepts local input, assigns delay, stores in map
 // applies stored input based on current frame count and player
-u16 MapleNet::ApplyNetInputsNAOMI(u16 buttons, u32 port)
+u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
 	InputPort = port;
 
@@ -498,22 +435,40 @@ u16 MapleNet::ApplyNetInputsNAOMI(u16 buttons, u32 port)
 		FrameNumber++;
 
 		if (!spectating)
-			CaptureAndSendLocalFrameNAOMI(buttons);
+		{
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+				CaptureAndSendLocalFrame(pjs);
+			else
+				CaptureAndSendLocalFrame(buttons);
+		}
 	}
 
 	// be sure not to duplicate input directed to other ports
-	buttons = 0;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		PlainJoystickState blank_pjs;
+		memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
+	}
+	else
+		buttons = 0;
 
 	// assign inputs
 	// inputs captured and synced in client thread
 	while (CurrentFrameData[port].empty());
 
 	std::string to_apply(CurrentFrameData[port]);
-	buttons = TranslateFrameDataToInputNAOMI((u8*)to_apply.data(), buttons);
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		TranslateFrameDataToInput((u8*)to_apply.data(), pjs);
+	else
+		buttons = TranslateFrameDataToInput((u8*)to_apply.data(), buttons);
 
 	CurrentFrameData[port] = "";
 
-	return buttons;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		return 0;
+	else
+		return buttons;
 }
 
 void MapleNet::PrintFrameData(const char * prefix, u8 * data)
@@ -583,10 +538,10 @@ void MapleNet::ClientLoopAction()
 	{
 		std::string this_frame = "";
 
-		while (net_input_keys[current_port].count(FrameNumber - 1) == 0);
-
 		while (this_frame.empty())
 		{
+			while (net_input_keys[current_port].count(FrameNumber - 1) == 0);
+			
 			try {
 				this_frame = net_inputs[current_port].at(FrameNumber - 1);
 
@@ -614,12 +569,12 @@ int MapleNet::StartMapleNet()
 	if (hosting)
 	{
 		NoticeStream << "Hosting game on port " << host_port;
-		gui_display_notification(NoticeStream.str().data(), 5000);
+		gui_display_notification(NoticeStream.str().data(), 9000);
 	}
 	else
 	{
 		NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
-		gui_display_notification(NoticeStream.str().data(), 5000);
+		gui_display_notification(NoticeStream.str().data(), 9000);
 	}
 
 	try
@@ -636,3 +591,4 @@ int MapleNet::StartMapleNet()
 }
 
 MapleNet maplenet;
+

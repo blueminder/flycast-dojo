@@ -2799,7 +2799,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							if ((settings.platform.system == DC_PLATFORM_NAOMI || 
 								 settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
 							     settings.maplenet.Enable)
-								cur_btns = maplenet.ApplyNetInputsNAOMI(cur_btns, player);
+								cur_btns = maplenet.ApplyNetInputs(cur_btns, player);
 							if (player == 0)
 							{
 								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
