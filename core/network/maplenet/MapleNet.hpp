@@ -89,6 +89,8 @@ public:
 	void CaptureAndSendLocalFrameNAOMI(u16 buttons);
 	u16 ApplyNetInputsNAOMI(u16 buttons, u32 port);
 
+	bool net_coin_press;
+
 	void CaptureAndSendLocalFrame(PlainJoystickState* pjs);
 	void ApplyNetInputs(PlainJoystickState* pjs, u32 port);
 

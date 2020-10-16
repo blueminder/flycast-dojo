@@ -28,6 +28,8 @@ MapleNet::MapleNet()
 	started = false;
 
 	spectating = false;
+
+	net_coin_press = false;
 }
 
 void MapleNet::LoadNetConfig()
