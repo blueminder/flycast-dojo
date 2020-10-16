@@ -1332,6 +1332,9 @@ static void gui_display_settings()
 					ShowHelpMarker("The server port to connect to");
 					settings.maplenet.ServerPort = ServerPort;
 					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 8);
+					ImGui::Checkbox("Spectate/Playback Mode", &settings.maplenet.Spectating);
+					ImGui::SameLine();
+					ShowHelpMarker("Playback gameplay from incoming network stream");
 				}
 			}
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))

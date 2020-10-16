@@ -899,6 +899,8 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
 	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
+	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
+
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1066,6 +1068,7 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
+	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
 
 	GamepadDevice::SaveMaplePorts();
 
