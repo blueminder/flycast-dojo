@@ -2836,7 +2836,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							u16 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-							if ((keycode & mask) || maplenet.net_coin_press)
+							if ((keycode & mask) && !settings.maplenet.Enable || 
+								maplenet.net_coin_press && settings.maplenet.Enable)
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
