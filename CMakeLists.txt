@@ -160,8 +160,10 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
 endif()
 
-find_package(libzip CONFIG REQUIRED)
+if (MSVC)
+    find_package(libzip CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
+endif()
 
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
