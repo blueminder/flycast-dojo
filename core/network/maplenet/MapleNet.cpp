@@ -454,16 +454,35 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	// assign inputs
 	// inputs captured and synced in client thread
-	while (CurrentFrameData[port].empty());
+	std::string this_frame = "";
 
-	std::string to_apply(CurrentFrameData[port]);
+	while (net_input_keys[port].count(FrameNumber - 1) == 0);
+
+	while (this_frame.empty())
+	{
+		try {
+			this_frame = net_inputs[port].at(FrameNumber - 1);
+
+			if (!this_frame.empty())
+			{
+				if (settings.maplenet.Debug == DEBUG_APPLY ||
+					settings.maplenet.Debug == DEBUG_APPLY_BACKFILL ||
+					settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
+					settings.maplenet.Debug == DEBUG_ALL)
+				{
+					PrintFrameData("Applied", (u8*)this_frame.data());
+				}
+			}
+		}
+		catch (const std::out_of_range& oor) {};
+	}
+
+	std::string to_apply(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		TranslateFrameDataToInput((u8*)to_apply.data(), pjs);
 	else
 		buttons = TranslateFrameDataToInput((u8*)to_apply.data(), buttons);
-
-	CurrentFrameData[port] = "";
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		return 0;
@@ -527,40 +546,13 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 void MapleNet::ClientLoopAction()
 {
 	u32 current_port = InputPort;
+	u32 current_frame = FrameNumber;
 
-	if (last_consecutive_common_frame < (FrameNumber))
+	if (last_consecutive_common_frame < (current_frame))
 		pause();
 
-	if (last_consecutive_common_frame == FrameNumber)
+	if (last_consecutive_common_frame == current_frame)
 		resume();
-
-	if (CurrentFrameData[current_port].empty())
-	{
-		std::string this_frame = "";
-
-		while (this_frame.empty())
-		{
-			while (net_input_keys[current_port].count(FrameNumber - 1) == 0);
-			
-			try {
-				this_frame = net_inputs[current_port].at(FrameNumber - 1);
-
-				if (!this_frame.empty())
-				{
-					CurrentFrameData[current_port] = this_frame;
-
-					if (settings.maplenet.Debug == DEBUG_APPLY ||
-						settings.maplenet.Debug == DEBUG_APPLY_BACKFILL ||
-						settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
-						settings.maplenet.Debug == DEBUG_ALL)
-					{
-						PrintFrameData("Applied", (u8 *)this_frame.data());
-					}
-				}
-			}
-			catch (const std::out_of_range& oor) {};
-		}
-	}
 }
 
 int MapleNet::StartMapleNet()
