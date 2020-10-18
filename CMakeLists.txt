@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 
+# Modify compile flags to change optimization level from O3 to O2
+string(REGEX REPLACE "([\\/\\-]O)3" "\\12"
+  CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(REGEX REPLACE "([\\/\\-]O)3" "\\12"
+  CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+string(REGEX REPLACE "([\\/\\-]O)3" "\\12"
+  CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}")
+string(REGEX REPLACE "([\\/\\-]O)3" "\\12"
+  CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
