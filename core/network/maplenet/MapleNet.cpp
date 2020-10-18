@@ -283,7 +283,8 @@ std::string MapleNet::CreateFrame(unsigned int frame_num, int player, int delay,
 	new_frame[0] = player;
 	new_frame[1] = delay;
 
-	memcpy(new_frame + 2, (const char*)input, INPUT_SIZE);
+	if (input != 0)
+		memcpy(new_frame + 2, (const char*)input, INPUT_SIZE);
 
 	// enter current frame count in next 4 bytes
 	memcpy(new_frame + 4, (unsigned char*)&frame_num, sizeof(unsigned int));
@@ -402,22 +403,14 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		LoadNetConfig();
 
-		u8 blank_frame[FRAME_SIZE] = { 0 };
-		blank_frame[0] = player;
-		blank_frame[1] = delay;
-
 		// seed with blank frames == delay amount
 		for (int j = 0; j < MaxPlayers; j++)
 		{
 			for (int i = 0; i < ((int)(SkipFrame + delay + 1)); i++)
 			{
-				int delay_frame = i;
-				blank_frame[0] = 0;
-				blank_frame[1] = delay;
-				memcpy(blank_frame + 2, (u8*)&delay_frame, 4);
-				std::string data_to_queue(blank_frame, blank_frame + FRAME_SIZE);
-				net_inputs[j][delay_frame] = data_to_queue;
-				net_input_keys[j].insert(delay_frame);
+				std::string new_frame = CreateFrame(i, player, delay, 0);
+				net_inputs[j][i] = new_frame;
+				net_input_keys[j].insert(i);
 			}
 		}
 
