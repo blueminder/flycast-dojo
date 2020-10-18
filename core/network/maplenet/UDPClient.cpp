@@ -137,9 +137,6 @@ void UDPClient::ClientLoop()
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
-				if (maplenet.GetPlayer((u8*)buffer) == 0xFF)
-					disconnect_toggle = true;
-
 				if (disconnect_toggle)
 				{
 					char disconnect_packet[2];
@@ -148,10 +145,11 @@ void UDPClient::ClientLoop()
 					{
 						sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 					}
+					dc_exit();
 				}
 
-				if (disconnect_toggle && maplenet.GetPlayer((u8*)buffer) == 0xFF)
-					dc_exit();
+				if (maplenet.GetPlayer((u8*)buffer) == 0xFF)
+					disconnect_toggle = true;
 
 				if (bytes_read == PAYLOAD_SIZE)
 				{
