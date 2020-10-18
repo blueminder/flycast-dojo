@@ -456,7 +456,11 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	while (net_input_keys[port].count(FrameNumber - 1) == 0);
+	while (net_input_keys[port].count(FrameNumber - 1) == 0)
+	{
+		if (client.disconnect_toggle)
+			dc_exit();
+	}
 
 	while (this_frame.empty())
 	{

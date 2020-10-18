@@ -39,6 +39,8 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 
+#include "network/maplenet/MapleNet.hpp"
+
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
@@ -365,11 +367,18 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		// Exit to main menu
-		gui_state = Main;
-		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
-		dc_reset(true);
+		if (settings.maplenet.Enable && maplenet.isMatchStarted)
+		{
+			maplenet.client.disconnect_toggle = true;
+		}
+		else
+		{
+			// Exit to main menu
+			gui_state = Main;
+			game_started = false;
+			settings.imgread.ImagePath[0] = '\0';
+			dc_reset(true);
+		}
 	}
 
 	ImGui::End();

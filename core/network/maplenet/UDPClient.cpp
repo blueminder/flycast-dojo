@@ -1,5 +1,6 @@
 #include "MapleNet.hpp"
 
+
 UDPClient::UDPClient()
 {
 	isStarted = false;
@@ -7,6 +8,7 @@ UDPClient::UDPClient()
 	write_out = false;
 	memset((void*)to_send, 0, 256);
 	last_sent = "";
+	disconnect_toggle = false;
 };
 
 void UDPClient::SetHost(std::string host, int port)
@@ -135,6 +137,22 @@ void UDPClient::ClientLoop()
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
+				if (maplenet.GetPlayer((u8*)buffer) == 0xFF)
+					disconnect_toggle = true;
+
+				if (disconnect_toggle)
+				{
+					char disconnect_packet[2];
+					disconnect_packet[0] = 0xFF;
+					for (int i = 0; i < 5; i++)
+					{
+						sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+					}
+				}
+
+				if (disconnect_toggle && maplenet.GetPlayer((u8*)buffer) == 0xFF)
+					dc_exit();
+
 				if (bytes_read == PAYLOAD_SIZE)
 				{
 					if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)

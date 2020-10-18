@@ -37,6 +37,8 @@ public:
 	void ClientLoop();
 	//int Disconnect();
 
+	bool disconnect_toggle;
+
 	void ClientThread();
 
 	int SendData(std::string data);

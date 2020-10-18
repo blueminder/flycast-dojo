@@ -16,6 +16,8 @@
 #include "types.h"
 #include "UDP.hpp"
 
+#include "emulator.h"
+
 #define FRAME_SIZE 10
 #define PAYLOAD_SIZE 38
 #define INPUT_SIZE 4
