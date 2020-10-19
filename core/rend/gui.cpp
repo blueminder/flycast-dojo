@@ -1317,7 +1317,7 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
 		    }
-			if (ImGui::CollapsingHeader("Local Netplay", ImGuiTreeNodeFlags_DefaultOpen))
+			if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				ImGui::Checkbox("Enable##MapleNet", &settings.maplenet.Enable);
 				ImGui::SameLine();
@@ -1329,17 +1329,18 @@ static void gui_display_settings()
 					ShowHelpMarker("Host netplay game");
 					char ServerIP[256];
 					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
-					ImGui::InputText("Server IP", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::InputText("Server", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("The server IP to connect to");
-					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
 					settings.maplenet.ServerIP = ServerIP;
+
 					char ServerPort[256];
 					strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
 					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("The server port to connect to");
 					settings.maplenet.ServerPort = ServerPort;
+
 					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 8);
 					ImGui::Checkbox("Spectate/Playback Mode", &settings.maplenet.Spectating);
 					ImGui::SameLine();
