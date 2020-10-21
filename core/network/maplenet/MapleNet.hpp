@@ -19,7 +19,7 @@
 #include "emulator.h"
 
 #define FRAME_SIZE 10
-#define PAYLOAD_SIZE 38
+#define PAYLOAD_SIZE 22
 #define INPUT_SIZE 4
 
 #define DEBUG_APPLY 1
@@ -55,6 +55,8 @@ public:
 	int local_port;
 	int player;
 	int opponent;
+
+	bool coin_toggled;
 
 	u32 delay;
 

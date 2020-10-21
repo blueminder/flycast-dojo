@@ -3,6 +3,7 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
+#include <network\maplenet\MapleNet.hpp>
 
 #define HAS_VMU
 /*
@@ -110,8 +111,13 @@ bool maple_atomiswave_coin_chute(int slot)
 {
 	for (int i = 0; i < 16; i++)
 	{
-		if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
+		if (((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY) ||
+			maplenet.coin_toggled)
+		{
+			if (maplenet.coin_toggled)
+				maplenet.coin_toggled = false;
 			return true;
+		}
 	}
 	return false;
 }

@@ -103,7 +103,7 @@ u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 
 // based on http://mc.pp.se/dc/controller.html
 // data[2] in packet data
-u16 maple_bitmasks[12] = {
+u16 maple_bitmasks[13] = {
 	1 << 0,  // c service
 	1 << 1,  // b
 	1 << 2,  // a
@@ -115,7 +115,8 @@ u16 maple_bitmasks[12] = {
 	1 << 8,  // z test
 	1 << 10, // x
 	1 << 9,  // y
-	1 << 11  // d coin
+	1 << 11, // d coin
+	1 << 15  // atomiswave coin
 };
 
 u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs)
@@ -138,10 +139,11 @@ u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState*
 
 	u16 qin = data[2] | data[3] << 8;
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		if (pjs != NULL) {
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 13; i++) {
 				if (qin & maple_bitmasks[i]) {
 					pjs->kcode ^= maple_bitmasks[i];
 				}
@@ -193,11 +195,12 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 	int frame = FrameNumber;
 	memcpy(data + 4, (u8*)&frame, 4);
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		u16 qout = 0;
 
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 13; i++) {
 			if ((pjs->kcode & maple_bitmasks[i]) == 0) {
 				qout ^= maple_bitmasks[i];
 			}
@@ -206,14 +209,17 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 		data[2] = qout & 0xff;
 		data[3] = (qout >> 8) & 0xff;
 
-		// r trigger
-		if (get_analog_axis(0, *pjs) == 255)
-			data[3] ^= 0x10;
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		{
+			// r trigger
+			if (get_analog_axis(-1, *pjs) == 255)
+				data[2] ^= 0x10;
 
-		// l trigger
-		if (get_analog_axis(1, *pjs) == 255)
-			data[3] ^= 0x20;
-
+			// l trigger
+			if (get_analog_axis(0, *pjs) == 255)
+				data[2] ^= 0x20;
+		}
+	
 		// dc analog
 		data[8] = (u8)pjs->joy[PJAI_X1];
 		data[9] = (u8)pjs->joy[PJAI_Y1];
@@ -351,7 +357,8 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 {
 	u8 data[PAYLOAD_SIZE] = { 0 };
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		memcpy(data, TranslateInputToFrameData(pjs), FRAME_SIZE);
 	else 
 		memcpy(data, TranslateInputToFrameData(buttons), FRAME_SIZE);
@@ -429,7 +436,8 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 		if (!spectating)
 		{
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 				CaptureAndSendLocalFrame(pjs);
 			else
 				CaptureAndSendLocalFrame(buttons);
@@ -437,7 +445,8 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	}
 
 	// be sure not to duplicate input directed to other ports
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		PlainJoystickState blank_pjs;
 		memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
@@ -476,12 +485,14 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	std::string to_apply(this_frame);
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		TranslateFrameDataToInput((u8*)to_apply.data(), pjs);
 	else
 		buttons = TranslateFrameDataToInput((u8*)to_apply.data(), buttons);
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		return 0;
 	else
 		return buttons;
