@@ -630,6 +630,9 @@ static void dc_start_game(const char *path)
 		}
 	}
 	fast_forward_mode = false;
+
+	if (settings.maplenet.Enable)
+		dc_loadstate();
 }
 
 bool dc_is_running()

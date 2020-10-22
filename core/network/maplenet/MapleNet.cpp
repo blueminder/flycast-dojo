@@ -415,9 +415,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	if (FrameNumber == 1)
 	{
 		if (settings.maplenet.RecordMatches)
-		{
 			replay_filename = CreateReplayFile();
-		}
 
 		// seed with blank frames == delay amount
 		for (int j = 0; j < MaxPlayers; j++)
