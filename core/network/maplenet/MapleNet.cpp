@@ -277,8 +277,8 @@ void MapleNet::AddNetFrame(const char* received_data)
 			std::pair<u32, std::string>(effective_frame_num, data_to_queue));
 		net_input_keys[frame_player].insert(effective_frame_num);
 
-		if (settings.maplenet.RecordMatches)
-			AppendToReplayFile(data_to_queue);
+		//if (settings.maplenet.RecordMatches)
+			//AppendToReplayFile(data_to_queue);
 	}
 
 	if (net_inputs[frame_player].count(effective_frame_num) == 1 &&
@@ -458,7 +458,6 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
-
 		if (!spectating && !settings.maplenet.PlayMatch)
 		{
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -469,10 +468,9 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	if (settings.maplenet.PlayMatch && FrameNumber < 700)
-	{
-		return buttons;
-	}
+	//if (settings.maplenet.PlayMatch && FrameNumber < 700)
+		//return buttons;
+
 	// be sure not to duplicate input directed to other ports
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -514,6 +512,9 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 
 	std::string to_apply(this_frame);
+
+	if (settings.maplenet.RecordMatches)
+		AppendToReplayFile(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -670,8 +671,12 @@ void MapleNet::LoadReplayFile(std::string path)
 			
 		int player_num = GetPlayer((u8*)buffer);
 		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
-		net_inputs[player_num][frame_num] = std::string(buffer, FRAME_SIZE);
-		net_input_keys[player_num].insert(frame_num);
+
+		if (net_inputs[player_num].count(frame_num) == 0)
+		{
+			net_inputs[player_num][frame_num] = std::string(buffer, FRAME_SIZE);
+			net_input_keys[player_num].insert(frame_num);
+		}	
 
 		if (!count)
 			break;
