@@ -1,7 +1,10 @@
 #include <atomic>
 #include <bitset>
+#include <chrono>
 #include <deque>
+#include <fstream>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <numeric>
 #include <set>
@@ -125,6 +128,12 @@ public:
 	int debug;
 
 	bool spectating;
+
+	std::string CreateReplayFile();
+	void AppendToReplayFile(std::string frame);
+	void LoadReplayFile(std::string path);
+
+	std::string replay_filename;
 };
 
 extern MapleNet maplenet;

@@ -779,6 +779,7 @@ void InitSettings()
 
 	settings.maplenet.Enable = false;
 	settings.maplenet.ActAsServer = false;
+	settings.maplenet.RecordMatches = false;
 	settings.maplenet.Spectating = false;
 	settings.maplenet.ServerIP = "127.0.0.1";
 	settings.maplenet.ServerPort = "7777";
@@ -900,7 +901,9 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
 	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
 	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
-
+	settings.maplenet.RecordMatches = cfgLoadBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
+	settings.maplenet.PlayMatch = cfgLoadBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
+	settings.maplenet.ReplayFilename = cfgLoadStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);

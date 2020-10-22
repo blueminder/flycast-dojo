@@ -499,6 +499,9 @@ struct settings_t
 		bool Enable;
 		bool ActAsServer;
 		bool Spectating;
+		bool RecordMatches;
+		bool PlayMatch;
+		std::string ReplayFilename;
 		std::string ServerIP;
 		std::string ServerPort;
 		int Delay;

@@ -1,4 +1,5 @@
 #include "MapleNet.hpp"
+#include <iomanip>
 
 MapleNet::MapleNet()
 {
@@ -30,6 +31,8 @@ MapleNet::MapleNet()
 	spectating = false;
 
 	net_coin_press = false;
+
+	replay_filename = "";
 }
 
 void MapleNet::LoadNetConfig()
@@ -273,6 +276,9 @@ void MapleNet::AddNetFrame(const char* received_data)
 		net_inputs[frame_player].insert(
 			std::pair<u32, std::string>(effective_frame_num, data_to_queue));
 		net_input_keys[frame_player].insert(effective_frame_num);
+
+		if (settings.maplenet.RecordMatches)
+			AppendToReplayFile(data_to_queue);
 	}
 
 	if (net_inputs[frame_player].count(effective_frame_num) == 1 &&
@@ -408,7 +414,10 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 1)
 	{
-		LoadNetConfig();
+		if (settings.maplenet.RecordMatches)
+		{
+			replay_filename = CreateReplayFile();
+		}
 
 		// seed with blank frames == delay amount
 		for (int j = 0; j < MaxPlayers; j++)
@@ -418,12 +427,27 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 				std::string new_frame = CreateFrame(i, player, delay, 0);
 				net_inputs[j][i] = new_frame;
 				net_input_keys[j].insert(i);
+
+				if (settings.maplenet.RecordMatches)
+					AppendToReplayFile(new_frame);
 			}
 		}
 
-		last_consecutive_common_frame = SkipFrame + delay;
+		if (settings.maplenet.PlayMatch)
+		{
+			LoadReplayFile(settings.maplenet.ReplayFilename);
+			net_inputs[0][11] = CreateFrame(10, 0, 1, 0);
+			net_input_keys[0].insert(11);
+			resume();
+		}
+		else
+		{
+			LoadNetConfig();
+			
+			last_consecutive_common_frame = SkipFrame + delay;
 
-		StartMapleNet();
+			StartMapleNet();
+		}
 	}
 
 	if (FrameNumber > SkipFrame)
@@ -434,7 +458,8 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
-		if (!spectating)
+
+		if (!spectating && !settings.maplenet.PlayMatch)
 		{
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -444,6 +469,10 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
+	if (settings.maplenet.PlayMatch && FrameNumber < 700)
+	{
+		return buttons;
+	}
 	// be sure not to duplicate input directed to other ports
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -482,6 +511,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 		catch (const std::out_of_range& oor) {};
 	}
+
 
 	std::string to_apply(this_frame);
 
@@ -588,6 +618,66 @@ int MapleNet::StartMapleNet()
 	{
 		return 1;
 	}
+}
+
+std::string currentISO8601TimeUTC() {
+  auto now = std::chrono::system_clock::now();
+  auto itt = std::chrono::system_clock::to_time_t(now);
+  std::ostringstream ss;
+  ss << std::put_time(gmtime(&itt), "%FT%TZ");
+  return ss.str();
+}
+
+std::string MapleNet::CreateReplayFile()
+{
+	// create timestamp string, iso8601 format
+	std::string timestamp = currentISO8601TimeUTC();
+	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
+	std::string filename = timestamp.append(".flyreplay");
+	// create replay file itself
+	std::ofstream file;
+	file.open(filename);
+	// define metadata at beginning of file
+
+	return filename;
+}
+
+void MapleNet::AppendToReplayFile(std::string frame)
+{
+	if (frame.size() == FRAME_SIZE)
+	{
+		// append frame data to replay file
+		std::ofstream fout(replay_filename, 
+			std::ios::out | std::ios::binary | std::ios_base::app);
+
+		fout.write(frame.data(), FRAME_SIZE);
+		fout.close();
+	}
+}
+
+void MapleNet::LoadReplayFile(std::string path)
+{
+	// add string in increments of FRAME_SIZE to net_inputs
+	std::ifstream fin(path, 
+		std::ios::in | std::ios::binary);
+
+	char* buffer = new char[FRAME_SIZE];
+
+	while (fin)
+	{
+		fin.read(buffer, FRAME_SIZE);
+		size_t count = fin.gcount();
+			
+		int player_num = GetPlayer((u8*)buffer);
+		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
+		net_inputs[player_num][frame_num] = std::string(buffer, FRAME_SIZE);
+		net_input_keys[player_num].insert(frame_num);
+
+		if (!count)
+			break;
+	}
+
+	delete[] buffer;
 }
 
 MapleNet maplenet;
