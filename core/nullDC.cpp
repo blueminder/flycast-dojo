@@ -632,7 +632,11 @@ static void dc_start_game(const char *path)
 	fast_forward_mode = false;
 
 	if (settings.maplenet.Enable)
-		dc_loadstate();
+	{
+		std::string net_save_path = get_savestate_file_path();
+		net_save_path.append(".net");
+		dc_loadstate(net_save_path);
+	}
 }
 
 bool dc_is_running()
@@ -1122,7 +1126,11 @@ static std::string get_savestate_file_path()
 
 void dc_savestate()
 {
-	std::string filename;
+	dc_savestate(get_savestate_file_path());
+}
+
+void dc_savestate(std::string filename)
+{
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -1157,7 +1165,6 @@ void dc_savestate()
     	return;
 	}
 
-	filename = get_savestate_file_path();
 	f = fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
@@ -1178,7 +1185,11 @@ void dc_savestate()
 
 void dc_loadstate()
 {
-    std::string filename;
+	dc_loadstate(get_savestate_file_path());
+}
+
+void dc_loadstate(std::string filename)
+{
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -1186,7 +1197,6 @@ void dc_loadstate()
 
 	dc_stop();
 
-	filename = get_savestate_file_path();
 	f = fopen(filename.c_str(), "rb") ;
 
 	if ( f == NULL )

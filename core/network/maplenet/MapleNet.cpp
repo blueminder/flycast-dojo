@@ -434,16 +434,13 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		if (settings.maplenet.PlayMatch)
 		{
 			LoadReplayFile(settings.maplenet.ReplayFilename);
-			net_inputs[0][11] = CreateFrame(10, 0, 1, 0);
-			net_input_keys[0].insert(11);
 			resume();
 		}
 		else
 		{
-			LoadNetConfig();
-			
 			last_consecutive_common_frame = SkipFrame + delay;
 
+			LoadNetConfig();
 			StartMapleNet();
 		}
 	}

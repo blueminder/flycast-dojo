@@ -37,9 +37,13 @@ void dc_request_reset();
 void dc_exit();
 void dc_resume();
 void dc_savestate();
+void dc_savestate(std::string filename);
 void dc_loadstate();
+void dc_loadstate(std::string filename);
 void dc_load_game(const char *path);
 bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
+
+static std::string get_savestate_file_path();
