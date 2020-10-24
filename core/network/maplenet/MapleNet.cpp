@@ -629,7 +629,7 @@ std::string MapleNet::CreateReplayFile()
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
-	std::string filename = timestamp.append(".flyreplay");
+	std::string filename = "replays/" + timestamp.append(".flyreplay");
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);
