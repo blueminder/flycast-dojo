@@ -463,9 +463,6 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	//if (settings.maplenet.PlayMatch && FrameNumber < 700)
-		//return buttons;
-
 	// be sure not to duplicate input directed to other ports
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -481,8 +478,8 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	std::string this_frame = "";
 
 	if (settings.maplenet.PlayMatch &&
-		FrameNumber > net_input_keys[0].size() ||
-		FrameNumber > net_input_keys[1].size())
+		(FrameNumber > net_input_keys[0].size() ||
+		FrameNumber > net_input_keys[1].size()))
 		dc_exit();
 
 	while (net_input_keys[port].count(FrameNumber - 1) == 0)
