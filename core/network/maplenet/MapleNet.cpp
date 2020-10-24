@@ -417,10 +417,10 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		if (settings.maplenet.RecordMatches)
 			replay_filename = CreateReplayFile();
 
-		// seed with blank frames == delay amount
+		// seed with blank frames == max delay amount
 		for (int j = 0; j < MaxPlayers; j++)
 		{
-			for (int i = 0; i < ((int)(SkipFrame + delay + 1)); i++)
+			for (int i = 0; i < ((int)(SkipFrame + delay + 10)); i++)
 			{
 				std::string new_frame = CreateFrame(i, player, delay, 0);
 				net_inputs[j][i] = new_frame;
@@ -634,6 +634,8 @@ std::string MapleNet::CreateReplayFile()
 	std::ofstream file;
 	file.open(filename);
 	// define metadata at beginning of file
+
+	settings.maplenet.ReplayFilename = filename;
 
 	return filename;
 }

@@ -1329,7 +1329,7 @@ static void gui_display_settings()
 					ShowHelpMarker("Host netplay game");
 					char ServerIP[256];
 					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
-					ImGui::InputText("Server", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::InputText("Server##MapleNet", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("The server IP to connect to");
 					settings.maplenet.ServerIP = ServerIP;
@@ -1341,10 +1341,27 @@ static void gui_display_settings()
 					ShowHelpMarker("The server port to connect to");
 					settings.maplenet.ServerPort = ServerPort;
 
-					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 8);
-					ImGui::Checkbox("Spectate/Playback Mode", &settings.maplenet.Spectating);
+					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 10);
+					ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
+					ImGui::SameLine();
+					ShowHelpMarker("Record all netplay sessions to a local file");
+					
+					ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
+					ImGui::SameLine();
+					ShowHelpMarker("Plays local replay file");
+
+					char ReplayFilename[256] = { 0 };
+					strcpy(ReplayFilename, settings.maplenet.ReplayFilename.c_str());
+					ImGui::InputText("Replay Filename", ReplayFilename, sizeof(ReplayFilename), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
+					settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
+
+					ImGui::Checkbox("Spectate Network Game", &settings.maplenet.Spectating);
 					ImGui::SameLine();
 					ShowHelpMarker("Playback gameplay from incoming network stream");
+
+
 				}
 			}
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))

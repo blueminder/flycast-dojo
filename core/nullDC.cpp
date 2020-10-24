@@ -792,6 +792,7 @@ void InitSettings()
 	settings.maplenet.ServerPort = "7777";
 	settings.maplenet.Delay = 1;
 	settings.maplenet.Debug = 8;
+	settings.maplenet.ReplayFilename = "";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -1079,6 +1080,9 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
+	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
+	cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
+	cfgSaveStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 
