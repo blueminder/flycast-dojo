@@ -129,6 +129,7 @@ public:
 
 	bool spectating;
 
+	std::string GetRomNamePrefix();
 	std::string CreateReplayFile();
 	void AppendToReplayFile(std::string frame);
 	void LoadReplayFile(std::string path);

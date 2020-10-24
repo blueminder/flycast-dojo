@@ -629,16 +629,38 @@ std::string currentISO8601TimeUTC() {
   return ss.str();
 }
 
+std::string MapleNet::GetRomNamePrefix()
+{
+	// shamelessly stolen from nullDC.cpp#get_savestate_file_path()
+	std::string state_file = settings.imgread.ImagePath;
+	size_t lastindex = state_file.find_last_of('/');
+#ifdef _WIN32
+	size_t lastindex2 = state_file.find_last_of('\\');
+	if (lastindex == std::string::npos)
+		lastindex = lastindex2;
+	else if (lastindex2 != std::string::npos)
+		lastindex = std::max(lastindex, lastindex2);
+#endif
+	if (lastindex != std::string::npos)
+		state_file = state_file.substr(lastindex + 1);
+	lastindex = state_file.find_last_of('.');
+	if (lastindex != std::string::npos)
+		state_file = state_file.substr(0, lastindex);
+
+	return state_file;
+}
+
 std::string MapleNet::CreateReplayFile()
 {
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
-	std::string filename = "replays/" + timestamp.append(".flyreplay");
+	std::string rom_name = GetRomNamePrefix();
+	std::string filename = "replays/" + rom_name +  "-" + timestamp + ".flyreplay";
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);
-	// define metadata at beginning of file
+	// TODO define metadata at beginning of file
 
 	settings.maplenet.ReplayFilename = filename;
 
