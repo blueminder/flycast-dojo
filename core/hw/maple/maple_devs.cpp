@@ -287,7 +287,7 @@ struct maple_sega_controller: maple_base
 				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 				{
 					bool coin_pressed = (pjs.kcode & AWAVE_COIN_KEY) == 0;
-					if (coin_pressed)
+					if (coin_pressed && bus_id == 0)
 					{
 						// player 0 acts as master of the coin
 						maplenet.coin_toggled = true;
