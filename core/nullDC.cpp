@@ -712,8 +712,17 @@ void dc_request_reset()
 
 void dc_exit()
 {
-	dc_stop();
-	rend_stop_renderer();
+	if (settings.maplenet.Enable &&
+		maplenet.isMatchStarted &&
+		!maplenet.client.disconnect_toggle)
+	{
+		maplenet.client.disconnect_toggle = true;
+	}
+	else
+	{
+		dc_stop();
+		rend_stop_renderer();
+	}
 }
 
 void InitSettings()
