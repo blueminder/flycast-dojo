@@ -2814,8 +2814,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							if (player == 0)
 							{
 								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
-								// player 0 acts as master of the coin
-								if (cur_btns == 1)
+								if (cur_btns & 1)
 									maplenet.net_coin_press = true;
 							}
 							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);
@@ -2847,8 +2846,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							u16 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-							if ((keycode & mask) && !settings.maplenet.Enable || 
-								maplenet.net_coin_press && settings.maplenet.Enable)
+							if (((keycode & mask) && !settings.maplenet.Enable) || 
+								(maplenet.net_coin_press && settings.maplenet.Enable))
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
