@@ -276,9 +276,6 @@ void MapleNet::AddNetFrame(const char* received_data)
 		net_inputs[frame_player].insert(
 			std::pair<u32, std::string>(effective_frame_num, data_to_queue));
 		net_input_keys[frame_player].insert(effective_frame_num);
-
-		//if (settings.maplenet.RecordMatches)
-			//AppendToReplayFile(data_to_queue);
 	}
 
 	if (net_inputs[frame_player].count(effective_frame_num) == 1 &&
@@ -317,15 +314,22 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 	int initial_player = GetPlayer((u8*)initial_frame);
 	int initial_delay = GetDelay((u8*)initial_frame);
 	u32 initial_frame_num = GetEffectiveFrameNumber((u8*)initial_frame);
+	u16 initial_input = GetInputData((u8*)initial_frame);
+
+	char* all_inputs = new char[(int)INPUT_SIZE + back_inputs_size];
+	memcpy(all_inputs, &initial_input, INPUT_SIZE);
+	memcpy(all_inputs + INPUT_SIZE, back_inputs, back_inputs_size);
 
 	// generates and adds missing frames from old inputs at the end of the payload
-	for (int i = 1; i <= (back_inputs_size / INPUT_SIZE); i++)
+	for (int i = 0; i < (((int)INPUT_SIZE + back_inputs_size) / INPUT_SIZE); i++)
 	{
 		if (((int)initial_frame_num - i) > 2 &&
 			net_inputs[initial_player].count(initial_frame_num - i) == 0)
 		{
 			char frame_fill[FRAME_SIZE] = { 0 };
-			std::string new_frame = CreateFrame(initial_frame_num - initial_delay - i, initial_player, initial_delay, back_inputs + (i * INPUT_SIZE));
+			std::string new_frame = 
+				CreateFrame(initial_frame_num - initial_delay - i, initial_player, 
+					initial_delay, all_inputs + (i * INPUT_SIZE));
 			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
 
@@ -338,6 +342,8 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 			}
 		}
 	}
+
+	delete[] all_inputs;
 }
 
 void MapleNet::pause()
@@ -574,7 +580,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		return;
 
 	std::string to_add(received_data, received_data + FRAME_SIZE);
-	AddNetFrame(to_add.data());
+	//AddNetFrame(to_add.data());
 	AddBackFrames(to_add.data(), to_add.data() + FRAME_SIZE, PAYLOAD_SIZE - FRAME_SIZE);
 }
 
