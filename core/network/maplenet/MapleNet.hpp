@@ -22,7 +22,7 @@
 #include "emulator.h"
 
 #define FRAME_SIZE 12
-#define PAYLOAD_SIZE 42
+#define PAYLOAD_SIZE 48
 #define INPUT_SIZE 6
 
 #define DEBUG_APPLY 1
