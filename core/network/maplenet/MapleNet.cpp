@@ -71,23 +71,34 @@ int MapleNet::GetDelay(u8* data)
 
 u32 MapleNet::GetFrameNumber(u8* data)
 {
-	return (int)(*(u32*)(data + 4));
+	return (int)(*(u32*)(data + 2));
 }
 
 u16 MapleNet::GetInputData(u8* data)
 {
-	u16 input = data[2] | data[3] << 8;
+	u16 input = data[6] | data[7] << 8;
 	return input;
 }
 
+u8 MapleNet::GetTriggerR(u8* data)
+{
+	return data[8];
+}
+
+u8 MapleNet::GetTriggerL(u8* data)
+{
+	return data[9];
+}
+
+
 u32 MapleNet::GetAnalogX(u8* data)
 {
-	return (u32)data[8];
+	return (u32)data[10];
 }
 
 u32 MapleNet::GetAnalogY(u8* data)
 {
-	return (u32)data[9];
+	return (u32)data[11];
 }
 
 u32 MapleNet::GetEffectiveFrameNumber(u8* data)
@@ -98,11 +109,13 @@ u32 MapleNet::GetEffectiveFrameNumber(u8* data)
 // packet data format
 // 0: player (u8)
 // 1: delay (u8)
-// 2: input[0] (u8)
-// 3: input[1] (u8)
-// 4-7: frame (u32)
-// 8: analog x (u8)
-// 9: analog y (u8)
+// 2-5: frame (u32)
+// 6: input[0] (u8)
+// 7: input[1] (u8)
+// 8: trigger[0] (u8)
+// 9: trigger[1] (u8)
+// 10: analog x (u8)
+// 11: analog y (u8)
 
 // based on http://mc.pp.se/dc/controller.html
 // data[2] in packet data
@@ -135,12 +148,12 @@ u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons)
 u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs, u16 buttons)
 {
 	int frame = (
-		data[4] << 24 |
-		data[5] << 16 |
-		data[6] << 8 |
-		data[7]);
+		data[2] << 24 |
+		data[3] << 16 |
+		data[4] << 8 |
+		data[5]);
 
-	u16 qin = data[2] | data[3] << 8;
+	u16 qin = data[6] | data[7] << 8;
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -152,18 +165,13 @@ u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState*
 				}
 			}
 
-			// use naomi p2 section of button bitfield for dc triggers instead
-			if (data[3] & 0x10) {
-				pjs->trigger[1] = 0xFF;
-			}
-
-			if (data[3] & 0x20) {
-				pjs->trigger[0] = 0xFF;
-			}
+			// dc triggers
+			pjs->trigger[1] = data[8];
+			pjs->trigger[0] = data[9];
 
 			// dc analog
-			pjs->joy[PJAI_X1] = data[8];
-			pjs->joy[PJAI_Y1] = data[9];
+			pjs->joy[PJAI_X1] = data[10];
+			pjs->joy[PJAI_Y1] = data[11];
 		}
 
 		return 0;
@@ -196,7 +204,7 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 
 	// enter current frame count in last 4 bytes
 	int frame = FrameNumber;
-	memcpy(data + 4, (u8*)&frame, 4);
+	memcpy(data + 2, (u8*)&frame, 4);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -209,30 +217,23 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 			}
 		}
 
-		data[2] = qout & 0xff;
-		data[3] = (qout >> 8) & 0xff;
+		data[6] = qout & 0xff;
+		data[7] = (qout >> 8) & 0xff;
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		{
-			// r trigger
-			if (get_analog_axis(-1, *pjs) == 255)
-				data[2] ^= 0x10;
-
-			// l trigger
-			if (get_analog_axis(0, *pjs) == 255)
-				data[2] ^= 0x20;
-		}
+		// dc triggers
+		data[8] = (u8)get_analog_axis(0, *pjs);
+		data[9] = (u8)get_analog_axis(1, *pjs);
 	
 		// dc analog
-		data[8] = (u8)pjs->joy[PJAI_X1];
-		data[9] = (u8)pjs->joy[PJAI_Y1];
+		data[10] = (u8)pjs->joy[PJAI_X1];
+		data[11] = (u8)pjs->joy[PJAI_Y1];
 
 		return data;
 	}
 	else
 	{
-		data[2] = buttons & 0xff;
-		data[3] = (buttons >> 8) & 0xff;
+		data[6] = buttons & 0xff;
+		data[7] = (buttons >> 8) & 0xff;
 
 		return data;
 	}
@@ -292,11 +293,11 @@ std::string MapleNet::CreateFrame(unsigned int frame_num, int player, int delay,
 	new_frame[0] = player;
 	new_frame[1] = delay;
 
-	if (input != 0)
-		memcpy(new_frame + 2, (const char*)input, INPUT_SIZE);
-
 	// enter current frame count in next 4 bytes
-	memcpy(new_frame + 4, (unsigned char*)&frame_num, sizeof(unsigned int));
+	memcpy(new_frame + 2, (unsigned char*)&frame_num, sizeof(unsigned int));
+
+	if (input != 0)
+		memcpy(new_frame + 6, (const char*)input, INPUT_SIZE);
 
 	char ret_frame[FRAME_SIZE] = { 0 };
 	memcpy((void*)ret_frame, new_frame, FRAME_SIZE);
@@ -314,14 +315,14 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 	int initial_player = GetPlayer((u8*)initial_frame);
 	int initial_delay = GetDelay((u8*)initial_frame);
 	u32 initial_frame_num = GetEffectiveFrameNumber((u8*)initial_frame);
-	u16 initial_input = GetInputData((u8*)initial_frame);
 
-	char* all_inputs = new char[(int)INPUT_SIZE + back_inputs_size];
-	memcpy(all_inputs, &initial_input, INPUT_SIZE);
+	int all_inputs_size = back_inputs_size + INPUT_SIZE;
+	char* all_inputs = new char[all_inputs_size];
+	memcpy(all_inputs, initial_frame + 6, INPUT_SIZE);
 	memcpy(all_inputs + INPUT_SIZE, back_inputs, back_inputs_size);
 
 	// generates and adds missing frames from old inputs at the end of the payload
-	for (int i = 0; i < (((int)INPUT_SIZE + back_inputs_size) / INPUT_SIZE); i++)
+	for (int i = 0; i < ((back_inputs_size + INPUT_SIZE) / INPUT_SIZE); i++)
 	{
 		if (((int)initial_frame_num - i) > 2 &&
 			net_inputs[initial_player].count(initial_frame_num - i) == 0)
@@ -386,7 +387,7 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 		if ((PAYLOAD_SIZE - FRAME_SIZE) > 0)
 		{
 			// cache input to send older frame data
-			last_inputs.push_front(to_send.substr(2, INPUT_SIZE));
+			last_inputs.push_front(to_send.substr(6, INPUT_SIZE));
 			if (last_inputs.size() > ((PAYLOAD_SIZE - FRAME_SIZE) / INPUT_SIZE))
 				last_inputs.pop_back();
 
@@ -540,14 +541,17 @@ void MapleNet::PrintFrameData(const char * prefix, u8 * data)
 	u32 frame = GetFrameNumber(data);
 	u32 effective_frame = GetEffectiveFrameNumber(data);
 
+	u32 triggerr = GetTriggerR(data);
+	u32 triggerl = GetTriggerL(data);
+
 	u32 analogx = GetAnalogX(data);
 	u32 analogy = GetAnalogY(data);
 
 	std::bitset<16> input_bitset(input);
 
 	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u",
-		prefix, effective_frame, frame, delay, player, 
-		input_bitset.to_string().c_str(), analogx, analogy);
+		prefix, effective_frame, frame, delay, player, input_bitset.to_string().c_str(), 
+		triggerr, triggerl, analogx, analogy);
 }
 
 // called on by client thread once data is received
@@ -580,7 +584,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		return;
 
 	std::string to_add(received_data, received_data + FRAME_SIZE);
-	//AddNetFrame(to_add.data());
+	AddNetFrame(to_add.data());
 	AddBackFrames(to_add.data(), to_add.data() + FRAME_SIZE, PAYLOAD_SIZE - FRAME_SIZE);
 }
 
