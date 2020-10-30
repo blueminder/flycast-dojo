@@ -99,6 +99,17 @@ void UDPClient::ClientLoop()
 	{
 		while (true)
 		{
+			if (disconnect_toggle)
+			{
+				char disconnect_packet[2];
+				disconnect_packet[0] = 0xFF;
+				for (int i = 0; i < 5; i++)
+				{
+					sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				}
+				dc_exit();
+			}
+
 			// if match has not started, send packet to inform host who the opponent is
 			if (maplenet.FrameNumber > 0 && !maplenet.hosting)
 			{
@@ -137,17 +148,6 @@ void UDPClient::ClientLoop()
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
-				if (disconnect_toggle)
-				{
-					char disconnect_packet[2];
-					disconnect_packet[0] = 0xFF;
-					for (int i = 0; i < 5; i++)
-					{
-						sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-					}
-					dc_exit();
-				}
-
 				if (maplenet.GetPlayer((u8*)buffer) == 0xFF)
 					disconnect_toggle = true;
 
