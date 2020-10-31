@@ -90,15 +90,14 @@ u8 MapleNet::GetTriggerL(u8* data)
 	return data[9];
 }
 
-
-u32 MapleNet::GetAnalogX(u8* data)
+u8 MapleNet::GetAnalogX(u8* data)
 {
-	return (u32)data[10];
+	return data[10];
 }
 
-u32 MapleNet::GetAnalogY(u8* data)
+u8 MapleNet::GetAnalogY(u8* data)
 {
-	return (u32)data[11];
+	return data[11];
 }
 
 u32 MapleNet::GetEffectiveFrameNumber(u8* data)
@@ -221,44 +220,19 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 		data[7] = (qout >> 8) & 0xff;
 
 		// dc triggers
-		data[8] = (u8)get_analog_axis(0, *pjs);
-		data[9] = (u8)get_analog_axis(1, *pjs);
-	
-		// dc analog
-		data[10] = (u8)get_analog_axis(2, *pjs);
-		data[11] = (u8)get_analog_axis(3, *pjs);
+		data[8] = pjs->trigger[PJTI_R];
+		data[9] = pjs->trigger[PJTI_L];
 
-		return data;
+		// dc analog
+		data[10] = pjs->joy[PJAI_X1];
+		data[11] = pjs->joy[PJAI_Y1];
 	}
 	else
 	{
 		data[6] = buttons & 0xff;
 		data[7] = (buttons >> 8) & 0xff;
-
-		return data;
 	}
-}
-
-// copied from struct maple_sega_controller: maple_base
-u32 MapleNet::get_analog_axis(int index, const PlainJoystickState& pjs)
-{
-	if (index == 2 || index == 3)
-	{
-		// Limit the magnitude of the analog axes to 128
-		s8 xaxis = pjs.joy[PJAI_X1] - 128;
-		s8 yaxis = pjs.joy[PJAI_Y1] - 128;
-		limit_joystick_magnitude<128>(xaxis, yaxis);
-		if (index == 2)
-			return xaxis + 128;
-		else
-			return yaxis + 128;
-	}
-	else if (index == 0)
-		return pjs.trigger[PJTI_R];		// Right trigger
-	else if (index == 1)
-		return pjs.trigger[PJTI_L];		// Left trigger
-	else
-		return 0x80;					// unused
+	return data;
 }
 
 void MapleNet::AddNetFrame(const char* received_data)
@@ -549,7 +523,7 @@ void MapleNet::PrintFrameData(const char * prefix, u8 * data)
 
 	std::bitset<16> input_bitset(input);
 
-	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u",
+	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u %u %u",
 		prefix, effective_frame, frame, delay, player, input_bitset.to_string().c_str(), 
 		triggerr, triggerl, analogx, analogy);
 }

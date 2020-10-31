@@ -72,8 +72,8 @@ public:
 	u16 GetInputData(u8* data);
 	u8 GetTriggerR(u8* data);
 	u8 GetTriggerL(u8* data);
-	u32 GetAnalogX(u8* data);
-	u32 GetAnalogY(u8* data);
+	u8 GetAnalogX(u8* data);
+	u8 GetAnalogY(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
 
@@ -84,8 +84,6 @@ public:
 	std::string CurrentFrameData[4];
 
 	u32 SkipFrame;
-
-	u32 get_analog_axis(int index, const PlainJoystickState& pjs);
 
 	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs);
 	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons);
