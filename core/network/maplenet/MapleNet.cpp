@@ -225,8 +225,8 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 		data[9] = (u8)get_analog_axis(1, *pjs);
 	
 		// dc analog
-		data[10] = (u8)pjs->joy[PJAI_X1];
-		data[11] = (u8)pjs->joy[PJAI_Y1];
+		data[10] = (u8)get_analog_axis(2, *pjs);
+		data[11] = (u8)get_analog_axis(3, *pjs);
 
 		return data;
 	}
