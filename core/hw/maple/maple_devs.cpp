@@ -279,18 +279,21 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if ((settings.platform.system == DC_PLATFORM_DREAMCAST ||
-					 settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
-					settings.maplenet.Enable)
-					maplenet.ApplyNetInputs(&pjs, bus_id);
-				
-				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+				if (settings.maplenet.Enable)
 				{
-					bool coin_pressed = (pjs.kcode & AWAVE_COIN_KEY) == 0;
-					if (coin_pressed && bus_id == 0)
+
+					if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+						settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+						maplenet.ApplyNetInputs(&pjs, bus_id);
+
+					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 					{
-						// player 0 acts as master of the coin
-						maplenet.coin_toggled = true;
+						bool coin_pressed = (pjs.kcode & AWAVE_COIN_KEY) == 0;
+						if (coin_pressed && bus_id == 0)
+						{
+							// player 0 acts as master of the coin
+							maplenet.coin_toggled = true;
+						}
 					}
 				}
 
