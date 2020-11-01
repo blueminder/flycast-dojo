@@ -107,7 +107,6 @@ void UDPClient::ClientLoop()
 				{
 					sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}
-				dc_exit();
 			}
 
 			// if match has not started, send packet to inform host who the opponent is
