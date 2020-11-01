@@ -471,7 +471,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	while (net_input_keys[port].count(FrameNumber - 1) == 0)
 	{
 		if ((client.disconnect_toggle || current_timeout >= max_timeout) &&
-			gui_state != Commands)
+			gui_state != Commands && !settings.maplenet.PlayMatch)
 			dc_exit();
 
 		DWORD end = GetTickCount64();

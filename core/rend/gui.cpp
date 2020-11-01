@@ -370,6 +370,7 @@ static void gui_display_commands()
 		if (settings.maplenet.Enable && maplenet.isMatchStarted)
 		{
 			maplenet.client.disconnect_toggle = true;
+			gui_state = Closed;
 		}
 		else
 		{
