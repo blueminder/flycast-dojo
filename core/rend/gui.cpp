@@ -1297,38 +1297,54 @@ static void gui_display_settings()
 			ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
 			if (settings.maplenet.Enable)
 			{
-				ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
-				ImGui::SameLine();
-				ShowHelpMarker("Host netplay game");
-				char ServerIP[256];
-				strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
-				ImGui::InputText("Server##MapleNet", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("The server IP to connect to");
-				settings.maplenet.ServerIP = ServerIP;
+				if (!settings.maplenet.PlayMatch)
+				{
+					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
+					ImGui::SameLine();
+					ShowHelpMarker("Host netplay game");
 
-				char ServerPort[256];
-				strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
-				ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("The server port to connect to");
-				settings.maplenet.ServerPort = ServerPort;
+					if (!settings.maplenet.ActAsServer)
+					{
+						char ServerIP[256];
+						strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
+						ImGui::InputText("Server##MapleNet", ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker("The server IP to connect to");
+						settings.maplenet.ServerIP = ServerIP;
+					}
 
-				ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 10);
-				ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
-				ImGui::SameLine();
-				ShowHelpMarker("Record all netplay sessions to a local file");
-				
-				ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
-				ImGui::SameLine();
-				ShowHelpMarker("Plays local replay file");
+					char ServerPort[256];
+					strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
+					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The server port to connect to");
+					settings.maplenet.ServerPort = ServerPort;
 
-				char ReplayFilename[256] = { 0 };
-				strcpy(ReplayFilename, settings.maplenet.ReplayFilename.c_str());
-				ImGui::InputText("Replay Filename", ReplayFilename, sizeof(ReplayFilename), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
-				settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
+					ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 10);
+					ImGui::SameLine();
+					ShowHelpMarker("Set input delay");
+
+					ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
+					ImGui::SameLine();
+					ShowHelpMarker("Record all netplay sessions to a local file");
+				}
+
+				if (!settings.maplenet.RecordMatches)
+				{
+					ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
+					ImGui::SameLine();
+					ShowHelpMarker("Plays local replay file");
+				}
+
+				if (settings.maplenet.PlayMatch)
+				{
+					char ReplayFilename[256] = { 0 };
+					strcpy(ReplayFilename, settings.maplenet.ReplayFilename.c_str());
+					ImGui::InputText("Replay Filename", ReplayFilename, sizeof(ReplayFilename), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
+					settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
+				}
 
 				if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 				{
