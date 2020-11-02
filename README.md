@@ -1,6 +1,6 @@
 flycast-netplay
 ===========
-**flycast-netplay** is a fork of [**flycast**](https://github.com/flyinghead/flycast), multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **flycast-netplay** updated with the latest downstream changes made to the parent project.
+**flycast-netplay** is a fork of [**flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **flycast-netplay** updated with the latest downstream changes made to the parent project.
 
 General information about flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
 
