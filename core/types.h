@@ -506,6 +506,8 @@ struct settings_t
 		std::string ServerPort;
 		int Delay;
 		int Debug;
+		int PacketsPerFrame;
+		bool EnableBackfill;
 	} maplenet;
 };
 

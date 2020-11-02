@@ -103,7 +103,7 @@ void UDPClient::ClientLoop()
 			{
 				char disconnect_packet[2];
 				disconnect_packet[0] = 0xFF;
-				for (int i = 0; i < 5; i++)
+				for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
 				{
 					sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}
@@ -123,7 +123,7 @@ void UDPClient::ClientLoop()
 				memcmp(to_send, last_sent.data(), PAYLOAD_SIZE) != 0)
 			{
 				// send payload until morale improves
-				for (int i = 0; i < 5; i++)
+				for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
 				{
 					sendto(local_socket, (const char*)to_send, PAYLOAD_SIZE, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}

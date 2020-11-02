@@ -1330,9 +1330,16 @@ static void gui_display_settings()
 				ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
 				settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
 
-				ImGui::Checkbox("Spectate Network Game", &settings.maplenet.Spectating);
-				ImGui::SameLine();
-				ShowHelpMarker("Playback gameplay from incoming network stream");
+				if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::SliderInt("Packets Per Frame", (int*)&settings.maplenet.PacketsPerFrame, 1, 10);
+					ImGui::SameLine();
+					ShowHelpMarker("Number of packets to send per input frame.");
+
+					ImGui::Checkbox("Enable Backfill", &settings.maplenet.EnableBackfill);
+					ImGui::SameLine();
+					ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
+				}
 			}
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
