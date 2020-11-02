@@ -804,6 +804,7 @@ void InitSettings()
 	settings.maplenet.ReplayFilename = "";
 	settings.maplenet.PacketsPerFrame = 5;
 	settings.maplenet.EnableBackfill = false;
+	settings.maplenet.NumBackFrames = 6;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -925,8 +926,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.ReplayFilename = cfgLoadStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
 	settings.maplenet.PacketsPerFrame = cfgLoadInt("maplenet", "PacketsPerFrame", settings.maplenet.PacketsPerFrame);
 	settings.maplenet.EnableBackfill = cfgLoadBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
-
-
+	settings.maplenet.NumBackFrames = cfgLoadInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1100,6 +1100,7 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
 	cfgSaveInt("maplenet", "PacketsPerFrame", settings.maplenet.PacketsPerFrame);
 	cfgSaveBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
+	cfgSaveInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 
 	GamepadDevice::SaveMaplePorts();
 

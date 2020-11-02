@@ -59,6 +59,14 @@ void MapleNet::LoadNetConfig()
 	client.SetHost(host_ip.data(), host_port);
 }
 
+int MapleNet::PayloadSize()
+{
+	if (settings.maplenet.EnableBackfill)
+		return settings.maplenet.NumBackFrames * INPUT_SIZE + FRAME_SIZE;
+	else
+		return FRAME_SIZE;
+}
+
 int MapleNet::GetPlayer(u8* data)
 {
 	return (int)data[0];
@@ -342,7 +350,7 @@ void MapleNet::CaptureAndSendLocalFrame(u16 buttons)
 
 void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 {
-	u8 data[PAYLOAD_SIZE] = { 0 };
+	u8 data[256] = { 0 };
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -356,20 +364,20 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	// add current input frame to player slot
 	if (local_input_keys.count(GetEffectiveFrameNumber(data)) == 0)
 	{
-		std::string to_send(data, data + PAYLOAD_SIZE);
+		std::string to_send(data, data + maplenet.PayloadSize());
 
-		if ((PAYLOAD_SIZE - FRAME_SIZE) > 0)
+		if ((maplenet.PayloadSize() - FRAME_SIZE) > 0)
 		{
 			// cache input to send older frame data
 			last_inputs.push_front(to_send.substr(6, INPUT_SIZE));
-			if (last_inputs.size() > ((PAYLOAD_SIZE - FRAME_SIZE) / INPUT_SIZE))
+			if (last_inputs.size() > ((maplenet.PayloadSize() - FRAME_SIZE) / INPUT_SIZE))
 				last_inputs.pop_back();
 
 			std::string combined_last_inputs =
 				std::accumulate(last_inputs.begin(), last_inputs.end(), std::string(""));
 
 			// fill rest of payload with cached local inputs
-			to_send.replace(FRAME_SIZE, PAYLOAD_SIZE - FRAME_SIZE, combined_last_inputs);
+			to_send.replace(FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE, combined_last_inputs);
 		}
 
 		client.SendData(to_send);
@@ -571,7 +579,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 	std::string to_add(received_data, received_data + FRAME_SIZE);
 	AddNetFrame(to_add.data());
 	if (settings.maplenet.EnableBackfill)
-		AddBackFrames(to_add.data(), to_add.data() + FRAME_SIZE, PAYLOAD_SIZE - FRAME_SIZE);
+		AddBackFrames(to_add.data(), to_add.data() + FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE);
 }
 
 // continuously called on by client thread

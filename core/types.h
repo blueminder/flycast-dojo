@@ -508,6 +508,7 @@ struct settings_t
 		int Debug;
 		int PacketsPerFrame;
 		bool EnableBackfill;
+		int NumBackFrames;
 	} maplenet;
 };
 

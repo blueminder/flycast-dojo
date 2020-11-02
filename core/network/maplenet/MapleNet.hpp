@@ -22,7 +22,6 @@
 #include "emulator.h"
 
 #define FRAME_SIZE 12
-#define PAYLOAD_SIZE 48
 #define INPUT_SIZE 6
 
 #define DEBUG_APPLY 1
@@ -76,6 +75,8 @@ public:
 	u8 GetAnalogY(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
+
+	int PayloadSize();
 
 	std::map<u32, std::string> net_inputs[4];
 

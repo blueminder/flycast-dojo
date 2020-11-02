@@ -22,7 +22,7 @@ int UDPClient::SendData(std::string data)
 {
 	// sets current send buffer
 	write_out = true;
-	memcpy((void*)to_send, data.data(), PAYLOAD_SIZE);
+	memcpy((void*)to_send, data.data(), maplenet.PayloadSize());
 	write_out = false;
 
 	if (maplenet.client_input_authority)
@@ -114,18 +114,18 @@ void UDPClient::ClientLoop()
 			{
 				if (!maplenet.isMatchStarted)
 				{
-					sendto(local_socket, (const char*)to_send, PAYLOAD_SIZE, 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
+					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
 				}
 			}
 
 			// if opponent detected, shoot packets at them
 			if (opponent_addr.sin_port > 0 &&
-				memcmp(to_send, last_sent.data(), PAYLOAD_SIZE) != 0)
+				memcmp(to_send, last_sent.data(), maplenet.PayloadSize()) != 0)
 			{
 				// send payload until morale improves
 				for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
 				{
-					sendto(local_socket, (const char*)to_send, PAYLOAD_SIZE, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}
 
 				if (settings.maplenet.Debug == DEBUG_SEND ||
@@ -135,7 +135,7 @@ void UDPClient::ClientLoop()
 					maplenet.PrintFrameData("Sent", (u8 *)to_send);
 				}
 
-				last_sent = std::string(to_send, to_send + PAYLOAD_SIZE);
+				last_sent = std::string(to_send, to_send + maplenet.PayloadSize());
 
 				if (maplenet.client_input_authority)
 					maplenet.AddNetFrame((const char*)to_send);
@@ -150,7 +150,7 @@ void UDPClient::ClientLoop()
 				if (maplenet.GetPlayer((u8*)buffer) == 0xFF)
 					disconnect_toggle = true;
 
-				if (bytes_read == PAYLOAD_SIZE)
+				if (bytes_read == maplenet.PayloadSize())
 				{
 					if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)
 					{

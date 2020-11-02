@@ -1339,6 +1339,13 @@ static void gui_display_settings()
 					ImGui::Checkbox("Enable Backfill", &settings.maplenet.EnableBackfill);
 					ImGui::SameLine();
 					ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
+
+					if (settings.maplenet.EnableBackfill)
+					{
+						ImGui::SliderInt("Number of Past Input Frames", (int*)&settings.maplenet.NumBackFrames, 1, 40);
+						ImGui::SameLine();
+						ShowHelpMarker("Number of past inputs to send per frame.");
+					}
 				}
 			}
 			ImGui::PopStyleVar();
