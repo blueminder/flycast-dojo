@@ -1493,7 +1493,11 @@ void load_naomi_eeprom()
 	{
 		EEPROM_loaded = true;
 		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-		std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+		std::string eeprom_file;
+		if (settings.maplenet.Enable)
+			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom.net";
+		else
+			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 		FILE* f = fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
@@ -2364,17 +2368,20 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-				std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-				std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-				FILE* f = fopen(eeprom_file.c_str(), "wb");
-				if (f)
+				if (!settings.maplenet.Enable)
 				{
-					fwrite(EEPROM, 1, 0x80, f);
-					fclose(f);
-					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+					std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+					std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+					FILE* f = fopen(eeprom_file.c_str(), "wb");
+					if (f)
+					{
+						fwrite(EEPROM, 1, 0x80, f);
+						fclose(f);
+						INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+					}
+					else
+						WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 				}
-				else
-					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 
 				w8(MDRS_JVSReply);
 				w8(0x00);

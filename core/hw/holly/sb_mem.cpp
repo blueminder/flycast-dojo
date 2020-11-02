@@ -167,16 +167,29 @@ void FixUpFlash()
 static bool nvmem_load(const std::string& root)
 {
 	bool rc;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin", "nvram");
+	if (settings.maplenet.Enable)
+	{
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin.net", "nvram");
+		else
+			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem.net");
+		if (!rc)
+			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+			sys_rom->Load(get_game_save_prefix() + ".nvmem2.net");
+	}
 	else
-		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
-	if (!rc)
-		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-	
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
-	
+	{
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin", "nvram");
+		else
+			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
+		if (!rc)
+			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+			sys_rom->Load(get_game_save_prefix() + ".nvmem2");
+	}
+
 	return true;
 }
 
@@ -196,12 +209,16 @@ bool LoadRomFiles(const std::string& root)
 
 void SaveRomFiles(const std::string& root)
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
-	else
-		sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
+	// make no changes to netplay memory
+	if (!settings.maplenet.Enable)
+	{
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
+		else
+			sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
+		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+			sys_rom->Save(get_game_save_prefix() + ".nvmem2");
+	}
 }
 
 bool LoadHle(const std::string& root)
