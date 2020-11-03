@@ -54,7 +54,11 @@ int MapleNet::GetAveragePing(const char* ipAddr)
 		}
 	}
 	INFO_LOG(NETWORK, "Average Ping (%d ms)", sum_ms / success_ping);
-	return (sum_ms / success_ping);
+
+	if (success_ping == 0)
+		return 0;
+	else
+		return (sum_ms / success_ping);
 }
 
 void MapleNet::LoadNetConfig()
