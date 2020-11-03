@@ -707,6 +707,31 @@ static void gui_display_lobby()
     		gui_state = Main;
 	}
 
+	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
+	ImGui::Separator();
+	ImGui::Text("IP"); ImGui::NextColumn();
+	ImGui::Text("Status"); ImGui::NextColumn();
+	ImGui::Text("Game"); ImGui::NextColumn();
+	ImGui::Text("Ping"); ImGui::NextColumn();
+	ImGui::Separator();
+	const char* ips[1] = { "127.0.0.1" };
+	const char* statuses[1] = { "Idle" };
+	const char* games[1] = { "" };
+	const char* pings[1] = { "0" };
+	static int selected = -1;
+	for (int i = 0; i < 1; i++)
+	{
+		//char label[32];
+		//sprintf(label, "%04d", i);
+		if (ImGui::Selectable(ips[i], selected == i, ImGuiSelectableFlags_SpanAllColumns))
+			selected = i;
+		ImGui::NextColumn();
+		//ImGui::Text(ips[i]); ImGui::NextColumn();
+		ImGui::Text(statuses[i]); ImGui::NextColumn();
+		ImGui::Text(games[i]); ImGui::NextColumn();
+		ImGui::Text(pings[i]); ImGui::NextColumn();
+	}
+
     ImGui::End();
     ImGui::PopStyleVar();
 
