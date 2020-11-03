@@ -18,6 +18,7 @@
 
 #include "types.h"
 #include "UDP.hpp"
+#include "Ping.hpp"
 
 #include "emulator.h"
 
@@ -136,6 +137,8 @@ public:
 	void LoadReplayFile(std::string path);
 
 	std::string replay_filename;
+
+	int GetAveragePing(const char* ipAddr);
 };
 
 extern MapleNet maplenet;

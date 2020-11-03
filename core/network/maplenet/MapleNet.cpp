@@ -35,6 +35,28 @@ MapleNet::MapleNet()
 	replay_filename = "";
 }
 
+int MapleNet::GetAveragePing(const char* ipAddr)
+{
+	Ping target;
+	INFO_LOG(NETWORK, "Pinging %s", ipAddr);
+
+	int sum_ms = 0;
+	int success_ping = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		int ms = target.ping(ipAddr);
+		if(ms < -1) {
+		    INFO_LOG(NETWORK, "ERROR (%d)", ms);
+		} else {
+		    INFO_LOG(NETWORK, "Success (%d ms)", ms);
+			sum_ms += ms;
+			success_ping++;
+		}
+	}
+	INFO_LOG(NETWORK, "Average Ping (%d ms)", sum_ms / success_ping);
+	return (sum_ms / success_ping);
+}
+
 void MapleNet::LoadNetConfig()
 {
 	enabled = settings.maplenet.Enable;

@@ -703,6 +703,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_sources(${PROJECT_NAME} PRIVATE
         core/network/maplenet/MapleNet.cpp
         core/network/maplenet/MapleNet.hpp
+        core/network/maplenet/Ping.cpp
+        core/network/maplenet/Ping.hpp
         core/network/maplenet/UDPClient.cpp
         core/network/maplenet/UDP.hpp)
 
