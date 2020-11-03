@@ -43,7 +43,8 @@ typedef enum {
 	VJoyEditCommands,
 	SelectDisk,
 	Loading,
-	NetworkStart
+	NetworkStart,
+	Lobby
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

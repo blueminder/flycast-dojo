@@ -687,6 +687,34 @@ void directory_selected_callback(bool cancelled, std::string selection)
 	}
 }
 
+static void gui_display_lobby()
+{
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+
+	ImGui::Begin("Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+	
+	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+	{
+		if (game_started)
+    		gui_state = Commands;
+    	else
+    		gui_state = Main;
+	}
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -1611,6 +1639,7 @@ static void gui_display_content()
     ImGui::AlignTextToFramePadding();
     ImGui::Text("GAMES");
 
+	ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
     {
@@ -1619,6 +1648,9 @@ static void gui_display_content()
     }
     if (gui_state != SelectDisk)
     {
+		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+		if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
+			gui_state = Lobby;
 		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
 			gui_state = Settings;
@@ -1846,6 +1878,9 @@ void gui_display_ui()
 {
 	switch (gui_state)
 	{
+	case Lobby:
+		gui_display_lobby();
+		break;
 	case Settings:
 		gui_display_settings();
 		break;
