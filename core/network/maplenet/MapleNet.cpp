@@ -23,6 +23,7 @@ MapleNet::MapleNet()
 	isMatchStarted = false;
 
 	UDPClient client;
+	LobbyPresence presence;
 
 	client_input_authority = true;
 	last_consecutive_common_frame = 1;
@@ -33,6 +34,8 @@ MapleNet::MapleNet()
 	net_coin_press = false;
 
 	replay_filename = "";
+
+	host_status = 0;//"IDLE";
 }
 
 int MapleNet::GetAveragePing(const char* ipAddr)
@@ -461,6 +464,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
+	
 	if (FrameNumber > SkipFrame)
 		while (isPaused);
 
@@ -599,6 +603,13 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 			isMatchStarted = true;
 		}
 	}
+	else
+	{
+		if (hosting)
+			host_status = 2;//"HOST_PLAYING";
+		else
+			host_status = 4;//"GUEST_PLAYING";
+	}
 
 	if (client_input_authority && GetPlayer((u8*)received_data) == player)
 		return;
@@ -629,17 +640,22 @@ int MapleNet::StartMapleNet()
 	{
 		NoticeStream << "Hosting game on port " << host_port;
 		gui_display_notification(NoticeStream.str().data(), 9000);
+		host_status = 1;//"HOST_WAIT";
 	}
 	else
 	{
 		NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
 		gui_display_notification(NoticeStream.str().data(), 9000);
+		host_status = 3;//"GUEST_CONNECTING";
 	}
 
 	try
 	{
 		std::thread t2(&UDPClient::ClientThread, std::ref(client));
 		t2.detach();
+
+		std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
+		t3.detach();
 
 		return 0;
 	}

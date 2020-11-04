@@ -19,6 +19,7 @@
 #include "types.h"
 #include "UDP.hpp"
 #include "Ping.hpp"
+#include "LobbyPresence.hpp"
 
 #include "emulator.h"
 
@@ -106,6 +107,9 @@ public:
 	bool net_coin_press;
 
 	UDPClient client;
+	LobbyPresence presence;
+
+	void BeaconThread();
 
 	void PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);
@@ -139,6 +143,8 @@ public:
 	std::string replay_filename;
 
 	int GetAveragePing(const char* ipAddr);
+
+	int host_status;
 };
 
 extern MapleNet maplenet;
