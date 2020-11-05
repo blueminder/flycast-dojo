@@ -27,13 +27,13 @@
 class LobbyPresence
 {
 public:
-    int beacon(char* group, int port, int delay_secs);
-    int listener(char* group, int port);
-
     void BeaconThread();
     void ListenerThread();
 
-private:
     std::map<std::string, std::string> active_beacons;
+
+private:
+    int beacon(char* group, int port, int delay_secs);
+    int listener(char* group, int port);
 
 };

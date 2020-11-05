@@ -687,8 +687,21 @@ void directory_selected_callback(bool cancelled, std::string selection)
 	}
 }
 
+std::vector<std::string> split(const std::string& text, char delimiter) {
+    std::string tmp;
+    std::vector<std::string> stk;
+    std::stringstream ss(text);
+    while(getline(ss,tmp, delimiter)) {
+        stk.push_back(tmp);
+    }
+    return stk;
+}
+
 static void gui_display_lobby()
 {
+	std::thread t4(&LobbyPresence::ListenerThread, std::ref(maplenet.presence));
+	t4.detach();
+
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
@@ -707,31 +720,41 @@ static void gui_display_lobby()
     		gui_state = Main;
 	}
 
-	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
+	ImGui::Columns(1, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
 	ImGui::Text("IP"); ImGui::NextColumn();
-	ImGui::Text("Status"); ImGui::NextColumn();
-	ImGui::Text("Game"); ImGui::NextColumn();
-	ImGui::Text("Ping"); ImGui::NextColumn();
+	//ImGui::Text("Status"); ImGui::NextColumn();
+	//ImGui::Text("Game"); ImGui::NextColumn();
+	//ImGui::Text("Ping"); ImGui::NextColumn();
 	ImGui::Separator();
+	const char* msg = maplenet.presence.active_beacons.begin()->first.data();
 	const char* ips[1] = { "127.0.0.1" };
 	const char* statuses[1] = { "Idle" };
 	const char* games[1] = { "" };
 	const char* pings[1] = { "0" };
 	static int selected = -1;
-	for (int i = 0; i < 1; i++)
+
+	std::map<std::string, std::string> beacons = maplenet.presence.active_beacons;
+	for (auto it = beacons.cbegin(); it != beacons.cend(); ++it) {
+		std::stringstream bs;
+		bs << "{" << (*it).first << ": " << (*it).second << "}";
+		ImGui::Text(bs.str().c_str()); ImGui::NextColumn;
+	}
+
+/*
+	for (int i = 0; i < maplenet.presence.active_beacons.size(); i++)
 	{
 		//char label[32];
 		//sprintf(label, "%04d", i);
-		if (ImGui::Selectable(ips[i], selected == i, ImGuiSelectableFlags_SpanAllColumns))
+		if (ImGui::Selectable(msg, selected == i, ImGuiSelectableFlags_SpanAllColumns))
 			selected = i;
 		ImGui::NextColumn();
 		//ImGui::Text(ips[i]); ImGui::NextColumn();
-		ImGui::Text(statuses[i]); ImGui::NextColumn();
-		ImGui::Text(games[i]); ImGui::NextColumn();
-		ImGui::Text(pings[i]); ImGui::NextColumn();
+		//ImGui::Text(statuses[i]); ImGui::NextColumn();
+		//ImGui::Text(games[i]); ImGui::NextColumn();
+		//ImGui::Text(pings[i]); ImGui::NextColumn();
 	}
-
+	*/
     ImGui::End();
     ImGui::PopStyleVar();
 

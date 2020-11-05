@@ -48,10 +48,10 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
         switch (maplenet.host_status)
         {
         case 0:
-            status = "IDLE__" + settings.maplenet.ServerPort;
+            status = "IDLE";
             break;
         case 1:
-            status = "HOST_WAIT__" + settings.maplenet.ServerPort;
+            status = "HOST_WAIT";
             break;
         case 2:
             status = "HOST_PLAYING";
@@ -64,7 +64,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
             break;
         }
 
-        std::string message_str = status + "__" + current_game;
+        std::string message_str = settings.maplenet.ServerPort + "__" + status + "__" + current_game;
         message = message_str.c_str();
 
         char ch = 0;
@@ -192,12 +192,23 @@ int LobbyPresence::listener(char* group, int port)
         msgbuf[nbytes] = '\0';
 
         get_ip_str((struct sockaddr *) &addr, ip_str, 128);
-        int sport = getpeername(fd, &addr, &addrlen);
-        printf("%s %d ", ip_str, addr.sin_port);
-        puts(msgbuf);
+        INFO_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
+        INFO_LOG(NETWORK, msgbuf);
 
-        std::string beacon_id = std::string(ip_str, strlen(ip_str)) + ":" + std::to_string(sport);
-        active_beacons[beacon_id] = std::string(msgbuf, strlen(msgbuf));
+		std::stringstream bi;
+        bi << ip_str << ":" << std::to_string(addr.sin_port);
+        std::string beacon_id = bi.str();
+
+        std::stringstream bm;
+        bm << ip_str <<  "__" << msgbuf;
+
+        if (active_beacons.count(beacon_id) == 0)
+            active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
+        else
+        {
+            if (active_beacons.at(beacon_id) != bm.str())
+                active_beacons.at(beacon_id) = bm.str();
+        }
      }
 
 #ifdef _WIN32
