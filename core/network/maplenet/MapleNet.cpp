@@ -403,7 +403,8 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 				std::accumulate(last_inputs.begin(), last_inputs.end(), std::string(""));
 
 			// fill rest of payload with cached local inputs
-			to_send.replace(FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE, combined_last_inputs);
+			if (GetEffectiveFrameNumber(data) > settings.maplenet.NumBackFrames)
+				to_send.replace(FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE, combined_last_inputs);
 		}
 
 		client.SendData(to_send);
