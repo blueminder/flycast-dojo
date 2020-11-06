@@ -606,7 +606,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 	std::string to_add(received_data, received_data + FRAME_SIZE);
 	AddNetFrame(to_add.data());
 	if (settings.maplenet.EnableBackfill)
-		AddBackFrames(to_add.data(), to_add.data() + FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE);
+		AddBackFrames(to_add.data(), received_data + FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE);
 }
 
 // continuously called on by client thread
