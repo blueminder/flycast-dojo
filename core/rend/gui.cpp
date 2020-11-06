@@ -720,10 +720,10 @@ static void gui_display_lobby()
     		gui_state = Main;
 	}
 
-	ImGui::Columns(1, "mycolumns"); // 4-ways, with border
+	ImGui::Columns(2, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
 	ImGui::Text("IP"); ImGui::NextColumn();
-	//ImGui::Text("Status"); ImGui::NextColumn();
+	ImGui::Text("Status"); ImGui::NextColumn();
 	//ImGui::Text("Game"); ImGui::NextColumn();
 	//ImGui::Text("Ping"); ImGui::NextColumn();
 	ImGui::Separator();
@@ -736,9 +736,27 @@ static void gui_display_lobby()
 
 	std::map<std::string, std::string> beacons = maplenet.presence.active_beacons;
 	for (auto it = beacons.cbegin(); it != beacons.cend(); ++it) {
+		std::string s = it->second;
+		std::string delimiter = "__";
+
+		std::vector<std::string> beacon_entry;
+
+		size_t pos = 0;
+		std::string token;
+		while ((pos = s.find(delimiter)) != std::string::npos) {
+		    token = s.substr(0, pos);
+		    std::cout << token << std::endl;
+			beacon_entry.push_back(token);
+		    s.erase(0, pos + delimiter.length());
+		}
+
+		ImGui::Text(beacon_entry[0].c_str()); ImGui::NextColumn();
+		ImGui::Text(beacon_entry[2].c_str());  ImGui::NextColumn();
+		//ImGui::Text(beacon_entry[3].c_str()); ImGui::NextColumn();
+
 		std::stringstream bs;
-		bs << "{" << (*it).first << ": " << (*it).second << "}";
-		ImGui::Text(bs.str().c_str()); ImGui::NextColumn;
+		//bs << "{" << (*it).first << ": " << (*it).second << "}";
+		//ImGui::Text(bs.str().c_str()); ImGui::NextColumn;
 	}
 
 /*
