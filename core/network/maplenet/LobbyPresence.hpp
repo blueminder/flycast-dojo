@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "stdclass.h"
 
 #define MSGBUFSIZE 256
 
@@ -30,7 +31,10 @@ public:
     void BeaconThread();
     void ListenerThread();
 
+    long unix_timestamp();
+
     std::map<std::string, std::string> active_beacons;
+    std::map<std::string, long> last_seen;
 
 private:
     int beacon(char* group, int port, int delay_secs);

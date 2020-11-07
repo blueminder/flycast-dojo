@@ -12,7 +12,7 @@ void LobbyPresence::ListenerThread()
 
 int LobbyPresence::beacon(char* group, int port, int delay_secs)
 {
-    std::string current_game = settings.imgread.ImagePath;
+    std::string current_game = get_file_basename(settings.imgread.ImagePath);
     current_game = current_game.substr(current_game.find_last_of("/\\") + 1);
 
     std::string status;
@@ -64,7 +64,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
             break;
         }
 
-        std::string message_str = settings.maplenet.ServerPort + "__" + status + "__" + current_game;
+        std::string message_str = settings.maplenet.ServerPort + "__" + status + "__" + current_game + "__";
         message = message_str.c_str();
 
         char ch = 0;
@@ -114,6 +114,13 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     }
 
     return s;
+}
+
+long LobbyPresence::unix_timestamp()
+{
+    time_t t = time(0);
+    long int now = static_cast<long int> (t);
+    return now;
 }
 
 int LobbyPresence::listener(char* group, int port)
@@ -209,6 +216,8 @@ int LobbyPresence::listener(char* group, int port)
             if (active_beacons.at(beacon_id) != bm.str())
                 active_beacons.at(beacon_id) = bm.str();
         }
+
+        last_seen[beacon_id] = unix_timestamp();
      }
 
 #ifdef _WIN32
