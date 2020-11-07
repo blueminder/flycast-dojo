@@ -510,6 +510,7 @@ struct settings_t
 		bool EnableBackfill;
 		int NumBackFrames;
 		bool EnableLobby;
+		std::string PlayerName;
 	} maplenet;
 };
 

@@ -806,6 +806,7 @@ void InitSettings()
 	settings.maplenet.EnableBackfill = false;
 	settings.maplenet.NumBackFrames = 6;
 	settings.maplenet.EnableLobby = false;
+	settings.maplenet.PlayerName = "Player";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -929,6 +930,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.EnableBackfill = cfgLoadBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
 	settings.maplenet.NumBackFrames = cfgLoadInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 	settings.maplenet.EnableLobby = cfgLoadBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
+	settings.maplenet.PlayerName = cfgLoadStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1104,6 +1106,7 @@ void SaveSettings()
 	cfgSaveBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
 	cfgSaveInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 	cfgSaveBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
+	cfgSaveStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

@@ -1404,6 +1404,16 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("Enable discovery and matchmaking on LAN");
 
+					if (settings.maplenet.EnableLobby)
+					{
+						char PlayerName[256] = { 0 };
+						strcpy(PlayerName, settings.maplenet.PlayerName.c_str());
+						ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker("Name visible to other players");
+						settings.maplenet.PlayerName = std::string(PlayerName, strlen(PlayerName));
+					}
+
 					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
 					ImGui::SameLine();
 					ShowHelpMarker("Host netplay game");
