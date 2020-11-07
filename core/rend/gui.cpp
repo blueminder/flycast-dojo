@@ -723,7 +723,7 @@ static void gui_display_lobby()
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
 	ImGui::Text("Ping"); ImGui::NextColumn();
-	ImGui::Text("IP"); ImGui::NextColumn();
+	ImGui::Text("Name"); ImGui::NextColumn();
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Text("Status"); ImGui::NextColumn();
 	ImGui::Separator();
@@ -755,7 +755,7 @@ static void gui_display_lobby()
 			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
 
 			ImGui::Text(std::to_string(avg_ping_ms).c_str()); ImGui::NextColumn();
-			ImGui::Text(beacon_ip.c_str()); ImGui::NextColumn();
+			ImGui::Text(beacon_entry[4].c_str()); ImGui::NextColumn();
 			ImGui::Text(beacon_entry[3].c_str()); ImGui::NextColumn();
 			ImGui::Text(beacon_entry[2].c_str());  ImGui::NextColumn();
 	

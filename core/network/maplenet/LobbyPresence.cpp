@@ -64,7 +64,8 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
             break;
         }
 
-        std::string message_str = settings.maplenet.ServerPort + "__" + status + "__" + current_game + "__";
+        std::string message_str = settings.maplenet.ServerPort + "__" +
+            status + "__" + current_game + "__" + settings.maplenet.PlayerName + "__";
         message = message_str.c_str();
 
         char ch = 0;
