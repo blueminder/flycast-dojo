@@ -729,8 +729,6 @@ static void gui_display_lobby()
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
 
-	static int selected = -1;
-
 	std::map<std::string, std::string> beacons = maplenet.presence.active_beacons;
 	for (auto it = beacons.cbegin(); it != beacons.cend(); ++it) {
 		std::string s = it->second;
@@ -749,19 +747,16 @@ static void gui_display_lobby()
 				beacon_entry.push_back(token);
 			    s.erase(0, pos + delimiter.length());
 			}
-	
-			std::string beacon_ip = beacon_entry[0];
-			int avg_ping_ms = 0;
-			char OpponentIP[256];
-			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
 
-			ImGui::Text(std::to_string(avg_ping_ms).c_str()); ImGui::NextColumn();
+			std::string beacon_ip = beacon_entry[0];
+			std::string beacon_server_port = beacon_entry[1];
+			std::string beacon_status = beacon_entry[2];
 
 			std::string beacon_game = beacon_entry[3].c_str();
 			std::string beacon_game_path = "";
 
 			std::vector<GameMedia> games = scanner.get_game_list();
-			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(), 
+			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
 				[&](GameMedia gm) { return ( gm.name.rfind(beacon_game, 0) == 0 ); });
 
 			if (it != games.end())
@@ -770,8 +765,38 @@ static void gui_display_lobby()
 				beacon_game_path = it->path;
 			}
 
-			ImGui::Text(beacon_entry[4].c_str()); ImGui::NextColumn();
-			ImGui::Text(beacon_entry[2].c_str());  ImGui::NextColumn();
+			std::string beacon_player = beacon_entry[4];
+
+			int avg_ping_ms = 0;
+			char OpponentIP[256];
+			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
+
+			bool is_selected = false;
+			if (ImGui::Selectable(std::to_string(avg_ping_ms).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
+			is_selected = true;
+			if (is_selected)
+			{
+				INFO_LOG(NETWORK, "BEACON %s %s %s", beacon_ip.c_str(), beacon_server_port.c_str(), beacon_game_path.c_str());
+
+				settings.maplenet.ActAsServer = false;
+				settings.maplenet.PlayMatch = false;
+
+				int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
+				settings.maplenet.Delay = delay > 1 ? delay : 1;
+
+				settings.maplenet.ServerIP = beacon_ip;
+				settings.maplenet.ServerPort = beacon_server_port;
+
+				SaveSettings();
+
+				gui_state = Closed;
+				gui_start_game(beacon_game_path);
+			}
+
+			ImGui::NextColumn();
+
+			ImGui::Text(beacon_player.c_str()); ImGui::NextColumn();
+			ImGui::Text(beacon_status.c_str());  ImGui::NextColumn();
 			ImGui::Text(beacon_game.c_str()); ImGui::NextColumn();
 	
 			std::stringstream bs;
