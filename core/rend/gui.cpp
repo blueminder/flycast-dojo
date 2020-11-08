@@ -772,8 +772,25 @@ static void gui_display_lobby()
 			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
 
 			bool is_selected = false;
+			bool manual_delay = false;
 			if (ImGui::Selectable(std::to_string(avg_ping_ms).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
-			is_selected = true;
+				is_selected = true;
+			if (ImGui::BeginPopupContextItem())
+			{
+
+			    ImGui::Text("Set Delay");
+				ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
+
+				SaveSettings();
+
+				if (ImGui::Button("Launch Game"))
+				{
+					manual_delay = true;
+					is_selected = true;
+				}
+
+			    ImGui::EndPopup();
+			}
 			if (is_selected)
 			{
 				INFO_LOG(NETWORK, "BEACON %s %s %s", beacon_ip.c_str(), beacon_server_port.c_str(), beacon_game_path.c_str());
@@ -781,8 +798,11 @@ static void gui_display_lobby()
 				settings.maplenet.ActAsServer = false;
 				settings.maplenet.PlayMatch = false;
 
-				int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
-				settings.maplenet.Delay = delay > 1 ? delay : 1;
+				if (!manual_delay)
+				{
+					int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
+					settings.maplenet.Delay = delay > 1 ? delay : 1;
+				}
 
 				settings.maplenet.ServerIP = beacon_ip;
 				settings.maplenet.ServerPort = beacon_server_port;
