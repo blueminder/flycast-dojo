@@ -802,9 +802,9 @@ void InitSettings()
 	settings.maplenet.Delay = 1;
 	settings.maplenet.Debug = 8;
 	settings.maplenet.ReplayFilename = "";
-	settings.maplenet.PacketsPerFrame = 5;
-	settings.maplenet.EnableBackfill = false;
-	settings.maplenet.NumBackFrames = 6;
+	settings.maplenet.PacketsPerFrame = 2;
+	settings.maplenet.EnableBackfill = true;
+	settings.maplenet.NumBackFrames = 3;
 	settings.maplenet.EnableLobby = false;
 	settings.maplenet.PlayerName = "Player";
 
