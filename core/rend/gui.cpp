@@ -722,10 +722,11 @@ static void gui_display_lobby()
 
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
+	ImGui::SetColumnWidth(0, ImGui::CalcTextSize("Ping").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 	ImGui::Text("Ping"); ImGui::NextColumn();
 	ImGui::Text("Name"); ImGui::NextColumn();
-	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Text("Status"); ImGui::NextColumn();
+	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
 
 	static int selected = -1;
@@ -755,9 +756,23 @@ static void gui_display_lobby()
 			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
 
 			ImGui::Text(std::to_string(avg_ping_ms).c_str()); ImGui::NextColumn();
+
+			std::string beacon_game = beacon_entry[3].c_str();
+			std::string beacon_game_path = "";
+
+			std::vector<GameMedia> games = scanner.get_game_list();
+			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(), 
+				[&](GameMedia gm) { return ( gm.name.rfind(beacon_game, 0) == 0 ); });
+
+			if (it != games.end())
+			{
+				beacon_game = it->name;
+				beacon_game_path = it->path;
+			}
+
 			ImGui::Text(beacon_entry[4].c_str()); ImGui::NextColumn();
-			ImGui::Text(beacon_entry[3].c_str()); ImGui::NextColumn();
 			ImGui::Text(beacon_entry[2].c_str());  ImGui::NextColumn();
+			ImGui::Text(beacon_game.c_str()); ImGui::NextColumn();
 	
 			std::stringstream bs;
 			//bs << "{" << (*it).first << ": " << (*it).second << "}";

@@ -48,19 +48,19 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
         switch (maplenet.host_status)
         {
         case 0:
-            status = "IDLE";
+            status = "Idle";
             break;
         case 1:
-            status = "HOST_WAIT";
+            status = "Hosting, Waiting";
             break;
         case 2:
-            status = "HOST_PLAYING";
+            status = "Hosting, Playing";
             break;
         case 3:
-            status = "GUEST_CONNECTING";
+            status = "Guest, Connecting";
             break;
         case 4:
-            status = "HOST_PLAYING";
+            status = "Guest, Playing";
             break;
         }
 
