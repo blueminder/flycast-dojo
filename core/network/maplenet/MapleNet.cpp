@@ -606,7 +606,11 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 	else
 	{
 		if (hosting)
+		{
 			host_status = 2;//"HOST_PLAYING";
+			if (settings.maplenet.EnableLobby)
+				delay = (u32)GetDelay((u8*)received_data);
+		}
 		else
 			host_status = 4;//"GUEST_PLAYING";
 	}
