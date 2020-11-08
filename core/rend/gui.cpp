@@ -773,7 +773,8 @@ static void gui_display_lobby()
 
 			bool is_selected = false;
 			bool manual_delay = false;
-			if (ImGui::Selectable(std::to_string(avg_ping_ms).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
+			if (beacon_status == "Hosting, Waiting" &&
+				ImGui::Selectable(std::to_string(avg_ping_ms).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 				is_selected = true;
 			if (ImGui::BeginPopupContextItem())
 			{
