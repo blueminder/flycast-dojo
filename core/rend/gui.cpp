@@ -1787,7 +1787,7 @@ static void gui_display_content()
     ImGui::AlignTextToFramePadding();
     ImGui::Text("GAMES");
 
-	if (settings.maplenet.EnableLobby)
+	if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
@@ -1797,7 +1797,7 @@ static void gui_display_content()
     }
     if (gui_state != SelectDisk)
     {
-		if (settings.maplenet.EnableLobby)
+		if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
