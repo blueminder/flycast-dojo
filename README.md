@@ -35,7 +35,7 @@ If you are hosting and do not wish to use the lobby system, you can enter your s
 If you are a guest, make sure that "Act As Server" is not checked and that you have entered the matching IP address and port of your opponent in the "Server" column.
 
 ## Set Delay
-To automatically set delay, click on the "Detect Delay" button after entering your opponent's IP. There's also slider for manually setting delay if you run into any issues.
+To automatically set delay, click on the "Detect Delay" button after entering your opponent's IP. There's also a slider for manually setting delay if you run into any issues.
 
 To calculate delay, we would use the following formula:
 

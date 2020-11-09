@@ -211,7 +211,12 @@ int LobbyPresence::listener(char* group, int port)
         bm << ip_str <<  "__" << msgbuf;
 
         if (active_beacons.count(beacon_id) == 0)
+        {
             active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
+
+            int avg_ping_ms = maplenet.GetAveragePing(beacon_id.c_str());
+            active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
+        }
         else
         {
             if (active_beacons.at(beacon_id) != bm.str())

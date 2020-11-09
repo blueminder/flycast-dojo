@@ -34,6 +34,7 @@ public:
     long unix_timestamp();
 
     std::map<std::string, std::string> active_beacons;
+    std::map<std::string, int> active_beacon_ping;
     std::map<std::string, long> last_seen;
 
 private:

@@ -767,56 +767,56 @@ static void gui_display_lobby()
 
 			std::string beacon_player = beacon_entry[4];
 
-			int avg_ping_ms = 0;
-			char OpponentIP[256];
-			avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
+			bool is_selected;
 
-			bool is_selected = false;
-			bool manual_delay = false;
 			if (beacon_status == "Hosting, Waiting" &&
-				ImGui::Selectable(std::to_string(avg_ping_ms).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
-				is_selected = true;
-			if (ImGui::BeginPopupContextItem())
+				ImGui::Selectable(std::to_string(maplenet.presence.active_beacon_ping[beacon_id]).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
+				int delay = (int)ceil(
+					(maplenet.presence.active_beacon_ping[beacon_id] * 1.0f)
+					/ 32.0f);
+				settings.maplenet.Delay = delay > 1 ? delay : 1;
 
+				ImGui::OpenPopup("Set Delay & Launch");
+			}
+
+			// right click to skip automatic detection
+			if (ImGui::BeginPopupContextItem("Set Delay & Launch", 1))
+			{
 			    ImGui::Text("Set Delay");
 				ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
 
-				SaveSettings();
-
-				if (ImGui::Button("Launch Game"))
+				if (ImGui::Button("Detect Delay"))
 				{
-					manual_delay = true;
-					is_selected = true;
-				}
-
-			    ImGui::EndPopup();
-			}
-			if (is_selected)
-			{
-				INFO_LOG(NETWORK, "BEACON %s %s %s", beacon_ip.c_str(), beacon_server_port.c_str(), beacon_game_path.c_str());
-
-				settings.maplenet.ActAsServer = false;
-				settings.maplenet.PlayMatch = false;
-
-				if (!manual_delay)
-				{
+					int avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
+					maplenet.presence.active_beacon_ping[beacon_id] = avg_ping_ms;
+					
 					int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
 					settings.maplenet.Delay = delay > 1 ? delay : 1;
 				}
 
-				settings.maplenet.ServerIP = beacon_ip;
-				settings.maplenet.ServerPort = beacon_server_port;
+				if (ImGui::Button("Launch Game"))
+				{
+					settings.maplenet.ActAsServer = false;
+					settings.maplenet.PlayMatch = false;
+
+					settings.maplenet.ServerIP = beacon_ip;
+					settings.maplenet.ServerPort = beacon_server_port;
+
+					SaveSettings();
+
+					gui_state = Closed;
+					gui_start_game(beacon_game_path);
+				}
 
 				SaveSettings();
 
-				gui_state = Closed;
-				gui_start_game(beacon_game_path);
+			    ImGui::EndPopup();
 			}
 
 			ImGui::NextColumn();
 
-			ImGui::Text(beacon_player.c_str()); ImGui::NextColumn();
+			ImGui::Text(beacon_player.c_str());  ImGui::NextColumn();
 			ImGui::Text(beacon_status.c_str());  ImGui::NextColumn();
 			ImGui::Text(beacon_game.c_str()); ImGui::NextColumn();
 	
