@@ -776,15 +776,23 @@ static void gui_display_lobby()
 			std::string beacon_player = beacon_entry[4];
 
 			bool is_selected;
+			int beacon_ping = maplenet.presence.active_beacon_ping[beacon_id];
+			std::string beacon_ping_str = "";
+			if (beacon_ping > 0)
+				beacon_ping_str = std::to_string(beacon_ping);
 
 			if (beacon_status == "Hosting, Waiting" &&
-				ImGui::Selectable(std::to_string(maplenet.presence.active_beacon_ping[beacon_id]).c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
+				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				int delay = (int)ceil(
-					(maplenet.presence.active_beacon_ping[beacon_id] * 1.0f)
-					/ 32.0f);
-				settings.maplenet.Delay = delay > 1 ? delay : 1;
+				int delay = 0;
+				if (beacon_ping > 0)
+				{
+					delay = (int)ceil(
+						(beacon_ping * 1.0f)
+						/ 32.0f);
+				}
 
+				settings.maplenet.Delay = delay > 1 ? delay : 1;
 				ImGui::OpenPopup("Set Delay & Launch");
 			}
 
