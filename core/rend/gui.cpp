@@ -720,6 +720,14 @@ static void gui_display_lobby()
     		gui_state = Main;
 	}
 
+	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
+	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
+	{
+		settings.maplenet.ActAsServer = true;
+		cfgSaveBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
+		gui_state = Main;
+	}
+
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
 	ImGui::SetColumnWidth(0, ImGui::CalcTextSize("Ping").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
@@ -1785,10 +1793,17 @@ static void gui_display_content()
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("GAMES");
+    if (settings.maplenet.Enable && settings.maplenet.PlayMatch)
+        ImGui::Text("REPLAY");
+    else if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
+        ImGui::Text("HOST");
+    else if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
+        ImGui::Text("GUEST");
+    else
+        ImGui::Text("GAMES");
 
-	if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
-		ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+    if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
     {
