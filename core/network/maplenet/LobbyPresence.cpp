@@ -2,7 +2,7 @@
 
 void LobbyPresence::BeaconThread()
 {
-    beacon("238.255.255.250", 1900, 1);
+    beacon("238.255.255.250", 1900, 5);
 }
 
 void LobbyPresence::ListenerThread()
@@ -83,7 +83,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
         }
 
      #ifdef _WIN32
-          Sleep(delay_secs * 1000); // windows sleep in ms 
+          Sleep(delay_secs * 1000); // windows sleep in ms
      #else
           sleep(delay_secs); // unix sleep in seconds
      #endif
