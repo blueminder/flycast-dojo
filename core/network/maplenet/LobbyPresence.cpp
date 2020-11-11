@@ -2,12 +2,12 @@
 
 void LobbyPresence::BeaconThread()
 {
-    beacon("238.255.255.250", 1900, 5);
+    beacon("238.255.255.250", 7776, 5);
 }
 
 void LobbyPresence::ListenerThread()
 {
-    listener("238.255.255.250", 1900);
+    listener("238.255.255.250", 7776);
 }
 
 int LobbyPresence::beacon(char* group, int port, int delay_secs)
