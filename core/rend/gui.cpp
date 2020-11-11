@@ -793,11 +793,15 @@ static void gui_display_lobby()
 				}
 
 				settings.maplenet.Delay = delay > 1 ? delay : 1;
-				ImGui::OpenPopup("Set Delay & Launch");
+
+				std::string popup_name = "Set Delay & Launch " + beacon_id;
+				ImGui::OpenPopup(popup_name.c_str());
 			}
 
 			// right click to skip automatic detection
-			if (ImGui::BeginPopupContextItem("Set Delay & Launch", 1))
+
+			std::string popup_name = "Set Delay & Launch " + beacon_id;
+			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 0))
 			{
 			    ImGui::Text("Set Delay");
 				ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
