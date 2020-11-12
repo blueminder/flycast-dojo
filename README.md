@@ -58,7 +58,7 @@ Make sure both you and your opponent have the same delay and game ROM to begin y
 ### Launch Game
 On the Flycast main screen, you may now select your game of choice. You may also filter your list of games by typing in the text box on the top of the screen.
 
-If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else’s game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `save.net` files found in your `data/` subdirectory.
+If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else's game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `eeprom.net`/`nvmem.net` files found in your `data/` subdirectory.
 
 # Replays
 To record your netplay sessions, just check the box that says "Record All Sessions". This will create a new replay file for each netplay session you run and will be saved in the `replays/` subdirectory.
