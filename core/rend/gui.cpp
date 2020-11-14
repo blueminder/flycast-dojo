@@ -149,6 +149,8 @@ void gui_init()
 
     io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
+
+	gui_state = settings.maplenet.TestGame ? TestGame : Main;
 }
 
 void ImGui_Impl_NewFrame()
@@ -307,6 +309,39 @@ static void gui_start_game(const std::string& path)
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
+
+static void gui_display_test_game()
+{
+	dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##test_game", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Columns(2, "buttons", false);
+	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		gui_state = Settings;
+	}
+	ImGui::NextColumn();
+	if (ImGui::Button("Start Game", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		gui_state = Closed;
+		gui_start_game(settings.imgread.ImagePath);
+	}
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
+}
+
+
 
 static void gui_display_commands()
 {
@@ -2072,6 +2107,9 @@ void gui_display_ui()
 	{
 	case Lobby:
 		gui_display_lobby();
+		break;
+	case TestGame:
+		gui_display_test_game();
 		break;
 	case Settings:
 		gui_display_settings();

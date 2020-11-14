@@ -44,7 +44,8 @@ typedef enum {
 	SelectDisk,
 	Loading,
 	NetworkStart,
-	Lobby
+	Lobby,
+	TestGame
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();
