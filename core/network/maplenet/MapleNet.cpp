@@ -515,6 +515,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		FrameNumber > net_input_keys[1].size()))
 		dc_exit();
 
+/*
 	// define max ms to wait for new packets before close
 	int max_timeout = 10000;
 	int current_timeout = 0;
@@ -531,6 +532,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	}
 
 	current_timeout = 0;
+*/
 
 	while (this_frame.empty())
 	{
