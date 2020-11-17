@@ -658,8 +658,11 @@ int MapleNet::StartMapleNet()
 		std::thread t2(&UDPClient::ClientThread, std::ref(client));
 		t2.detach();
 
-		std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
-		t3.detach();
+		if (settings.maplenet.EnableLobby)
+		{
+			std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
+			t3.detach();
+		}
 
 		return 0;
 	}
