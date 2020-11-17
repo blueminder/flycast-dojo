@@ -161,7 +161,7 @@ void UDPClient::ClientLoop()
 							maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
 
 						maplenet.isMatchReady = true;
-						maplenet.isMatchStarted = true;
+						//maplenet.isMatchStarted = true;
 						maplenet.resume();
 					}
 

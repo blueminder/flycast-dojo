@@ -28,6 +28,9 @@ void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
 
+void gui_display_host_delay();
+void gui_open_host_delay();
+
 extern int screen_dpi;
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
@@ -45,7 +48,8 @@ typedef enum {
 	Loading,
 	NetworkStart,
 	Lobby,
-	TestGame
+	TestGame,
+	HostDelay
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

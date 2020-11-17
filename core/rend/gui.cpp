@@ -276,6 +276,12 @@ static void ShowHelpMarker(const char* desc)
     }
 }
 
+void gui_open_host_delay()
+{
+	gui_state = HostDelay;
+	settings_opening = true;
+}
+
 void gui_open_settings()
 {
 	if (gui_state == Closed)
@@ -308,6 +314,68 @@ static void gui_start_game(const std::string& path)
 	path_copy = path;	// path may be a local var
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+}
+
+void gui_display_host_delay()
+{
+	dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(360 * scaling, 0));
+
+	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	maplenet.OpponentIP = "172.217.12.78";
+	//maplenet.OpponentIP = "";
+
+	ImGui::Text("%s vs %s", settings.maplenet.PlayerName.c_str(), settings.maplenet.OpponentName.c_str());
+
+	ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
+	ImGui::SameLine();
+	ImGui::Text("Set Delay");
+
+	if (!maplenet.OpponentIP.empty())
+	{
+		if (maplenet.OpponentPing == 0)
+			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
+
+		if (ImGui::Button("Detect Delay"))
+			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
+
+		if (maplenet.OpponentPing > 0)
+		{
+			ImGui::SameLine();
+			ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
+		}
+	}
+
+	if (ImGui::Button("Start Game"))
+	{
+		settings.maplenet.PlayMatch = false;
+
+		maplenet.delay = settings.maplenet.Delay;
+		SaveSettings();
+
+		gui_state = Closed;
+		//gui_start_game(beacon_game_path);
+
+		maplenet.isMatchStarted = true;
+		maplenet.resume();
+	}
+
+	SaveSettings();
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
 }
 
 static void gui_display_test_game()
@@ -2204,6 +2272,9 @@ void gui_display_ui()
 		break;
 	case TestGame:
 		gui_display_test_game();
+		break;
+	case HostDelay:
+		gui_display_host_delay();
 		break;
 	case Settings:
 		gui_display_settings();

@@ -609,6 +609,8 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		if (received_data[0] == opponent &&
 			GetEffectiveFrameNumber((u8*)received_data) >= (FrameNumber))
 		{
+			if (hosting)
+				gui_open_host_delay();
 			isMatchReady = true;
 		}
 
@@ -632,8 +634,10 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 			host_status = 4;//"GUEST_PLAYING";
 			// normal operation, guest adopts host delay selection
 			if (!settings.maplenet.EnableLobby)
-				delay = (u32)GetDelay((u8*)received_data);
-
+			{
+				settings.maplenet.Delay = (u32)GetDelay((u8*)received_data);
+				maplenet.delay = settings.maplenet.Delay;
+			}
 		}
 	}
 
