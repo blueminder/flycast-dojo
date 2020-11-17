@@ -454,7 +454,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		{
 			for (int i = 0; i < ((int)(SkipFrame + delay + 10)); i++)
 			{
-				std::string new_frame = CreateFrame(i, player, delay, 0);
+				std::string new_frame = CreateFrame(i, j, delay, 0);
 				net_inputs[j][i] = new_frame;
 				net_input_keys[j].insert(i);
 
