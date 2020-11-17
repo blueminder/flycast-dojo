@@ -36,6 +36,19 @@ MapleNet::MapleNet()
 	replay_filename = "";
 
 	host_status = 0;//"IDLE";
+
+	OpponentIP = "";
+	OpponentPing = 0;
+}
+
+int MapleNet::DetectDelay(const char* ipAddr)
+{
+	int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
+
+	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
+	settings.maplenet.Delay = delay > 1 ? delay : 1;
+
+	return avg_ping_ms;
 }
 
 int MapleNet::GetAveragePing(const char* ipAddr)
@@ -608,11 +621,18 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		if (hosting)
 		{
 			host_status = 2;//"HOST_PLAYING";
+			// when lobby is enabled, delay determined by guest joining
 			if (settings.maplenet.EnableLobby)
 				delay = (u32)GetDelay((u8*)received_data);
 		}
 		else
+		{
 			host_status = 4;//"GUEST_PLAYING";
+			// normal operation, guest adopts host delay selection
+			if (!settings.maplenet.EnableLobby)
+				delay = (u32)GetDelay((u8*)received_data);
+
+		}
 	}
 
 	if (client_input_authority && GetPlayer((u8*)received_data) == player)

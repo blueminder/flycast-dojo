@@ -156,6 +156,10 @@ void UDPClient::ClientLoop()
 					if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)
 					{
 						opponent_addr = sender;
+
+						if (maplenet.hosting)
+							maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
+
 						maplenet.isMatchReady = true;
 						maplenet.isMatchStarted = true;
 						maplenet.resume();

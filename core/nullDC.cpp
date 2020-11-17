@@ -807,6 +807,7 @@ void InitSettings()
 	settings.maplenet.NumBackFrames = 3;
 	settings.maplenet.EnableLobby = false;
 	settings.maplenet.PlayerName = "Player";
+	settings.maplenet.OpponentName = "Opponent";
 	settings.maplenet.TestGame = false;
 
 #if SUPPORT_DISPMANX
@@ -932,6 +933,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.NumBackFrames = cfgLoadInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 	settings.maplenet.EnableLobby = cfgLoadBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
 	settings.maplenet.PlayerName = cfgLoadStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
+	settings.maplenet.OpponentName = cfgLoadStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
 	settings.maplenet.TestGame = cfgLoadBool("maplenet", "TestGame", settings.maplenet.TestGame);
 
 #if SUPPORT_DISPMANX
@@ -1109,6 +1111,7 @@ void SaveSettings()
 	cfgSaveInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
 	cfgSaveBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
 	cfgSaveStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
+	cfgSaveStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
 	cfgSaveBool("maplenet", "TestGame", settings.maplenet.TestGame);
 
 	GamepadDevice::SaveMaplePorts();

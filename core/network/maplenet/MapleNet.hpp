@@ -60,6 +60,9 @@ public:
 	int player;
 	int opponent;
 
+	std::string OpponentIP;
+	int OpponentPing;
+
 	bool coin_toggled;
 
 	u32 delay;
@@ -143,6 +146,7 @@ public:
 	std::string replay_filename;
 
 	int GetAveragePing(const char* ipAddr);
+	int DetectDelay(const char* ipAddr);
 
 	int host_status;
 };

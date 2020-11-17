@@ -511,6 +511,7 @@ struct settings_t
 		int NumBackFrames;
 		bool EnableLobby;
 		std::string PlayerName;
+		std::string OpponentName;
 		bool TestGame;
 	} maplenet;
 };
