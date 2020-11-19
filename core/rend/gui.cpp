@@ -2061,6 +2061,8 @@ static void gui_display_content()
 						{
 							scanner.get_mutex().unlock();
 							gui_state = Closed;
+							if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
+								settings.aica.LimitFPS = false;
 							gui_start_game(game.path);
 							scanner.get_mutex().lock();
 						}
