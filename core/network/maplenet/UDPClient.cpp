@@ -31,6 +31,18 @@ int UDPClient::SendData(std::string data)
 	return 0;
 }
 
+// udp ping, seeds with random number
+int UDPClient::PingOpponent()
+{
+	srand(time(NULL));
+	int rnd_num_cmp = rand() * 1000 + 1;
+
+	long current_timestamp = unix_timestamp(); 
+	ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
+	
+	return rnd_num_cmp;
+}
+
 sock_t UDPClient::createAndBind(int port)
 {
 	sock_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -91,6 +103,13 @@ bool UDPClient::Init(bool hosting)
 		
 }
 
+long UDPClient::unix_timestamp()
+{
+    time_t t = time(0);
+    long int now = static_cast<long int> (t);
+    return now;
+}
+
 void UDPClient::ClientLoop()
 {
 	isLoopStarted = true;
@@ -148,6 +167,30 @@ void UDPClient::ClientLoop()
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
+				if (memcmp("PING", buffer, 4) == 0)
+				{
+					char buffer_copy[256];
+					memcpy(buffer_copy, buffer, 256);
+					buffer_copy[1] = 'O';
+					sendto(local_socket, (const char*)buffer_copy, strlen(buffer_copy), 0, (struct sockaddr*)&sender, senderlen);
+					memset(buffer, 0, 256);
+				}
+
+				if (memcmp("PONG", buffer, 4) == 0)
+				{
+					//srand (time(NULL));
+					//int rnd_num_cmp = rand() * 1000 + 1;
+
+					int rnd_num_cmp = atoi(buffer + 5);
+					long ret_timestamp = unix_timestamp();
+					long rtt;
+					if (ping_send_ts.at(rnd_num_cmp))
+					{
+						ping_rtt.push_back(ret_timestamp - ping_send_ts[rnd_num_cmp]);
+						ping_send_ts.erase(rnd_num_cmp);
+					}
+				}
+
 				if (maplenet.GetPlayer((u8*)buffer) == 0xFF && maplenet.GetDelay((u8*)buffer) == 0xFF)
 					disconnect_toggle = true;
 
@@ -157,11 +200,11 @@ void UDPClient::ClientLoop()
 					{
 						opponent_addr = sender;
 
+						// prepare for delay selection
 						if (maplenet.hosting)
 							maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
 
 						maplenet.isMatchReady = true;
-						//maplenet.isMatchStarted = true;
 						maplenet.resume();
 					}
 

@@ -28,6 +28,8 @@ private:
 public:
 	UDPClient();
 
+	long unix_timestamp();
+
 	sock_t createAndBind(int port);
 	bool createLocalSocket(int port);
 
@@ -42,4 +44,8 @@ public:
 	void ClientThread();
 
 	int SendData(std::string data);
+
+	int PingOpponent();
+	std::map<int, long> ping_send_ts;
+	std::vector<long> ping_rtt;
 };
