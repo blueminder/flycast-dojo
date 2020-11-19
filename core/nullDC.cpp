@@ -922,7 +922,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
-	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
+	//settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
 	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
 	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	settings.maplenet.RecordMatches = cfgLoadBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
@@ -1101,7 +1101,7 @@ void SaveSettings()
 	cfgSaveBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
 	cfgSaveStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
-	cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
+	//cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
 	cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);

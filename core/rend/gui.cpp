@@ -331,12 +331,9 @@ void gui_display_host_delay()
 
 	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	maplenet.OpponentIP = "172.217.12.78";
-	//maplenet.OpponentIP = "";
-
 	ImGui::Text("%s vs %s", settings.maplenet.PlayerName.c_str(), settings.maplenet.OpponentName.c_str());
 
-	ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
+	ImGui::SliderInt("", (int*)&maplenet.delay, 1, 10);
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
@@ -358,12 +355,7 @@ void gui_display_host_delay()
 	if (ImGui::Button("Start Game"))
 	{
 		settings.maplenet.PlayMatch = false;
-
-		maplenet.delay = settings.maplenet.Delay;
-		SaveSettings();
-
 		gui_state = Closed;
-		//gui_start_game(beacon_game_path);
 
 		maplenet.isMatchStarted = true;
 		maplenet.resume();
@@ -985,7 +977,7 @@ static void gui_display_lobby()
 						/ 32.0f);
 				}
 
-				settings.maplenet.Delay = delay > 1 ? delay : 1;
+				maplenet.delay = delay > 1 ? delay : 1;
 
 				std::string popup_name = "Set Delay & Launch " + beacon_id;
 				ImGui::OpenPopup(popup_name.c_str());
@@ -997,7 +989,7 @@ static void gui_display_lobby()
 			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 0))
 			{
 			    ImGui::Text("Set Delay");
-				ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
+				ImGui::SliderInt("", (int*)&maplenet.delay, 1, 10);
 
 				if (ImGui::Button("Detect Delay"))
 				{
@@ -1005,7 +997,7 @@ static void gui_display_lobby()
 					maplenet.presence.active_beacon_ping[beacon_id] = avg_ping_ms;
 					
 					int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
-					settings.maplenet.Delay = delay > 1 ? delay : 1;
+					maplenet.delay = delay > 1 ? delay : 1;
 				}
 
 				if (ImGui::Button("Launch Game"))
@@ -1675,77 +1667,12 @@ static void gui_display_settings()
 			ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
 			if (settings.maplenet.Enable)
 			{
-				if (!settings.maplenet.PlayMatch)
-				{
-					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-
-						ImGui::Checkbox("Enable Lobby", &settings.maplenet.EnableLobby);
-						ImGui::SameLine();
-						ShowHelpMarker("Enable discovery and matchmaking on LAN");
-
-						if (settings.maplenet.EnableLobby)
-						{
-							char PlayerName[256] = { 0 };
-							strcpy(PlayerName, settings.maplenet.PlayerName.c_str());
-							ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-							ImGui::SameLine();
-							ShowHelpMarker("Name visible to other players");
-							settings.maplenet.PlayerName = std::string(PlayerName, strlen(PlayerName));
-						}
-					}
-
-					if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
-						ImGui::SameLine();
-						ShowHelpMarker("Host netplay game");
-
-						char ServerIP[256];
-						std::string IPLabel;
-						std::string IPDescription;
-						std::string PortDescription;
-						if (settings.maplenet.ActAsServer)
-						{
-							IPLabel = "Opponent IP##MapleNet";
-							IPDescription = "Opponent IP to detect delay against (optional)";
-							PortDescription = "The server port to listen on";
-						}
-						else
-						{
-							IPLabel = "Server IP##MapleNet";
-							IPDescription = "The server IP to connect to";
-							PortDescription = "The server port to connect to";
-						}
-
-						strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
-						ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker(IPDescription.c_str());
-						settings.maplenet.ServerIP = ServerIP;
-
-						char ServerPort[256];
-						strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
-						ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker(PortDescription.c_str());
-						settings.maplenet.ServerPort = ServerPort;
-
-						ImGui::SliderInt("Delay", (int*)&settings.maplenet.Delay, 1, 10);
-						ImGui::SameLine();
-						ShowHelpMarker("Set input delay");
-
-						if (ImGui::Button("Detect Delay", ImVec2(100 * scaling, 30 * scaling)))
-						{
-							int avg_ping_ms = 0;
-							char OpponentIP[256];
-							avg_ping_ms = maplenet.GetAveragePing(ServerIP);
-
-							int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
-							settings.maplenet.Delay = delay > 1 ? delay : 1;
-						}
-					}
-				}
+				char PlayerName[256] = { 0 };
+				strcpy(PlayerName, settings.maplenet.PlayerName.c_str());
+				ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Name visible to other players");
+				settings.maplenet.PlayerName = std::string(PlayerName, strlen(PlayerName));
 
 				if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -1772,6 +1699,53 @@ static void gui_display_settings()
 						ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
 						settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
 					}
+				}
+
+				if (!settings.maplenet.PlayMatch)
+				{
+					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						ImGui::Checkbox("Enable Lobby", &settings.maplenet.EnableLobby);
+						ImGui::SameLine();
+						ShowHelpMarker("Enable discovery and matchmaking on LAN");
+					}
+				}
+
+				if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
+					ImGui::SameLine();
+					ShowHelpMarker("Host netplay game");
+
+					char ServerIP[256];
+					std::string IPLabel;
+					std::string IPDescription;
+					std::string PortDescription;
+					if (settings.maplenet.ActAsServer)
+					{
+						IPLabel = "Opponent IP##MapleNet";
+						IPDescription = "Opponent IP to detect delay against (optional)";
+						PortDescription = "The server port to listen on";
+					}
+					else
+					{
+						IPLabel = "Server IP##MapleNet";
+						IPDescription = "The server IP to connect to";
+						PortDescription = "The server port to connect to";
+					}
+
+					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
+					ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker(IPDescription.c_str());
+					settings.maplenet.ServerIP = ServerIP;
+
+					char ServerPort[256];
+					strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
+					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker(PortDescription.c_str());
+					settings.maplenet.ServerPort = ServerPort;
 				}
 
 				if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))

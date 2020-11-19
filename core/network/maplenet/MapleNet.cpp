@@ -635,8 +635,10 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 			// normal operation, guest adopts host delay selection
 			if (!settings.maplenet.EnableLobby)
 			{
-				settings.maplenet.Delay = (u32)GetDelay((u8*)received_data);
-				maplenet.delay = settings.maplenet.Delay;
+				int old_delay = maplenet.delay;
+				maplenet.delay = (u32)GetDelay((u8*)received_data);
+				if (old_delay < maplenet.delay)
+					FrameNumber = GetEffectiveFrameNumber((u8*)received_data) - maplenet.delay;
 			}
 		}
 	}
