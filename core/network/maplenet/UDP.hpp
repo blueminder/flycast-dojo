@@ -45,7 +45,7 @@ public:
 
 	int SendData(std::string data);
 
-	int PingOpponent();
+	int PingOpponent(int add_to_seed);
 	int GetOpponentAvgPing();
 	std::map<int, long> ping_send_ts;
 	std::vector<long> ping_rtt;

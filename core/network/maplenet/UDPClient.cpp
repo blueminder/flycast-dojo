@@ -47,10 +47,10 @@ unsigned long mix(unsigned long a, unsigned long b, unsigned long c)
 }
 
 // udp ping, seeds with random number
-int UDPClient::PingOpponent()
+int UDPClient::PingOpponent(int add_to_seed)
 {
 	unsigned long seed = mix(clock(), time(NULL), getpid());
-	srand(seed);
+	srand(seed + add_to_seed);
 	//srand(time(NULL));
 	int rnd_num_cmp = rand() * 1000 + 1;
 
@@ -74,10 +74,10 @@ int UDPClient::PingOpponent()
 
 int UDPClient::GetOpponentAvgPing()
 {
-	//while (ping_rtt.size() < 1)
-	//{
-		PingOpponent();
-	//}
+	for (int i = 0; i < 5; i++)
+	{
+		PingOpponent(i);
+	}
 
 	return avg_ping_ms;
 }
@@ -217,9 +217,6 @@ void UDPClient::ClientLoop()
 
 				if (memcmp("PONG", buffer, 4) == 0)
 				{
-					//srand (time(NULL));
-					//int rnd_num_cmp = rand() * 1000 + 1;
-
 					int rnd_num_cmp = atoi(buffer + 5);
 					long ret_timestamp = unix_timestamp();
 
@@ -228,19 +225,22 @@ void UDPClient::ClientLoop()
 					{
 
 						long rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
+						INFO_LOG(NETWORK, "Received PONG %d, RTT: %d ms", rnd_num_cmp, rtt);
 						
 						ping_rtt.push_back(rtt);
 
 						if (ping_rtt.size() > 1)
 						{
 							avg_ping_ms = std::accumulate(ping_rtt.begin(), ping_rtt.end(), 0.0) / ping_rtt.size();
-							//ping_rtt.clear();
 						}
 						else
 						{
 
 							avg_ping_ms = rtt;
 						}
+
+						if (ping_rtt.size() > 5)
+							ping_rtt.clear();
 
 						ping_send_ts.erase(rnd_num_cmp);
 					}

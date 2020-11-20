@@ -43,14 +43,7 @@ MapleNet::MapleNet()
 
 int MapleNet::DetectDelay(const char* ipAddr)
 {
-	//int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
 	int avg_ping_ms = client.GetOpponentAvgPing();
-
-	//while (client.ping_rtt.size() < 10)
-		//client.PingOpponent();
-
-	//int avg_ping_ms = std::accumulate(client.ping_rtt.begin(), client.ping_rtt.end(), 0.0) / 10;
-	//client.ping_rtt.clear();
 
 	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
 	settings.maplenet.Delay = delay > 1 ? delay : 1;
@@ -58,6 +51,8 @@ int MapleNet::DetectDelay(const char* ipAddr)
 	return avg_ping_ms;
 }
 
+// returns ICMP ping, to be removed once udp rtt ping is enabled
+// not all exposed IPs respond to ICMP ping
 int MapleNet::GetAveragePing(const char* ipAddr)
 {
 	Ping target;
