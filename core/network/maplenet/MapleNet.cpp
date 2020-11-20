@@ -615,8 +615,11 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		if (received_data[0] == opponent &&
 			GetEffectiveFrameNumber((u8*)received_data) >= (FrameNumber))
 		{
-			if (hosting)
+			if (hosting && !OpponentIP.empty())
+			{
+				DetectDelay(OpponentIP.data());
 				gui_open_host_delay();
+			}
 			isMatchReady = true;
 		}
 

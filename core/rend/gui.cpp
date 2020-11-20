@@ -333,15 +333,12 @@ void gui_display_host_delay()
 
 	ImGui::Text("%s vs %s", settings.maplenet.PlayerName.c_str(), settings.maplenet.OpponentName.c_str());
 
-	ImGui::SliderInt("", (int*)&maplenet.delay, 1, 10);
+	ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
 	if (!maplenet.OpponentIP.empty())
 	{
-		if (maplenet.OpponentPing == 0)
-			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
-
 		if (ImGui::Button("Detect Delay"))
 			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
 
@@ -357,6 +354,7 @@ void gui_display_host_delay()
 		settings.maplenet.PlayMatch = false;
 		gui_state = Closed;
 
+		maplenet.delay = settings.maplenet.Delay;
 		maplenet.isMatchStarted = true;
 		maplenet.resume();
 	}
