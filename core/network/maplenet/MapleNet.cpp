@@ -43,7 +43,8 @@ MapleNet::MapleNet()
 
 int MapleNet::DetectDelay(const char* ipAddr)
 {
-	int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
+	//int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
+	int avg_ping_ms = client.GetOpponentAvgPing();
 
 	//while (client.ping_rtt.size() < 10)
 		//client.PingOpponent();
@@ -617,7 +618,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		{
 			if (hosting && !OpponentIP.empty())
 			{
-				DetectDelay(OpponentIP.data());
+				//DetectDelay(OpponentIP.data());
 				gui_open_host_delay();
 			}
 			isMatchReady = true;
@@ -626,7 +627,8 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		if (isMatchReady)
 		{
 			resume();
-			isMatchStarted = true;
+			if (!hosting)
+				isMatchStarted = true;
 		}
 	}
 	else

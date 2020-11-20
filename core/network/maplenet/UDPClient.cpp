@@ -31,16 +31,55 @@ int UDPClient::SendData(std::string data)
 	return 0;
 }
 
+// http://www.concentric.net/~Ttwang/tech/inthash.htm
+unsigned long mix(unsigned long a, unsigned long b, unsigned long c)
+{
+    a=a-b;  a=a-c;  a=a^(c >> 13);
+    b=b-c;  b=b-a;  b=b^(a << 8);
+    c=c-a;  c=c-b;  c=c^(b >> 13);
+    a=a-b;  a=a-c;  a=a^(c >> 12);
+    b=b-c;  b=b-a;  b=b^(a << 16);
+    c=c-a;  c=c-b;  c=c^(b >> 5);
+    a=a-b;  a=a-c;  a=a^(c >> 3);
+    b=b-c;  b=b-a;  b=b^(a << 10);
+    c=c-a;  c=c-b;  c=c^(b >> 15);
+    return c;
+}
+
 // udp ping, seeds with random number
 int UDPClient::PingOpponent()
 {
-	srand(time(NULL));
+	unsigned long seed = mix(clock(), time(NULL), getpid());
+	srand(seed);
+	//srand(time(NULL));
 	int rnd_num_cmp = rand() * 1000 + 1;
 
-	long current_timestamp = unix_timestamp(); 
-	ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
+	if (ping_send_ts.count(rnd_num_cmp) == 0)
+	{
+
+		std::stringstream ping_ss("");
+		ping_ss << "PING " << rnd_num_cmp;
+		std::string to_send_ping = ping_ss.str();
+		
+		sendto(local_socket, (const char*)to_send_ping.data(), strlen(to_send_ping.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+		INFO_LOG(NETWORK, "Sent %s", to_send_ping.data());
+
+		long current_timestamp = unix_timestamp();
+		ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
+	}
 	
+	// last ping key
 	return rnd_num_cmp;
+}
+
+int UDPClient::GetOpponentAvgPing()
+{
+	//while (ping_rtt.size() < 1)
+	//{
+		PingOpponent();
+	//}
+
+	return avg_ping_ms;
 }
 
 sock_t UDPClient::createAndBind(int port)
@@ -183,12 +222,29 @@ void UDPClient::ClientLoop()
 
 					int rnd_num_cmp = atoi(buffer + 5);
 					long ret_timestamp = unix_timestamp();
-					long rtt;
-					if (ping_send_ts.at(rnd_num_cmp))
+
+					
+					if (ping_send_ts.count(rnd_num_cmp) == 1)
 					{
-						ping_rtt.push_back(ret_timestamp - ping_send_ts[rnd_num_cmp]);
+
+						long rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
+						
+						ping_rtt.push_back(rtt);
+
+						if (ping_rtt.size() > 1)
+						{
+							avg_ping_ms = std::accumulate(ping_rtt.begin(), ping_rtt.end(), 0.0) / ping_rtt.size();
+							//ping_rtt.clear();
+						}
+						else
+						{
+
+							avg_ping_ms = rtt;
+						}
+
 						ping_send_ts.erase(rnd_num_cmp);
 					}
+					
 				}
 
 				if (maplenet.GetPlayer((u8*)buffer) == 0xFF && maplenet.GetDelay((u8*)buffer) == 0xFF)
