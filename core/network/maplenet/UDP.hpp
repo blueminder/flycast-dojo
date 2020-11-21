@@ -48,6 +48,9 @@ public:
 	int PingOpponent(int add_to_seed);
 	int GetOpponentAvgPing();
 
+
+	void SendPlayerName();
+
 	void StartSession();
 	void EndSession();
 

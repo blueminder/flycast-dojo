@@ -981,7 +981,7 @@ static void gui_display_lobby()
 	ImGui::Separator();
 	ImGui::SetColumnWidth(0, ImGui::CalcTextSize("Ping").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 	ImGui::Text("Ping"); ImGui::NextColumn();
-	ImGui::Text("Name"); ImGui::NextColumn();
+	ImGui::Text("Players"); ImGui::NextColumn();
 	ImGui::Text("Status"); ImGui::NextColumn();
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
@@ -1033,54 +1033,16 @@ static void gui_display_lobby()
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				int delay = 0;
-				if (beacon_ping > 0)
-				{
-					delay = (int)ceil(
-						(beacon_ping * 1.0f)
-						/ 32.0f);
-				}
+				settings.maplenet.ActAsServer = false;
+				settings.maplenet.PlayMatch = false;
 
-				maplenet.delay = delay > 1 ? delay : 1;
-
-				std::string popup_name = "Set Delay & Launch " + beacon_id;
-				ImGui::OpenPopup(popup_name.c_str());
-			}
-
-			// right click to skip automatic detection
-
-			std::string popup_name = "Set Delay & Launch " + beacon_id;
-			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 0))
-			{
-			    ImGui::Text("Set Delay");
-				ImGui::SliderInt("", (int*)&maplenet.delay, 1, 10);
-
-				if (ImGui::Button("Detect Delay"))
-				{
-					int avg_ping_ms = maplenet.GetAveragePing(beacon_ip.c_str());
-					maplenet.presence.active_beacon_ping[beacon_id] = avg_ping_ms;
-					
-					int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
-					maplenet.delay = delay > 1 ? delay : 1;
-				}
-
-				if (ImGui::Button("Launch Game"))
-				{
-					settings.maplenet.ActAsServer = false;
-					settings.maplenet.PlayMatch = false;
-
-					settings.maplenet.ServerIP = beacon_ip;
-					settings.maplenet.ServerPort = beacon_server_port;
-
-					SaveSettings();
-
-					gui_state = Closed;
-					gui_start_game(beacon_game_path);
-				}
+				settings.maplenet.ServerIP = beacon_ip;
+				settings.maplenet.ServerPort = beacon_server_port;
 
 				SaveSettings();
 
-			    ImGui::EndPopup();
+				gui_state = Closed;
+				gui_start_game(beacon_game_path);
 			}
 
 			ImGui::NextColumn();
@@ -1088,28 +1050,9 @@ static void gui_display_lobby()
 			ImGui::Text(beacon_player.c_str());  ImGui::NextColumn();
 			ImGui::Text(beacon_status.c_str());  ImGui::NextColumn();
 			ImGui::Text(beacon_game.c_str()); ImGui::NextColumn();
-	
-			std::stringstream bs;
-			//bs << "{" << (*it).first << ": " << (*it).second << "}";
-			//ImGui::Text(bs.str().c_str()); ImGui::NextColumn;
-
 		}
 	}
 
-/*
-	for (int i = 0; i < maplenet.presence.active_beacons.size(); i++)
-	{
-		//char label[32];
-		//sprintf(label, "%04d", i);
-		if (ImGui::Selectable(msg, selected == i, ImGuiSelectableFlags_SpanAllColumns))
-			selected = i;
-		ImGui::NextColumn();
-		//ImGui::Text(ips[i]); ImGui::NextColumn();
-		//ImGui::Text(statuses[i]); ImGui::NextColumn();
-		//ImGui::Text(games[i]); ImGui::NextColumn();
-		//ImGui::Text(pings[i]); ImGui::NextColumn();
-	}
-	*/
     ImGui::End();
     ImGui::PopStyleVar();
 

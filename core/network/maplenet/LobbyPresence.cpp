@@ -54,19 +54,31 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
             status = "Hosting, Waiting";
             break;
         case 2:
-            status = "Hosting, Playing";
+            status = "Hosting, Starting";
             break;
         case 3:
-            status = "Guest, Connecting";
+            status = "Hosting, Playing";
             break;
         case 4:
+            status = "Guest, Connecting";
+            break;
+        case 5:
             status = "Guest, Playing";
             break;
         }
 
-        std::string message_str = settings.maplenet.ServerPort + "__" +
-            status + "__" + current_game + "__" + settings.maplenet.PlayerName + "__";
-        message = message_str.c_str();
+		std::stringstream message_ss("");
+        message_ss << settings.maplenet.ServerPort << "__" << status << "__" << current_game << "__" << settings.maplenet.PlayerName;
+        if (maplenet.host_status == 2 || maplenet.host_status == 3)
+        {
+            message_ss << " vs " << settings.maplenet.OpponentName << "__";
+        }
+        else
+        {
+            message_ss << "__";
+        }
+        std::string message_str = message_ss.str();
+        message = message_str.data();
 
         char ch = 0;
         int nbytes = sendto(

@@ -108,6 +108,19 @@ void UDPClient::EndSession()
 	INFO_LOG(NETWORK, "Disconnected");
 }
 
+void UDPClient::SendPlayerName()
+{
+	std::string to_send_name("NAME " + settings.maplenet.PlayerName);
+
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)to_send_name.data(), strlen(to_send_name.data()), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
+	}
+
+	INFO_LOG(NETWORK, "Player Name Sent: %s", settings.maplenet.PlayerName.data());
+}
+
+
 sock_t UDPClient::createAndBind(int port)
 {
 	sock_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -194,6 +207,7 @@ void UDPClient::ClientLoop()
 			{
 				if (!maplenet.isMatchStarted)
 				{
+					SendPlayerName();
 					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
 				}
 			}
@@ -228,6 +242,11 @@ void UDPClient::ClientLoop()
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
+				if (memcmp("NAME", buffer, 4) == 0)
+				{
+					settings.maplenet.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+				}
+
 				if (memcmp("PING", buffer, 4) == 0)
 				{
 					char buffer_copy[256];
@@ -257,7 +276,6 @@ void UDPClient::ClientLoop()
 						}
 						else
 						{
-
 							avg_ping_ms = rtt;
 						}
 

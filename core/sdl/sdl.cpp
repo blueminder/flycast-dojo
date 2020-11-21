@@ -279,7 +279,7 @@ void sdl_recreate_window(u32 flags)
 	else if (window_maximized)
 		flags |= SDL_WINDOW_MAXIMIZED;
 #endif
-	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
+	window = SDL_CreateWindow("Flycast Dojo", x, y, window_width, window_height, flags);
 	if (!window)
 		die("error creating SDL window");
 

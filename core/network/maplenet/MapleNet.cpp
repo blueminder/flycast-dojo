@@ -615,6 +615,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		{
 			if (hosting && !OpponentIP.empty())
 			{
+				host_status = 2;
 				DetectDelay(OpponentIP.data());
 				gui_open_host_delay();
 			}
@@ -636,25 +637,19 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 	{
 		if (hosting)
 		{
-			host_status = 2;//"HOST_PLAYING";
-			// when lobby is enabled, delay determined by guest joining
-			if (settings.maplenet.EnableLobby)
-				delay = (u32)GetDelay((u8*)received_data);
+			host_status = 3;//"HOST_PLAYING";
 		}
 		else
 		{
-			host_status = 4;//"GUEST_PLAYING";
-			// normal operation, guest adopts host delay selection
-			if (!settings.maplenet.EnableLobby)
-			{
-				int old_delay = maplenet.delay;
-				maplenet.delay = (u32)GetDelay((u8*)received_data);
-				if (old_delay < maplenet.delay)
-					FrameNumber = GetEffectiveFrameNumber((u8*)received_data) - maplenet.delay;
+			host_status = 5;//"GUEST_PLAYING";
+			// guest adopts host delay selection
+			int old_delay = maplenet.delay;
+			maplenet.delay = (u32)GetDelay((u8*)received_data);
+			if (old_delay < maplenet.delay)
+				FrameNumber = GetEffectiveFrameNumber((u8*)received_data) - maplenet.delay;
 
-				if (maplenet.session_started)
-					gui_close_guest_wait();
-			}
+			if (maplenet.session_started)
+				gui_close_guest_wait();
 		}
 	}
 
@@ -701,7 +696,7 @@ int MapleNet::StartMapleNet()
 		std::thread t2(&UDPClient::ClientThread, std::ref(client));
 		t2.detach();
 
-		if (settings.maplenet.EnableLobby)
+		if (settings.maplenet.EnableLobby && hosting)
 		{
 			std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
 			t3.detach();
