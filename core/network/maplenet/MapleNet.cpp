@@ -13,6 +13,8 @@ MapleNet::MapleNet()
 	player = settings.maplenet.ActAsServer ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 
+	session_started = false;
+
 	FrameNumber = 1;
 	SkipFrame = 1;
 	isPaused = true;
@@ -613,8 +615,12 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		{
 			if (hosting && !OpponentIP.empty())
 			{
-				//DetectDelay(OpponentIP.data());
+				DetectDelay(OpponentIP.data());
 				gui_open_host_delay();
+			}
+			else
+			{
+				gui_open_guest_wait();
 			}
 			isMatchReady = true;
 		}
@@ -645,6 +651,9 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 				maplenet.delay = (u32)GetDelay((u8*)received_data);
 				if (old_delay < maplenet.delay)
 					FrameNumber = GetEffectiveFrameNumber((u8*)received_data) - maplenet.delay;
+
+				if (maplenet.session_started)
+					gui_close_guest_wait();
 			}
 		}
 	}

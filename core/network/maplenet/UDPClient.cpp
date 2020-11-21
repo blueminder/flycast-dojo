@@ -82,6 +82,19 @@ int UDPClient::GetOpponentAvgPing()
 	return avg_ping_ms;
 }
 
+void UDPClient::StartSession()
+{
+	maplenet.session_started = true;
+	std::string to_send_start("START");
+
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)to_send_start.data(), strlen(to_send_start.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+	}
+
+	INFO_LOG(NETWORK, "Session Initiated");
+}
+
 sock_t UDPClient::createAndBind(int port)
 {
 	sock_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -203,6 +216,7 @@ void UDPClient::ClientLoop()
 			struct sockaddr_in sender;
 			socklen_t senderlen = sizeof(sender);
 			char buffer[256];
+			memset(buffer, 0, 256);
 			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 			if (bytes_read)
 			{
@@ -245,6 +259,11 @@ void UDPClient::ClientLoop()
 						ping_send_ts.erase(rnd_num_cmp);
 					}
 					
+				}
+
+				if (memcmp("START", buffer, 5) == 0)
+				{
+					maplenet.session_started = true;
 				}
 
 				if (maplenet.GetPlayer((u8*)buffer) == 0xFF && maplenet.GetDelay((u8*)buffer) == 0xFF)

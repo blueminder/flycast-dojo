@@ -276,6 +276,17 @@ static void ShowHelpMarker(const char* desc)
     }
 }
 
+void gui_open_guest_wait()
+{
+	gui_state = GuestWait;
+	settings_opening = true;
+}
+
+void gui_close_guest_wait()
+{
+	gui_state = Closed;
+}
+
 void gui_open_host_delay()
 {
 	gui_state = HostDelay;
@@ -314,6 +325,30 @@ static void gui_start_game(const std::string& path)
 	path_copy = path;	// path may be a local var
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+}
+
+void gui_display_guest_wait()
+{
+	//dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Waiting for host to select delay...");
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
 }
 
 void gui_display_host_delay()
@@ -357,6 +392,7 @@ void gui_display_host_delay()
 		maplenet.delay = settings.maplenet.Delay;
 		maplenet.isMatchStarted = true;
 		maplenet.resume();
+		maplenet.client.StartSession();
 	}
 
 	SaveSettings();
@@ -2249,6 +2285,9 @@ void gui_display_ui()
 		break;
 	case HostDelay:
 		gui_display_host_delay();
+		break;
+	case GuestWait:
+		gui_display_guest_wait();
 		break;
 	case Settings:
 		gui_display_settings();

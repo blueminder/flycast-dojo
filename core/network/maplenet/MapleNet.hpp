@@ -59,6 +59,7 @@ public:
 	int local_port;
 	int player;
 	int opponent;
+	bool session_started;
 
 	std::string OpponentIP;
 	int OpponentPing;
