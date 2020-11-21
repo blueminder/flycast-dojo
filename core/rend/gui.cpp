@@ -293,6 +293,12 @@ void gui_open_host_delay()
 	settings_opening = true;
 }
 
+void gui_open_disconnected()
+{
+	gui_state = Disconnected;
+	settings_opening = true;
+}
+
 void gui_open_settings()
 {
 	if (gui_state == Closed)
@@ -343,6 +349,30 @@ void gui_display_guest_wait()
 	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Text("Waiting for host to select delay...");
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
+}
+
+void gui_display_disconnected()
+{
+	dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##disconnected", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Disconnected.");
 
 	ImGui::End();
 
@@ -2288,6 +2318,9 @@ void gui_display_ui()
 		break;
 	case GuestWait:
 		gui_display_guest_wait();
+		break;
+	case Disconnected:
+		gui_display_disconnected();
 		break;
 	case Settings:
 		gui_display_settings();

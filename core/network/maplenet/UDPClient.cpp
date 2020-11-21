@@ -95,6 +95,19 @@ void UDPClient::StartSession()
 	INFO_LOG(NETWORK, "Session Initiated");
 }
 
+void UDPClient::EndSession()
+{
+	disconnect_toggle = true;
+	std::string to_send_end("DISCONNECT");
+
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)to_send_end.data(), strlen(to_send_end.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+	}
+
+	INFO_LOG(NETWORK, "Disconnected");
+}
+
 sock_t UDPClient::createAndBind(int port)
 {
 	sock_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -172,13 +185,8 @@ void UDPClient::ClientLoop()
 		{
 			if (disconnect_toggle)
 			{
-				char disconnect_packet[2];
-				disconnect_packet[0] = 0xFF;
-				disconnect_packet[1] = 0xFF;
-				for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-				{
-					sendto(local_socket, (const char*)disconnect_packet, 2, 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-				}
+				EndSession();
+				gui_open_disconnected();
 			}
 
 			// if match has not started, send packet to inform host who the opponent is
@@ -266,8 +274,10 @@ void UDPClient::ClientLoop()
 					maplenet.session_started = true;
 				}
 
-				if (maplenet.GetPlayer((u8*)buffer) == 0xFF && maplenet.GetDelay((u8*)buffer) == 0xFF)
+				if (memcmp("DISCONNECT", buffer, 10) == 0)
+				{
 					disconnect_toggle = true;
+				}
 
 				if (bytes_read == maplenet.PayloadSize())
 				{

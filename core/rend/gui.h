@@ -34,6 +34,9 @@ void gui_open_host_delay();
 void gui_open_guest_wait();
 void gui_close_guest_wait();
 
+void gui_open_disconnected();
+void gui_display_disconnected();
+
 extern int screen_dpi;
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
@@ -53,7 +56,8 @@ typedef enum {
 	Lobby,
 	TestGame,
 	HostDelay,
-	GuestWait
+	GuestWait,
+	Disconnected
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();
