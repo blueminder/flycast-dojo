@@ -487,7 +487,7 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 	}
 }
 
-const char *maple_ports[] = { "None", "A", "B", "C", "D" };
+const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
 const DreamcastKey button_keys[] = {
 		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
@@ -545,6 +545,7 @@ static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
 static double map_start_time;
 static bool arcade_button_mode;
+static u32 gamepad_port;
 
 static void input_detected(u32 code)
 {
@@ -570,15 +571,15 @@ static void detect_input_popup(int index, bool analog)
 			{
 				if (analog)
 				{
-					u32 previous_mapping = input_mapping->get_axis_code(axis_keys[index]);
+					u32 previous_mapping = input_mapping->get_axis_code(gamepad_port, axis_keys[index]);
 					bool inverted = false;
 					if (previous_mapping != (u32)-1)
-						inverted = input_mapping->get_axis_inverted(previous_mapping);
+						inverted = input_mapping->get_axis_inverted(gamepad_port, previous_mapping);
 					// FIXME Allow inverted to be set
-					input_mapping->set_axis(axis_keys[index], mapped_code, inverted);
+					input_mapping->set_axis(gamepad_port, axis_keys[index], mapped_code, inverted);
 				}
 				else
-					input_mapping->set_button(button_keys[index], mapped_code);
+					input_mapping->set_button(gamepad_port, button_keys[index], mapped_code);
 			}
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
@@ -614,6 +615,26 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			gamepad->save_mapping();
 		}
 		ImGui::SetItemDefaultFocus();
+
+		if (gamepad->maple_port() == MAPLE_PORTS)
+		{
+			ImGui::SameLine();
+			float w = ImGui::CalcItemWidth();
+			ImGui::PushItemWidth(w / 2);
+			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
+			{
+				for (u32 j = 0; j < MAPLE_PORTS; j++)
+				{
+					bool is_selected = gamepad_port == j;
+					if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+						gamepad_port = j;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+		}
 		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Arcade button names").x
 				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
 		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
@@ -632,9 +653,15 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_button_code(button_keys[j]);
+			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
 			if (code != (u32)-1)
-				ImGui::Text("%d", code);
+			{
+				const char *label = gamepad->get_button_name(code);
+				if (label != nullptr)
+					ImGui::Text("%s", label);
+				else
+					ImGui::Text("[%d]", code);
+			}
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
@@ -666,9 +693,15 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", arcade_button_mode ? arcade_axis_names[j] : axis_names[j]);
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_axis_code(axis_keys[j]);
+			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
 			if (code != (u32)-1)
-				ImGui::Text("%d", code);
+			{
+				const char *label = gamepad->get_axis_name(code);
+				if (label != nullptr)
+					ImGui::Text("%s", label);
+				else
+					ImGui::Text("[%d]", code);
+			}
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
@@ -711,6 +744,63 @@ static void error_popup()
 			ImGui::EndPopup();
 		}
 	}
+}
+
+static void contentpath_warning_popup()
+{
+    static bool show_contentpath_warning_popup = true;
+    static bool show_contentpath_selection = false;
+    if (show_contentpath_warning_popup && scanner.path_is_too_dirty)
+    {
+        ImGui::OpenPopup("Incorrect Content Location?");
+        if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+            ImGui::TextWrapped("  Still searching in %d folders, no game can be found!  ", scanner.still_no_rom_counter);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
+            if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
+            {
+                show_contentpath_warning_popup = false;
+                ImGui::CloseCurrentPopup();
+                show_contentpath_selection = true;
+            }
+            
+            ImGui::SameLine();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
+            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+            {
+                show_contentpath_warning_popup = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::PopStyleVar();
+            ImGui::EndPopup();
+        }
+    }
+    if (show_contentpath_selection)
+    {
+        static auto original = settings.dreamcast.ContentPath;
+        settings.dreamcast.ContentPath.clear();
+        scanner.stop();
+        ImGui::OpenPopup("Select Directory");
+        select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
+        {
+            show_contentpath_selection = false;
+            show_contentpath_warning_popup = true;
+            if (!cancelled)
+            {
+                settings.dreamcast.ContentPath.push_back(selection);
+                scanner.refresh();
+            }
+            else
+            {
+                settings.dreamcast.ContentPath = original;
+                scanner.refresh();
+            }
+        });
+    }
 }
 
 void directory_selected_callback(bool cancelled, std::string selection)
@@ -1173,7 +1263,7 @@ static void gui_display_settings()
 					ImGui::PushID(port_name);
 					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
 					{
-						for (int j = -1; j < MAPLE_PORTS; j++)
+						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
 						{
 							bool is_selected = gamepad->maple_port() == j;
 							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
@@ -1186,7 +1276,10 @@ static void gui_display_settings()
 					}
 					ImGui::NextColumn();
 					if (gamepad->remappable() && ImGui::Button("Map"))
+					{
+						gamepad_port = 0;
 						ImGui::OpenPopup("Controller Mapping");
+					}
 
 					controller_mapping_popup(gamepad);
 
@@ -1942,6 +2035,7 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
 	error_popup();
+    contentpath_warning_popup();
 
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);

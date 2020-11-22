@@ -67,6 +67,7 @@ enum MapleDeviceCommand
 
 	MDC_JVSUploadFirmware = 0x80, // JVS bridge firmware
 	MDC_JVSGetId		 = 0x82,
+	MDC_JVSSelfTest		 = 0x84, // JVS Self Test
 	MDC_JVSCommand		 = 0x86, // JVS I/O
 };
 
@@ -85,6 +86,7 @@ enum MapleDeviceRV
 	MDRE_FileError       = 0xFB, //1 word, bitfield
 	MDRE_LCDError        = 0xFA, //1 word, bitfield
 	MDRE_ARGunError      = 0xF9, //1 word, bitfield
+	MDRS_JVSSelfTestReply= 0x85, // JVS I/O SelfTest
 
 	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
@@ -2476,6 +2478,14 @@ struct maple_naomi_jamma : maple_sega_controller
 		u32 cmd = *(u8*)buffer_in;
 		switch (cmd)
 		{
+			case MDC_JVSSelfTest:
+				w8(MDRS_JVSSelfTestReply);
+				w8(0x00);
+				w8(0x20);
+				w8(0x01);
+				w8(0x00);
+				break;
+
 			case MDC_JVSCommand:
 				handle_86_subcommand();
 				break;
@@ -3028,7 +3038,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		}
 		break;
 	}
-	jvs_length = length - 3;
+	jvs_length = length - 2;
+
+	u8 calc_crc = 0;
+	for (int i = 1; i < length; i++)
+		calc_crc = ((calc_crc + buffer_out[i]) & 0xFF);
+
+	JVS_OUT(calc_crc);
+	LOGJVS("CRC %x", calc_crc);
 
 	return length;
 }

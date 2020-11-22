@@ -101,7 +101,7 @@ uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
 uniform sampler2D palette;
-uniform float palette_index;
+uniform int palette_index;
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -142,8 +142,9 @@ vec4 fog_clamp(vec4 col)
 
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
-	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + palette_index, 0.5, 0.0, 0.0);
-	return texture(palette, c.xy);
+	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
+	vec2 c = vec2(float(color_idx % 32) / 31.0, float(color_idx / 32) / 31.0);
+	return texture(palette, c);
 }
 
 #endif
@@ -815,6 +816,17 @@ static bool RenderFrame()
 					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 					glcache.Scissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
+				else if (matrices.GetSidebarWidth() < 0)
+				{
+					float scaled_offs_y = -matrices.GetSidebarWidth() * screen_scaling;
+
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glcache.Scissor(0, 0, rendering_width, (GLsizei)lroundf(scaled_offs_y));
+					glClear(GL_COLOR_BUFFER_BIT);
+					glcache.Scissor(0, (GLint)lroundf(screen_height * screen_scaling - scaled_offs_y), rendering_width, (GLsizei)lroundf(scaled_offs_y + 1.f));
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}

@@ -226,7 +226,7 @@ bool LoadHle(const std::string& root)
 	if (!nvmem_load(root))
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 
-	reios_reset(sys_rom->data, sys_nvmem);
+	reios_reset(sys_rom->data);
 
 	return true;
 }
@@ -486,6 +486,7 @@ void sh4_area0_Reset(bool hard)
 		case DC_PLATFORM_DREAMCAST:
 			sys_rom = new RomChip(settings.platform.bios_size);
 			sys_nvmem = new DCFlashChip(settings.platform.flash_size);
+			reios_set_flash(sys_nvmem);
 			break;
 		case DC_PLATFORM_NAOMI:
 			sys_rom = new RomChip(settings.platform.bios_size);
