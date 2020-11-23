@@ -482,10 +482,9 @@ void gui_display_host_delay()
 		settings.maplenet.PlayMatch = false;
 		gui_state = Closed;
 
-		maplenet.delay = settings.maplenet.Delay;
 		maplenet.isMatchStarted = true;
-		maplenet.client.StartSession();
 		maplenet.resume();
+		maplenet.StartSession(settings.maplenet.Delay);
 	}
 
 	SaveSettings();

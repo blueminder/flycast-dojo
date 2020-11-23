@@ -84,8 +84,6 @@ int UDPClient::GetOpponentAvgPing()
 
 void UDPClient::StartSession()
 {
-	maplenet.session_started = true;
-
 	std::stringstream start_ss("");
 	start_ss << "START " << maplenet.delay;
 	std::string to_send_start = start_ss.str();
@@ -94,8 +92,6 @@ void UDPClient::StartSession()
 	{
 		sendto(local_socket, (const char*)to_send_start.data(), strlen(to_send_start.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 	}
-
-	INFO_LOG(NETWORK, "Session Initiated");
 }
 
 void UDPClient::EndSession()
@@ -302,10 +298,7 @@ void UDPClient::ClientLoop()
 					int delay = atoi(buffer + 6);
 					if (!maplenet.session_started)
 					{
-						maplenet.delay = delay;
-						maplenet.session_started = true;
-
-						INFO_LOG(NETWORK, "Session Initiated");
+						maplenet.StartSession(delay);
 					}
 				}
 

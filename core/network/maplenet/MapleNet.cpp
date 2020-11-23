@@ -15,7 +15,7 @@ MapleNet::MapleNet()
 
 	session_started = false;
 
-	FrameNumber = 1;
+	FrameNumber = 2;
 	//SkipFrame = 1;
 	isPaused = true;
 
@@ -28,7 +28,7 @@ MapleNet::MapleNet()
 	LobbyPresence presence;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 1;
+	last_consecutive_common_frame = 2;
 	started = false;
 
 	spectating = false;
@@ -432,6 +432,41 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	}
 }
 
+void MapleNet::StartSession(int session_delay)
+{
+	FillDelay(session_delay);
+	delay = session_delay;
+
+	if (hosting)
+		client.StartSession();
+
+	session_started = true;
+	maplenet.resume();
+	INFO_LOG(NETWORK, "Session Initiated");
+}
+
+void MapleNet::FillDelay(int fill_delay)
+{
+	for (int j = 0; j < MaxPlayers; j++)
+	{
+		std::string first_frame = CreateFrame(1, j, 1, 0);
+		int first_index = GetEffectiveFrameNumber((u8*)first_frame.data());
+		net_inputs[j][first_index] = first_frame;
+
+		for (int i = 1; i <= fill_delay; i++)
+		{
+			std::string new_frame = CreateFrame(2, j, i, 0);
+			int new_index = GetEffectiveFrameNumber((u8*)new_frame.data());
+			net_inputs[j][new_index] = new_frame;
+			net_input_keys[j].insert(new_index);
+
+			if (settings.maplenet.RecordMatches)
+				AppendToReplayFile(new_frame);
+		}
+	}
+
+}
+
 int MapleNet::StartMapleNet()
 {
 	if (settings.maplenet.RecordMatches)
@@ -459,7 +494,7 @@ int MapleNet::StartMapleNet()
 	}
 	else
 	{
-		last_consecutive_common_frame = delay;
+		last_consecutive_common_frame = 2;
 
 		LoadNetConfig();
 
@@ -498,8 +533,8 @@ u16 MapleNet::ApplyNetInputs(u16 buttons, u32 port)
 u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
 	InputPort = port;
-	
-	if (FrameNumber == 1)
+
+	if (FrameNumber == 2)
 	{
 		if (settings.maplenet.PlayMatch)
 		{

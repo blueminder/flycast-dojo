@@ -68,8 +68,11 @@ public:
 
 	u32 delay;
 
+	void FillDelay(int fill_delay);
+
 	void LoadNetConfig();
 	int StartMapleNet();
+	void StartSession(int delay);
 
 	// frame data extraction methods
 	int GetPlayer(u8* data);
