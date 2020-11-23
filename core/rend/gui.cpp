@@ -276,10 +276,20 @@ static void ShowHelpMarker(const char* desc)
     }
 }
 
+void gui_open_host_wait()
+{
+	gui_state = HostWait;
+	settings_opening = true;
+}
+
 void gui_open_guest_wait()
 {
 	gui_state = GuestWait;
 	settings_opening = true;
+
+	//if (maplenet.isMatchReady)
+	if (maplenet.session_started)
+		gui_state = Closed;
 }
 
 void gui_close_guest_wait()
@@ -330,7 +340,50 @@ static void gui_start_game(const std::string& path)
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
+	if (settings.maplenet.Enable)
+	{
+		maplenet.StartMapleNet();
+
+		if (settings.maplenet.ActAsServer)
+			gui_open_host_wait();
+		else
+			gui_open_guest_wait();
+	}
+
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+}
+
+void gui_display_host_wait()
+{
+	//dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("Waiting for opponent to connect...");
+
+	if (!maplenet.OpponentIP.empty())
+	{
+		maplenet.host_status = 2;
+		maplenet.DetectDelay(maplenet.OpponentIP.data());
+
+		gui_state = Closed;
+		gui_open_host_delay();
+	}
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
 }
 
 void gui_display_guest_wait()
@@ -349,6 +402,16 @@ void gui_display_guest_wait()
 	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Text("Waiting for host to select delay...");
+
+	if (maplenet.session_started)
+	{
+		gui_state = Closed;
+		maplenet.resume();
+	}
+	else
+	{
+		maplenet.client.SendPlayerName();
+	}
 
 	ImGui::End();
 
@@ -421,8 +484,8 @@ void gui_display_host_delay()
 
 		maplenet.delay = settings.maplenet.Delay;
 		maplenet.isMatchStarted = true;
-		maplenet.resume();
 		maplenet.client.StartSession();
+		maplenet.resume();
 	}
 
 	SaveSettings();
@@ -2258,6 +2321,9 @@ void gui_display_ui()
 		break;
 	case HostDelay:
 		gui_display_host_delay();
+		break;
+	case HostWait:
+		gui_display_host_wait();
 		break;
 	case GuestWait:
 		gui_display_guest_wait();

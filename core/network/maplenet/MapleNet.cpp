@@ -16,7 +16,7 @@ MapleNet::MapleNet()
 	session_started = false;
 
 	FrameNumber = 1;
-	SkipFrame = 1;
+	//SkipFrame = 1;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -432,6 +432,57 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	}
 }
 
+int MapleNet::StartMapleNet()
+{
+	if (settings.maplenet.RecordMatches)
+			replay_filename = CreateReplayFile();
+
+	/*
+	for (int j = 0; j < MaxPlayers; j++)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			std::string new_frame = CreateFrame(i, j, delay, 0);
+			net_inputs[j][i] = new_frame;
+			net_input_keys[j].insert(i);
+
+			if (settings.maplenet.RecordMatches)
+				AppendToReplayFile(new_frame);
+		}
+	}
+	*/
+
+	if (settings.maplenet.PlayMatch)
+	{
+		LoadReplayFile(settings.maplenet.ReplayFilename);
+		//resume();
+	}
+	else
+	{
+		last_consecutive_common_frame = delay;
+
+		LoadNetConfig();
+
+		try
+		{
+			std::thread t2(&UDPClient::ClientThread, std::ref(client));
+			t2.detach();
+
+			if (settings.maplenet.EnableLobby && hosting)
+			{
+				std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
+				t3.detach();
+			}
+
+			return 0;
+		}
+		catch (std::exception&)
+		{
+			return 1;
+		}
+	}
+}
+
 u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 {
 	return ApplyNetInputs(pjs, 0, port);
@@ -447,43 +498,33 @@ u16 MapleNet::ApplyNetInputs(u16 buttons, u32 port)
 u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
 	InputPort = port;
-
+	
 	if (FrameNumber == 1)
 	{
-		if (settings.maplenet.RecordMatches)
-			replay_filename = CreateReplayFile();
-
-		// seed with blank frames == max delay amount
-		for (int j = 0; j < MaxPlayers; j++)
-		{
-			for (int i = 0; i < ((int)(SkipFrame + delay + 10)); i++)
-			{
-				std::string new_frame = CreateFrame(i, j, delay, 0);
-				net_inputs[j][i] = new_frame;
-				net_input_keys[j].insert(i);
-
-				if (settings.maplenet.RecordMatches)
-					AppendToReplayFile(new_frame);
-			}
-		}
-
 		if (settings.maplenet.PlayMatch)
 		{
-			LoadReplayFile(settings.maplenet.ReplayFilename);
 			resume();
 		}
 		else
 		{
-			last_consecutive_common_frame = SkipFrame + delay;
-
-			LoadNetConfig();
-			StartMapleNet();
+			std::ostringstream NoticeStream;
+			if (hosting)
+			{
+				NoticeStream << "Hosting game on port " << host_port;
+				gui_display_notification(NoticeStream.str().data(), 9000);
+				host_status = 1;// Hosting, Waiting
+			}
+			else
+			{
+				NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
+				gui_display_notification(NoticeStream.str().data(), 9000);
+				host_status = 3;// Guest, Connecting
+			}
 		}
 	}
 
-	
-	if (FrameNumber > SkipFrame)
-		while (isPaused);
+	//if (FrameNumber > SkipFrame)
+	while (isPaused);
 
 	// advance game state
 	if (port == 0)
@@ -607,6 +648,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 		PrintFrameData("Received", (u8*)received_data);
 	}
 
+	/*
 	if (!isMatchStarted)
 	{
 		// wait for opponent to reach current starting frame before syncing
@@ -633,7 +675,9 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 				isMatchStarted = true;
 		}
 	}
-	else
+	*/
+
+	if (isMatchStarted)
 	{
 		if (hosting)
 		{
@@ -673,41 +717,6 @@ void MapleNet::ClientLoopAction()
 
 	if (last_consecutive_common_frame == current_frame)
 		resume();
-}
-
-int MapleNet::StartMapleNet()
-{
-	std::ostringstream NoticeStream;
-	if (hosting)
-	{
-		NoticeStream << "Hosting game on port " << host_port;
-		gui_display_notification(NoticeStream.str().data(), 9000);
-		host_status = 1;//"HOST_WAIT";
-	}
-	else
-	{
-		NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
-		gui_display_notification(NoticeStream.str().data(), 9000);
-		host_status = 3;//"GUEST_CONNECTING";
-	}
-
-	try
-	{
-		std::thread t2(&UDPClient::ClientThread, std::ref(client));
-		t2.detach();
-
-		if (settings.maplenet.EnableLobby && hosting)
-		{
-			std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
-			t3.detach();
-		}
-
-		return 0;
-	}
-	catch (std::exception&)
-	{
-		return 1;
-	}
 }
 
 std::string currentISO8601TimeUTC() {

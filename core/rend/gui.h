@@ -28,11 +28,15 @@ void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
 
-void gui_display_host_delay();
-void gui_display_guest_wait();
-void gui_open_host_delay();
+void gui_open_host_wait();
+void gui_display_host_wait();
+
 void gui_open_guest_wait();
+void gui_display_guest_wait();
 void gui_close_guest_wait();
+
+void gui_open_host_delay();
+void gui_display_host_delay();
 
 void gui_open_disconnected();
 void gui_display_disconnected();
@@ -56,6 +60,7 @@ typedef enum {
 	Lobby,
 	TestGame,
 	HostDelay,
+	HostWait,
 	GuestWait,
 	Disconnected
 } GuiState;

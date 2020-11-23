@@ -85,7 +85,10 @@ int UDPClient::GetOpponentAvgPing()
 void UDPClient::StartSession()
 {
 	maplenet.session_started = true;
-	std::string to_send_start("START");
+
+	std::stringstream start_ss("");
+	start_ss << "START " << maplenet.delay;
+	std::string to_send_start = start_ss.str();
 
 	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
 	{
@@ -207,7 +210,6 @@ void UDPClient::ClientLoop()
 			{
 				if (!maplenet.isMatchStarted)
 				{
-					SendPlayerName();
 					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
 				}
 			}
@@ -245,6 +247,15 @@ void UDPClient::ClientLoop()
 				if (memcmp("NAME", buffer, 4) == 0)
 				{
 					settings.maplenet.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+					
+					opponent_addr = sender;
+
+					// prepare for delay selection
+					if (maplenet.OpponentIP.empty())
+						maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
+
+					maplenet.isMatchReady = true;
+					maplenet.resume();
 				}
 
 				if (memcmp("PING", buffer, 4) == 0)
@@ -260,7 +271,6 @@ void UDPClient::ClientLoop()
 				{
 					int rnd_num_cmp = atoi(buffer + 5);
 					long ret_timestamp = unix_timestamp();
-
 					
 					if (ping_send_ts.count(rnd_num_cmp) == 1)
 					{
@@ -289,7 +299,14 @@ void UDPClient::ClientLoop()
 
 				if (memcmp("START", buffer, 5) == 0)
 				{
-					maplenet.session_started = true;
+					int delay = atoi(buffer + 6);
+					if (!maplenet.session_started)
+					{
+						maplenet.delay = delay;
+						maplenet.session_started = true;
+
+						INFO_LOG(NETWORK, "Session Initiated");
+					}
 				}
 
 				if (memcmp("DISCONNECT", buffer, 10) == 0)
