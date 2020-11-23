@@ -340,16 +340,6 @@ static void gui_start_game(const std::string& path)
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
-	if (settings.maplenet.Enable)
-	{
-		maplenet.StartMapleNet();
-
-		if (settings.maplenet.ActAsServer)
-			gui_open_host_wait();
-		else
-			gui_open_guest_wait();
-	}
-
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
@@ -389,6 +379,8 @@ void gui_display_host_wait()
 void gui_display_guest_wait()
 {
 	//dc_stop();
+
+	maplenet.pause();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
@@ -446,7 +438,9 @@ void gui_display_disconnected()
 
 void gui_display_host_delay()
 {
-	dc_stop();
+	//dc_stop();
+
+	maplenet.pause();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
@@ -480,11 +474,12 @@ void gui_display_host_delay()
 	if (ImGui::Button("Start Game"))
 	{
 		settings.maplenet.PlayMatch = false;
-		gui_state = Closed;
 
 		maplenet.isMatchStarted = true;
-		maplenet.resume();
 		maplenet.StartSession(settings.maplenet.Delay);
+		maplenet.resume();
+
+		gui_state = Closed;
 	}
 
 	SaveSettings();
@@ -2269,6 +2264,15 @@ static void gui_display_loadscreen()
 			if (NaomiNetworkSupported())
 			{
 				start_network();
+			}
+			else if (settings.maplenet.Enable)
+			{
+				maplenet.StartMapleNet();
+
+				if (settings.maplenet.ActAsServer)
+					gui_open_host_wait();
+				else
+					gui_open_guest_wait();
 			}
 			else
 			{

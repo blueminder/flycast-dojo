@@ -201,15 +201,6 @@ void UDPClient::ClientLoop()
 				gui_open_disconnected();
 			}
 
-			// if match has not started, send packet to inform host who the opponent is
-			if (maplenet.FrameNumber > 0 && !maplenet.hosting)
-			{
-				if (!maplenet.isMatchStarted)
-				{
-					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
-				}
-			}
-
 			// if opponent detected, shoot packets at them
 			if (opponent_addr.sin_port > 0 &&
 				memcmp(to_send, last_sent.data(), maplenet.PayloadSize()) != 0)
