@@ -52,7 +52,9 @@ public:
 
 
 	void SendPlayerName();
-
+	void SendNameOK();
+	bool name_acknowledged;
+	
 	void StartSession();
 	void EndSession();
 

@@ -11,6 +11,7 @@ UDPClient::UDPClient()
 	disconnect_toggle = false;
 	disconnect_complete = false;
 	opponent_disconnected = false;
+	name_acknowledged = false;
 };
 
 void UDPClient::SetHost(std::string host, int port)
@@ -128,6 +129,17 @@ void UDPClient::SendPlayerName()
 	INFO_LOG(NETWORK, "Player Name Sent: %s", settings.maplenet.PlayerName.data());
 }
 
+void UDPClient::SendNameOK()
+{
+	std::string to_send_ok_name("OK NAME");
+
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)to_send_ok_name.data(), strlen(to_send_ok_name.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+	}
+
+	INFO_LOG(NETWORK, "Opponent Name Acknowledged");
+}
 
 sock_t UDPClient::createAndBind(int port)
 {
@@ -249,8 +261,15 @@ void UDPClient::ClientLoop()
 					if (maplenet.OpponentIP.empty())
 						maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
 
+					SendNameOK();
+
 					maplenet.isMatchReady = true;
 					maplenet.resume();
+				}
+
+				if (memcmp("OK NAME", buffer, 7) == 0)
+				{
+					name_acknowledged = true;
 				}
 
 				if (memcmp("PING", buffer, 4) == 0)

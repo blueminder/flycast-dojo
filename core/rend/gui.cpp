@@ -289,7 +289,9 @@ void gui_open_guest_wait()
 
 	//if (maplenet.isMatchReady)
 	if (maplenet.session_started)
+	{
 		gui_state = Closed;
+	}
 }
 
 void gui_close_guest_wait()
@@ -395,16 +397,20 @@ void gui_display_guest_wait()
 
 	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("Waiting for host to select delay...");
+	if (!maplenet.client.name_acknowledged)
+	{
+		ImGui::Text("Connecting to host...");
+		maplenet.client.SendPlayerName();
+	}
+	else
+	{
+		ImGui::Text("Waiting for host to select delay...");
+	}
 
 	if (maplenet.session_started)
 	{
 		gui_state = Closed;
 		maplenet.resume();
-	}
-	else
-	{
-		maplenet.client.SendPlayerName();
 	}
 
 	ImGui::End();
