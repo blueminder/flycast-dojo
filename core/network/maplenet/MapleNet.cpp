@@ -441,6 +441,8 @@ void MapleNet::StartSession(int session_delay)
 		client.StartSession();
 
 	session_started = true;
+	isMatchStarted = true;
+
 	maplenet.resume();
 	INFO_LOG(NETWORK, "Session Initiated");
 }
@@ -547,13 +549,13 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			{
 				NoticeStream << "Hosting game on port " << host_port;
 				gui_display_notification(NoticeStream.str().data(), 9000);
-				host_status = 1;// Hosting, Waiting
+				host_status = 3;// Hosting, Playing
 			}
 			else
 			{
 				NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
 				gui_display_notification(NoticeStream.str().data(), 9000);
-				host_status = 3;// Guest, Connecting
+				host_status = 5;// Guest, Playing
 			}
 		}
 	}
@@ -710,15 +712,10 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 				isMatchStarted = true;
 		}
 	}
-	*/
 
 	if (isMatchStarted)
 	{
-		if (hosting)
-		{
-			host_status = 3;//"HOST_PLAYING";
-		}
-		else
+		if (!hosting)
 		{
 			host_status = 5;//"GUEST_PLAYING";
 			// guest adopts host delay selection
@@ -731,6 +728,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 				gui_close_guest_wait();
 		}
 	}
+	*/
 
 	if (client_input_authority && GetPlayer((u8*)received_data) == player)
 		return;

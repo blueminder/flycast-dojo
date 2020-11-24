@@ -358,6 +358,8 @@ void gui_display_host_wait()
 
 	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
+	maplenet.host_status = 1;
+
 	ImGui::Text("Waiting for opponent to connect...");
 
 	if (!maplenet.OpponentIP.empty())
