@@ -713,7 +713,6 @@ void dc_request_reset()
 void dc_exit()
 {
 	if (settings.maplenet.Enable &&
-		maplenet.isMatchStarted &&
 		!maplenet.client.disconnect_toggle)
 	{
 		maplenet.client.disconnect_toggle = true;

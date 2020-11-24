@@ -40,6 +40,8 @@ public:
 	//int Disconnect();
 
 	bool disconnect_toggle;
+	bool disconnect_complete;
+	bool opponent_disconnected;
 
 	void ClientThread();
 

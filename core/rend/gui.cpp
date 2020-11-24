@@ -427,7 +427,10 @@ void gui_display_disconnected()
 
 	ImGui::Begin("##disconnected", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("Disconnected.");
+	if (maplenet.client.opponent_disconnected)
+		ImGui::Text("Opponent disconnected.");
+	else
+		ImGui::Text("Disconnected.");
 
 	ImGui::End();
 

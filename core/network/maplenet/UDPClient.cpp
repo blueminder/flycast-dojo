@@ -9,6 +9,8 @@ UDPClient::UDPClient()
 	memset((void*)to_send, 0, 256);
 	last_sent = "";
 	disconnect_toggle = false;
+	disconnect_complete = false;
+	opponent_disconnected = false;
 };
 
 void UDPClient::SetHost(std::string host, int port)
@@ -96,7 +98,11 @@ void UDPClient::StartSession()
 
 void UDPClient::EndSession()
 {
-	disconnect_toggle = true;
+	if (disconnect_complete)
+		return;
+
+	dc_stop();
+
 	std::string to_send_end("DISCONNECT");
 
 	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
@@ -105,6 +111,9 @@ void UDPClient::EndSession()
 	}
 
 	INFO_LOG(NETWORK, "Disconnected");
+	disconnect_complete = true;
+
+	gui_open_disconnected();
 }
 
 void UDPClient::SendPlayerName()
@@ -198,7 +207,6 @@ void UDPClient::ClientLoop()
 			if (disconnect_toggle)
 			{
 				EndSession();
-				gui_open_disconnected();
 			}
 
 			// if opponent detected, shoot packets at them
@@ -293,9 +301,11 @@ void UDPClient::ClientLoop()
 					}
 				}
 
-				if (memcmp("DISCONNECT", buffer, 10) == 0)
+				if (memcmp("DISCONNECT", buffer, 10) == 0 && !disconnect_toggle)
 				{
 					disconnect_toggle = true;
+					opponent_disconnected = true;
+					EndSession();
 				}
 
 				if (bytes_read == maplenet.PayloadSize())
