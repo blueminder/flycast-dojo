@@ -2280,10 +2280,18 @@ static void gui_display_loadscreen()
 			{
 				maplenet.StartMapleNet();
 
-				if (settings.maplenet.ActAsServer)
-					gui_open_host_wait();
+				if (settings.maplenet.PlayMatch)
+				{
+					gui_state = Closed;
+					ImGui::Text("LOADING REPLAY...");
+				}
 				else
-					gui_open_guest_wait();
+				{
+					if (settings.maplenet.ActAsServer)
+						gui_open_host_wait();
+					else
+						gui_open_guest_wait();
+				}
 			}
 			else
 			{

@@ -16,7 +16,6 @@ MapleNet::MapleNet()
 	session_started = false;
 
 	FrameNumber = 2;
-	//SkipFrame = 1;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -474,25 +473,10 @@ int MapleNet::StartMapleNet()
 	if (settings.maplenet.RecordMatches)
 			replay_filename = CreateReplayFile();
 
-	/*
-	for (int j = 0; j < MaxPlayers; j++)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			std::string new_frame = CreateFrame(i, j, delay, 0);
-			net_inputs[j][i] = new_frame;
-			net_input_keys[j].insert(i);
-
-			if (settings.maplenet.RecordMatches)
-				AppendToReplayFile(new_frame);
-		}
-	}
-	*/
-
 	if (settings.maplenet.PlayMatch)
 	{
 		LoadReplayFile(settings.maplenet.ReplayFilename);
-		//resume();
+		resume();
 	}
 	else
 	{
@@ -560,7 +544,6 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	//if (FrameNumber > SkipFrame)
 	while (isPaused);
 
 	// advance game state
@@ -635,7 +618,6 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		catch (const std::out_of_range& oor) {};
 	}
 
-
 	std::string to_apply(this_frame);
 
 	if (settings.maplenet.RecordMatches)
@@ -684,51 +666,6 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 	{
 		PrintFrameData("Received", (u8*)received_data);
 	}
-
-	/*
-	if (!isMatchStarted)
-	{
-		// wait for opponent to reach current starting frame before syncing
-		if (received_data[0] == opponent &&
-			GetEffectiveFrameNumber((u8*)received_data) >= (FrameNumber))
-		{
-			if (hosting && !OpponentIP.empty())
-			{
-				host_status = 2;
-				DetectDelay(OpponentIP.data());
-				gui_open_host_delay();
-			}
-			else
-			{
-				gui_open_guest_wait();
-			}
-			isMatchReady = true;
-		}
-
-		if (isMatchReady)
-		{
-			resume();
-			if (!hosting)
-				isMatchStarted = true;
-		}
-	}
-
-	if (isMatchStarted)
-	{
-		if (!hosting)
-		{
-			host_status = 5;//"GUEST_PLAYING";
-			// guest adopts host delay selection
-			int old_delay = maplenet.delay;
-			maplenet.delay = (u32)GetDelay((u8*)received_data);
-			if (old_delay < maplenet.delay)
-				FrameNumber = GetEffectiveFrameNumber((u8*)received_data) - maplenet.delay;
-
-			if (maplenet.session_started)
-				gui_close_guest_wait();
-		}
-	}
-	*/
 
 	if (client_input_authority && GetPlayer((u8*)received_data) == player)
 		return;
