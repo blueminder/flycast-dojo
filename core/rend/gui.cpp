@@ -41,6 +41,10 @@
 
 #include "network/maplenet/MapleNet.hpp"
 
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
@@ -439,6 +443,30 @@ void gui_display_disconnected()
 		ImGui::Text("Opponent disconnected.");
 	else
 		ImGui::Text("Disconnected.");
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
+}
+
+void gui_display_end_replay()
+{
+	dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##end_replay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("End of replay.");
 
 	ImGui::End();
 
@@ -1129,6 +1157,100 @@ static void gui_display_lobby()
 }
 
 
+static void gui_display_replays()
+{
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+
+	ImGui::Begin("Replays", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+
+	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+	{
+		if (game_started)
+			gui_state = Commands;
+		else
+		gui_state = Main;
+	}
+
+	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Record All Netplay Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x);
+
+	ImGui::Checkbox("Record All Netplay Sessions", &settings.maplenet.RecordMatches);
+	ImGui::SameLine();
+	ShowHelpMarker("Record all netplay sessions to a local file");
+
+	ImGui::Columns(3, "mycolumns"); // 4-ways, with border
+	ImGui::Separator();
+	ImGui::Text("Date"); ImGui::NextColumn();
+	ImGui::Text("Players"); ImGui::NextColumn();
+	ImGui::Text("Game"); ImGui::NextColumn();
+	ImGui::Separator();
+
+	std::string path = "replays\\";
+	std::map<std::string, std::string> replays;
+	for (auto& p : fs::directory_iterator(path))
+	{
+		std::string replay_path = p.path().string();
+
+		std::string s = replay_path;
+		std::string delimiter = "__";
+
+		std::vector<std::string> replay_entry;
+
+		size_t pos = 0;
+		std::string token;
+		while ((pos = s.find(delimiter)) != std::string::npos) {
+		    token = s.substr(0, pos);
+		    std::cout << token << std::endl;
+			replay_entry.push_back(token);
+		    s.erase(0, pos + delimiter.length());
+		}
+
+		std::string game_name = replay_entry[0].substr(replay_entry[0].find("\\") + 1);
+		std::string date = replay_entry[1];
+		std::string host_player = replay_entry[2];
+		std::string guest_player = replay_entry[3];
+
+		std::string game_path = "";
+
+		std::vector<GameMedia> games = scanner.get_game_list();
+		std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
+			[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+
+		if (it != games.end())
+		{
+			game_path = it->path;
+		}
+
+		bool is_selected;
+		if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
+		{
+			settings.maplenet.ReplayFilename = replay_path;
+			settings.maplenet.PlayMatch = true;
+			SaveSettings();
+
+			gui_state = Closed;
+			maplenet.StartMapleNet();
+			gui_start_game(game_path);
+		}
+		ImGui::NextColumn();
+
+		std::string players = host_player + " vs " + guest_player;
+		ImGui::Text(players.c_str());  ImGui::NextColumn();
+		ImGui::Text(game_name.c_str());  ImGui::NextColumn();
+	}
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -1751,19 +1873,13 @@ static void gui_display_settings()
 
 				if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					if (!settings.maplenet.PlayMatch)
-					{
-						ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
-						ImGui::SameLine();
-						ShowHelpMarker("Record all netplay sessions to a local file");
-					}
+					ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
+					ImGui::SameLine();
+					ShowHelpMarker("Record all netplay sessions to a local file");
 
-					if (!settings.maplenet.RecordMatches)
-					{
-						ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
-						ImGui::SameLine();
-						ShowHelpMarker("Plays local replay file");
-					}
+					ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
+					ImGui::SameLine();
+					ShowHelpMarker("Plays local replay file");
 
 					if (settings.maplenet.PlayMatch)
 					{
@@ -2073,7 +2189,10 @@ static void gui_display_content()
         ImGui::Text("GAMES");
 
     if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+    else if (settings.maplenet.Enable && !settings.maplenet.EnableLobby)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
     {
@@ -2084,10 +2203,17 @@ static void gui_display_content()
     {
 		if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Lobby;
 		}
+		if (settings.maplenet.Enable)
+		{
+			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
+				gui_state = Replays;
+		}
+
 		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
 			gui_state = Settings;
@@ -2338,6 +2464,9 @@ void gui_display_ui()
 	case Lobby:
 		gui_display_lobby();
 		break;
+	case Replays:
+		gui_display_replays();
+		break;
 	case TestGame:
 		gui_display_test_game();
 		break;
@@ -2352,6 +2481,9 @@ void gui_display_ui()
 		break;
 	case Disconnected:
 		gui_display_disconnected();
+		break;
+	case EndReplay:
+		gui_display_end_replay();
 		break;
 	case Settings:
 		gui_display_settings();

@@ -461,7 +461,7 @@ void MapleNet::FillDelay(int fill_delay)
 			net_inputs[j][new_index] = new_frame;
 			net_input_keys[j].insert(new_index);
 
-			if (settings.maplenet.RecordMatches)
+			if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
 				AppendToReplayFile(new_frame);
 		}
 	}
@@ -470,8 +470,8 @@ void MapleNet::FillDelay(int fill_delay)
 
 int MapleNet::StartMapleNet()
 {
-	if (settings.maplenet.RecordMatches)
-			replay_filename = CreateReplayFile();
+	if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
+		replay_filename = CreateReplayFile();
 
 	if (settings.maplenet.PlayMatch)
 	{
@@ -576,9 +576,11 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	std::string this_frame = "";
 
 	if (settings.maplenet.PlayMatch &&
-		(FrameNumber > net_input_keys[0].size() ||
-		FrameNumber > net_input_keys[1].size()))
-		dc_exit();
+		(FrameNumber >= net_input_keys[0].size() ||
+			FrameNumber >= net_input_keys[1].size()))
+	{
+		gui_state = EndReplay;
+	}
 
 /*
 	// define max ms to wait for new packets before close
@@ -620,7 +622,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	std::string to_apply(this_frame);
 
-	if (settings.maplenet.RecordMatches)
+	if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
 		AppendToReplayFile(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -724,7 +726,12 @@ std::string MapleNet::CreateReplayFile()
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
 	std::string rom_name = GetRomNamePrefix();
-	std::string filename = "replays/" + rom_name +  "-" + timestamp + ".flyreplay";
+	std::string filename =
+		"replays/" + rom_name +  "__" +
+		timestamp + "__" +
+		settings.maplenet.PlayerName + "__" + 
+		settings.maplenet.OpponentName + "__" + 
+		".flyreplay";
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);

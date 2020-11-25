@@ -41,6 +41,8 @@ void gui_display_host_delay();
 void gui_open_disconnected();
 void gui_display_disconnected();
 
+void gui_display_end_replay();
+
 extern int screen_dpi;
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
@@ -58,11 +60,13 @@ typedef enum {
 	Loading,
 	NetworkStart,
 	Lobby,
+	Replays,
 	TestGame,
 	HostDelay,
 	HostWait,
 	GuestWait,
-	Disconnected
+	Disconnected,
+	EndReplay
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

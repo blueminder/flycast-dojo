@@ -713,7 +713,14 @@ void dc_request_reset()
 void dc_exit()
 {
 	if (settings.maplenet.Enable &&
-		!maplenet.client.disconnect_toggle)
+		!maplenet.client.disconnect_toggle &&
+		gui_state != Main &&
+		gui_state != Lobby &&
+		gui_state != Replays &&
+		gui_state != EndReplay &&
+		gui_state != TestGame &&
+		gui_state != Settings &&
+		gui_state != Onboarding)
 	{
 		maplenet.client.disconnect_toggle = true;
 	}
