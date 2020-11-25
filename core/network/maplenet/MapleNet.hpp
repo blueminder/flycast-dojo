@@ -153,6 +153,9 @@ public:
 	int DetectDelay(const char* ipAddr);
 
 	int host_status;
+
+	bool PlayMatch;
+	std::string ReplayFilename;
 };
 
 extern MapleNet maplenet;

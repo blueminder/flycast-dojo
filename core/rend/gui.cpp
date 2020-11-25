@@ -512,7 +512,7 @@ void gui_display_host_delay()
 
 	if (ImGui::Button("Start Game"))
 	{
-		settings.maplenet.PlayMatch = false;
+		maplenet.PlayMatch = false;
 
 		maplenet.isMatchStarted = true;
 		maplenet.StartSession(settings.maplenet.Delay);
@@ -1129,9 +1129,9 @@ static void gui_display_lobby()
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				settings.maplenet.ActAsServer = false;
-				settings.maplenet.PlayMatch = false;
+				maplenet.PlayMatch = false;
 
+				settings.maplenet.ActAsServer = false;
 				settings.maplenet.ServerIP = beacon_ip;
 				settings.maplenet.ServerPort = beacon_server_port;
 
@@ -1177,9 +1177,9 @@ static void gui_display_replays()
 		gui_state = Main;
 	}
 
-	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Record All Netplay Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x);
+	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);
 
-	ImGui::Checkbox("Record All Netplay Sessions", &settings.maplenet.RecordMatches);
+	ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
 	ImGui::SameLine();
 	ShowHelpMarker("Record all netplay sessions to a local file");
 
@@ -1226,12 +1226,11 @@ static void gui_display_replays()
 			game_path = it->path;
 		}
 
-		bool is_selected;
+		bool is_selected = false;
 		if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 		{
-			settings.maplenet.ReplayFilename = replay_path;
-			settings.maplenet.PlayMatch = true;
-			SaveSettings();
+			maplenet.ReplayFilename = replay_path;
+			maplenet.PlayMatch = true;
 
 			gui_state = Closed;
 			maplenet.StartMapleNet();
@@ -1871,35 +1870,11 @@ static void gui_display_settings()
 				ShowHelpMarker("Name visible to other players");
 				settings.maplenet.PlayerName = std::string(PlayerName, strlen(PlayerName));
 
-				if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
+				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
+					ImGui::Checkbox("Enable Lobby", &settings.maplenet.EnableLobby);
 					ImGui::SameLine();
-					ShowHelpMarker("Record all netplay sessions to a local file");
-
-					ImGui::Checkbox("Playback Local Replay File", &settings.maplenet.PlayMatch);
-					ImGui::SameLine();
-					ShowHelpMarker("Plays local replay file");
-
-					if (settings.maplenet.PlayMatch)
-					{
-						char ReplayFilename[256] = { 0 };
-						strcpy(ReplayFilename, settings.maplenet.ReplayFilename.c_str());
-						ImGui::InputText("Replay Filename", ReplayFilename, sizeof(ReplayFilename), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("The local replay file to playback. Defaults to last recorded session");
-						settings.maplenet.ReplayFilename = std::string(ReplayFilename, strlen(ReplayFilename));
-					}
-				}
-
-				if (!settings.maplenet.PlayMatch)
-				{
-					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						ImGui::Checkbox("Enable Lobby", &settings.maplenet.EnableLobby);
-						ImGui::SameLine();
-						ShowHelpMarker("Enable discovery and matchmaking on LAN");
-					}
+					ShowHelpMarker("Enable discovery and matchmaking on LAN");
 				}
 
 				if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
@@ -2179,9 +2154,7 @@ static void gui_display_content()
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
     ImGui::AlignTextToFramePadding();
-    if (settings.maplenet.Enable && settings.maplenet.PlayMatch)
-        ImGui::Text("REPLAY");
-    else if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
+    if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
         ImGui::Text("HOST");
     else if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
         ImGui::Text("GUEST");
@@ -2406,7 +2379,7 @@ static void gui_display_loadscreen()
 			{
 				maplenet.StartMapleNet();
 
-				if (settings.maplenet.PlayMatch)
+				if (maplenet.PlayMatch)
 				{
 					gui_state = Closed;
 					ImGui::Text("LOADING REPLAY...");

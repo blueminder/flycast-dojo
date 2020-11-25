@@ -40,6 +40,9 @@ MapleNet::MapleNet()
 
 	OpponentIP = "";
 	OpponentPing = 0;
+
+	PlayMatch = false;
+	ReplayFilename = "";
 }
 
 int MapleNet::DetectDelay(const char* ipAddr)
@@ -102,6 +105,9 @@ void MapleNet::LoadNetConfig()
 	debug = settings.maplenet.Debug;
 	
 	client.SetHost(host_ip.data(), host_port);
+
+	PlayMatch = settings.maplenet.PlayMatch;
+	ReplayFilename = settings.maplenet.ReplayFilename;
 }
 
 int MapleNet::PayloadSize()
@@ -461,7 +467,7 @@ void MapleNet::FillDelay(int fill_delay)
 			net_inputs[j][new_index] = new_frame;
 			net_input_keys[j].insert(new_index);
 
-			if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
+			if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
 				AppendToReplayFile(new_frame);
 		}
 	}
@@ -470,12 +476,12 @@ void MapleNet::FillDelay(int fill_delay)
 
 int MapleNet::StartMapleNet()
 {
-	if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
+	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
 		replay_filename = CreateReplayFile();
 
-	if (settings.maplenet.PlayMatch)
+	if (maplenet.PlayMatch)
 	{
-		LoadReplayFile(settings.maplenet.ReplayFilename);
+		LoadReplayFile(maplenet.ReplayFilename);
 		resume();
 	}
 	else
@@ -522,7 +528,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 2)
 	{
-		if (settings.maplenet.PlayMatch)
+		if (maplenet.PlayMatch)
 		{
 			resume();
 		}
@@ -551,7 +557,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
-		if (!spectating && !settings.maplenet.PlayMatch)
+		if (!spectating && !maplenet.PlayMatch)
 		{
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -575,7 +581,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	if (settings.maplenet.PlayMatch &&
+	if (maplenet.PlayMatch &&
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
@@ -622,7 +628,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	std::string to_apply(this_frame);
 
-	if (settings.maplenet.RecordMatches && !settings.maplenet.PlayMatch)
+	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
 		AppendToReplayFile(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -737,7 +743,7 @@ std::string MapleNet::CreateReplayFile()
 	file.open(filename);
 	// TODO define metadata at beginning of file
 
-	settings.maplenet.ReplayFilename = filename;
+	maplenet.ReplayFilename = filename;
 
 	return filename;
 }
