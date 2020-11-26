@@ -96,13 +96,8 @@ void UDPClient::StartSession()
 	}
 }
 
-void UDPClient::EndSession()
+void UDPClient::SendDisconnect()
 {
-	if (disconnect_complete)
-		return;
-
-	dc_stop();
-
 	std::string to_send_end("DISCONNECT");
 
 	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
@@ -110,10 +105,30 @@ void UDPClient::EndSession()
 		sendto(local_socket, (const char*)to_send_end.data(), strlen(to_send_end.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 	}
 
-	INFO_LOG(NETWORK, "Disconnected");
-	disconnect_complete = true;
+	INFO_LOG(NETWORK, "Initiate Disconnect");
+}
+
+void UDPClient::SendDisconnectOK()
+{
+	std::string to_send_end("OK DISCONNECT");
+
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)to_send_end.data(), strlen(to_send_end.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+	}
+
+	INFO_LOG(NETWORK, "Confirm Disconnect");
+}
+
+
+void UDPClient::EndSession()
+{
+	INFO_LOG(NETWORK, "Disconnected.");
+	//disconnect_complete = true;
 
 	gui_open_disconnected();
+	dc_stop();
+	closeSocket(local_socket);
 }
 
 void UDPClient::SendPlayerName()
@@ -216,7 +231,7 @@ void UDPClient::ClientLoop()
 		{
 			if (disconnect_toggle)
 			{
-				EndSession();
+				SendDisconnect();
 			}
 
 			// if opponent detected, shoot packets at them
@@ -318,10 +333,16 @@ void UDPClient::ClientLoop()
 					}
 				}
 
-				if (memcmp("DISCONNECT", buffer, 10) == 0 && !disconnect_toggle)
+				if (memcmp("DISCONNECT", buffer, 10) == 0)
 				{
 					disconnect_toggle = true;
+					SendDisconnectOK();
 					opponent_disconnected = true;
+				}
+
+				if (memcmp("OK DISCONNECT", buffer, 13) == 0)
+				{
+					SendDisconnectOK();
 					EndSession();
 				}
 

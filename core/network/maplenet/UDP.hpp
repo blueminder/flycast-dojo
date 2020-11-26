@@ -58,6 +58,10 @@ public:
 	void StartSession();
 	void EndSession();
 
+
+	void SendDisconnect();
+	void SendDisconnectOK();
+
 	std::map<int, long> ping_send_ts;
 	std::vector<long> ping_rtt;
 
