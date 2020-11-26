@@ -500,6 +500,7 @@ struct settings_t
 		bool ActAsServer;
 		bool Spectating;
 		bool Transmitting;
+		bool Receiving;
 		bool RecordMatches;
 		bool PlayMatch;
 		std::string ReplayFilename;

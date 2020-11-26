@@ -804,6 +804,7 @@ void InitSettings()
 	settings.maplenet.RecordMatches = false;
 	settings.maplenet.Spectating = false;
 	settings.maplenet.Transmitting = false;
+	settings.maplenet.Receiving = false;
 	settings.maplenet.ServerIP = "127.0.0.1";
 	settings.maplenet.ServerPort = "7777";
 	settings.maplenet.Delay = 1;
@@ -930,6 +931,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.ActAsServer = cfgLoadBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
 	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	settings.maplenet.Transmitting = cfgLoadBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
+	settings.maplenet.Receiving = cfgLoadBool("maplenet", "Receiving", settings.maplenet.Receiving);
 	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	//settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
@@ -1115,6 +1117,7 @@ void SaveSettings()
 	//cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	cfgSaveBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
+	cfgSaveBool("maplenet", "Receiving", settings.maplenet.Receiving);
 	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
 	//cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
 	cfgSaveStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());

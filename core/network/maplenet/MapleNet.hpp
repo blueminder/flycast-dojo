@@ -117,6 +117,7 @@ public:
 	UDPClient client;
 	LobbyPresence presence;
 	TCPClient transmitter;
+	TCPServer receiver;
 
 	void BeaconThread();
 
@@ -144,6 +145,7 @@ public:
 
 	bool spectating;
 	bool transmitting;
+	bool receiving;
 
 	std::string GetRomNamePrefix();
 	std::string CreateReplayFile();

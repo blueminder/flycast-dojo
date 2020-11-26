@@ -4,6 +4,7 @@ TCPClient::TCPClient()
 {
 	isStarted = false;
 	isLoopStarted = false;
+	endSession = false;
 }
 
 bool TCPClient::Init()

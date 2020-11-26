@@ -698,6 +698,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/maplenet/Ping.cpp
         core/network/maplenet/Ping.hpp
         core/network/maplenet/TCPClient.cpp
+        core/network/maplenet/TCPServer.cpp
         core/network/maplenet/TCP.hpp
         core/network/maplenet/UDPClient.cpp
         core/network/maplenet/UDP.hpp)
