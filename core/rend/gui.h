@@ -66,7 +66,8 @@ typedef enum {
 	HostWait,
 	GuestWait,
 	Disconnected,
-	EndReplay
+	EndReplay,
+	EndSpectate
 } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

@@ -475,6 +475,30 @@ void gui_display_end_replay()
     settings_opening = false;
 }
 
+void gui_display_end_spectate()
+{
+	dc_stop();
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	if (!settings_opening && settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##end_spectate", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Text("End of spectated match.");
+
+	ImGui::End();
+
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    settings_opening = false;
+}
+
 void gui_display_host_delay()
 {
 	//dc_stop();
@@ -1159,7 +1183,7 @@ static void gui_display_lobby()
 
 static void gui_display_replays()
 {
-		ImGui_Impl_NewFrame();
+	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -2154,7 +2178,9 @@ static void gui_display_content()
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
     ImGui::AlignTextToFramePadding();
-    if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
+    if (settings.maplenet.Enable && settings.maplenet.Receiving)
+        ImGui::Text("RECEIVE");
+    else if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
         ImGui::Text("HOST");
     else if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
         ImGui::Text("GUEST");
@@ -2384,6 +2410,11 @@ static void gui_display_loadscreen()
 					gui_state = Closed;
 					ImGui::Text("LOADING REPLAY...");
 				}
+				else if (settings.maplenet.Receiving)
+				{
+					gui_state = Closed;
+					ImGui::Text("LOADING RECEIVED SESSION...");
+				}
 				else
 				{
 					if (settings.maplenet.ActAsServer)
@@ -2457,6 +2488,9 @@ void gui_display_ui()
 		break;
 	case EndReplay:
 		gui_display_end_replay();
+		break;
+	case EndSpectate:
+		gui_display_end_spectate();
 		break;
 	case Settings:
 		gui_display_settings();

@@ -25,6 +25,7 @@ public:
 	TCPClient();
 
 	bool isStarted;
+	bool endSession;
 
 	std::queue<std::string> transmission_frames;
 
@@ -43,7 +44,10 @@ private:
 	int port;
 
 	sock_t sock = INVALID_SOCKET;
+	sock_t client_sock = INVALID_SOCKET;
+
 	sockaddr_in host_addr;
+	sockaddr_in client_addr;
 
 	unsigned char to_send[256];
 
@@ -55,6 +59,7 @@ public:
 	TCPServer();
 
 	bool isStarted;
+	bool endSession;
 
 	std::queue<std::string> transmission_frames;
 
@@ -65,6 +70,7 @@ public:
 
 	void ServerLoop();
 	void ReceiverThread();
-};
 
+	void Listen();
+};
 

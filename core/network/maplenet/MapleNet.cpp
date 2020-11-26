@@ -32,6 +32,7 @@ MapleNet::MapleNet()
 
 	spectating = false;
 	transmitting = false;
+	receiving = false;
 
 	net_coin_press = false;
 
@@ -90,6 +91,7 @@ void MapleNet::LoadNetConfig()
 	hosting = settings.maplenet.ActAsServer;
 	spectating = settings.maplenet.Spectating;
 	transmitting = settings.maplenet.Transmitting;
+	receiving = settings.maplenet.Receiving;
 
 	if (spectating)
 	{
@@ -502,6 +504,14 @@ int MapleNet::StartMapleNet()
 		LoadReplayFile(maplenet.ReplayFilename);
 		resume();
 	}
+	else if (settings.maplenet.Receiving &&
+			!maplenet.receiver.isStarted)
+	{
+		std::thread t5(&TCPServer::ReceiverThread, std::ref(maplenet.receiver));
+		t5.detach();
+
+		resume();
+	}
 	else
 	{
 		last_consecutive_common_frame = 2;
@@ -604,6 +614,12 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			FrameNumber >= net_input_keys[1].size()))
 	{
 		gui_state = EndReplay;
+	}
+
+	if (maplenet.receiving &&
+		maplenet.receiver.endSession)
+	{
+		gui_state = EndSpectate;
 	}
 
 /*
@@ -798,7 +814,7 @@ void MapleNet::LoadReplayFile(std::string path)
 	{
 		fin.read(buffer, FRAME_SIZE);
 		size_t count = fin.gcount();
-			
+
 		int player_num = GetPlayer((u8*)buffer);
 		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
 
