@@ -31,6 +31,7 @@ MapleNet::MapleNet()
 	started = false;
 
 	spectating = false;
+	transmitting = false;
 
 	net_coin_press = false;
 
@@ -88,6 +89,7 @@ void MapleNet::LoadNetConfig()
 	enabled = settings.maplenet.Enable;
 	hosting = settings.maplenet.ActAsServer;
 	spectating = settings.maplenet.Spectating;
+	transmitting = settings.maplenet.Transmitting;
 
 	if (spectating)
 	{
@@ -448,7 +450,16 @@ void MapleNet::StartSession(int session_delay)
 	session_started = true;
 	isMatchStarted = true;
 
+	if (hosting &&
+		transmitting &&
+		!maplenet.transmitter.isStarted)
+	{
+		std::thread t4(&TCPClient::TransmissionThread, std::ref(maplenet.transmitter));
+		t4.detach();
+	}
+
 	maplenet.resume();
+
 	INFO_LOG(NETWORK, "Session Initiated");
 }
 
@@ -620,6 +631,13 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 					settings.maplenet.Debug == DEBUG_ALL)
 				{
 					PrintFrameData("Applied", (u8*)this_frame.data());
+				}
+
+				if (transmitter.isStarted)
+				{
+					if (transmitter.transmission_frames.empty() ||
+						transmitter.transmission_frames.back() != this_frame)
+						transmitter.transmission_frames.push(this_frame);
 				}
 			}
 		}

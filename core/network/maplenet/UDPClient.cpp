@@ -1,6 +1,5 @@
 #include "MapleNet.hpp"
 
-
 UDPClient::UDPClient()
 {
 	isStarted = false;
@@ -198,7 +197,6 @@ bool UDPClient::Init(bool hosting)
 		opponent_addr = host_addr;
 		return createLocalSocket(0);
 	}
-		
 }
 
 long UDPClient::unix_timestamp()

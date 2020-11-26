@@ -499,6 +499,7 @@ struct settings_t
 		bool Enable;
 		bool ActAsServer;
 		bool Spectating;
+		bool Transmitting;
 		bool RecordMatches;
 		bool PlayMatch;
 		std::string ReplayFilename;
@@ -513,6 +514,8 @@ struct settings_t
 		std::string PlayerName;
 		std::string OpponentName;
 		bool TestGame;
+		std::string SpectatorIP;
+		std::string SpectatorPort;
 	} maplenet;
 };
 

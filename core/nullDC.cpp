@@ -803,6 +803,7 @@ void InitSettings()
 	settings.maplenet.ActAsServer = false;
 	settings.maplenet.RecordMatches = false;
 	settings.maplenet.Spectating = false;
+	settings.maplenet.Transmitting = false;
 	settings.maplenet.ServerIP = "127.0.0.1";
 	settings.maplenet.ServerPort = "7777";
 	settings.maplenet.Delay = 1;
@@ -815,6 +816,8 @@ void InitSettings()
 	settings.maplenet.PlayerName = "Player";
 	settings.maplenet.OpponentName = "Opponent";
 	settings.maplenet.TestGame = false;
+	settings.maplenet.SpectatorIP = "127.0.0.1";
+	settings.maplenet.SpectatorPort = "54000";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -926,11 +929,11 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.Enable = cfgLoadBool("maplenet", "Enable", settings.maplenet.Enable);
 	settings.maplenet.ActAsServer = cfgLoadBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
 	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
+	settings.maplenet.Transmitting = cfgLoadBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
 	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	//settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
 	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
-	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
 	settings.maplenet.RecordMatches = cfgLoadBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
 	settings.maplenet.PlayMatch = cfgLoadBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
 	settings.maplenet.ReplayFilename = cfgLoadStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
@@ -941,6 +944,8 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.PlayerName = cfgLoadStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
 	settings.maplenet.OpponentName = cfgLoadStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
 	settings.maplenet.TestGame = cfgLoadBool("maplenet", "TestGame", settings.maplenet.TestGame);
+	settings.maplenet.SpectatorIP = cfgLoadStr("maplenet", "SpectatorIP", settings.maplenet.SpectatorIP.c_str());
+	settings.maplenet.SpectatorPort = cfgLoadStr("maplenet", "SpectatorPort", settings.maplenet.SpectatorPort.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1109,8 +1114,9 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	//cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
+	cfgSaveBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
 	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
-	cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
+	//cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
 	cfgSaveStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
 	cfgSaveInt("maplenet", "PacketsPerFrame", settings.maplenet.PacketsPerFrame);
 	cfgSaveBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
@@ -1119,6 +1125,8 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
 	cfgSaveStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
 	cfgSaveBool("maplenet", "TestGame", settings.maplenet.TestGame);
+	cfgSaveStr("maplenet", "SpectatorIP", settings.maplenet.ServerIP.c_str());
+	cfgSaveStr("maplenet", "SpectatorPort", settings.maplenet.ServerPort.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

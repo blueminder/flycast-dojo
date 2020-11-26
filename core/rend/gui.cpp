@@ -1159,7 +1159,7 @@ static void gui_display_lobby()
 
 static void gui_display_replays()
 {
-	ImGui_Impl_NewFrame();
+		ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));

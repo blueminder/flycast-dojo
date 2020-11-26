@@ -17,6 +17,7 @@
 #include <rend/gui.h>
 
 #include "types.h"
+#include "TCP.hpp"
 #include "UDP.hpp"
 #include "Ping.hpp"
 #include "LobbyPresence.hpp"
@@ -115,6 +116,7 @@ public:
 
 	UDPClient client;
 	LobbyPresence presence;
+	TCPClient transmitter;
 
 	void BeaconThread();
 
@@ -141,6 +143,7 @@ public:
 	int debug;
 
 	bool spectating;
+	bool transmitting;
 
 	std::string GetRomNamePrefix();
 	std::string CreateReplayFile();
