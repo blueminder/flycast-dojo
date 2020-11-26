@@ -1125,8 +1125,8 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
 	cfgSaveStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
 	cfgSaveBool("maplenet", "TestGame", settings.maplenet.TestGame);
-	cfgSaveStr("maplenet", "SpectatorIP", settings.maplenet.ServerIP.c_str());
-	cfgSaveStr("maplenet", "SpectatorPort", settings.maplenet.ServerPort.c_str());
+	cfgSaveStr("maplenet", "SpectatorIP", settings.maplenet.SpectatorIP.c_str());
+	cfgSaveStr("maplenet", "SpectatorPort", settings.maplenet.SpectatorPort.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

@@ -492,6 +492,13 @@ int MapleNet::StartMapleNet()
 
 	if (maplenet.PlayMatch)
 	{
+		if (settings.maplenet.Transmitting &&
+			!maplenet.transmitter.isStarted)
+		{
+			std::thread t4(&TCPClient::TransmissionThread, std::ref(maplenet.transmitter));
+			t4.detach();
+		}
+
 		LoadReplayFile(maplenet.ReplayFilename);
 		resume();
 	}

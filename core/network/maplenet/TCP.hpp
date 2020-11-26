@@ -36,3 +36,35 @@ public:
 	void TransmissionThread();
 };
 
+class TCPServer
+{
+private:
+	std::string host;
+	int port;
+
+	sock_t sock = INVALID_SOCKET;
+	sockaddr_in host_addr;
+
+	unsigned char to_send[256];
+
+	bool isLoopStarted;
+
+	void CloseSocket(sock_t& socket) const { closesocket(socket); socket = INVALID_SOCKET; }
+
+public:
+	TCPServer();
+
+	bool isStarted;
+
+	std::queue<std::string> transmission_frames;
+
+	bool Init();
+	bool CreateSocket();
+	sock_t CreateAndBind(int port);
+	void Connect();
+
+	void ServerLoop();
+	void ReceiverThread();
+};
+
+
