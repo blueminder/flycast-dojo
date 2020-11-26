@@ -426,7 +426,7 @@ void gui_display_guest_wait()
 
 void gui_display_disconnected()
 {
-	dc_stop();
+	//dc_stop();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
