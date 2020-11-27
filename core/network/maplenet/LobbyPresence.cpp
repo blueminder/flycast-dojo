@@ -42,7 +42,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
     addr.sin_port = htons(port);
 
     // sendto() destination
-    while (1) {
+    while (maplenet.host_status < 4) {
         const char* message;
 
         switch (maplenet.host_status)
@@ -99,11 +99,12 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
      #else
           sleep(delay_secs); // unix sleep in seconds
      #endif
-     }
+    }
+
+    closesocket(fd);
 
 #ifdef _WIN32
     // shut down winsock cleanly
-    // never actually reached
     WSACleanup();
 #endif
 }
