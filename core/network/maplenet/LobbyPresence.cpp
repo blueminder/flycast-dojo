@@ -192,7 +192,7 @@ int LobbyPresence::listener(char* group, int port)
     }
 
     // now just enter a read-print loop
-    while (1) {
+    while (maplenet.host_status == 0) {
         char msgbuf[MSGBUFSIZE];
         char ip_str[128];
 
@@ -222,25 +222,29 @@ int LobbyPresence::listener(char* group, int port)
         std::stringstream bm;
         bm << ip_str <<  "__" << msgbuf;
 
-        if (active_beacons.count(beacon_id) == 0)
+        if (maplenet.host_status == 0)
         {
-            active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
+            if (active_beacons.count(beacon_id) == 0)
+            {
+                active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
 
-            int avg_ping_ms = maplenet.GetAveragePing(beacon_id.c_str());
-            active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
-        }
-        else
-        {
-            if (active_beacons.at(beacon_id) != bm.str())
-                active_beacons.at(beacon_id) = bm.str();
-        }
+                int avg_ping_ms = maplenet.GetAveragePing(beacon_id.c_str());
+                active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
+            }
+            else
+            {
+                if (active_beacons.at(beacon_id) != bm.str())
+                    active_beacons.at(beacon_id) = bm.str();
+            }
 
-        last_seen[beacon_id] = unix_timestamp();
+            last_seen[beacon_id] = unix_timestamp();
+        }
      }
+
+    closesocket(fd);
 
 #ifdef _WIN32
     // shut down winsock cleanly
-    // never actually reached
     WSACleanup();
 #endif
 
