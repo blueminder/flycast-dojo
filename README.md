@@ -15,6 +15,11 @@ If you are connected to your opponents on a shared LAN or are using software tha
 * In the Netplay options, check "Enable Lobby" to make yourself visible to anyone connected to your network.
 * Set a unique Player Name to distinguish yourself from the crowd.
 
+### As Guest
+* On the Lobby screen, click on any entries with the status of "Hosting, Waiting" to launch a game. The game will load, and the session will start once the host has selected delay.
+
+![Lobby - Entry Select](lobby3.png)
+
 ### As Host
 * In the Lobby screen, click "Host Game" and select your game of choice.
 
@@ -30,11 +35,6 @@ When a guest joins a session, delay will automatically be set on the host's side
 Depending on the connection between you and your opponent and the tendency for network spikes, you may have to bump delay up to make your game smoother. The best course of action is to start low, and go higher until both you and your opponent have a smooth framerate.
 
 ![Host Delay Selection](hostdelay.png)
-
-### As Guest
-* Click on any entries with the status of "Hosting, Waiting" to launch a game. The game will load, and the session will start once the host has selected delay.
-
-![Lobby - Entry Select](lobby3.png)
 
 # Replays
 To see a listing of your recorded replay sessions to play back, click on the "Replays" button on the Flycast main screen.
@@ -71,7 +71,6 @@ On the Flycast main screen, you may now select your game of choice. You may also
 
 If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else's game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `eeprom.net`/`nvmem.net` files found in your `data/` subdirectory.
 
-
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
@@ -83,10 +82,10 @@ You may also call Flycast from the command line. All command line flags correspo
 
 ## TCP Match Transmission (Spectating)
 _append to server arguments_
-```-config maplenet:Transmitting=yes -config maplenet:Receiving=no -config maplenet:SpectatorIP=<IP> -config maplenet:SpectatorPort=7000```
+```-config maplenet:Transmitting=yes -config maplenet:SpectatorIP=<IP> -config maplenet:SpectatorPort=7000```
 
 ## TCP Match Receiving (Spectating)
-```-config maplenet:Transmitting=no -config maplenet:Receiving=yes -config maplenet:SpectatorPort=7000```
+```-config maplenet:Receiving=yes -config maplenet:SpectatorPort=7000```
 
 ## Test Game Screen
 ```-config maplenet:TestGame=yes```
@@ -97,6 +96,9 @@ _append to server arguments_
 
 ## Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS
 [![Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS](http://img.youtube.com/vi/s0MXenZPLiU/0.jpg)](http://www.youtube.com/watch?v=s0MXenZPLiU "Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS")
+
+## Flycast Dojo - Spectating / TCP Transmission - Test 1
+[![Flycast Dojo - Spectating / TCP Transmission - Test 1](https://img.youtube.com/vi/AmRf7MwOrQA/0.jpg)](https://www.youtube.com/watch?v=AmRf7MwOrQA)
 
 # Roadmap
 - [x] UDP Delay Netplay
