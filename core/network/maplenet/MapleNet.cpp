@@ -655,13 +655,6 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 				{
 					PrintFrameData("Applied", (u8*)this_frame.data());
 				}
-
-				if (transmitter.isStarted)
-				{
-					if (transmitter.transmission_frames.empty() ||
-						transmitter.transmission_frames.back() != this_frame)
-						transmitter.transmission_frames.push(this_frame);
-				}
 			}
 		}
 		catch (const std::out_of_range& oor) {};
@@ -671,6 +664,9 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
 		AppendToReplayFile(this_frame);
+
+	if (transmitter.isStarted)
+		transmitter.transmission_frames.push(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
