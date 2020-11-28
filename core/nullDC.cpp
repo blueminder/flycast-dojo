@@ -1116,7 +1116,7 @@ void SaveSettings()
 	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
 	//cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
 	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
-	cfgSaveBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
+	//cfgSaveBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
 	cfgSaveBool("maplenet", "Receiving", settings.maplenet.Receiving);
 	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
 	//cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
