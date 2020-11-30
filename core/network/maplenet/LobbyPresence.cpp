@@ -193,7 +193,8 @@ int LobbyPresence::listener(char* group, int port)
     }
 
     // now just enter a read-print loop
-    while (maplenet.host_status == 0) {
+    while (maplenet.host_status == 0 && !dc_is_running())
+    {
         char msgbuf[MSGBUFSIZE];
         char ip_str[128];
 
@@ -229,13 +230,16 @@ int LobbyPresence::listener(char* group, int port)
             {
                 active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
 
-                int avg_ping_ms = maplenet.GetAveragePing(beacon_id.c_str());
+                int avg_ping_ms = maplenet.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
                 active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
             }
             else
             {
-                if (active_beacons.at(beacon_id) != bm.str())
-                    active_beacons.at(beacon_id) = bm.str();
+                try {
+                    if (active_beacons.at(beacon_id) != bm.str())
+                        active_beacons.at(beacon_id) = bm.str();
+                }
+                catch (...) {};
             }
 
             last_seen[beacon_id] = unix_timestamp();

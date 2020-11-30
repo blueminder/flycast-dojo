@@ -48,6 +48,36 @@ unsigned long mix(unsigned long a, unsigned long b, unsigned long c)
     return c;
 }
 
+int UDPClient::PingAddress(const char * ip_addr, int port, int add_to_seed)
+{
+	sockaddr_in target_addr;
+	target_addr.sin_family = AF_INET;
+	target_addr.sin_port = htons((u16)port);
+	inet_pton(AF_INET, ip_addr, &target_addr.sin_addr);
+
+	unsigned long seed = mix(clock(), time(NULL), getpid());
+	srand(seed + add_to_seed);
+	//srand(time(NULL));
+	int rnd_num_cmp = rand() * 1000 + 1;
+
+	if (ping_send_ts.count(rnd_num_cmp) == 0)
+	{
+
+		std::stringstream ping_ss("");
+		ping_ss << "PING " << rnd_num_cmp;
+		std::string to_send_ping = ping_ss.str();
+
+		sendto(local_socket, (const char*)to_send_ping.data(), strlen(to_send_ping.data()), 0, (const struct sockaddr*)&target_addr, sizeof(target_addr));
+		INFO_LOG(NETWORK, "Sent %s", to_send_ping.data());
+
+		long current_timestamp = unix_timestamp();
+		ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
+	}
+
+	// last ping key
+	return rnd_num_cmp;
+}
+
 // udp ping, seeds with random number
 int UDPClient::PingOpponent(int add_to_seed)
 {
@@ -72,6 +102,16 @@ int UDPClient::PingOpponent(int add_to_seed)
 	
 	// last ping key
 	return rnd_num_cmp;
+}
+
+int UDPClient::GetAvgPing(const char * ip_addr, int port)
+{
+	for (int i = 0; i < 5; i++)
+	{
+		PingAddress(ip_addr, port, i);
+	}
+
+	return avg_ping_ms;
 }
 
 int UDPClient::GetOpponentAvgPing()

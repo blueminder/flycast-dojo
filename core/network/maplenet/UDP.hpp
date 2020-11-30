@@ -47,7 +47,10 @@ public:
 
 	int SendData(std::string data);
 
+	int PingAddress(const char * ip_addr, int port, int add_to_seed);
 	int PingOpponent(int add_to_seed);
+
+	int GetAvgPing(const char * ip_addr, int port);
 	int GetOpponentAvgPing();
 
 

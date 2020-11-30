@@ -527,11 +527,8 @@ void gui_display_host_delay()
 		if (ImGui::Button("Detect Delay"))
 			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
 
-		if (maplenet.OpponentPing > 0)
-		{
-			ImGui::SameLine();
-			ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
-		}
+		//if (maplenet.OpponentPing > 0)
+			ImGui::SameLine(); ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
 	}
 
 	if (ImGui::Button("Start Game"))
@@ -1147,7 +1144,7 @@ static void gui_display_lobby()
 			bool is_selected;
 			int beacon_ping = maplenet.presence.active_beacon_ping[beacon_id];
 			std::string beacon_ping_str = "";
-			if (beacon_ping > 0)
+			//if (beacon_ping > 0)
 				beacon_ping_str = std::to_string(beacon_ping);
 
 			if (beacon_status == "Hosting, Waiting" &&
