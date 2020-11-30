@@ -51,7 +51,15 @@ void TCPClient::Connect()
 	}
 }
 
-void TCPClient::ClientLoop()
+void TCPClient::Disconnect()
+{
+	CloseSocket(sock);
+#ifdef _WIN32
+	WSACleanup();
+#endif
+}
+
+void TCPClient::TransmissionLoop()
 {
 	isLoopStarted = true;
 	std::string last_sent_frame = "";
@@ -68,7 +76,7 @@ void TCPClient::ClientLoop()
 			int sendResult = sendto(sock, (const char*)to_send, FRAME_SIZE, 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
 			if (sendResult != SOCKET_ERROR)
 			{
-				// Wait for response
+				// wait for response
 				memset(buf, 0, 4096);
 				int bytesReceived = recv(sock, buf, 4096, 0);
 				if (bytesReceived > 0)
@@ -81,18 +89,10 @@ void TCPClient::ClientLoop()
 					transmission_frames.pop();
 					memset(to_send, 0, 256);
 					//}
-
-					// Echo response to console
 				}
 			}
 		}
 	} while (true);
-
-	CloseSocket(sock);
-
-#ifdef _WIN32
-	WSACleanup();
-#endif
 }
 
 void TCPClient::TransmissionThread()
@@ -104,6 +104,7 @@ void TCPClient::TransmissionThread()
 
 	Init();
 	Connect();
-	ClientLoop();
+	TransmissionLoop();
+	Disconnect();
 }
 

@@ -17,7 +17,13 @@ private:
 
 	unsigned char to_send[256];
 
+	bool Init();
+	bool CreateSocket();
+	void Connect();
+	void Disconnect();
+
 	bool isLoopStarted;
+	void TransmissionLoop();
 
 	void CloseSocket(sock_t& socket) const { closesocket(socket); socket = INVALID_SOCKET; }
 
@@ -28,12 +34,6 @@ public:
 	bool endSession;
 
 	std::queue<std::string> transmission_frames;
-
-	bool Init();
-	bool CreateSocket();
-	void Connect();
-
-	void ClientLoop();
 	void TransmissionThread();
 };
 
