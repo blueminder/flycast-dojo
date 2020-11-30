@@ -46,6 +46,7 @@ public:
 	void ClientThread();
 
 	int SendData(std::string data);
+	void SendMsg(std::string msg, sockaddr_in target);
 
 	int PingAddress(const char * ip_addr, int port, int add_to_seed);
 	int PingOpponent(int add_to_seed);

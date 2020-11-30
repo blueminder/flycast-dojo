@@ -20,6 +20,7 @@ void UDPClient::SetHost(std::string host, int port)
 	inet_pton(AF_INET, host.data(), &host_addr.sin_addr);
 }
 
+// for sending frame data during emulator game loop
 int UDPClient::SendData(std::string data)
 {
 	// sets current send buffer
@@ -124,42 +125,51 @@ int UDPClient::GetOpponentAvgPing()
 	return avg_ping_ms;
 }
 
+// for messages sent outside the game loop
+void UDPClient::SendMsg(std::string msg, sockaddr_in target)
+{
+	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	{
+		sendto(local_socket, (const char*)msg.data(), strlen(msg.data()), 0, (const struct sockaddr*)&target, sizeof(target));
+	}
+
+	INFO_LOG(NETWORK, "Message Sent: %s", msg.data());
+}
+
 void UDPClient::StartSession()
 {
 	std::stringstream start_ss("");
 	start_ss << "START " << maplenet.delay;
 	std::string to_send_start = start_ss.str();
 
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-	{
-		sendto(local_socket, (const char*)to_send_start.data(), strlen(to_send_start.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-	}
+	SendMsg(to_send_start, opponent_addr);
+
+	INFO_LOG(NETWORK, "Session Started");
 }
 
 void UDPClient::SendDisconnect()
 {
 	std::string to_send_end("DISCONNECT");
 
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-	{
-		sendto(local_socket, (const char*)to_send_end.data(), strlen(to_send_end.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-	}
+	SendMsg(to_send_end, opponent_addr);
 
 	INFO_LOG(NETWORK, "Initiate Disconnect");
 }
 
 void UDPClient::SendDisconnectOK()
 {
-	std::string to_send_end("OK DISCONNECT");
-
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-	{
-		sendto(local_socket, (const char*)to_send_end.data(), strlen(to_send_end.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-	}
-
-	INFO_LOG(NETWORK, "Confirm Disconnect");
+	SendMsg("OK DISCONNECT", opponent_addr);
 }
 
+void UDPClient::SendPlayerName()
+{
+	SendMsg("NAME " + settings.maplenet.PlayerName, host_addr);
+}
+
+void UDPClient::SendNameOK()
+{
+	SendMsg("OK NAME", opponent_addr);
+}
 
 void UDPClient::EndSession()
 {
@@ -169,30 +179,6 @@ void UDPClient::EndSession()
 	gui_open_disconnected();
 	dc_stop();
 	closeSocket(local_socket);
-}
-
-void UDPClient::SendPlayerName()
-{
-	std::string to_send_name("NAME " + settings.maplenet.PlayerName);
-
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-	{
-		sendto(local_socket, (const char*)to_send_name.data(), strlen(to_send_name.data()), 0, (const struct sockaddr*)&host_addr, sizeof(host_addr));
-	}
-
-	INFO_LOG(NETWORK, "Player Name Sent: %s", settings.maplenet.PlayerName.data());
-}
-
-void UDPClient::SendNameOK()
-{
-	std::string to_send_ok_name("OK NAME");
-
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-	{
-		sendto(local_socket, (const char*)to_send_ok_name.data(), strlen(to_send_ok_name.data()), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-	}
-
-	INFO_LOG(NETWORK, "Opponent Name Acknowledged");
 }
 
 sock_t UDPClient::createAndBind(int port)
