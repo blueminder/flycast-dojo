@@ -2,13 +2,11 @@
 
 UDPClient::UDPClient()
 {
-	isStarted = false;
 	isLoopStarted = false;
 	write_out = false;
 	memset((void*)to_send, 0, 256);
 	last_sent = "";
 	disconnect_toggle = false;
-	disconnect_complete = false;
 	opponent_disconnected = false;
 	name_acknowledged = false;
 };
@@ -149,15 +147,15 @@ void UDPClient::SendNameOK()
 
 void UDPClient::EndSession()
 {
-	INFO_LOG(NETWORK, "Disconnected.");
-	//disconnect_complete = true;
-
 	gui_open_disconnected();
 	dc_stop();
-	closeSocket(local_socket);
+	CloseSocket(local_socket);
+	//WSACleanup();
+
+	INFO_LOG(NETWORK, "Disconnected.");
 }
 
-sock_t UDPClient::createAndBind(int port)
+sock_t UDPClient::CreateAndBind(int port)
 {
 	sock_t sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (!VALID(sock))
@@ -176,7 +174,7 @@ sock_t UDPClient::createAndBind(int port)
 	if (::bind(sock, (struct sockaddr*)&serveraddr, sizeof(serveraddr)) < 0)
 	{
 		ERROR_LOG(NETWORK, "MapleNet UDP Server: bind() failed. errno=%d", get_last_error());
-		closeSocket(sock);
+		CloseSocket(sock);
 	}
 	else
 		set_non_blocking(sock);
@@ -184,10 +182,10 @@ sock_t UDPClient::createAndBind(int port)
 	return sock;
 }
 
-bool UDPClient::createLocalSocket(int port)
+bool UDPClient::CreateLocalSocket(int port)
 {
 	if (!VALID(local_socket))
-		local_socket = createAndBind(port);
+		local_socket = CreateAndBind(port);
 
 	return VALID(local_socket);
 }
@@ -207,12 +205,12 @@ bool UDPClient::Init(bool hosting)
 
 	if (hosting)
 	{
-		return createLocalSocket(stoi(settings.maplenet.ServerPort));
+		return CreateLocalSocket(stoi(settings.maplenet.ServerPort));
 	}
 	else
 	{
 		opponent_addr = host_addr;
-		return createLocalSocket(0);
+		return CreateLocalSocket(0);
 	}
 }
 
@@ -227,153 +225,145 @@ void UDPClient::ClientLoop()
 {
 	isLoopStarted = true;
 
-	while (true)
+	while (!disconnect_toggle)
 	{
-		while (true)
+		// if opponent detected, shoot packets at them
+		if (opponent_addr.sin_port > 0 &&
+			memcmp(to_send, last_sent.data(), maplenet.PayloadSize()) != 0)
 		{
-			if (disconnect_toggle)
+			// send payload until morale improves
+			for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
 			{
-				SendDisconnect();
+				sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 			}
 
-			// if opponent detected, shoot packets at them
-			if (opponent_addr.sin_port > 0 &&
-				memcmp(to_send, last_sent.data(), maplenet.PayloadSize()) != 0)
+			if (settings.maplenet.Debug == DEBUG_SEND ||
+				settings.maplenet.Debug == DEBUG_SEND_RECV ||
+				settings.maplenet.Debug == DEBUG_ALL)
 			{
-				// send payload until morale improves
-				for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
-				{
-					sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
-				}
-
-				if (settings.maplenet.Debug == DEBUG_SEND ||
-					settings.maplenet.Debug == DEBUG_SEND_RECV ||
-					settings.maplenet.Debug == DEBUG_ALL)
-				{
-					maplenet.PrintFrameData("Sent", (u8 *)to_send);
-				}
-
-				last_sent = std::string(to_send, to_send + maplenet.PayloadSize());
-
-				if (maplenet.client_input_authority)
-					maplenet.AddNetFrame((const char*)to_send);
+				maplenet.PrintFrameData("Sent", (u8 *)to_send);
 			}
 
-			struct sockaddr_in sender;
-			socklen_t senderlen = sizeof(sender);
-			char buffer[256];
-			memset(buffer, 0, 256);
-			int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
-			if (bytes_read)
+			last_sent = std::string(to_send, to_send + maplenet.PayloadSize());
+
+			if (maplenet.client_input_authority)
+				maplenet.AddNetFrame((const char*)to_send);
+		}
+
+		struct sockaddr_in sender;
+		socklen_t senderlen = sizeof(sender);
+		char buffer[256];
+		memset(buffer, 0, 256);
+		int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
+		if (bytes_read)
+		{
+			if (memcmp("NAME", buffer, 4) == 0)
 			{
-				if (memcmp("NAME", buffer, 4) == 0)
+				settings.maplenet.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+				
+				opponent_addr = sender;
+
+				// prepare for delay selection
+				if (maplenet.OpponentIP.empty())
+					maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
+
+				SendNameOK();
+
+				maplenet.isMatchReady = true;
+				maplenet.resume();
+			}
+
+			if (memcmp("OK NAME", buffer, 7) == 0)
+			{
+				name_acknowledged = true;
+			}
+
+			if (memcmp("PING", buffer, 4) == 0)
+			{
+				char buffer_copy[256];
+				memcpy(buffer_copy, buffer, 256);
+				buffer_copy[1] = 'O';
+				sendto(local_socket, (const char*)buffer_copy, strlen(buffer_copy), 0, (struct sockaddr*)&sender, senderlen);
+				memset(buffer, 0, 256);
+			}
+
+			if (memcmp("PONG", buffer, 4) == 0)
+			{
+				int rnd_num_cmp = atoi(buffer + 5);
+				long ret_timestamp = unix_timestamp();
+				
+				if (ping_send_ts.count(rnd_num_cmp) == 1)
 				{
-					settings.maplenet.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+
+					long rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
+					INFO_LOG(NETWORK, "Received PONG %d, RTT: %d ms", rnd_num_cmp, rtt);
 					
+					ping_rtt.push_back(rtt);
+
+					if (ping_rtt.size() > 1)
+					{
+						avg_ping_ms = std::accumulate(ping_rtt.begin(), ping_rtt.end(), 0.0) / ping_rtt.size();
+					}
+					else
+					{
+						avg_ping_ms = rtt;
+					}
+
+					if (ping_rtt.size() > 5)
+						ping_rtt.clear();
+
+					ping_send_ts.erase(rnd_num_cmp);
+				}
+				
+			}
+
+			if (memcmp("START", buffer, 5) == 0)
+			{
+				int delay = atoi(buffer + 6);
+				if (!maplenet.session_started)
+				{
+					maplenet.StartSession(delay);
+				}
+			}
+
+			if (memcmp("DISCONNECT", buffer, 10) == 0)
+			{
+				disconnect_toggle = true;
+				opponent_disconnected = true;
+				SendDisconnectOK();
+			}
+
+			if (memcmp("OK DISCONNECT", buffer, 13) == 0)
+			{
+				SendDisconnectOK();
+				disconnect_toggle = true;
+			}
+
+			if (bytes_read == maplenet.PayloadSize())
+			{
+				if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)
+				{
 					opponent_addr = sender;
 
 					// prepare for delay selection
-					if (maplenet.OpponentIP.empty())
+					if (maplenet.hosting)
 						maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
-
-					SendNameOK();
 
 					maplenet.isMatchReady = true;
 					maplenet.resume();
 				}
 
-				if (memcmp("OK NAME", buffer, 7) == 0)
-				{
-					name_acknowledged = true;
-				}
-
-				if (memcmp("PING", buffer, 4) == 0)
-				{
-					char buffer_copy[256];
-					memcpy(buffer_copy, buffer, 256);
-					buffer_copy[1] = 'O';
-					sendto(local_socket, (const char*)buffer_copy, strlen(buffer_copy), 0, (struct sockaddr*)&sender, senderlen);
-					memset(buffer, 0, 256);
-				}
-
-				if (memcmp("PONG", buffer, 4) == 0)
-				{
-					int rnd_num_cmp = atoi(buffer + 5);
-					long ret_timestamp = unix_timestamp();
-					
-					if (ping_send_ts.count(rnd_num_cmp) == 1)
-					{
-
-						long rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
-						INFO_LOG(NETWORK, "Received PONG %d, RTT: %d ms", rnd_num_cmp, rtt);
-						
-						ping_rtt.push_back(rtt);
-
-						if (ping_rtt.size() > 1)
-						{
-							avg_ping_ms = std::accumulate(ping_rtt.begin(), ping_rtt.end(), 0.0) / ping_rtt.size();
-						}
-						else
-						{
-							avg_ping_ms = rtt;
-						}
-
-						if (ping_rtt.size() > 5)
-							ping_rtt.clear();
-
-						ping_send_ts.erase(rnd_num_cmp);
-					}
-					
-				}
-
-				if (memcmp("START", buffer, 5) == 0)
-				{
-					int delay = atoi(buffer + 6);
-					if (!maplenet.session_started)
-					{
-						maplenet.StartSession(delay);
-					}
-				}
-
-				if (memcmp("DISCONNECT", buffer, 10) == 0)
-				{
-					disconnect_toggle = true;
-					SendDisconnectOK();
-					opponent_disconnected = true;
-				}
-
-				if (memcmp("OK DISCONNECT", buffer, 13) == 0)
-				{
-					SendDisconnectOK();
-					EndSession();
-				}
-
-				if (bytes_read == maplenet.PayloadSize())
-				{
-					if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)
-					{
-						opponent_addr = sender;
-
-						// prepare for delay selection
-						if (maplenet.hosting)
-							maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
-
-						maplenet.isMatchReady = true;
-						maplenet.resume();
-					}
-
-					maplenet.ClientReceiveAction((const char*)buffer);
-				}
+				maplenet.ClientReceiveAction((const char*)buffer);
 			}
-
-			//maplenet.ClientLoopAction();
-			//wait_seconds(0.006f);
 		}
 	}
+
+	SendDisconnect();
 }
 
 void UDPClient::ClientThread()
 {
 	Init(maplenet.hosting);
 	ClientLoop();
+	EndSession();
 }
