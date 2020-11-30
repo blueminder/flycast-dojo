@@ -119,8 +119,6 @@ public:
 	TCPClient transmitter;
 	TCPServer receiver;
 
-	void BeaconThread();
-
 	void PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);
 	void ClientLoopAction();
@@ -154,6 +152,7 @@ public:
 
 	std::string replay_filename;
 
+	static long unix_timestamp();
 	int GetAveragePing(const char* ipAddr);
 	int DetectDelay(const char* ipAddr);
 

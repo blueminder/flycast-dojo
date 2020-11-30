@@ -1116,7 +1116,7 @@ static void gui_display_lobby()
 		std::string beacon_id = it->first;
 		std::vector<std::string> beacon_entry;
 
-		if (maplenet.presence.last_seen[beacon_id] + 10 > maplenet.presence.unix_timestamp())
+		if (maplenet.presence.last_seen[beacon_id] + 10 > maplenet.unix_timestamp())
 		{
 			size_t pos = 0;
 			std::string token;

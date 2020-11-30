@@ -25,8 +25,6 @@ private:
 public:
 	UDPClient();
 
-	long unix_timestamp();
-
 	sock_t CreateAndBind(int port);
 	bool CreateLocalSocket(int port);
 

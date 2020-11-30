@@ -130,13 +130,6 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
-long LobbyPresence::unix_timestamp()
-{
-    time_t t = time(0);
-    long int now = static_cast<long int> (t);
-    return now;
-}
-
 int LobbyPresence::listener(char* group, int port)
 {
 #ifdef _WIN32
@@ -192,7 +185,7 @@ int LobbyPresence::listener(char* group, int port)
         return 1;
     }
 
-    // now just enter a read-print loop
+    // listener loop
     while (maplenet.host_status == 0 && !dc_is_running())
     {
         char msgbuf[MSGBUFSIZE];
@@ -242,7 +235,7 @@ int LobbyPresence::listener(char* group, int port)
                 catch (...) {};
             }
 
-            last_seen[beacon_id] = unix_timestamp();
+            last_seen[beacon_id] = maplenet.unix_timestamp();
         }
      }
 

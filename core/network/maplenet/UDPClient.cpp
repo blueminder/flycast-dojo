@@ -65,7 +65,7 @@ int UDPClient::PingAddress(sockaddr_in target_addr, int add_to_seed)
 		sendto(local_socket, (const char*)to_send_ping.data(), strlen(to_send_ping.data()), 0, (const struct sockaddr*)&target_addr, sizeof(target_addr));
 		INFO_LOG(NETWORK, "Sent %s", to_send_ping.data());
 
-		long current_timestamp = unix_timestamp();
+		long current_timestamp = maplenet.unix_timestamp();
 		ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
 	}
 
@@ -214,13 +214,6 @@ bool UDPClient::Init(bool hosting)
 	}
 }
 
-long UDPClient::unix_timestamp()
-{
-    time_t t = time(0);
-    long int now = static_cast<long int> (t);
-    return now;
-}
-
 void UDPClient::ClientLoop()
 {
 	isLoopStarted = true;
@@ -290,7 +283,7 @@ void UDPClient::ClientLoop()
 			if (memcmp("PONG", buffer, 4) == 0)
 			{
 				int rnd_num_cmp = atoi(buffer + 5);
-				long ret_timestamp = unix_timestamp();
+				long ret_timestamp = maplenet.unix_timestamp();
 				
 				if (ping_send_ts.count(rnd_num_cmp) == 1)
 				{

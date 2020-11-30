@@ -58,6 +58,13 @@ int MapleNet::DetectDelay(const char* ipAddr)
 	return avg_ping_ms;
 }
 
+long MapleNet::unix_timestamp()
+{
+    time_t t = time(0);
+    long int now = static_cast<long int> (t);
+    return now;
+}
+
 // returns ICMP ping, to be removed once udp rtt ping is enabled
 // not all exposed IPs respond to ICMP ping
 int MapleNet::GetAveragePing(const char* ipAddr)
