@@ -49,7 +49,8 @@ MapleNet::MapleNet()
 
 int MapleNet::DetectDelay(const char* ipAddr)
 {
-	int avg_ping_ms = client.GetOpponentAvgPing();
+	int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
+	//int avg_ping_ms = client.GetOpponentAvgPing();
 
 	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
 	settings.maplenet.Delay = delay > 1 ? delay : 1;

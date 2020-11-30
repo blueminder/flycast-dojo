@@ -371,7 +371,7 @@ void gui_display_host_wait()
 	if (!maplenet.OpponentIP.empty())
 	{
 		maplenet.host_status = 2;
-		maplenet.DetectDelay(maplenet.OpponentIP.data());
+		//maplenet.DetectDelay(maplenet.OpponentIP.data());
 
 		gui_state = Closed;
 		gui_open_host_delay();
@@ -527,8 +527,11 @@ void gui_display_host_delay()
 		if (ImGui::Button("Detect Delay"))
 			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
 
-		//if (maplenet.OpponentPing > 0)
-			ImGui::SameLine(); ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
+		if (maplenet.OpponentPing > 0)
+		{
+			ImGui::SameLine();
+			ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
+		}
 	}
 
 	if (ImGui::Button("Start Game"))

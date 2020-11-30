@@ -934,7 +934,7 @@ void LoadSettings(bool game_specific)
 	settings.maplenet.Receiving = cfgLoadBool("maplenet", "Receiving", settings.maplenet.Receiving);
 	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
 	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
-	//settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
+	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
 	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
 	settings.maplenet.RecordMatches = cfgLoadBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
 	settings.maplenet.PlayMatch = cfgLoadBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
