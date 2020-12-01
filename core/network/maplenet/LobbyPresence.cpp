@@ -118,20 +118,13 @@ sockaddr_in LobbyPresence::SetDestination(char* group, short port)
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(group);
+    if (group == 0)
+        addr.sin_addr.s_addr = htonl(INADDR_ANY); // differs from sender
+    else
+        addr.sin_addr.s_addr = inet_addr(group);
     addr.sin_port = htons(port);
 
     return addr;
-}
-
-int LobbyPresence::beacon(char* group, int port, int delay_secs)
-{
-    beacon_sock = Init();
-    sockaddr_in addr = SetDestination(group, port);
-    BeaconLoop(addr, delay_secs);
-    CloseSocket(beacon_sock);
-
-    return 0;
 }
 
 char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
@@ -155,11 +148,79 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
+int LobbyPresence::ListenerLoop(sockaddr_in addr)
+{
+    while (maplenet.host_status == 0 && !dc_is_running())
+    {
+        char msgbuf[MSGBUFSIZE];
+        char ip_str[128];
+
+        int addrlen = sizeof(addr);
+        int nbytes = recvfrom(
+            listener_sock,
+            msgbuf,
+            MSGBUFSIZE,
+            0,
+            (struct sockaddr *) &addr,
+            &addrlen
+        );
+        if (nbytes < 0) {
+            perror("recvfrom");
+            return 1;
+        }
+        msgbuf[nbytes] = '\0';
+        
+        get_ip_str((struct sockaddr *) &addr, ip_str, 128);
+        INFO_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
+        INFO_LOG(NETWORK, msgbuf);
+        
+        std::stringstream bi;
+        bi << ip_str << ":" << std::to_string(addr.sin_port);
+        std::string beacon_id = bi.str();
+        
+        std::stringstream bm;
+        bm << ip_str <<  "__" << msgbuf;
+        
+        if (maplenet.host_status == 0)
+        {
+            if (active_beacons.count(beacon_id) == 0)
+            {
+                active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
+                
+                int avg_ping_ms = maplenet.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
+                active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
+            }
+            else
+            {
+                try {
+                    if (active_beacons.at(beacon_id) != bm.str())
+                        active_beacons.at(beacon_id) = bm.str();
+                    }
+                catch (...) {};
+            }
+            
+            last_seen[beacon_id] = maplenet.unix_timestamp();
+        }
+    }
+
+    return 0;
+}
+
+int LobbyPresence::beacon(char* group, int port, int delay_secs)
+{
+    beacon_sock = Init();
+    sockaddr_in addr = SetDestination(group, port);
+    BeaconLoop(addr, delay_secs);
+    CloseSocket(beacon_sock);
+
+    return 0;
+}
+
 int LobbyPresence::listener(char* group, int port)
 {
     listener_sock = Init();
 
-    // allow multiple sockets to use the same PORT number
+    // allow multiple sockets to use the same port number
     u_int yes = 1;
     if (
         setsockopt(
@@ -170,12 +231,7 @@ int LobbyPresence::listener(char* group, int port)
        return 1;
     }
 
-    // set up destination address
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_ANY); // differs from sender
-    addr.sin_port = htons(port);
+    sockaddr_in addr = SetDestination(0, port);
 
     // bind to receive address
     if (bind(listener_sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
@@ -196,61 +252,9 @@ int LobbyPresence::listener(char* group, int port)
         return 1;
     }
 
-    // listener loop
-    while (maplenet.host_status == 0 && !dc_is_running())
-    {
-        char msgbuf[MSGBUFSIZE];
-        char ip_str[128];
-
-        int addrlen = sizeof(addr);
-        int nbytes = recvfrom(
-            listener_sock,
-            msgbuf,
-            MSGBUFSIZE,
-            0,
-            (struct sockaddr *) &addr,
-            &addrlen
-        );
-        if (nbytes < 0) {
-            perror("recvfrom");
-            return 1;
-        }
-        msgbuf[nbytes] = '\0';
-
-        get_ip_str((struct sockaddr *) &addr, ip_str, 128);
-        INFO_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
-        INFO_LOG(NETWORK, msgbuf);
-
-		std::stringstream bi;
-        bi << ip_str << ":" << std::to_string(addr.sin_port);
-        std::string beacon_id = bi.str();
-
-        std::stringstream bm;
-        bm << ip_str <<  "__" << msgbuf;
-
-        if (maplenet.host_status == 0)
-        {
-            if (active_beacons.count(beacon_id) == 0)
-            {
-                active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
-
-                int avg_ping_ms = maplenet.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
-                active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
-            }
-            else
-            {
-                try {
-                    if (active_beacons.at(beacon_id) != bm.str())
-                        active_beacons.at(beacon_id) = bm.str();
-                }
-                catch (...) {};
-            }
-
-            last_seen[beacon_id] = maplenet.unix_timestamp();
-        }
-     }
-
+    ListenerLoop(addr);
     CloseSocket(listener_sock);
 
     return 0;
 }
+

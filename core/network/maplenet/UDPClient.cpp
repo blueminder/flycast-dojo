@@ -150,7 +150,7 @@ void UDPClient::EndSession()
 	gui_open_disconnected();
 	dc_stop();
 	CloseSocket(local_socket);
-	//WSACleanup();
+	WSACleanup();
 
 	INFO_LOG(NETWORK, "Disconnected.");
 }
@@ -360,3 +360,4 @@ void UDPClient::ClientThread()
 	ClientLoop();
 	EndSession();
 }
+
