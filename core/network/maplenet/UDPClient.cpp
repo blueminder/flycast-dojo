@@ -321,9 +321,9 @@ void UDPClient::ClientLoop()
 
 			if (memcmp("DISCONNECT", buffer, 10) == 0)
 			{
-				disconnect_toggle = true;
-				opponent_disconnected = true;
 				SendDisconnectOK();
+				opponent_disconnected = true;
+				disconnect_toggle = true;
 			}
 
 			if (memcmp("OK DISCONNECT", buffer, 13) == 0)
