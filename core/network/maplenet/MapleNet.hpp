@@ -17,10 +17,10 @@
 #include <rend/gui.h>
 
 #include "types.h"
-#include "TCP.hpp"
-#include "UDP.hpp"
-#include "Ping.hpp"
-#include "LobbyPresence.hpp"
+#include "network/maplenet/TCP.hpp"
+#include "network/maplenet/UDP.hpp"
+#include "network/maplenet/Ping.hpp"
+#include "network/maplenet/LobbyPresence.hpp"
 
 #include "emulator.h"
 
