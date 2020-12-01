@@ -31,6 +31,16 @@ public:
     void BeaconThread();
     void ListenerThread();
 
+    int listener_sock;
+    int beacon_sock;
+
+    int Init();
+    sockaddr_in SetDestination(char* group, short port);
+    int BeaconLoop(sockaddr_in addr, int delay_secs);
+    void ListenerLoop();
+    std::string ConstructMsg();
+    void CloseSocket(int sock);
+
     long unix_timestamp();
 
     std::map<std::string, std::string> active_beacons;

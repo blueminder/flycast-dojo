@@ -10,14 +10,8 @@ void LobbyPresence::ListenerThread()
     listener("224.0.0.1", 7776);
 }
 
-int LobbyPresence::beacon(char* group, int port, int delay_secs)
+int LobbyPresence::Init()
 {
-    std::string current_game = get_file_basename(settings.imgread.ImagePath);
-    current_game = current_game.substr(current_game.find_last_of("/\\") + 1);
-
-    std::string status;
-    std::string data;
-
 #ifdef _WIN32
     // initialize winsock
     WSADATA wsaData;
@@ -34,12 +28,26 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
         return 1;
     }
 
-    // set up destination address
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(group);
-    addr.sin_port = htons(port);
+    return fd;
+}
+
+void LobbyPresence::CloseSocket(int sock)
+{
+    closesocket(sock);
+
+#ifdef _WIN32
+    // shut down winsock cleanly
+    //WSACleanup();
+#endif
+}
+
+int LobbyPresence::BeaconLoop(sockaddr_in addr, int delay_secs)
+{
+    std::string current_game = get_file_basename(settings.imgread.ImagePath);
+    current_game = current_game.substr(current_game.find_last_of("/\\") + 1);
+
+    std::string status;
+    std::string data;
 
     // sendto() destination
     while (maplenet.host_status < 4) {
@@ -82,7 +90,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
 
         char ch = 0;
         int nbytes = sendto(
-            fd,
+            beacon_sock,
             message,
             strlen(message),
             0,
@@ -101,12 +109,29 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
      #endif
     }
 
-    closesocket(fd);
+    return 0;
+}
 
-#ifdef _WIN32
-    // shut down winsock cleanly
-    WSACleanup();
-#endif
+sockaddr_in LobbyPresence::SetDestination(char* group, short port)
+{
+    // set up destination address
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(group);
+    addr.sin_port = htons(port);
+
+    return addr;
+}
+
+int LobbyPresence::beacon(char* group, int port, int delay_secs)
+{
+    beacon_sock = Init();
+    sockaddr_in addr = SetDestination(group, port);
+    BeaconLoop(addr, delay_secs);
+    CloseSocket(beacon_sock);
+
+    return 0;
 }
 
 char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
@@ -132,27 +157,13 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 
 int LobbyPresence::listener(char* group, int port)
 {
-#ifdef _WIN32
-    // initialize winsock 
-    WSADATA wsaData;
-    if (WSAStartup(0x0101, &wsaData)) {
-        perror("WSAStartup");
-        return 1;
-    }
-#endif
-
-    // create what looks like an ordinary UDP socket
-    int fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0) {
-        perror("socket");
-        return 1;
-    }
+    listener_sock = Init();
 
     // allow multiple sockets to use the same PORT number
     u_int yes = 1;
     if (
         setsockopt(
-            fd, SOL_SOCKET, SO_REUSEADDR, (char*) &yes, sizeof(yes)
+            listener_sock, SOL_SOCKET, SO_REUSEADDR, (char*) &yes, sizeof(yes)
         ) < 0
     ){
        perror("Reusing ADDR failed");
@@ -167,7 +178,7 @@ int LobbyPresence::listener(char* group, int port)
     addr.sin_port = htons(port);
 
     // bind to receive address
-    if (bind(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+    if (bind(listener_sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("bind");
         return 1;
     }
@@ -178,7 +189,7 @@ int LobbyPresence::listener(char* group, int port)
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     if (
         setsockopt(
-            fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq)
+            listener_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq)
         ) < 0
     ){
         perror("setsockopt");
@@ -193,7 +204,7 @@ int LobbyPresence::listener(char* group, int port)
 
         int addrlen = sizeof(addr);
         int nbytes = recvfrom(
-            fd,
+            listener_sock,
             msgbuf,
             MSGBUFSIZE,
             0,
@@ -239,12 +250,7 @@ int LobbyPresence::listener(char* group, int port)
         }
      }
 
-    closesocket(fd);
-
-#ifdef _WIN32
-    // shut down winsock cleanly
-    WSACleanup();
-#endif
+    CloseSocket(listener_sock);
 
     return 0;
 }
