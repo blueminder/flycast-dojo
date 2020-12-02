@@ -1070,7 +1070,7 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
 
 static void gui_display_lobby()
 {
-	std::thread t4(&LobbyPresence::ListenerThread, std::ref(maplenet.presence));
+	std::thread t4(&DojoLobby::ListenerThread, std::ref(maplenet.presence));
 	t4.detach();
 
 	ImGui_Impl_NewFrame();

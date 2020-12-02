@@ -25,7 +25,7 @@
 
 #define MSGBUFSIZE 256
 
-class LobbyPresence
+class DojoLobby
 {
 public:
     void BeaconThread();

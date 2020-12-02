@@ -1,16 +1,16 @@
 #include "MapleNet.hpp"
 
-void LobbyPresence::BeaconThread()
+void DojoLobby::BeaconThread()
 {
     beacon("224.0.0.1", 7776, 5);
 }
 
-void LobbyPresence::ListenerThread()
+void DojoLobby::ListenerThread()
 {
     listener("224.0.0.1", 7776);
 }
 
-int LobbyPresence::Init()
+int DojoLobby::Init()
 {
 #ifdef _WIN32
     // initialize winsock
@@ -31,7 +31,7 @@ int LobbyPresence::Init()
     return fd;
 }
 
-void LobbyPresence::CloseSocket(int sock)
+void DojoLobby::CloseSocket(int sock)
 {
     closesocket(sock);
 
@@ -41,7 +41,7 @@ void LobbyPresence::CloseSocket(int sock)
 #endif
 }
 
-int LobbyPresence::BeaconLoop(sockaddr_in addr, int delay_secs)
+int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
 {
     std::string current_game = get_file_basename(settings.imgread.ImagePath);
     current_game = current_game.substr(current_game.find_last_of("/\\") + 1);
@@ -112,7 +112,7 @@ int LobbyPresence::BeaconLoop(sockaddr_in addr, int delay_secs)
     return 0;
 }
 
-sockaddr_in LobbyPresence::SetDestination(char* group, short port)
+sockaddr_in DojoLobby::SetDestination(char* group, short port)
 {
     // set up destination address
     struct sockaddr_in addr;
@@ -148,7 +148,7 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
-int LobbyPresence::ListenerLoop(sockaddr_in addr)
+int DojoLobby::ListenerLoop(sockaddr_in addr)
 {
     while (maplenet.host_status == 0 && !dc_is_running())
     {
@@ -206,7 +206,7 @@ int LobbyPresence::ListenerLoop(sockaddr_in addr)
     return 0;
 }
 
-int LobbyPresence::beacon(char* group, int port, int delay_secs)
+int DojoLobby::beacon(char* group, int port, int delay_secs)
 {
     beacon_sock = Init();
     sockaddr_in addr = SetDestination(group, port);
@@ -216,7 +216,7 @@ int LobbyPresence::beacon(char* group, int port, int delay_secs)
     return 0;
 }
 
-int LobbyPresence::listener(char* group, int port)
+int DojoLobby::listener(char* group, int port)
 {
     listener_sock = Init();
 

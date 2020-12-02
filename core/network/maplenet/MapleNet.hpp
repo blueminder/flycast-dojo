@@ -20,7 +20,7 @@
 #include "network/maplenet/TCP.hpp"
 #include "network/maplenet/UDP.hpp"
 #include "network/maplenet/Ping.hpp"
-#include "network/maplenet/LobbyPresence.hpp"
+#include "network/maplenet/DojoLobby.hpp"
 
 #include "emulator.h"
 
@@ -115,7 +115,7 @@ public:
 	bool net_coin_press;
 
 	UDPClient client;
-	LobbyPresence presence;
+	DojoLobby presence;
 	TCPClient transmitter;
 	TCPServer receiver;
 

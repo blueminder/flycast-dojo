@@ -691,8 +691,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/network/maplenet/LobbyPresence.cpp
-        core/network/maplenet/LobbyPresence.hpp
+        core/network/maplenet/DojoLobby.cpp
+        core/network/maplenet/DojoLobby.hpp
         core/network/maplenet/MapleNet.cpp
         core/network/maplenet/MapleNet.hpp
         core/network/maplenet/Ping.cpp

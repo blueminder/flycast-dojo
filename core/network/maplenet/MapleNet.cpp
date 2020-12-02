@@ -24,7 +24,7 @@ MapleNet::MapleNet()
 	isMatchStarted = false;
 
 	UDPClient client;
-	LobbyPresence presence;
+	DojoLobby presence;
 
 	client_input_authority = true;
 	last_consecutive_common_frame = 2;
@@ -533,7 +533,7 @@ int MapleNet::StartMapleNet()
 
 			if (settings.maplenet.EnableLobby && hosting)
 			{
-				std::thread t3(&LobbyPresence::BeaconThread, std::ref(presence));
+				std::thread t3(&DojoLobby::BeaconThread, std::ref(presence));
 				t3.detach();
 			}
 
