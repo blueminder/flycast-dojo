@@ -522,6 +522,7 @@ void gui_display_host_delay()
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
+	/*
 	if (!maplenet.OpponentIP.empty())
 	{
 		if (ImGui::Button("Detect Delay"))
@@ -533,6 +534,7 @@ void gui_display_host_delay()
 			ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
 		}
 	}
+	*/
 
 	if (ImGui::Button("Start Game"))
 	{
