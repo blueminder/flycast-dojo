@@ -12,7 +12,7 @@
 #include <zlib.h>
 #include <xxhash.h>
 
-#include "network/dojo/DojoSession.hpp"
+#include "dojo/DojoSession.hpp"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 

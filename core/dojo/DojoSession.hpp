@@ -17,10 +17,10 @@
 #include <rend/gui.h>
 
 #include "types.h"
-#include "network/dojo/TCP.hpp"
-#include "network/dojo/UDP.hpp"
-#include "network/dojo/Ping.hpp"
-#include "network/dojo/DojoLobby.hpp"
+#include "dojo/TCP.hpp"
+#include "dojo/UDP.hpp"
+#include "dojo/Ping.hpp"
+#include "dojo/DojoLobby.hpp"
 
 #include "emulator.h"
 

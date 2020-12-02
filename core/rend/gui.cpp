@@ -39,7 +39,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 
-#include "network/dojo/DojoSession.hpp"
+#include "dojo/DojoSession.hpp"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 #include <experimental/filesystem>

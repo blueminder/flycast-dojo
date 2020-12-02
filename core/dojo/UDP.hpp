@@ -3,7 +3,7 @@
 #include <regex>
 #include <string>
 
-#include "../net_platform.h"
+#include "network/net_platform.h"
 
 class UDPClient
 {
