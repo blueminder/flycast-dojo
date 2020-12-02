@@ -517,7 +517,7 @@ struct settings_t
 		bool TestGame;
 		std::string SpectatorIP;
 		std::string SpectatorPort;
-	} maplenet;
+	} dojo;
 };
 
 extern settings_t settings;

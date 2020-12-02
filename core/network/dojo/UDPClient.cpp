@@ -23,11 +23,11 @@ int UDPClient::SendData(std::string data)
 {
 	// sets current send buffer
 	write_out = true;
-	memcpy((void*)to_send, data.data(), maplenet.PayloadSize());
+	memcpy((void*)to_send, data.data(), dojo.PayloadSize());
 	write_out = false;
 
-	if (maplenet.client_input_authority)
-		maplenet.AddNetFrame((const char*)to_send);
+	if (dojo.client_input_authority)
+		dojo.AddNetFrame((const char*)to_send);
 
 	return 0;
 }
@@ -65,7 +65,7 @@ int UDPClient::PingAddress(sockaddr_in target_addr, int add_to_seed)
 		sendto(local_socket, (const char*)to_send_ping.data(), strlen(to_send_ping.data()), 0, (const struct sockaddr*)&target_addr, sizeof(target_addr));
 		INFO_LOG(NETWORK, "Sent %s", to_send_ping.data());
 
-		long current_timestamp = maplenet.unix_timestamp();
+		long current_timestamp = dojo.unix_timestamp();
 		ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
 	}
 
@@ -106,7 +106,7 @@ int UDPClient::GetOpponentAvgPing()
 // for messages sent outside the game loop
 void UDPClient::SendMsg(std::string msg, sockaddr_in target)
 {
-	for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+	for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
 	{
 		sendto(local_socket, (const char*)msg.data(), strlen(msg.data()), 0, (const struct sockaddr*)&target, sizeof(target));
 	}
@@ -117,7 +117,7 @@ void UDPClient::SendMsg(std::string msg, sockaddr_in target)
 void UDPClient::StartSession()
 {
 	std::stringstream start_ss("");
-	start_ss << "START " << maplenet.delay;
+	start_ss << "START " << dojo.delay;
 	std::string to_send_start = start_ss.str();
 
 	SendMsg(to_send_start, opponent_addr);
@@ -137,7 +137,7 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
-	SendMsg("NAME " + settings.maplenet.PlayerName, host_addr);
+	SendMsg("NAME " + settings.dojo.PlayerName, host_addr);
 }
 
 void UDPClient::SendNameOK()
@@ -192,7 +192,7 @@ bool UDPClient::CreateLocalSocket(int port)
 
 bool UDPClient::Init(bool hosting)
 {
-	if (!settings.maplenet.Enable)
+	if (!settings.dojo.Enable)
 		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -205,7 +205,7 @@ bool UDPClient::Init(bool hosting)
 
 	if (hosting)
 	{
-		return CreateLocalSocket(stoi(settings.maplenet.ServerPort));
+		return CreateLocalSocket(stoi(settings.dojo.ServerPort));
 	}
 	else
 	{
@@ -222,25 +222,25 @@ void UDPClient::ClientLoop()
 	{
 		// if opponent detected, shoot packets at them
 		if (opponent_addr.sin_port > 0 &&
-			memcmp(to_send, last_sent.data(), maplenet.PayloadSize()) != 0)
+			memcmp(to_send, last_sent.data(), dojo.PayloadSize()) != 0)
 		{
 			// send payload until morale improves
-			for (int i = 0; i < settings.maplenet.PacketsPerFrame; i++)
+			for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
 			{
-				sendto(local_socket, (const char*)to_send, maplenet.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				sendto(local_socket, (const char*)to_send, dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 			}
 
-			if (settings.maplenet.Debug == DEBUG_SEND ||
-				settings.maplenet.Debug == DEBUG_SEND_RECV ||
-				settings.maplenet.Debug == DEBUG_ALL)
+			if (settings.dojo.Debug == DEBUG_SEND ||
+				settings.dojo.Debug == DEBUG_SEND_RECV ||
+				settings.dojo.Debug == DEBUG_ALL)
 			{
-				maplenet.PrintFrameData("Sent", (u8 *)to_send);
+				dojo.PrintFrameData("Sent", (u8 *)to_send);
 			}
 
-			last_sent = std::string(to_send, to_send + maplenet.PayloadSize());
+			last_sent = std::string(to_send, to_send + dojo.PayloadSize());
 
-			if (maplenet.client_input_authority)
-				maplenet.AddNetFrame((const char*)to_send);
+			if (dojo.client_input_authority)
+				dojo.AddNetFrame((const char*)to_send);
 		}
 
 		struct sockaddr_in sender;
@@ -252,18 +252,18 @@ void UDPClient::ClientLoop()
 		{
 			if (memcmp("NAME", buffer, 4) == 0)
 			{
-				settings.maplenet.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+				settings.dojo.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
 				
 				opponent_addr = sender;
 
 				// prepare for delay selection
-				if (maplenet.OpponentIP.empty())
-					maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
+				if (dojo.OpponentIP.empty())
+					dojo.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
 
 				SendNameOK();
 
-				maplenet.isMatchReady = true;
-				maplenet.resume();
+				dojo.isMatchReady = true;
+				dojo.resume();
 			}
 
 			if (memcmp("OK NAME", buffer, 7) == 0)
@@ -283,7 +283,7 @@ void UDPClient::ClientLoop()
 			if (memcmp("PONG", buffer, 4) == 0)
 			{
 				int rnd_num_cmp = atoi(buffer + 5);
-				long ret_timestamp = maplenet.unix_timestamp();
+				long ret_timestamp = dojo.unix_timestamp();
 				
 				if (ping_send_ts.count(rnd_num_cmp) == 1)
 				{
@@ -313,9 +313,9 @@ void UDPClient::ClientLoop()
 			if (memcmp("START", buffer, 5) == 0)
 			{
 				int delay = atoi(buffer + 6);
-				if (!maplenet.session_started)
+				if (!dojo.session_started)
 				{
-					maplenet.StartSession(delay);
+					dojo.StartSession(delay);
 				}
 			}
 
@@ -332,21 +332,21 @@ void UDPClient::ClientLoop()
 				disconnect_toggle = true;
 			}
 
-			if (bytes_read == maplenet.PayloadSize())
+			if (bytes_read == dojo.PayloadSize())
 			{
-				if (!maplenet.isMatchReady && maplenet.GetPlayer((u8 *)buffer) == maplenet.opponent)
+				if (!dojo.isMatchReady && dojo.GetPlayer((u8 *)buffer) == dojo.opponent)
 				{
 					opponent_addr = sender;
 
 					// prepare for delay selection
-					if (maplenet.hosting)
-						maplenet.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
+					if (dojo.hosting)
+						dojo.OpponentIP = std::string(inet_ntoa(opponent_addr.sin_addr));
 
-					maplenet.isMatchReady = true;
-					maplenet.resume();
+					dojo.isMatchReady = true;
+					dojo.resume();
 				}
 
-				maplenet.ClientReceiveAction((const char*)buffer);
+				dojo.ClientReceiveAction((const char*)buffer);
 			}
 		}
 	}
@@ -356,7 +356,7 @@ void UDPClient::ClientLoop()
 
 void UDPClient::ClientThread()
 {
-	Init(maplenet.hosting);
+	Init(dojo.hosting);
 	ClientLoop();
 	EndSession();
 }

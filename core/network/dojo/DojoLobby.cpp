@@ -50,10 +50,10 @@ int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
     std::string data;
 
     // sendto() destination
-    while (maplenet.host_status < 4) {
+    while (dojo.host_status < 4) {
         const char* message;
 
-        switch (maplenet.host_status)
+        switch (dojo.host_status)
         {
         case 0:
             status = "Idle";
@@ -76,10 +76,10 @@ int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
         }
 
 		std::stringstream message_ss("");
-        message_ss << settings.maplenet.ServerPort << "__" << status << "__" << current_game << "__" << settings.maplenet.PlayerName;
-        if (maplenet.host_status == 2 || maplenet.host_status == 3)
+        message_ss << settings.dojo.ServerPort << "__" << status << "__" << current_game << "__" << settings.dojo.PlayerName;
+        if (dojo.host_status == 2 || dojo.host_status == 3)
         {
-            message_ss << " vs " << settings.maplenet.OpponentName << "__";
+            message_ss << " vs " << settings.dojo.OpponentName << "__";
         }
         else
         {
@@ -150,7 +150,7 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 
 int DojoLobby::ListenerLoop(sockaddr_in addr)
 {
-    while (maplenet.host_status == 0 && !dc_is_running())
+    while (dojo.host_status == 0 && !dc_is_running())
     {
         char msgbuf[MSGBUFSIZE];
         char ip_str[128];
@@ -181,13 +181,13 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
         std::stringstream bm;
         bm << ip_str <<  "__" << msgbuf;
         
-        if (maplenet.host_status == 0)
+        if (dojo.host_status == 0)
         {
             if (active_beacons.count(beacon_id) == 0)
             {
                 active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
                 
-                int avg_ping_ms = maplenet.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
+                int avg_ping_ms = dojo.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
                 active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
             }
             else
@@ -199,7 +199,7 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
                 catch (...) {};
             }
             
-            last_seen[beacon_id] = maplenet.unix_timestamp();
+            last_seen[beacon_id] = dojo.unix_timestamp();
         }
     }
 

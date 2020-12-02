@@ -10,7 +10,7 @@ DojoSession::DojoSession()
 	host_port = 7777;
 	delay = 1;
 
-	player = settings.maplenet.ActAsServer ? 0 : 1;
+	player = settings.dojo.ActAsServer ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 
 	session_started = false;
@@ -49,11 +49,11 @@ DojoSession::DojoSession()
 
 int DojoSession::DetectDelay(const char* ipAddr)
 {
-	int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
+	int avg_ping_ms = dojo.GetAveragePing(ipAddr);
 	//int avg_ping_ms = client.GetOpponentAvgPing();
 
 	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
-	settings.maplenet.Delay = delay > 1 ? delay : 1;
+	settings.dojo.Delay = delay > 1 ? delay : 1;
 
 	return avg_ping_ms;
 }
@@ -95,11 +95,11 @@ int DojoSession::GetAveragePing(const char* ipAddr)
 
 void DojoSession::LoadNetConfig()
 {
-	enabled = settings.maplenet.Enable;
-	hosting = settings.maplenet.ActAsServer;
-	spectating = settings.maplenet.Spectating;
-	transmitting = settings.maplenet.Transmitting;
-	receiving = settings.maplenet.Receiving;
+	enabled = settings.dojo.Enable;
+	hosting = settings.dojo.ActAsServer;
+	spectating = settings.dojo.Spectating;
+	transmitting = settings.dojo.Transmitting;
+	receiving = settings.dojo.Receiving;
 
 	if (spectating)
 	{
@@ -107,25 +107,25 @@ void DojoSession::LoadNetConfig()
 		hosting = true;
 	}
 
-	host_ip = settings.maplenet.ServerIP;
-	host_port = atoi(settings.maplenet.ServerPort.data());
+	host_ip = settings.dojo.ServerIP;
+	host_port = atoi(settings.dojo.ServerPort.data());
 
 	player = hosting ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 
-	delay = settings.maplenet.Delay;
-	debug = settings.maplenet.Debug;
+	delay = settings.dojo.Delay;
+	debug = settings.dojo.Debug;
 	
 	client.SetHost(host_ip.data(), host_port);
 
-	PlayMatch = settings.maplenet.PlayMatch;
-	ReplayFilename = settings.maplenet.ReplayFilename;
+	PlayMatch = settings.dojo.PlayMatch;
+	ReplayFilename = settings.dojo.ReplayFilename;
 }
 
 int DojoSession::PayloadSize()
 {
-	if (settings.maplenet.EnableBackfill)
-		return settings.maplenet.NumBackFrames * INPUT_SIZE + FRAME_SIZE;
+	if (settings.dojo.EnableBackfill)
+		return settings.dojo.NumBackFrames * INPUT_SIZE + FRAME_SIZE;
 	else
 		return FRAME_SIZE;
 }
@@ -379,10 +379,10 @@ void DojoSession::AddBackFrames(const char* initial_frame, const char* back_inpu
 			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
 
-			if (settings.maplenet.Debug == DEBUG_BACKFILL ||
-				settings.maplenet.Debug == DEBUG_APPLY_BACKFILL ||
-				settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
-				settings.maplenet.Debug == DEBUG_ALL)
+			if (settings.dojo.Debug == DEBUG_BACKFILL ||
+				settings.dojo.Debug == DEBUG_APPLY_BACKFILL ||
+				settings.dojo.Debug == DEBUG_APPLY_BACKFILL_RECV ||
+				settings.dojo.Debug == DEBUG_ALL)
 			{
 				PrintFrameData("Backfilled", (u8 *)frame_fill);
 			}
@@ -427,21 +427,21 @@ void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	// add current input frame to player slot
 	if (local_input_keys.count(GetEffectiveFrameNumber(data)) == 0)
 	{
-		std::string to_send(data, data + maplenet.PayloadSize());
+		std::string to_send(data, data + dojo.PayloadSize());
 
-		if ((maplenet.PayloadSize() - FRAME_SIZE) > 0)
+		if ((dojo.PayloadSize() - FRAME_SIZE) > 0)
 		{
 			// cache input to send older frame data
 			last_inputs.push_front(to_send.substr(6, INPUT_SIZE));
-			if (last_inputs.size() > ((maplenet.PayloadSize() - FRAME_SIZE) / INPUT_SIZE))
+			if (last_inputs.size() > ((dojo.PayloadSize() - FRAME_SIZE) / INPUT_SIZE))
 				last_inputs.pop_back();
 
 			std::string combined_last_inputs =
 				std::accumulate(last_inputs.begin(), last_inputs.end(), std::string(""));
 
 			// fill rest of payload with cached local inputs
-			if (GetEffectiveFrameNumber(data) > settings.maplenet.NumBackFrames + delay + 1)
-				to_send.replace(FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE, combined_last_inputs);
+			if (GetEffectiveFrameNumber(data) > settings.dojo.NumBackFrames + delay + 1)
+				to_send.replace(FRAME_SIZE, dojo.PayloadSize() - FRAME_SIZE, combined_last_inputs);
 		}
 
 		client.SendData(to_send);
@@ -462,13 +462,13 @@ void DojoSession::StartSession(int session_delay)
 
 	if (hosting &&
 		transmitting &&
-		!maplenet.transmitter.isStarted)
+		!dojo.transmitter.isStarted)
 	{
-		std::thread t4(&TCPClient::TransmissionThread, std::ref(maplenet.transmitter));
+		std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
 		t4.detach();
 	}
 
-	maplenet.resume();
+	dojo.resume();
 
 	INFO_LOG(NETWORK, "Session Initiated");
 }
@@ -488,7 +488,7 @@ void DojoSession::FillDelay(int fill_delay)
 			net_inputs[j][new_index] = new_frame;
 			net_input_keys[j].insert(new_index);
 
-			if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
+			if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 				AppendToReplayFile(new_frame);
 		}
 	}
@@ -497,25 +497,25 @@ void DojoSession::FillDelay(int fill_delay)
 
 int DojoSession::StartDojoSession()
 {
-	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
+	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 		replay_filename = CreateReplayFile();
 
-	if (maplenet.PlayMatch)
+	if (dojo.PlayMatch)
 	{
-		if (settings.maplenet.Transmitting &&
-			!maplenet.transmitter.isStarted)
+		if (settings.dojo.Transmitting &&
+			!dojo.transmitter.isStarted)
 		{
-			std::thread t4(&TCPClient::TransmissionThread, std::ref(maplenet.transmitter));
+			std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
 			t4.detach();
 		}
 
-		LoadReplayFile(maplenet.ReplayFilename);
+		LoadReplayFile(dojo.ReplayFilename);
 		resume();
 	}
-	else if (settings.maplenet.Receiving &&
-			!maplenet.receiver.isStarted)
+	else if (settings.dojo.Receiving &&
+			!dojo.receiver.isStarted)
 	{
-		std::thread t5(&TCPServer::ReceiverThread, std::ref(maplenet.receiver));
+		std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
 		t5.detach();
 
 		resume();
@@ -531,7 +531,7 @@ int DojoSession::StartDojoSession()
 			std::thread t2(&UDPClient::ClientThread, std::ref(client));
 			t2.detach();
 
-			if (settings.maplenet.EnableLobby && hosting)
+			if (settings.dojo.EnableLobby && hosting)
 			{
 				std::thread t3(&DojoLobby::BeaconThread, std::ref(presence));
 				t3.detach();
@@ -564,7 +564,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 2)
 	{
-		if (maplenet.PlayMatch)
+		if (dojo.PlayMatch)
 		{
 			resume();
 		}
@@ -593,7 +593,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
-		if (!spectating && !maplenet.PlayMatch)
+		if (!spectating && !dojo.PlayMatch)
 		{
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -617,15 +617,15 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	if (maplenet.PlayMatch &&
+	if (dojo.PlayMatch &&
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
 		gui_state = EndReplay;
 	}
 
-	if (maplenet.receiving &&
-		maplenet.receiver.endSession)
+	if (dojo.receiving &&
+		dojo.receiver.endSession)
 	{
 		gui_state = EndSpectate;
 	}
@@ -639,7 +639,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	while (net_input_keys[port].count(FrameNumber - 1) == 0)
 	{
 		if ((client.disconnect_toggle || current_timeout >= max_timeout) &&
-			gui_state != Commands && !settings.maplenet.PlayMatch)
+			gui_state != Commands && !settings.dojo.PlayMatch)
 			dc_exit();
 
 		DWORD end = GetTickCount64();
@@ -656,10 +656,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 			if (!this_frame.empty())
 			{
-				if (settings.maplenet.Debug == DEBUG_APPLY ||
-					settings.maplenet.Debug == DEBUG_APPLY_BACKFILL ||
-					settings.maplenet.Debug == DEBUG_APPLY_BACKFILL_RECV ||
-					settings.maplenet.Debug == DEBUG_ALL)
+				if (settings.dojo.Debug == DEBUG_APPLY ||
+					settings.dojo.Debug == DEBUG_APPLY_BACKFILL ||
+					settings.dojo.Debug == DEBUG_APPLY_BACKFILL_RECV ||
+					settings.dojo.Debug == DEBUG_ALL)
 				{
 					PrintFrameData("Applied", (u8*)this_frame.data());
 				}
@@ -670,7 +670,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	std::string to_apply(this_frame);
 
-	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
+	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 		AppendToReplayFile(this_frame);
 
 	if (transmitter.isStarted)
@@ -713,9 +713,9 @@ void DojoSession::PrintFrameData(const char * prefix, u8 * data)
 // called on by client thread once data is received
 void DojoSession::ClientReceiveAction(const char* received_data)
 {
-	if (settings.maplenet.Debug == DEBUG_RECV ||
-		settings.maplenet.Debug == DEBUG_SEND_RECV ||
-		settings.maplenet.Debug == DEBUG_ALL)
+	if (settings.dojo.Debug == DEBUG_RECV ||
+		settings.dojo.Debug == DEBUG_SEND_RECV ||
+		settings.dojo.Debug == DEBUG_ALL)
 	{
 		PrintFrameData("Received", (u8*)received_data);
 	}
@@ -725,8 +725,8 @@ void DojoSession::ClientReceiveAction(const char* received_data)
 
 	std::string to_add(received_data, received_data + FRAME_SIZE);
 	AddNetFrame(to_add.data());
-	if (settings.maplenet.EnableBackfill)
-		AddBackFrames(to_add.data(), received_data + FRAME_SIZE, maplenet.PayloadSize() - FRAME_SIZE);
+	if (settings.dojo.EnableBackfill)
+		AddBackFrames(to_add.data(), received_data + FRAME_SIZE, dojo.PayloadSize() - FRAME_SIZE);
 }
 
 // continuously called on by client thread
@@ -780,15 +780,15 @@ std::string DojoSession::CreateReplayFile()
 	std::string filename =
 		"replays/" + rom_name +  "__" +
 		timestamp + "__" +
-		settings.maplenet.PlayerName + "__" + 
-		settings.maplenet.OpponentName + "__" + 
+		settings.dojo.PlayerName + "__" + 
+		settings.dojo.OpponentName + "__" + 
 		".flyreplay";
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);
 	// TODO define metadata at beginning of file
 
-	maplenet.ReplayFilename = filename;
+	dojo.ReplayFilename = filename;
 
 	return filename;
 }
@@ -835,5 +835,5 @@ void DojoSession::LoadReplayFile(std::string path)
 	delete[] buffer;
 }
 
-DojoSession maplenet;
+DojoSession dojo;
 

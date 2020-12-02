@@ -8,7 +8,7 @@ TCPServer::TCPServer()
 
 bool TCPServer::Init()
 {
-	if (!settings.maplenet.Enable)
+	if (!settings.dojo.Enable)
 		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -123,12 +123,12 @@ void TCPServer::ServerLoop()
 		if (bytesReceived >= 12)
 		{
 			std::stringstream frame_ss(""); 
-			frame_ss << "FRAME " << maplenet.GetEffectiveFrameNumber((u8*)buf) << std::endl;
+			frame_ss << "FRAME " << dojo.GetEffectiveFrameNumber((u8*)buf) << std::endl;
 			std::string frame_s = frame_ss.str();
 
 			INFO_LOG(NETWORK, "SPECTATED %s", frame_s.data());
 
-			maplenet.AddNetFrame(buf);
+			dojo.AddNetFrame(buf);
 
 			send(client_sock, frame_s.data(), frame_s.length(), 0);
 		}
@@ -143,7 +143,7 @@ void TCPServer::ServerLoop()
 
 void TCPServer::ReceiverThread()
 {
-	port = stoi(settings.maplenet.SpectatorPort);
+	port = stoi(settings.dojo.SpectatorPort);
 
 	isStarted = true;
 

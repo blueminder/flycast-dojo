@@ -691,17 +691,17 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/network/maplenet/DojoLobby.cpp
-        core/network/maplenet/DojoLobby.hpp
-        core/network/maplenet/DojoSession.cpp
-        core/network/maplenet/DojoSession.hpp
-        core/network/maplenet/Ping.cpp
-        core/network/maplenet/Ping.hpp
-        core/network/maplenet/TCPClient.cpp
-        core/network/maplenet/TCPServer.cpp
-        core/network/maplenet/TCP.hpp
-        core/network/maplenet/UDPClient.cpp
-        core/network/maplenet/UDP.hpp)
+        core/network/dojo/DojoLobby.cpp
+        core/network/dojo/DojoLobby.hpp
+        core/network/dojo/DojoSession.cpp
+        core/network/dojo/DojoSession.hpp
+        core/network/dojo/Ping.cpp
+        core/network/dojo/Ping.hpp
+        core/network/dojo/TCPClient.cpp
+        core/network/dojo/TCPServer.cpp
+        core/network/dojo/TCP.hpp
+        core/network/dojo/UDPClient.cpp
+        core/network/dojo/UDP.hpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_alsa.cpp

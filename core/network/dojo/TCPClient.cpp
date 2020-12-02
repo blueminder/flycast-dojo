@@ -9,7 +9,7 @@ TCPClient::TCPClient()
 
 bool TCPClient::Init()
 {
-	if (!settings.maplenet.Enable)
+	if (!settings.dojo.Enable)
 		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -97,8 +97,8 @@ void TCPClient::TransmissionLoop()
 
 void TCPClient::TransmissionThread()
 {
-	host = settings.maplenet.SpectatorIP;
-	port = stoi(settings.maplenet.SpectatorPort);
+	host = settings.dojo.SpectatorIP;
+	port = stoi(settings.dojo.SpectatorPort);
 
 	isStarted = true;
 

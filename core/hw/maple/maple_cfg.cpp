@@ -3,7 +3,7 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
-#include "network\maplenet\DojoSession.hpp"
+#include "network\dojo\DojoSession.hpp"
 
 #define HAS_VMU
 /*
@@ -109,11 +109,11 @@ struct MapleConfigMap : IMapleConfigMap
 
 bool maple_atomiswave_coin_chute(int slot)
 {
-	if (settings.maplenet.Enable)
+	if (settings.dojo.Enable)
 	{
-		if (maplenet.coin_toggled)
+		if (dojo.coin_toggled)
 		{
-			maplenet.coin_toggled = false;
+			dojo.coin_toggled = false;
 			return true;
 		}
 	}

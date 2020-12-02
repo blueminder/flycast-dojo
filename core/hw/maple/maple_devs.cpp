@@ -12,7 +12,7 @@
 #include <zlib.h>
 #include <xxhash.h>
 
-#include "network/maplenet/DojoSession.hpp"
+#include "network/dojo/DojoSession.hpp"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -281,12 +281,12 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (settings.maplenet.Enable)
+				if (settings.dojo.Enable)
 				{
 
 					if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 						settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						maplenet.ApplyNetInputs(&pjs, bus_id);
+						dojo.ApplyNetInputs(&pjs, bus_id);
 
 					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 					{
@@ -294,7 +294,7 @@ struct maple_sega_controller: maple_base
 						if (coin_pressed && bus_id == 0)
 						{
 							// player 0 acts as master of the coin
-							maplenet.coin_toggled = true;
+							dojo.coin_toggled = true;
 						}
 					}
 				}
@@ -1496,7 +1496,7 @@ void load_naomi_eeprom()
 		EEPROM_loaded = true;
 		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 		std::string eeprom_file;
-		if (settings.maplenet.Enable)
+		if (settings.dojo.Enable)
 			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom.net";
 		else
 			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
@@ -2370,7 +2370,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-				if (!settings.maplenet.Enable)
+				if (!settings.dojo.Enable)
 				{
 					std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 					std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
@@ -2829,13 +2829,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							u16 cur_btns = read_digital_in(first_player + player);
 							if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
-							     settings.maplenet.Enable)
-								cur_btns = maplenet.ApplyNetInputs(cur_btns, player);
+							     settings.dojo.Enable)
+								cur_btns = dojo.ApplyNetInputs(cur_btns, player);
 							if (player == 0)
 							{
 								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 								if (cur_btns & 1)
-									maplenet.net_coin_press = true;
+									dojo.net_coin_press = true;
 							}
 							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);
 							JVS_OUT(cur_btns >> 8);
@@ -2866,14 +2866,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							u16 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-							if (((keycode & mask) && !settings.maplenet.Enable) || 
-								(maplenet.net_coin_press && settings.maplenet.Enable))
+							if (((keycode & mask) && !settings.dojo.Enable) || 
+								(dojo.net_coin_press && settings.dojo.Enable))
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
 									coin_count[first_player + slot] += 1;
-								if (maplenet.net_coin_press)
-									maplenet.net_coin_press = false;
+								if (dojo.net_coin_press)
+									dojo.net_coin_press = false;
 							}
 							old_coin_chute[first_player + slot] = coin_chute;
 

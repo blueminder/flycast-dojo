@@ -39,7 +39,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 
-#include "network/maplenet/DojoSession.hpp"
+#include "network/dojo/DojoSession.hpp"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 #include <experimental/filesystem>
@@ -154,7 +154,7 @@ void gui_init()
     io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
-	gui_state = settings.maplenet.TestGame ? TestGame : Main;
+	gui_state = settings.dojo.TestGame ? TestGame : Main;
 }
 
 void ImGui_Impl_NewFrame()
@@ -291,8 +291,8 @@ void gui_open_guest_wait()
 	gui_state = GuestWait;
 	settings_opening = true;
 
-	//if (maplenet.isMatchReady)
-	if (maplenet.session_started)
+	//if (dojo.isMatchReady)
+	if (dojo.session_started)
 	{
 		gui_state = Closed;
 	}
@@ -364,14 +364,14 @@ void gui_display_host_wait()
 
 	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	maplenet.host_status = 1;
+	dojo.host_status = 1;
 
 	ImGui::Text("Waiting for opponent to connect...");
 
-	if (!maplenet.OpponentIP.empty())
+	if (!dojo.OpponentIP.empty())
 	{
-		maplenet.host_status = 2;
-		//maplenet.DetectDelay(maplenet.OpponentIP.data());
+		dojo.host_status = 2;
+		//dojo.DetectDelay(dojo.OpponentIP.data());
 
 		gui_state = Closed;
 		gui_open_host_delay();
@@ -388,7 +388,7 @@ void gui_display_guest_wait()
 {
 	//dc_stop();
 
-	maplenet.pause();
+	dojo.pause();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
@@ -401,20 +401,20 @@ void gui_display_guest_wait()
 
 	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	if (!maplenet.client.name_acknowledged)
+	if (!dojo.client.name_acknowledged)
 	{
 		ImGui::Text("Connecting to host...");
-		maplenet.client.SendPlayerName();
+		dojo.client.SendPlayerName();
 	}
 	else
 	{
 		ImGui::Text("Waiting for host to select delay...");
 	}
 
-	if (maplenet.session_started)
+	if (dojo.session_started)
 	{
 		gui_state = Closed;
-		maplenet.resume();
+		dojo.resume();
 	}
 
 	ImGui::End();
@@ -439,7 +439,7 @@ void gui_display_disconnected()
 
 	ImGui::Begin("##disconnected", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	if (maplenet.client.opponent_disconnected)
+	if (dojo.client.opponent_disconnected)
 		ImGui::Text("Opponent disconnected.");
 	else
 		ImGui::Text("Disconnected.");
@@ -503,7 +503,7 @@ void gui_display_host_delay()
 {
 	//dc_stop();
 
-	maplenet.pause();
+	dojo.pause();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
@@ -516,33 +516,33 @@ void gui_display_host_delay()
 
 	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("%s vs %s", settings.maplenet.PlayerName.c_str(), settings.maplenet.OpponentName.c_str());
+	ImGui::Text("%s vs %s", settings.dojo.PlayerName.c_str(), settings.dojo.OpponentName.c_str());
 
-	ImGui::SliderInt("", (int*)&settings.maplenet.Delay, 1, 10);
+	ImGui::SliderInt("", (int*)&settings.dojo.Delay, 1, 10);
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
 	/*
-	if (!maplenet.OpponentIP.empty())
+	if (!dojo.OpponentIP.empty())
 	{
 		if (ImGui::Button("Detect Delay"))
-			maplenet.OpponentPing = maplenet.DetectDelay(maplenet.OpponentIP.data());
+			dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
 
-		if (maplenet.OpponentPing > 0)
+		if (dojo.OpponentPing > 0)
 		{
 			ImGui::SameLine();
-			ImGui::Text("Current Ping: %d ms", maplenet.OpponentPing);
+			ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
 		}
 	}
 	*/
 
 	if (ImGui::Button("Start Game"))
 	{
-		maplenet.PlayMatch = false;
+		dojo.PlayMatch = false;
 
-		maplenet.isMatchStarted = true;
-		maplenet.StartSession(settings.maplenet.Delay);
-		maplenet.resume();
+		dojo.isMatchStarted = true;
+		dojo.StartSession(settings.dojo.Delay);
+		dojo.resume();
 
 		gui_state = Closed;
 	}
@@ -648,9 +648,9 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		if (settings.maplenet.Enable && maplenet.isMatchStarted)
+		if (settings.dojo.Enable && dojo.isMatchStarted)
 		{
-			maplenet.client.disconnect_toggle = true;
+			dojo.client.disconnect_toggle = true;
 			gui_state = Closed;
 		}
 		else
@@ -1070,7 +1070,7 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
 
 static void gui_display_lobby()
 {
-	std::thread t4(&DojoLobby::ListenerThread, std::ref(maplenet.presence));
+	std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
 	t4.detach();
 
 	ImGui_Impl_NewFrame();
@@ -1094,8 +1094,8 @@ static void gui_display_lobby()
 	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
 	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 	{
-		settings.maplenet.ActAsServer = true;
-		cfgSaveBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
+		settings.dojo.ActAsServer = true;
+		cfgSaveBool("dojo", "ActAsServer", settings.dojo.ActAsServer);
 		gui_state = Main;
 	}
 
@@ -1108,7 +1108,7 @@ static void gui_display_lobby()
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
 
-	std::map<std::string, std::string> beacons = maplenet.presence.active_beacons;
+	std::map<std::string, std::string> beacons = dojo.presence.active_beacons;
 	for (auto it = beacons.cbegin(); it != beacons.cend(); ++it) {
 		std::string s = it->second;
 		std::string delimiter = "__";
@@ -1116,7 +1116,7 @@ static void gui_display_lobby()
 		std::string beacon_id = it->first;
 		std::vector<std::string> beacon_entry;
 
-		if (maplenet.presence.last_seen[beacon_id] + 10 > maplenet.unix_timestamp())
+		if (dojo.presence.last_seen[beacon_id] + 10 > dojo.unix_timestamp())
 		{
 			size_t pos = 0;
 			std::string token;
@@ -1147,7 +1147,7 @@ static void gui_display_lobby()
 			std::string beacon_player = beacon_entry[4];
 
 			bool is_selected;
-			int beacon_ping = maplenet.presence.active_beacon_ping[beacon_id];
+			int beacon_ping = dojo.presence.active_beacon_ping[beacon_id];
 			std::string beacon_ping_str = "";
 			//if (beacon_ping > 0)
 				beacon_ping_str = std::to_string(beacon_ping);
@@ -1155,11 +1155,11 @@ static void gui_display_lobby()
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				maplenet.PlayMatch = false;
+				dojo.PlayMatch = false;
 
-				settings.maplenet.ActAsServer = false;
-				settings.maplenet.ServerIP = beacon_ip;
-				settings.maplenet.ServerPort = beacon_server_port;
+				settings.dojo.ActAsServer = false;
+				settings.dojo.ServerIP = beacon_ip;
+				settings.dojo.ServerPort = beacon_server_port;
 
 				SaveSettings();
 
@@ -1205,7 +1205,7 @@ static void gui_display_replays()
 
 	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);
 
-	ImGui::Checkbox("Record All Sessions", &settings.maplenet.RecordMatches);
+	ImGui::Checkbox("Record All Sessions", &settings.dojo.RecordMatches);
 	ImGui::SameLine();
 	ShowHelpMarker("Record all netplay sessions to a local file");
 
@@ -1255,11 +1255,11 @@ static void gui_display_replays()
 		bool is_selected = false;
 		if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 		{
-			maplenet.ReplayFilename = replay_path;
-			maplenet.PlayMatch = true;
+			dojo.ReplayFilename = replay_path;
+			dojo.PlayMatch = true;
 
 			gui_state = Closed;
-			maplenet.StartDojoSession();
+			dojo.StartDojoSession();
 			gui_start_game(game_path);
 		}
 		ImGui::NextColumn();
@@ -1884,28 +1884,28 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Netplay"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			ImGui::Checkbox("Enable Netplay", &settings.maplenet.Enable);
+			ImGui::Checkbox("Enable Netplay", &settings.dojo.Enable);
 			ImGui::SameLine();
 			ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
-			if (settings.maplenet.Enable)
+			if (settings.dojo.Enable)
 			{
 				char PlayerName[256] = { 0 };
-				strcpy(PlayerName, settings.maplenet.PlayerName.c_str());
+				strcpy(PlayerName, settings.dojo.PlayerName.c_str());
 				ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
 				ShowHelpMarker("Name visible to other players");
-				settings.maplenet.PlayerName = std::string(PlayerName, strlen(PlayerName));
+				settings.dojo.PlayerName = std::string(PlayerName, strlen(PlayerName));
 
 				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::Checkbox("Enable Lobby", &settings.maplenet.EnableLobby);
+					ImGui::Checkbox("Enable Lobby", &settings.dojo.EnableLobby);
 					ImGui::SameLine();
 					ShowHelpMarker("Enable discovery and matchmaking on LAN");
 				}
 
 				if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
 				{
-					ImGui::Checkbox("Act as Server", &settings.maplenet.ActAsServer);
+					ImGui::Checkbox("Act as Server", &settings.dojo.ActAsServer);
 					ImGui::SameLine();
 					ShowHelpMarker("Host netplay game");
 
@@ -1913,7 +1913,7 @@ static void gui_display_settings()
 					std::string IPLabel;
 					std::string IPDescription;
 					std::string PortDescription;
-					if (settings.maplenet.ActAsServer)
+					if (settings.dojo.ActAsServer)
 					{
 						IPLabel = "Opponent IP##DojoSession";
 						IPDescription = "Opponent IP to detect delay against (optional)";
@@ -1926,33 +1926,33 @@ static void gui_display_settings()
 						PortDescription = "The server port to connect to";
 					}
 
-					strcpy(ServerIP, settings.maplenet.ServerIP.c_str());
+					strcpy(ServerIP, settings.dojo.ServerIP.c_str());
 					ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker(IPDescription.c_str());
-					settings.maplenet.ServerIP = ServerIP;
+					settings.dojo.ServerIP = ServerIP;
 
 					char ServerPort[256];
-					strcpy(ServerPort, settings.maplenet.ServerPort.c_str());
+					strcpy(ServerPort, settings.dojo.ServerPort.c_str());
 					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker(PortDescription.c_str());
-					settings.maplenet.ServerPort = ServerPort;
+					settings.dojo.ServerPort = ServerPort;
 				}
 
 				if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 				{
-					ImGui::SliderInt("Packets Per Frame", (int*)&settings.maplenet.PacketsPerFrame, 1, 10);
+					ImGui::SliderInt("Packets Per Frame", (int*)&settings.dojo.PacketsPerFrame, 1, 10);
 					ImGui::SameLine();
 					ShowHelpMarker("Number of packets to send per input frame.");
 
-					ImGui::Checkbox("Enable Backfill", &settings.maplenet.EnableBackfill);
+					ImGui::Checkbox("Enable Backfill", &settings.dojo.EnableBackfill);
 					ImGui::SameLine();
 					ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
 
-					if (settings.maplenet.EnableBackfill)
+					if (settings.dojo.EnableBackfill)
 					{
-						ImGui::SliderInt("Number of Past Input Frames", (int*)&settings.maplenet.NumBackFrames, 1, 40);
+						ImGui::SliderInt("Number of Past Input Frames", (int*)&settings.dojo.NumBackFrames, 1, 40);
 						ImGui::SameLine();
 						ShowHelpMarker("Number of past inputs to send per frame.");
 					}
@@ -2180,18 +2180,18 @@ static void gui_display_content()
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
     ImGui::AlignTextToFramePadding();
-    if (settings.maplenet.Enable && settings.maplenet.Receiving)
+    if (settings.dojo.Enable && settings.dojo.Receiving)
         ImGui::Text("RECEIVE");
-    else if (settings.maplenet.Enable && settings.maplenet.ActAsServer)
+    else if (settings.dojo.Enable && settings.dojo.ActAsServer)
         ImGui::Text("HOST");
-    else if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
+    else if (settings.dojo.Enable && !settings.dojo.ActAsServer)
         ImGui::Text("GUEST");
     else
         ImGui::Text("GAMES");
 
-    if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
+    if (settings.dojo.Enable && settings.dojo.EnableLobby)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
-    else if (settings.maplenet.Enable && !settings.maplenet.EnableLobby)
+    else if (settings.dojo.Enable && !settings.dojo.EnableLobby)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
 
     static ImGuiTextFilter filter;
@@ -2202,13 +2202,13 @@ static void gui_display_content()
     }
     if (gui_state != SelectDisk)
     {
-		if (settings.maplenet.Enable && settings.maplenet.EnableLobby)
+		if (settings.dojo.Enable && settings.dojo.EnableLobby)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Lobby;
 		}
-		if (settings.maplenet.Enable)
+		if (settings.dojo.Enable)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
@@ -2263,7 +2263,7 @@ static void gui_display_content()
 						{
 							scanner.get_mutex().unlock();
 							gui_state = Closed;
-							if (settings.maplenet.Enable && !settings.maplenet.ActAsServer)
+							if (settings.dojo.Enable && !settings.dojo.ActAsServer)
 								settings.aica.LimitFPS = false;
 							gui_start_game(game.path);
 							scanner.get_mutex().lock();
@@ -2403,23 +2403,23 @@ static void gui_display_loadscreen()
 			{
 				start_network();
 			}
-			else if (settings.maplenet.Enable)
+			else if (settings.dojo.Enable)
 			{
-				maplenet.StartDojoSession();
+				dojo.StartDojoSession();
 
-				if (maplenet.PlayMatch)
+				if (dojo.PlayMatch)
 				{
 					gui_state = Closed;
 					ImGui::Text("LOADING REPLAY...");
 				}
-				else if (settings.maplenet.Receiving)
+				else if (settings.dojo.Receiving)
 				{
 					gui_state = Closed;
 					ImGui::Text("LOADING RECEIVED SESSION...");
 				}
 				else
 				{
-					if (settings.maplenet.ActAsServer)
+					if (settings.dojo.ActAsServer)
 						gui_open_host_wait();
 					else
 						gui_open_guest_wait();

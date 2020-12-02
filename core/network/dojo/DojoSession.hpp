@@ -17,10 +17,10 @@
 #include <rend/gui.h>
 
 #include "types.h"
-#include "network/maplenet/TCP.hpp"
-#include "network/maplenet/UDP.hpp"
-#include "network/maplenet/Ping.hpp"
-#include "network/maplenet/DojoLobby.hpp"
+#include "network/dojo/TCP.hpp"
+#include "network/dojo/UDP.hpp"
+#include "network/dojo/Ping.hpp"
+#include "network/dojo/DojoLobby.hpp"
 
 #include "emulator.h"
 
@@ -162,4 +162,4 @@ public:
 	std::string ReplayFilename;
 };
 
-extern DojoSession maplenet;
+extern DojoSession dojo;

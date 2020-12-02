@@ -34,7 +34,7 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
-#include "network/maplenet/DojoSession.hpp"
+#include "network/dojo/DojoSession.hpp"
 
 void FlushCache();
 static void LoadCustom();
@@ -631,7 +631,7 @@ static void dc_start_game(const char *path)
 	}
 	fast_forward_mode = false;
 
-	if (settings.maplenet.Enable)
+	if (settings.dojo.Enable)
 	{
 		std::string net_save_path = get_savestate_file_path();
 		net_save_path.append(".net");
@@ -712,8 +712,8 @@ void dc_request_reset()
 
 void dc_exit()
 {
-	if (settings.maplenet.Enable &&
-		!maplenet.client.disconnect_toggle &&
+	if (settings.dojo.Enable &&
+		!dojo.client.disconnect_toggle &&
 		gui_state != Main &&
 		gui_state != Lobby &&
 		gui_state != Replays &&
@@ -722,7 +722,7 @@ void dc_exit()
 		gui_state != Settings &&
 		gui_state != Onboarding)
 	{
-		maplenet.client.disconnect_toggle = true;
+		dojo.client.disconnect_toggle = true;
 	}
 	else
 	{
@@ -799,26 +799,26 @@ void InitSettings()
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
 
-	settings.maplenet.Enable = false;
-	settings.maplenet.ActAsServer = false;
-	settings.maplenet.RecordMatches = false;
-	settings.maplenet.Spectating = false;
-	settings.maplenet.Transmitting = false;
-	settings.maplenet.Receiving = false;
-	settings.maplenet.ServerIP = "127.0.0.1";
-	settings.maplenet.ServerPort = "7777";
-	settings.maplenet.Delay = 1;
-	settings.maplenet.Debug = 8;
-	settings.maplenet.ReplayFilename = "";
-	settings.maplenet.PacketsPerFrame = 2;
-	settings.maplenet.EnableBackfill = true;
-	settings.maplenet.NumBackFrames = 3;
-	settings.maplenet.EnableLobby = false;
-	settings.maplenet.PlayerName = "Player";
-	settings.maplenet.OpponentName = "Opponent";
-	settings.maplenet.TestGame = false;
-	settings.maplenet.SpectatorIP = "127.0.0.1";
-	settings.maplenet.SpectatorPort = "54000";
+	settings.dojo.Enable = false;
+	settings.dojo.ActAsServer = false;
+	settings.dojo.RecordMatches = false;
+	settings.dojo.Spectating = false;
+	settings.dojo.Transmitting = false;
+	settings.dojo.Receiving = false;
+	settings.dojo.ServerIP = "127.0.0.1";
+	settings.dojo.ServerPort = "7777";
+	settings.dojo.Delay = 1;
+	settings.dojo.Debug = 8;
+	settings.dojo.ReplayFilename = "";
+	settings.dojo.PacketsPerFrame = 2;
+	settings.dojo.EnableBackfill = true;
+	settings.dojo.NumBackFrames = 3;
+	settings.dojo.EnableLobby = false;
+	settings.dojo.PlayerName = "Player";
+	settings.dojo.OpponentName = "Opponent";
+	settings.dojo.TestGame = false;
+	settings.dojo.SpectatorIP = "127.0.0.1";
+	settings.dojo.SpectatorPort = "54000";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -927,27 +927,27 @@ void LoadSettings(bool game_specific)
 	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
 	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
 
-	settings.maplenet.Enable = cfgLoadBool("maplenet", "Enable", settings.maplenet.Enable);
-	settings.maplenet.ActAsServer = cfgLoadBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
-	settings.maplenet.Spectating = cfgLoadBool("maplenet", "Spectating", settings.maplenet.Spectating);
-	settings.maplenet.Transmitting = cfgLoadBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
-	settings.maplenet.Receiving = cfgLoadBool("maplenet", "Receiving", settings.maplenet.Receiving);
-	settings.maplenet.ServerIP = cfgLoadStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
-	settings.maplenet.ServerPort = cfgLoadStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
-	settings.maplenet.Delay = cfgLoadInt("maplenet", "Delay", settings.maplenet.Delay);
-	settings.maplenet.Debug = cfgLoadInt("maplenet", "Debug", settings.maplenet.Debug);
-	settings.maplenet.RecordMatches = cfgLoadBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
-	settings.maplenet.PlayMatch = cfgLoadBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
-	settings.maplenet.ReplayFilename = cfgLoadStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
-	settings.maplenet.PacketsPerFrame = cfgLoadInt("maplenet", "PacketsPerFrame", settings.maplenet.PacketsPerFrame);
-	settings.maplenet.EnableBackfill = cfgLoadBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
-	settings.maplenet.NumBackFrames = cfgLoadInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
-	settings.maplenet.EnableLobby = cfgLoadBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
-	settings.maplenet.PlayerName = cfgLoadStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
-	settings.maplenet.OpponentName = cfgLoadStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
-	settings.maplenet.TestGame = cfgLoadBool("maplenet", "TestGame", settings.maplenet.TestGame);
-	settings.maplenet.SpectatorIP = cfgLoadStr("maplenet", "SpectatorIP", settings.maplenet.SpectatorIP.c_str());
-	settings.maplenet.SpectatorPort = cfgLoadStr("maplenet", "SpectatorPort", settings.maplenet.SpectatorPort.c_str());
+	settings.dojo.Enable = cfgLoadBool("dojo", "Enable", settings.dojo.Enable);
+	settings.dojo.ActAsServer = cfgLoadBool("dojo", "ActAsServer", settings.dojo.ActAsServer);
+	settings.dojo.Spectating = cfgLoadBool("dojo", "Spectating", settings.dojo.Spectating);
+	settings.dojo.Transmitting = cfgLoadBool("dojo", "Transmitting", settings.dojo.Transmitting);
+	settings.dojo.Receiving = cfgLoadBool("dojo", "Receiving", settings.dojo.Receiving);
+	settings.dojo.ServerIP = cfgLoadStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+	settings.dojo.ServerPort = cfgLoadStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
+	settings.dojo.Delay = cfgLoadInt("dojo", "Delay", settings.dojo.Delay);
+	settings.dojo.Debug = cfgLoadInt("dojo", "Debug", settings.dojo.Debug);
+	settings.dojo.RecordMatches = cfgLoadBool("dojo", "RecordMatches", settings.dojo.RecordMatches);
+	settings.dojo.PlayMatch = cfgLoadBool("dojo", "PlayMatch", settings.dojo.PlayMatch);
+	settings.dojo.ReplayFilename = cfgLoadStr("dojo", "ReplayFilename", settings.dojo.ReplayFilename.c_str());
+	settings.dojo.PacketsPerFrame = cfgLoadInt("dojo", "PacketsPerFrame", settings.dojo.PacketsPerFrame);
+	settings.dojo.EnableBackfill = cfgLoadBool("dojo", "EnableBackfill", settings.dojo.EnableBackfill);
+	settings.dojo.NumBackFrames = cfgLoadInt("dojo", "NumBackFrames", settings.dojo.NumBackFrames);
+	settings.dojo.EnableLobby = cfgLoadBool("dojo", "EnableLobby", settings.dojo.EnableLobby);
+	settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
+	settings.dojo.OpponentName = cfgLoadStr("dojo", "OpponentName", settings.dojo.OpponentName.c_str());
+	settings.dojo.TestGame = cfgLoadBool("dojo", "TestGame", settings.dojo.TestGame);
+	settings.dojo.SpectatorIP = cfgLoadStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
+	settings.dojo.SpectatorPort = cfgLoadStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1110,26 +1110,26 @@ void SaveSettings()
 	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
 	cfgSaveStr("network", "server", settings.network.server.c_str());
 
-	cfgSaveBool("maplenet", "Enable", settings.maplenet.Enable);
-	cfgSaveBool("maplenet", "ActAsServer", settings.maplenet.ActAsServer);
-	cfgSaveStr("maplenet", "ServerIP", settings.maplenet.ServerIP.c_str());
-	cfgSaveStr("maplenet", "ServerPort", settings.maplenet.ServerPort.c_str());
-	//cfgSaveInt("maplenet", "Delay", settings.maplenet.Delay);
-	cfgSaveBool("maplenet", "Spectating", settings.maplenet.Spectating);
-	//cfgSaveBool("maplenet", "Transmitting", settings.maplenet.Transmitting);
-	cfgSaveBool("maplenet", "Receiving", settings.maplenet.Receiving);
-	cfgSaveBool("maplenet", "RecordMatches", settings.maplenet.RecordMatches);
-	//cfgSaveBool("maplenet", "PlayMatch", settings.maplenet.PlayMatch);
-	cfgSaveStr("maplenet", "ReplayFilename", settings.maplenet.ReplayFilename.c_str());
-	cfgSaveInt("maplenet", "PacketsPerFrame", settings.maplenet.PacketsPerFrame);
-	cfgSaveBool("maplenet", "EnableBackfill", settings.maplenet.EnableBackfill);
-	cfgSaveInt("maplenet", "NumBackFrames", settings.maplenet.NumBackFrames);
-	cfgSaveBool("maplenet", "EnableLobby", settings.maplenet.EnableLobby);
-	cfgSaveStr("maplenet", "PlayerName", settings.maplenet.PlayerName.c_str());
-	cfgSaveStr("maplenet", "OpponentName", settings.maplenet.OpponentName.c_str());
-	cfgSaveBool("maplenet", "TestGame", settings.maplenet.TestGame);
-	cfgSaveStr("maplenet", "SpectatorIP", settings.maplenet.SpectatorIP.c_str());
-	cfgSaveStr("maplenet", "SpectatorPort", settings.maplenet.SpectatorPort.c_str());
+	cfgSaveBool("dojo", "Enable", settings.dojo.Enable);
+	cfgSaveBool("dojo", "ActAsServer", settings.dojo.ActAsServer);
+	cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+	cfgSaveStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
+	//cfgSaveInt("dojo", "Delay", settings.dojo.Delay);
+	cfgSaveBool("dojo", "Spectating", settings.dojo.Spectating);
+	//cfgSaveBool("dojo", "Transmitting", settings.dojo.Transmitting);
+	cfgSaveBool("dojo", "Receiving", settings.dojo.Receiving);
+	cfgSaveBool("dojo", "RecordMatches", settings.dojo.RecordMatches);
+	//cfgSaveBool("dojo", "PlayMatch", settings.dojo.PlayMatch);
+	cfgSaveStr("dojo", "ReplayFilename", settings.dojo.ReplayFilename.c_str());
+	cfgSaveInt("dojo", "PacketsPerFrame", settings.dojo.PacketsPerFrame);
+	cfgSaveBool("dojo", "EnableBackfill", settings.dojo.EnableBackfill);
+	cfgSaveInt("dojo", "NumBackFrames", settings.dojo.NumBackFrames);
+	cfgSaveBool("dojo", "EnableLobby", settings.dojo.EnableLobby);
+	cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
+	cfgSaveStr("dojo", "OpponentName", settings.dojo.OpponentName.c_str());
+	cfgSaveBool("dojo", "TestGame", settings.dojo.TestGame);
+	cfgSaveStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
+	cfgSaveStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

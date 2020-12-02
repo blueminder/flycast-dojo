@@ -75,20 +75,20 @@ If you are hosting, you must start the game first, then have your opponent join 
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
 ## Server
-```flycast.exe -config maplenet:Enable -config maplenet:ActAsServer=yes -config maplenet:ServerPort=6000 ControllerTest-DJ.cdi```
+```flycast.exe -config dojo:Enable -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
 ## Client
-```flycast.exe -config maplenet:Enable -config maplenet:ActAsServer=no -config maplenet:ServerIP=127.0.0.1 -config maplenet:ServerPort=6000 ControllerTest-DJ.cdi```
+```flycast.exe -config dojo:Enable -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
 ## TCP Match Transmission (Spectating)
 _append to server arguments_
-```-config maplenet:Transmitting=yes -config maplenet:SpectatorIP=<IP> -config maplenet:SpectatorPort=7000```
+```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000```
 
 ## TCP Match Receiving (Spectating)
-```-config maplenet:Receiving=yes -config maplenet:SpectatorPort=7000```
+```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000```
 
 ## Test Game Screen
-```-config maplenet:TestGame=yes```
+```-config dojo:TestGame=yes```
 
 # Video Demos
 ## Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS

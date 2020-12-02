@@ -167,7 +167,7 @@ void FixUpFlash()
 static bool nvmem_load(const std::string& root)
 {
 	bool rc;
-	if (settings.maplenet.Enable)
+	if (settings.dojo.Enable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin.net", "nvram");
@@ -210,7 +210,7 @@ bool LoadRomFiles(const std::string& root)
 void SaveRomFiles(const std::string& root)
 {
 	// make no changes to netplay memory
-	if (!settings.maplenet.Enable)
+	if (!settings.dojo.Enable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
