@@ -39,7 +39,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 
-#include "network/maplenet/MapleNet.hpp"
+#include "network/maplenet/DojoSession.hpp"
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 #include <experimental/filesystem>
@@ -1259,7 +1259,7 @@ static void gui_display_replays()
 			maplenet.PlayMatch = true;
 
 			gui_state = Closed;
-			maplenet.StartMapleNet();
+			maplenet.StartDojoSession();
 			gui_start_game(game_path);
 		}
 		ImGui::NextColumn();
@@ -1915,13 +1915,13 @@ static void gui_display_settings()
 					std::string PortDescription;
 					if (settings.maplenet.ActAsServer)
 					{
-						IPLabel = "Opponent IP##MapleNet";
+						IPLabel = "Opponent IP##DojoSession";
 						IPDescription = "Opponent IP to detect delay against (optional)";
 						PortDescription = "The server port to listen on";
 					}
 					else
 					{
-						IPLabel = "Server IP##MapleNet";
+						IPLabel = "Server IP##DojoSession";
 						IPDescription = "The server IP to connect to";
 						PortDescription = "The server port to connect to";
 					}
@@ -2405,7 +2405,7 @@ static void gui_display_loadscreen()
 			}
 			else if (settings.maplenet.Enable)
 			{
-				maplenet.StartMapleNet();
+				maplenet.StartDojoSession();
 
 				if (maplenet.PlayMatch)
 				{

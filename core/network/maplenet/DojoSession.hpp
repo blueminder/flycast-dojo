@@ -36,7 +36,7 @@
 #define DEBUG_APPLY_BACKFILL_RECV 7
 #define DEBUG_ALL 8
 
-class MapleNet
+class DojoSession
 {
 private:
 	std::string host_ip;
@@ -54,7 +54,7 @@ private:
 	bool started;
 
 public:
-	MapleNet();
+	DojoSession();
 
 	bool enabled;
 	int local_port;
@@ -72,7 +72,7 @@ public:
 	void FillDelay(int fill_delay);
 
 	void LoadNetConfig();
-	int StartMapleNet();
+	int StartDojoSession();
 	void StartSession(int delay);
 
 	// frame data extraction methods
@@ -162,4 +162,4 @@ public:
 	std::string ReplayFilename;
 };
 
-extern MapleNet maplenet;
+extern DojoSession maplenet;

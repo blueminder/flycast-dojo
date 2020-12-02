@@ -1,4 +1,4 @@
-#include "MapleNet.hpp"
+#include "DojoSession.hpp"
 
 UDPClient::UDPClient()
 {
@@ -173,7 +173,7 @@ sock_t UDPClient::CreateAndBind(int port)
 
 	if (::bind(sock, (struct sockaddr*)&serveraddr, sizeof(serveraddr)) < 0)
 	{
-		ERROR_LOG(NETWORK, "MapleNet UDP Server: bind() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "DojoSession UDP Server: bind() failed. errno=%d", get_last_error());
 		CloseSocket(sock);
 	}
 	else

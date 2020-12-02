@@ -1,7 +1,7 @@
-#include "MapleNet.hpp"
+#include "DojoSession.hpp"
 #include <iomanip>
 
-MapleNet::MapleNet()
+DojoSession::DojoSession()
 {
 	// set defaults before attempting config load
 	enabled = false;
@@ -47,7 +47,7 @@ MapleNet::MapleNet()
 	ReplayFilename = "";
 }
 
-int MapleNet::DetectDelay(const char* ipAddr)
+int DojoSession::DetectDelay(const char* ipAddr)
 {
 	int avg_ping_ms = maplenet.GetAveragePing(ipAddr);
 	//int avg_ping_ms = client.GetOpponentAvgPing();
@@ -58,7 +58,7 @@ int MapleNet::DetectDelay(const char* ipAddr)
 	return avg_ping_ms;
 }
 
-long MapleNet::unix_timestamp()
+long DojoSession::unix_timestamp()
 {
     time_t t = time(0);
     long int now = static_cast<long int> (t);
@@ -67,7 +67,7 @@ long MapleNet::unix_timestamp()
 
 // returns ICMP ping, to be removed once udp rtt ping is enabled
 // not all exposed IPs respond to ICMP ping
-int MapleNet::GetAveragePing(const char* ipAddr)
+int DojoSession::GetAveragePing(const char* ipAddr)
 {
 	Ping target;
 	INFO_LOG(NETWORK, "Pinging %s", ipAddr);
@@ -93,7 +93,7 @@ int MapleNet::GetAveragePing(const char* ipAddr)
 		return (sum_ms / success_ping);
 }
 
-void MapleNet::LoadNetConfig()
+void DojoSession::LoadNetConfig()
 {
 	enabled = settings.maplenet.Enable;
 	hosting = settings.maplenet.ActAsServer;
@@ -122,7 +122,7 @@ void MapleNet::LoadNetConfig()
 	ReplayFilename = settings.maplenet.ReplayFilename;
 }
 
-int MapleNet::PayloadSize()
+int DojoSession::PayloadSize()
 {
 	if (settings.maplenet.EnableBackfill)
 		return settings.maplenet.NumBackFrames * INPUT_SIZE + FRAME_SIZE;
@@ -130,48 +130,48 @@ int MapleNet::PayloadSize()
 		return FRAME_SIZE;
 }
 
-int MapleNet::GetPlayer(u8* data)
+int DojoSession::GetPlayer(u8* data)
 {
 	return (int)data[0];
 }
 
-int MapleNet::GetDelay(u8* data)
+int DojoSession::GetDelay(u8* data)
 {
 	return (int)data[1];
 }
 
-u32 MapleNet::GetFrameNumber(u8* data)
+u32 DojoSession::GetFrameNumber(u8* data)
 {
 	return (int)(*(u32*)(data + 2));
 }
 
-u16 MapleNet::GetInputData(u8* data)
+u16 DojoSession::GetInputData(u8* data)
 {
 	u16 input = data[6] | data[7] << 8;
 	return input;
 }
 
-u8 MapleNet::GetTriggerR(u8* data)
+u8 DojoSession::GetTriggerR(u8* data)
 {
 	return data[8];
 }
 
-u8 MapleNet::GetTriggerL(u8* data)
+u8 DojoSession::GetTriggerL(u8* data)
 {
 	return data[9];
 }
 
-u8 MapleNet::GetAnalogX(u8* data)
+u8 DojoSession::GetAnalogX(u8* data)
 {
 	return data[10];
 }
 
-u8 MapleNet::GetAnalogY(u8* data)
+u8 DojoSession::GetAnalogY(u8* data)
 {
 	return data[11];
 }
 
-u32 MapleNet::GetEffectiveFrameNumber(u8* data)
+u32 DojoSession::GetEffectiveFrameNumber(u8* data)
 {
 	return GetFrameNumber(data) + GetDelay(data);
 }
@@ -205,17 +205,17 @@ u16 maple_bitmasks[13] = {
 	1 << 15  // atomiswave coin
 };
 
-u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs)
+u16 DojoSession::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs)
 {
 	return TranslateFrameDataToInput(data, pjs, 0);
 }
 
-u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons)
+u16 DojoSession::TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons)
 {
 	return TranslateFrameDataToInput(data, 0, buttons);
 }
 
-u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs, u16 buttons)
+u16 DojoSession::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs, u16 buttons)
 {
 	int frame = (
 		data[2] << 24 |
@@ -252,17 +252,17 @@ u16 MapleNet::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState*
 	}
 }
 
-u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs)
+u8* DojoSession::TranslateInputToFrameData(PlainJoystickState* pjs)
 {
 	return TranslateInputToFrameData(pjs, 0);
 }
 
-u8* MapleNet::TranslateInputToFrameData(u16 buttons)
+u8* DojoSession::TranslateInputToFrameData(u16 buttons)
 {
 	return TranslateInputToFrameData(0, buttons);
 }
 
-u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
+u8* DojoSession::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 {
 	static u8 data[FRAME_SIZE];
 
@@ -306,7 +306,7 @@ u8* MapleNet::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 	return data;
 }
 
-void MapleNet::AddNetFrame(const char* received_data)
+void DojoSession::AddNetFrame(const char* received_data)
 {
 	const char data[FRAME_SIZE] = { 0 };
 	memcpy((void*)data, received_data, FRAME_SIZE);
@@ -332,7 +332,7 @@ void MapleNet::AddNetFrame(const char* received_data)
 	}
 }
 
-std::string MapleNet::CreateFrame(unsigned int frame_num, int player, int delay, const char* input)
+std::string DojoSession::CreateFrame(unsigned int frame_num, int player, int delay, const char* input)
 {
 	unsigned char new_frame[FRAME_SIZE] = { 0 };
 	new_frame[0] = player;
@@ -352,7 +352,7 @@ std::string MapleNet::CreateFrame(unsigned int frame_num, int player, int delay,
 	return frame_str;
 }
 
-void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs, int back_inputs_size)
+void DojoSession::AddBackFrames(const char* initial_frame, const char* back_inputs, int back_inputs_size)
 {
 	if (back_inputs_size == 0)
 		return;
@@ -392,26 +392,26 @@ void MapleNet::AddBackFrames(const char* initial_frame, const char* back_inputs,
 	delete[] all_inputs;
 }
 
-void MapleNet::pause()
+void DojoSession::pause()
 {
 	isPaused = true;
 }
 
-void MapleNet::resume()
+void DojoSession::resume()
 {
 	isPaused = false;
 }
 
-void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
+void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
 {
 	return CaptureAndSendLocalFrame(pjs, 0);
 }
-void MapleNet::CaptureAndSendLocalFrame(u16 buttons)
+void DojoSession::CaptureAndSendLocalFrame(u16 buttons)
 {
 	return CaptureAndSendLocalFrame(0, buttons);
 }
 
-void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
+void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 {
 	u8 data[256] = { 0 };
 
@@ -449,7 +449,7 @@ void MapleNet::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	}
 }
 
-void MapleNet::StartSession(int session_delay)
+void DojoSession::StartSession(int session_delay)
 {
 	FillDelay(session_delay);
 	delay = session_delay;
@@ -473,7 +473,7 @@ void MapleNet::StartSession(int session_delay)
 	INFO_LOG(NETWORK, "Session Initiated");
 }
 
-void MapleNet::FillDelay(int fill_delay)
+void DojoSession::FillDelay(int fill_delay)
 {
 	for (int j = 0; j < MaxPlayers; j++)
 	{
@@ -495,7 +495,7 @@ void MapleNet::FillDelay(int fill_delay)
 
 }
 
-int MapleNet::StartMapleNet()
+int DojoSession::StartDojoSession()
 {
 	if (settings.maplenet.RecordMatches && !maplenet.PlayMatch)
 		replay_filename = CreateReplayFile();
@@ -546,19 +546,19 @@ int MapleNet::StartMapleNet()
 	}
 }
 
-u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
+u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
 {
 	return ApplyNetInputs(pjs, 0, port);
 }
 
-u16 MapleNet::ApplyNetInputs(u16 buttons, u32 port)
+u16 DojoSession::ApplyNetInputs(u16 buttons, u32 port)
 {
 	return ApplyNetInputs(0, buttons, port);
 }
 
 // intercepts local input, assigns delay, stores in map
 // applies stored input based on current frame count and player
-u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
+u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
 	InputPort = port;
 
@@ -689,7 +689,7 @@ u16 MapleNet::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		return buttons;
 }
 
-void MapleNet::PrintFrameData(const char * prefix, u8 * data)
+void DojoSession::PrintFrameData(const char * prefix, u8 * data)
 {
 	int player = GetPlayer(data);
 	int delay = GetDelay(data);
@@ -711,7 +711,7 @@ void MapleNet::PrintFrameData(const char * prefix, u8 * data)
 }
 
 // called on by client thread once data is received
-void MapleNet::ClientReceiveAction(const char* received_data)
+void DojoSession::ClientReceiveAction(const char* received_data)
 {
 	if (settings.maplenet.Debug == DEBUG_RECV ||
 		settings.maplenet.Debug == DEBUG_SEND_RECV ||
@@ -730,7 +730,7 @@ void MapleNet::ClientReceiveAction(const char* received_data)
 }
 
 // continuously called on by client thread
-void MapleNet::ClientLoopAction()
+void DojoSession::ClientLoopAction()
 {
 	u32 current_port = InputPort;
 	u32 current_frame = FrameNumber;
@@ -750,7 +750,7 @@ std::string currentISO8601TimeUTC() {
   return ss.str();
 }
 
-std::string MapleNet::GetRomNamePrefix()
+std::string DojoSession::GetRomNamePrefix()
 {
 	// shamelessly stolen from nullDC.cpp#get_savestate_file_path()
 	std::string state_file = settings.imgread.ImagePath;
@@ -771,7 +771,7 @@ std::string MapleNet::GetRomNamePrefix()
 	return state_file;
 }
 
-std::string MapleNet::CreateReplayFile()
+std::string DojoSession::CreateReplayFile()
 {
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
@@ -793,7 +793,7 @@ std::string MapleNet::CreateReplayFile()
 	return filename;
 }
 
-void MapleNet::AppendToReplayFile(std::string frame)
+void DojoSession::AppendToReplayFile(std::string frame)
 {
 	if (frame.size() == FRAME_SIZE)
 	{
@@ -806,7 +806,7 @@ void MapleNet::AppendToReplayFile(std::string frame)
 	}
 }
 
-void MapleNet::LoadReplayFile(std::string path)
+void DojoSession::LoadReplayFile(std::string path)
 {
 	// add string in increments of FRAME_SIZE to net_inputs
 	std::ifstream fin(path, 
@@ -835,5 +835,5 @@ void MapleNet::LoadReplayFile(std::string path)
 	delete[] buffer;
 }
 
-MapleNet maplenet;
+DojoSession maplenet;
 

@@ -3,7 +3,7 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
-#include "network\maplenet\MapleNet.hpp"
+#include "network\maplenet\DojoSession.hpp"
 
 #define HAS_VMU
 /*

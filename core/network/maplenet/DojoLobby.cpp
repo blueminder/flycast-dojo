@@ -1,4 +1,4 @@
-#include "MapleNet.hpp"
+#include "DojoSession.hpp"
 
 void DojoLobby::BeaconThread()
 {

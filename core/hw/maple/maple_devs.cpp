@@ -12,7 +12,7 @@
 #include <zlib.h>
 #include <xxhash.h>
 
-#include "network/maplenet/MapleNet.hpp"
+#include "network/maplenet/DojoSession.hpp"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 

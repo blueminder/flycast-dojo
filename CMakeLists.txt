@@ -693,8 +693,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_sources(${PROJECT_NAME} PRIVATE
         core/network/maplenet/DojoLobby.cpp
         core/network/maplenet/DojoLobby.hpp
-        core/network/maplenet/MapleNet.cpp
-        core/network/maplenet/MapleNet.hpp
+        core/network/maplenet/DojoSession.cpp
+        core/network/maplenet/DojoSession.hpp
         core/network/maplenet/Ping.cpp
         core/network/maplenet/Ping.hpp
         core/network/maplenet/TCPClient.cpp

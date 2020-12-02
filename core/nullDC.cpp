@@ -34,7 +34,7 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
-#include "network/maplenet/MapleNet.hpp"
+#include "network/maplenet/DojoSession.hpp"
 
 void FlushCache();
 static void LoadCustom();
