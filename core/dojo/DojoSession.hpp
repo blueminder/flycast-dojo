@@ -153,7 +153,6 @@ public:
 	std::string replay_filename;
 
 	static long unix_timestamp();
-	int GetAveragePing(const char* ipAddr);
 	int DetectDelay(const char* ipAddr);
 
 	int host_status;

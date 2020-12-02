@@ -695,8 +695,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/dojo/DojoLobby.hpp
         core/dojo/DojoSession.cpp
         core/dojo/DojoSession.hpp
-        core/dojo/Ping.cpp
-        core/dojo/Ping.hpp
         core/dojo/TCPClient.cpp
         core/dojo/TCPServer.cpp
         core/dojo/TCP.hpp

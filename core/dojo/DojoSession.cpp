@@ -49,8 +49,7 @@ DojoSession::DojoSession()
 
 int DojoSession::DetectDelay(const char* ipAddr)
 {
-	int avg_ping_ms = dojo.GetAveragePing(ipAddr);
-	//int avg_ping_ms = client.GetOpponentAvgPing();
+	int avg_ping_ms = client.GetOpponentAvgPing();
 
 	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
 	settings.dojo.Delay = delay > 1 ? delay : 1;
@@ -63,34 +62,6 @@ long DojoSession::unix_timestamp()
     time_t t = time(0);
     long int now = static_cast<long int> (t);
     return now;
-}
-
-// returns ICMP ping, to be removed once udp rtt ping is enabled
-// not all exposed IPs respond to ICMP ping
-int DojoSession::GetAveragePing(const char* ipAddr)
-{
-	Ping target;
-	INFO_LOG(NETWORK, "Pinging %s", ipAddr);
-
-	int sum_ms = 0;
-	int success_ping = 0;
-	for (int i = 0; i < 10; i++)
-	{
-		int ms = target.ping(ipAddr);
-		if(ms < -1) {
-		    INFO_LOG(NETWORK, "ERROR (%d)", ms);
-		} else {
-		    INFO_LOG(NETWORK, "Success (%d ms)", ms);
-			sum_ms += ms;
-			success_ping++;
-		}
-	}
-	INFO_LOG(NETWORK, "Average Ping (%d ms)", sum_ms / success_ping);
-
-	if (success_ping == 0)
-		return 0;
-	else
-		return (sum_ms / success_ping);
 }
 
 void DojoSession::LoadNetConfig()
