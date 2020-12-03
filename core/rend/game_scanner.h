@@ -26,12 +26,16 @@
 
 #include "types.h"
 #include "stdclass.h"
+
 #include "hw/naomi/naomi_roms.h"
 
+#ifndef _STRUCT_GAMEMEDIA
+#define _STRUCT_GAMEMEDIA
 struct GameMedia {
 	std::string name;
 	std::string path;
 };
+#endif
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
 {

@@ -29,19 +29,8 @@ void gui_term();
 void gui_refresh_files();
 
 void gui_open_host_wait();
-void gui_display_host_wait();
-
 void gui_open_guest_wait();
-void gui_display_guest_wait();
-void gui_close_guest_wait();
-
-void gui_open_host_delay();
-void gui_display_host_delay();
-
 void gui_open_disconnected();
-void gui_display_disconnected();
-
-void gui_display_end_replay();
 
 extern int screen_dpi;
 extern u32 vmu_lcd_data[8][48 * 32];
@@ -81,3 +70,6 @@ static inline bool gui_is_content_browser()
 	return gui_state == Main;
 }
 float gui_get_scaling();
+
+extern bool game_started;
+extern void gui_start_game(const std::string& path);

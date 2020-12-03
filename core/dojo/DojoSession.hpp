@@ -20,7 +20,6 @@
 #include "types.h"
 #include "dojo/TCP.hpp"
 #include "dojo/UDP.hpp"
-#include "dojo/Ping.hpp"
 #include "dojo/DojoLobby.hpp"
 
 #include "emulator.h"

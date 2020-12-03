@@ -691,6 +691,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/dojo/DojoGui.cpp
+        core/dojo/DojoGui.hpp
         core/dojo/DojoLobby.cpp
         core/dojo/DojoLobby.hpp
         core/dojo/DojoSession.cpp
