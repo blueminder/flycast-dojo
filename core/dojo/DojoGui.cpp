@@ -1,5 +1,5 @@
 #include "DojoGui.hpp"
-namespace fs = std::experimental::filesystem;
+namespace fs = ghc::filesystem;
 
 void DojoGui::gui_open_host_delay(bool* settings_opening)
 {
@@ -465,7 +465,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 			dojo.PlayMatch = true;
 
 			gui_state = Closed;
-			dojo.StartDojoSession();
+			//dojo.StartDojoSession();
 			gui_start_game(game_path);
 		}
 		ImGui::NextColumn();

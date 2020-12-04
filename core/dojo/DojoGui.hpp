@@ -1,9 +1,7 @@
 #pragma once
 
 #include "dojo/DojoSession.hpp"
-
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
-#include <experimental/filesystem>
+#include "dojo/filesystem.hpp"
 
 #include <mutex>
 #include "rend/gui.h"
