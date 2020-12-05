@@ -442,7 +442,12 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		    s.erase(0, pos + delimiter.length());
 		}
 
-		std::string game_name = replay_entry[0].substr(replay_entry[0].find("\\") + 1);
+#ifdef _WIN32
+		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
+#else
+		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
+#endif
+
 		std::string date = replay_entry[1];
 		std::string host_player = replay_entry[2];
 		std::string guest_player = replay_entry[3];
