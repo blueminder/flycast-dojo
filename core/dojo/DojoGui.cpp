@@ -422,7 +422,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
 
-	std::string path = "replays\\";
+	fs::path path = fs::current_path() / "replays";
 	std::map<std::string, std::string> replays;
 	for (auto& p : fs::directory_iterator(path))
 	{

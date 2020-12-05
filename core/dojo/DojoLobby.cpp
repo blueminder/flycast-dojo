@@ -141,7 +141,8 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
             break;
 
         default:
-            strncpy_s(s, strlen("Unknown AF"), "Unknown AF", maxlen);
+            memcpy(s, "Unknown AF", strlen("Unknown AF") + 1);
+            //strncpy_s(s, strlen("Unknown AF"), "Unknown AF", maxlen);
             return NULL;
     }
 
@@ -162,7 +163,7 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
             MSGBUFSIZE,
             0,
             (struct sockaddr *) &addr,
-            &addrlen
+            (socklen_t *)&addrlen
         );
         if (nbytes < 0) {
             perror("recvfrom");

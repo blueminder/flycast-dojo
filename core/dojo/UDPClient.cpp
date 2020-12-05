@@ -150,7 +150,9 @@ void UDPClient::EndSession()
 	gui_open_disconnected();
 	dc_stop();
 	CloseSocket(local_socket);
+#ifdef _WIN32
 	WSACleanup();
+#endif
 
 	INFO_LOG(NETWORK, "Disconnected.");
 }
