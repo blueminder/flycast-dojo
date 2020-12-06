@@ -274,14 +274,13 @@ int DojoSession::StartDojoSession()
 				std::thread t3(&DojoLobby::BeaconThread, std::ref(presence));
 				t3.detach();
 			}
-
-			return 0;
 		}
 		catch (std::exception&)
 		{
 			return 1;
 		}
 	}
+	return 0;
 }
 
 u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u32 port)
