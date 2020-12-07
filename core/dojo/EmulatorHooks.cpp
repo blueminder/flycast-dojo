@@ -25,7 +25,7 @@ void DojoSession::LoadNetConfig()
 	
 	client.SetHost(host_ip.data(), host_port);
 
-	PlayMatch = settings.dojo.PlayMatch;
+	//PlayMatch = settings.dojo.PlayMatch;
 	ReplayFilename = settings.dojo.ReplayFilename;
 }
 

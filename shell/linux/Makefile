@@ -423,8 +423,8 @@ ifdef UNIT_TESTS
 endif
 
 ifdef ASAN
-	CFLAGS += -fsanitize=address -static-libasan
-	LDFLAGS += -fsanitize=address -static-libasan
+	CFLAGS += -fsanitize=address
+	LDFLAGS += -fsanitize=address
 endif 
 
 ifdef LOG_TO_PTY
