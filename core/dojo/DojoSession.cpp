@@ -44,6 +44,8 @@ DojoSession::DojoSession()
 
 	PlayMatch = false;
 	ReplayFilename = "";
+
+	lobby_active = false;
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)

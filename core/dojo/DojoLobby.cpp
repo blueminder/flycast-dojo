@@ -7,6 +7,7 @@ void DojoLobby::BeaconThread()
 
 void DojoLobby::ListenerThread()
 {
+    dojo.lobby_active = true;
     listener("224.0.0.1", 7776);
 }
 

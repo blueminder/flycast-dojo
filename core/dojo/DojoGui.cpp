@@ -261,10 +261,12 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
 }
 
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
-
 {
-	std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
-	t4.detach();
+	if (!dojo.lobby_active)
+	{
+		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
+		t4.detach();
+	}
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();

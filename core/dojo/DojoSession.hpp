@@ -119,6 +119,8 @@ public:
 	TCPClient transmitter;
 	TCPServer receiver;
 
+	bool lobby_active;
+
 	void PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);
 	void ClientLoopAction();
