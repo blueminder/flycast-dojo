@@ -160,6 +160,7 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
 endif()
 
+# installed via vcpkg for now
 if (MSVC)
     find_package(libzip CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
@@ -691,6 +692,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/dojo/filesystem.hpp
         core/dojo/DojoGui.cpp
         core/dojo/DojoGui.hpp
         core/dojo/DojoLobby.cpp
