@@ -303,7 +303,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 2)
 	{
-		if (dojo.PlayMatch)
+		if (dojo.PlayMatch || settings.dojo.Receiving)
 		{
 			resume();
 		}
@@ -363,7 +363,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		gui_state = EndReplay;
 	}
 
-	if (dojo.receiving &&
+	if (settings.dojo.Receiving &&
 		dojo.receiver.endSession)
 	{
 		gui_state = EndSpectate;

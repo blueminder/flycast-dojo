@@ -56,12 +56,7 @@ sock_t TCPServer::CreateAndBind(int port)
 
 	host_addr.sin_family = AF_INET;
 	host_addr.sin_port = htons((u16)port);
-
-#ifdef _WIN32
 	host_addr.sin_addr.S_un.S_addr = INADDR_ANY;
-#else
-	host_addr.sin_addr.s_addr = INADDR_ANY;
-#endif
 
 	if (::bind(sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) < 0)
 	{
@@ -79,7 +74,7 @@ void TCPServer::Listen()
 	// wait for connection
 	int clientSize = sizeof(client_addr);
 
-	client_sock = accept(sock, (sockaddr*)&client_addr, (socklen_t*)&clientSize);
+	client_sock = accept(sock, (sockaddr*)&client_addr, &clientSize);
 
 	char host_name[NI_MAXHOST];		// client host name
 	char service[NI_MAXSERV];	// service
