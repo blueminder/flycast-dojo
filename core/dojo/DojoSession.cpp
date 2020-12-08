@@ -258,7 +258,7 @@ int DojoSession::StartDojoSession()
 		std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
 		t5.detach();
 
-		resume();
+		//resume();
 	}
 	else
 	{

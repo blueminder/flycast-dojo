@@ -146,6 +146,8 @@ void TCPServer::ServerLoop()
 
 	}
 	
+	dojo.resume();
+
 	CloseSocket(sock);
 
 #ifdef _WIN32
