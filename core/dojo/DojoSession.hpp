@@ -42,7 +42,7 @@ private:
 	std::string host_ip;
 	u32 host_port;
 
-	bool isPaused;
+	volatile bool isPaused;
 
 	std::string last_sent;
 	std::deque<std::string> last_inputs;

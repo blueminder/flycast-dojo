@@ -131,12 +131,15 @@ void TCPServer::ServerLoop()
 			INFO_LOG(NETWORK, "SPECTATED %s", frame_s.data());
 			
 			dojo.AddNetFrame(frame_s.data());
-
 			dojo.PrintFrameData("NETWORK", (u8*)frame_s.data());
 
 			send(client_sock, frame_s.data(), frame_s.length(), 0);
-		}
 
+			// when compiled with msvc, spectating renders immediately after each frame
+#if _MSC_VER
+			dojo.resume();
+#endif
+		}
 
 		if (bytesReceived == SOCKET_ERROR)
 		{
@@ -145,8 +148,11 @@ void TCPServer::ServerLoop()
 		}
 
 	}
-	
-	dojo.resume();
+
+	// when compiled with g++, spectating only renders outside of receive loop
+#if !_MSC_VER
+		dojo.resume();
+#endif
 
 	CloseSocket(sock);
 

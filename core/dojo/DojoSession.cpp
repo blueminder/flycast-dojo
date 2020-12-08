@@ -116,6 +116,9 @@ void DojoSession::AddNetFrame(const char* received_data)
 	{
 		if (effective_frame_num == last_consecutive_common_frame + 1)
 			last_consecutive_common_frame++;
+
+		//if (settings.dojo.Receiving && frame_player == 1)
+			//resume();
 	}
 }
 
