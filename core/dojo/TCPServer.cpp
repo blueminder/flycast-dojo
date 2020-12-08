@@ -48,8 +48,13 @@ sock_t TCPServer::CreateAndBind(int port)
 		ERROR_LOG(NETWORK, "Cannot create socket");
 		return sock;
 	}
-	int option = 1;
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&option, sizeof(option));
+	int yes = 1;
+	int no = 0;
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char *)&yes, sizeof(yes));
+#if __linux__
+	setsockopt(sock, IPPROTO_TCP, TCP_CORK, (const char *)&no, sizeof(no));
+#endif
 
 	struct sockaddr_in host_addr;
 	memset(&host_addr, 0, sizeof(host_addr));
@@ -151,7 +156,7 @@ void TCPServer::ServerLoop()
 
 	// when compiled with g++, spectating only renders outside of receive loop
 #if !_MSC_VER
-		dojo.resume();
+	dojo.resume();
 #endif
 
 	CloseSocket(sock);
