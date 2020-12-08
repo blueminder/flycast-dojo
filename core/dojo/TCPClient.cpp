@@ -81,8 +81,8 @@ void TCPClient::TransmissionLoop()
 				int bytesReceived = recv(sock, buf, 4096, 0);
 				if (bytesReceived > 0)
 				{
-					std::string received = std::string(buf, 0, bytesReceived);
-					INFO_LOG(NETWORK, "SPECTATED %s", received.data());
+					//std::string received = std::string(buf, 0, bytesReceived);
+					INFO_LOG(NETWORK, "SPECTATED %d", dojo.GetEffectiveFrameNumber((u8*)buf));
 					//maplenet.PrintFrameData("SPECTATED ", (u8*)received.data());
 					//if (received == transmission_frames.front())
 					//{

@@ -56,7 +56,12 @@ sock_t TCPServer::CreateAndBind(int port)
 
 	host_addr.sin_family = AF_INET;
 	host_addr.sin_port = htons((u16)port);
+
+#ifdef _WIN32
 	host_addr.sin_addr.S_un.S_addr = INADDR_ANY;
+#else
+	host_addr.sin_addr.s_addr = INADDR_ANY;
+#endif
 
 	if (::bind(sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) < 0)
 	{
@@ -74,7 +79,7 @@ void TCPServer::Listen()
 	// wait for connection
 	int clientSize = sizeof(client_addr);
 
-	client_sock = accept(sock, (sockaddr*)&client_addr, &clientSize);
+	client_sock = accept(sock, (sockaddr*)&client_addr, (socklen_t*)&clientSize);
 
 	char host_name[NI_MAXHOST];		// client host name
 	char service[NI_MAXSERV];	// service
@@ -108,12 +113,6 @@ void TCPServer::ServerLoop()
 
 		// Wait for client to send data
 		int bytesReceived = recv(client_sock, buf, 4096, 0);
-		if (bytesReceived == SOCKET_ERROR)
-		{
-			ERROR_LOG(NETWORK, "recv() error. quitting %d", get_last_error());
-			break;
-		}
-
 		if (bytesReceived == 0)
 		{
 			INFO_LOG(NETWORK, "client disconnected");
@@ -122,16 +121,29 @@ void TCPServer::ServerLoop()
 
 		if (bytesReceived >= 12)
 		{
+			/*
 			std::stringstream frame_ss(""); 
 			frame_ss << "FRAME " << dojo.GetEffectiveFrameNumber((u8*)buf) << std::endl;
 			std::string frame_s = frame_ss.str();
+			*/
 
+			std::string frame_s(buf, FRAME_SIZE);
 			INFO_LOG(NETWORK, "SPECTATED %s", frame_s.data());
+			
+			dojo.AddNetFrame(frame_s.data());
 
-			dojo.AddNetFrame(buf);
+			dojo.PrintFrameData("NETWORK", (u8*)frame_s.data());
 
 			send(client_sock, frame_s.data(), frame_s.length(), 0);
 		}
+
+
+		if (bytesReceived == SOCKET_ERROR)
+		{
+			ERROR_LOG(NETWORK, "recv() error. quitting %d", get_last_error());
+			break;
+		}
+
 	}
 	
 	CloseSocket(sock);

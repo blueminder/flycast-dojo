@@ -199,15 +199,15 @@ void DojoSession::StartSession(int session_delay)
 
 	session_started = true;
 	isMatchStarted = true;
-
+/*
 	if (hosting &&
-		transmitting &&
+		settings.dojo.Transmitting &&
 		!dojo.transmitter.isStarted)
 	{
 		std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
 		t4.detach();
 	}
-
+*/
 	dojo.resume();
 
 	INFO_LOG(NETWORK, "Session Initiated");
@@ -250,7 +250,7 @@ int DojoSession::StartDojoSession()
 		}
 
 		LoadReplayFile(dojo.ReplayFilename);
-		resume();
+		//resume();
 	}
 	else if (settings.dojo.Receiving &&
 			!dojo.receiver.isStarted)
@@ -303,7 +303,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 2)
 	{
-		if (dojo.PlayMatch || settings.dojo.Receiving)
+		if (dojo.PlayMatch)
 		{
 			resume();
 		}
