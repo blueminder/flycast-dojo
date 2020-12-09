@@ -55,7 +55,6 @@ public:
 	void SendDisconnect();
 	void SendDisconnectOK();
 
-	bool disconnect_toggle;
 	bool opponent_disconnected;
 
 	bool name_acknowledged;

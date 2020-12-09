@@ -527,7 +527,7 @@ static int get_game_platform(const char *path)
 	return DC_PLATFORM_DREAMCAST;
 }
 
-static void dc_start_game(const char *path)
+static void dc_start_game(const char* path)
 {
 	DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 	bool forced_bios_file = false;
@@ -551,7 +551,7 @@ static void dc_start_game(const char *path)
 	InitSettings();
 	dc_reset(true);
 	LoadSettings(false);
-	
+
 	std::string data_path = get_readonly_data_path(DATA_PATH);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -713,7 +713,7 @@ void dc_request_reset()
 void dc_exit()
 {
 	if (settings.dojo.Enable &&
-		!dojo.client.disconnect_toggle &&
+		!dojo.disconnect_toggle &&
 		gui_state != Main &&
 		gui_state != Lobby &&
 		gui_state != Replays &&
@@ -722,7 +722,7 @@ void dc_exit()
 		gui_state != Settings &&
 		gui_state != Onboarding)
 	{
-		dojo.client.disconnect_toggle = true;
+		dojo.disconnect_toggle = true;
 	}
 	else
 	{

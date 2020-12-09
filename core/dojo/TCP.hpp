@@ -22,7 +22,6 @@ private:
 	void Connect();
 	void Disconnect();
 
-	bool isLoopStarted;
 	void TransmissionLoop();
 
 	void CloseSocket(sock_t& socket) const { closesocket(socket); socket = INVALID_SOCKET; }
@@ -31,6 +30,7 @@ public:
 	TCPClient();
 
 	bool isStarted;
+	bool isLoopStarted;
 	bool endSession;
 
 	std::queue<std::string> transmission_frames;

@@ -112,7 +112,7 @@ void TCPServer::ServerLoop()
 
 	char buf[4096];
 
-	while (true)
+	while (isLoopStarted)
 	{
 		memset(buf, 0, 4096);
 
@@ -164,6 +164,13 @@ void TCPServer::ServerLoop()
 #ifdef _WIN32
 	WSACleanup();
 #endif
+
+#if _MSC_VER
+	dojo.disconnect_toggle = true;
+#endif
+
+	if (dojo.FrameNumber > dojo.last_consecutive_common_frame)
+		gui_state = EndSpectate;
 }
 
 void TCPServer::ReceiverThread()

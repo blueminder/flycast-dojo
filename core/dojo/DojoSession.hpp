@@ -50,7 +50,6 @@ private:
 	std::set<u32> local_input_keys;
 	std::set<u32> net_input_keys[2];
 
-	u32 last_consecutive_common_frame;
 	bool started;
 
 public:
@@ -70,6 +69,8 @@ public:
 	u32 delay;
 
 	void FillDelay(int fill_delay);
+
+	u32 last_consecutive_common_frame;
 
 	void LoadNetConfig();
 	int StartDojoSession();
@@ -161,6 +162,8 @@ public:
 
 	bool PlayMatch;
 	std::string ReplayFilename;
+
+	bool disconnect_toggle;
 };
 
 extern DojoSession dojo;

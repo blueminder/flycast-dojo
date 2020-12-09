@@ -399,7 +399,7 @@ static void gui_display_commands()
 	{
 		if (settings.dojo.Enable && dojo.isMatchStarted)
 		{
-			dojo.client.disconnect_toggle = true;
+			dojo.disconnect_toggle = true;
 			gui_state = Closed;
 		}
 		else

@@ -92,7 +92,9 @@ void TCPClient::TransmissionLoop()
 				}
 			}
 		}
-	} while (true);
+	} while (isLoopStarted);
+
+	dojo.disconnect_toggle = true;
 }
 
 void TCPClient::TransmissionThread()

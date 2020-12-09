@@ -6,7 +6,6 @@ UDPClient::UDPClient()
 	write_out = false;
 	memset((void*)to_send, 0, 256);
 	last_sent = "";
-	disconnect_toggle = false;
 	opponent_disconnected = false;
 	name_acknowledged = false;
 };
@@ -220,7 +219,7 @@ void UDPClient::ClientLoop()
 {
 	isLoopStarted = true;
 
-	while (!disconnect_toggle)
+	while (!dojo.disconnect_toggle)
 	{
 		// if opponent detected, shoot packets at them
 		if (opponent_addr.sin_port > 0 &&
@@ -325,13 +324,13 @@ void UDPClient::ClientLoop()
 			{
 				SendDisconnectOK();
 				opponent_disconnected = true;
-				disconnect_toggle = true;
+				dojo.disconnect_toggle = true;
 			}
 
 			if (memcmp("OK DISCONNECT", buffer, 13) == 0)
 			{
 				SendDisconnectOK();
-				disconnect_toggle = true;
+				dojo.disconnect_toggle = true;
 			}
 
 			if (bytes_read == dojo.PayloadSize())

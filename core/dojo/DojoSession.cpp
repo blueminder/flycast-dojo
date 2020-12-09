@@ -46,6 +46,7 @@ DojoSession::DojoSession()
 	ReplayFilename = "";
 
 	lobby_active = false;
+	disconnect_toggle = false;
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)
@@ -328,7 +329,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	while (isPaused);
+	while (isPaused & !disconnect_toggle);
 
 	// advance game state
 	if (port == 0)
@@ -391,7 +392,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	current_timeout = 0;
 */
 
-	while (this_frame.empty())
+	while (this_frame.empty() && !disconnect_toggle)
 	{
 		try {
 			this_frame = net_inputs[port].at(FrameNumber - 1);
