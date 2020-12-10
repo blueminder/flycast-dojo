@@ -52,7 +52,7 @@ sock_t NaomiNetwork::createAndBind(int protocol)
 
 	if (::bind(sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 	{
-		ERROR_LOG(NETWORK, "NaomiServer: bind() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "NaomiServer: bind() failed. errno=%d", get_last_error_n());
 		closeSocket(sock);
 	}
 	else
@@ -69,7 +69,7 @@ bool NaomiNetwork::init()
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 	{
-		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error_n());
 		return false;
 	}
 #endif
@@ -90,7 +90,7 @@ bool NaomiNetwork::createServerSocket()
 
 	if (listen(server_sock, 5) < 0)
 	{
-		ERROR_LOG(NETWORK, "NaomiServer: listen() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "NaomiServer: listen() failed. errno=%d", get_last_error_n());
 		closeSocket(server_sock);
 		return false;
 	}
@@ -117,8 +117,8 @@ void NaomiNetwork::processBeacon()
 		memset(buf, '\0', sizeof(buf));
 		if ((n = recvfrom(beacon_sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr, &addrlen)) == -1)
 		{
-			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-				WARN_LOG(NETWORK, "NaomiServer: Error receiving datagram. errno=%d", get_last_error());
+			if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
+				WARN_LOG(NETWORK, "NaomiServer: Error receiving datagram. errno=%d", get_last_error_n());
 		}
 		else
 		{
@@ -135,7 +135,7 @@ bool NaomiNetwork::findServer()
 	sock_t sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (!VALID(sockfd))
     {
-        ERROR_LOG(NETWORK, "Datagram socket creation error. errno=%d", get_last_error());
+        ERROR_LOG(NETWORK, "Datagram socket creation error. errno=%d", get_last_error_n());
         return false;
     }
 
@@ -143,7 +143,7 @@ bool NaomiNetwork::findServer()
     int broadcast = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcast, sizeof(broadcast)) == -1)
     {
-        ERROR_LOG(NETWORK, "setsockopt(SO_BROADCAST) failed. errno=%d", get_last_error());
+        ERROR_LOG(NETWORK, "setsockopt(SO_BROADCAST) failed. errno=%d", get_last_error_n());
         closesocket(sockfd);
         return false;
     }
@@ -151,7 +151,7 @@ bool NaomiNetwork::findServer()
     // Set a 500ms timeout on recv call
     if (!set_recv_timeout(sockfd, 500))
     {
-        ERROR_LOG(NETWORK, "setsockopt(SO_RCVTIMEO) failed. errno=%d", get_last_error());
+        ERROR_LOG(NETWORK, "setsockopt(SO_RCVTIMEO) failed. errno=%d", get_last_error_n());
         closesocket(sockfd);
         return false;
     }
@@ -168,7 +168,7 @@ bool NaomiNetwork::findServer()
     {
         if (sendto(sockfd, "flycast", 6, 0, (struct sockaddr *)&addr, sizeof addr) == -1)
         {
-            WARN_LOG(NETWORK, "Send datagram failed. errno=%d", get_last_error());
+            WARN_LOG(NETWORK, "Send datagram failed. errno=%d", get_last_error_n());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
@@ -178,8 +178,8 @@ bool NaomiNetwork::findServer()
         socklen_t addrlen = sizeof(server_addr);
         if (recvfrom(sockfd, buf, sizeof(buf), 0, &server_addr, &addrlen) == -1)
         {
-            if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-                WARN_LOG(NETWORK, "Recv datagram failed. errno=%d", get_last_error());
+            if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
+                WARN_LOG(NETWORK, "Recv datagram failed. errno=%d", get_last_error_n());
             else
                 INFO_LOG(NETWORK, "Recv datagram timeout. i=%d", i);
             continue;
@@ -241,7 +241,7 @@ bool NaomiNetwork::startNetwork()
 			sock_t clientSock = accept(server_sock, (struct sockaddr *)&src_addr, &addr_len);
 			if (!VALID(clientSock))
 			{
-				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+				if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 					perror("accept");
 			}
 			else
@@ -262,10 +262,10 @@ bool NaomiNetwork::startNetwork()
 				{
 					char buffer[8];
 					ssize_t l = ::recv(slave.socket, buffer, sizeof(buffer), 0);
-					if (l < (int)sizeof(buffer) && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+					if (l < (int)sizeof(buffer) && get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 					{
 						// error
-						INFO_LOG(NETWORK, "Slave socket recv error. errno=%d", get_last_error());
+						INFO_LOG(NETWORK, "Slave socket recv error. errno=%d", get_last_error_n());
 						closeSocket(slave.socket);
 					}
 					else if (l == -1 && now - slave.state_time > milliseconds(100))
@@ -373,7 +373,7 @@ bool NaomiNetwork::startNetwork()
 				u8 buf[2];
 				if (::recv(client_sock, (char *)buf, 2, 0) < 2)
 				{
-					ERROR_LOG(NETWORK, "recv failed: errno=%d", get_last_error());
+					ERROR_LOG(NETWORK, "recv failed: errno=%d", get_last_error_n());
 					closeSocket(client_sock);
 					gui_display_notification("Server failed to start", 10000);
 
@@ -413,9 +413,9 @@ bool NaomiNetwork::syncNetwork()
 				{
 					char buf[4];
 					ssize_t l = ::recv(slave.socket, buf, sizeof(buf), 0);
-					if (l < 4 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+					if (l < 4 && get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 					{
-						INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
+						INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error_n());
 						closeSocket(slave.socket);
 						return false;
 					}
@@ -441,7 +441,7 @@ bool NaomiNetwork::syncNetwork()
 			ssize_t l = ::send(slave.socket, "GO!!", 4, 0);
 			if (l < 4)
 			{
-				INFO_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error());
+				INFO_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error_n());
 				closeSocket(slave.socket);
 				return false;
 			}
@@ -457,7 +457,7 @@ bool NaomiNetwork::syncNetwork()
 		ssize_t l = ::send(client_sock, "REDY", 4 ,0);
 		if (l < 4)
 		{
-			WARN_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error());
+			WARN_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error_n());
 			closeSocket(client_sock);
 			return false;
 		}
@@ -468,9 +468,9 @@ bool NaomiNetwork::syncNetwork()
 			// Wait for the go
 			char buf[4];
 			l = ::recv(client_sock, buf, sizeof(buf), 0);
-			if (l < 4 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+			if (l < 4 && get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 			{
-				INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
+				INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error_n());
 				closeSocket(client_sock);
 				return false;
 			}
@@ -511,16 +511,16 @@ void NaomiNetwork::pipeSlaves()
 		ssize_t l = ::recv(it->socket, buf, sizeof(buf), 0);
 		if (l <= 0)
 		{
-			if (get_last_error() == L_EAGAIN || get_last_error() == L_EWOULDBLOCK)
+			if (get_last_error_n() == L_EAGAIN || get_last_error_n() == L_EWOULDBLOCK)
 				continue;
-			WARN_LOG(NETWORK, "pipeSlaves: receive failed. errno=%d", get_last_error());
+			WARN_LOG(NETWORK, "pipeSlaves: receive failed. errno=%d", get_last_error_n());
 			closeSocket(it->socket);
 			continue;
 		}
 		ssize_t l2 = ::send((it + 1)->socket, buf, l, 0);
 		if (l2 != l)
 		{
-			WARN_LOG(NETWORK, "pipeSlaves: send failed. errno=%d", get_last_error());
+			WARN_LOG(NETWORK, "pipeSlaves: send failed. errno=%d", get_last_error_n());
 			closeSocket((it + 1)->socket);
 		}
 	}
@@ -542,9 +542,9 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 		ssize_t l = ::recv(sockfd, (char*)(data + received), size - received, 0);
 		if (l <= 0)
 		{
-			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+			if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 			{
-				WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error());
+				WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error_n());
 				if (isMaster())
 				{
 					closeSocket(slaves.back().socket);
@@ -582,9 +582,9 @@ void NaomiNetwork::send(u8 *data, u32 size)
 
 	if (::send(sockfd, (const char *)data, size, 0) < size)
 	{
-		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+		if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 		{
-			WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error());
+			WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error_n());
 			if (isMaster())
 				closeSocket(slaves.front().socket);
 			else

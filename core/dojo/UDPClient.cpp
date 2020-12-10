@@ -174,7 +174,7 @@ sock_t UDPClient::CreateAndBind(int port)
 
 	if (::bind(sock, (struct sockaddr*)&serveraddr, sizeof(serveraddr)) < 0)
 	{
-		ERROR_LOG(NETWORK, "DojoSession UDP Server: bind() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "DojoSession UDP Server: bind() failed. errno=%d", get_last_error_n());
 		CloseSocket(sock);
 	}
 	else
@@ -199,7 +199,7 @@ bool UDPClient::Init(bool hosting)
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 	{
-		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error_n());
 		return false;
 	}
 #endif

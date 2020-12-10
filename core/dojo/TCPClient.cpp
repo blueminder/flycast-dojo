@@ -15,7 +15,7 @@ bool TCPClient::Init()
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 	{
-		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error_n());
 		return false;
 	}
 #endif

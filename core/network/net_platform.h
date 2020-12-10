@@ -41,15 +41,15 @@ typedef int sock_t;
 #define VALID(s) ((s) >= 0)
 #define L_EWOULDBLOCK EWOULDBLOCK
 #define L_EAGAIN EAGAIN
-#define get_last_error() (errno)
+#define get_last_error_n() (errno)
 #define INVALID_SOCKET (-1)
-#define perror(s) do { INFO_LOG(MODEM, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
+#define perror(s) do { INFO_LOG(MODEM, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error_n())); } while (false)
 #else
 typedef SOCKET sock_t;
 #define VALID(s) ((s) != INVALID_SOCKET)
 #define L_EWOULDBLOCK WSAEWOULDBLOCK
 #define L_EAGAIN WSAEWOULDBLOCK
-#define get_last_error() (WSAGetLastError())
+#define get_last_error_n() (WSAGetLastError())
 #define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
 #endif
 

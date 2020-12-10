@@ -96,7 +96,7 @@ int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr)
     int r = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr*)&peer , &peer_len);
     if (r < 0)
     {
-    	if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+    	if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
     		perror("DNS recvfrom failed");
     	return -1;
     }

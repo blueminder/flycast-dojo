@@ -14,7 +14,7 @@ bool TCPServer::Init()
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 	{
-		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error_n());
 		return false;
 	}
 #endif
@@ -33,7 +33,7 @@ bool TCPServer::CreateSocket()
 
 	if (listen(sock, 5) < 0)
 	{
-		ERROR_LOG(NETWORK, "TCPServer: listen() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "TCPServer: listen() failed. errno=%d", get_last_error_n());
 		CloseSocket(sock);
 		return false;
 	}
@@ -70,7 +70,7 @@ sock_t TCPServer::CreateAndBind(int port)
 
 	if (::bind(sock, (struct sockaddr *)&host_addr, sizeof(host_addr)) < 0)
 	{
-		ERROR_LOG(NETWORK, "TCP: bind() failed. errno=%d", get_last_error());
+		ERROR_LOG(NETWORK, "TCP: bind() failed. errno=%d", get_last_error_n());
 		CloseSocket(sock);
 	}
 
@@ -148,7 +148,7 @@ void TCPServer::ServerLoop()
 
 		if (bytesReceived == SOCKET_ERROR)
 		{
-			ERROR_LOG(NETWORK, "recv() error. quitting %d", get_last_error());
+			ERROR_LOG(NETWORK, "recv() error. quitting %d", get_last_error_n());
 			break;
 		}
 

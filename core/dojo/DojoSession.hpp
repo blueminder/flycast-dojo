@@ -24,6 +24,8 @@
 
 #include "emulator.h"
 
+#include <asio.hpp>
+
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
 
