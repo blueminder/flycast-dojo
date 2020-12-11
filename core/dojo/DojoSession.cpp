@@ -120,7 +120,10 @@ void DojoSession::AddNetFrame(const char* received_data)
 		if (effective_frame_num == last_consecutive_common_frame + 1)
 			last_consecutive_common_frame++;
 
-		//if (settings.dojo.Receiving && frame_player == 1)
+		//if (settings.dojo.Receiving &&
+			//effective_frame_num <= dojo.FrameNumber)
+			//pause();
+		//else
 			//resume();
 	}
 }
@@ -267,7 +270,7 @@ int DojoSession::StartDojoSession()
 		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
 		t5.detach();
 
-		//resume();
+		resume();
 	}
 	else
 	{

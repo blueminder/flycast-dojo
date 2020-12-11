@@ -32,9 +32,9 @@ void tcp_session::do_read()
 
                     std::string frame = std::string(data_, max_length);
                     //INFO_LOG(NETWORK, "SPECTATED %s", frame_s.data());
+                    INFO_LOG(NETWORK, "FRAME %d", (int)dojo.FrameNumber);
                     dojo.AddNetFrame(frame.data());
-                    dojo.PrintFrameData("NETWORK", (u8*)frame.data());
-                    dojo.resume();
+                    dojo.PrintFrameData("ADDED", (u8*)frame.data());
                 }
 
                 do_write(length);

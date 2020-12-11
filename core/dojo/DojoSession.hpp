@@ -24,10 +24,9 @@
 
 #include "emulator.h"
 
-#include <asio.hpp>
-#include "async_tcp_server.hpp" 
-
-using asio::ip::tcp;
+#include "asio.hpp"
+#include "async_tcp_server.hpp"
+#include "async_udp_server.hpp"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
