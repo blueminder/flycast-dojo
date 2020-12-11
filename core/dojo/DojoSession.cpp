@@ -47,6 +47,8 @@ DojoSession::DojoSession()
 
 	lobby_active = false;
 	disconnect_toggle = false;
+
+	receiver_started = false;
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)
@@ -257,9 +259,12 @@ int DojoSession::StartDojoSession()
 		//resume();
 	}
 	else if (settings.dojo.Receiving &&
-			!dojo.receiver.isStarted)
+			!dojo.receiver_started)
 	{
-		std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
+		//std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
+		//t5.detach();
+
+		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
 		t5.detach();
 
 		//resume();
@@ -366,13 +371,13 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		gui_state = EndReplay;
 	}
-
+/*
 	if (settings.dojo.Receiving &&
 		dojo.receiver.endSession)
 	{
 		gui_state = EndSpectate;
 	}
-
+*/
 /*
 	// define max ms to wait for new packets before close
 	int max_timeout = 10000;
@@ -534,6 +539,21 @@ void DojoSession::LoadReplayFile(std::string path)
 	}
 
 	delete[] buffer;
+}
+
+void DojoSession::receiver_thread()
+{
+    try
+    {
+	    asio::io_context io_context;
+        async_tcp_server s(io_context, atoi(settings.dojo.SpectatorPort.data()));
+
+        io_context.run();
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Exception: " << e.what() << "\n";
+    }
 }
 
 DojoSession dojo;

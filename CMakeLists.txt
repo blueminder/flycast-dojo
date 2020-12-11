@@ -693,6 +693,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/dojo/filesystem.hpp
+        core/dojo/async_tcp_server.hpp
+        core/dojo/async_tcp_server.cpp
         core/dojo/DojoGui.cpp
         core/dojo/DojoGui.hpp
         core/dojo/DojoLobby.cpp

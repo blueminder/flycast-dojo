@@ -25,6 +25,9 @@
 #include "emulator.h"
 
 #include <asio.hpp>
+#include "async_tcp_server.hpp" 
+
+using asio::ip::tcp;
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -53,6 +56,8 @@ private:
 	std::set<u32> net_input_keys[2];
 
 	bool started;
+
+	void receiver_thread();
 
 public:
 	DojoSession();
@@ -120,7 +125,8 @@ public:
 	UDPClient client;
 	DojoLobby presence;
 	TCPClient transmitter;
-	TCPServer receiver;
+	//TCPServer receiver;
+	bool receiver_started;
 
 	bool lobby_active;
 
