@@ -56,7 +56,8 @@ private:
 
 	bool started;
 
-	void receiver_thread();
+	void tcp_server_thread();
+	void tcp_client_thread();
 
 public:
 	DojoSession();
@@ -171,6 +172,12 @@ public:
 	std::string ReplayFilename;
 
 	bool disconnect_toggle;
+	
+	std::deque<std::string> transmission_frames;
+protected:
+        asio::io_context io_context;
+
+
 };
 
 extern DojoSession dojo;

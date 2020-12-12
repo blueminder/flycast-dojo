@@ -153,7 +153,7 @@ void async_udp_server::deliver(std::string to_deliver)
     for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
 	    msgs_to_send.push_back(to_deliver);
 
-    INFO_LOG(NETWORK, "Message Sent: %s", to_deliver.data());
+    INFO_LOG(NETWORK, "Message Queued: %s", to_deliver.data());
 }
 
 void async_udp_server::deliver_player_name()

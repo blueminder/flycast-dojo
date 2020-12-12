@@ -49,6 +49,7 @@ DojoSession::DojoSession()
 	disconnect_toggle = false;
 
 	receiver_started = false;
+
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)
@@ -254,8 +255,12 @@ int DojoSession::StartDojoSession()
 		if (settings.dojo.Transmitting &&
 			!dojo.transmitter.isStarted)
 		{
-			std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
+			//std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
+			//t4.detach();
+
+			std::thread t4(&DojoSession::tcp_server_thread, std::ref(dojo));
 			t4.detach();
+
 		}
 
 		LoadReplayFile(dojo.ReplayFilename);
@@ -267,7 +272,7 @@ int DojoSession::StartDojoSession()
 		//std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
 		//t5.detach();
 
-		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
+		std::thread t5(&DojoSession::tcp_server_thread, std::ref(dojo));
 		t5.detach();
 
 		resume();
@@ -425,7 +430,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		AppendToReplayFile(this_frame);
 
 	if (transmitter.isStarted)
-		transmitter.transmission_frames.push(this_frame);
+		dojo.transmission_frames.push_back(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -544,14 +549,13 @@ void DojoSession::LoadReplayFile(std::string path)
 	delete[] buffer;
 }
 
-void DojoSession::receiver_thread()
+void DojoSession::tcp_server_thread()
 {
     try
     {
-	    asio::io_context io_context;
-        async_tcp_server s(io_context, atoi(settings.dojo.SpectatorPort.data()));
-
-        io_context.run();
+		asio::io_context io_context;
+		async_tcp_server s(io_context, atoi(settings.dojo.SpectatorPort.data()));
+		io_context.run();
     }
     catch (std::exception& e)
     {
