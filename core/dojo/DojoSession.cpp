@@ -49,7 +49,7 @@ DojoSession::DojoSession()
 	disconnect_toggle = false;
 
 	receiver_started = false;
-
+	transmitter_started = false;
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)
@@ -64,9 +64,9 @@ int DojoSession::DetectDelay(const char* ipAddr)
 
 long DojoSession::unix_timestamp()
 {
-    time_t t = time(0);
-    long int now = static_cast<long int> (t);
-    return now;
+	time_t t = time(0);
+	long int now = static_cast<long int> (t);
+	return now;
 }
 
 int DojoSession::PayloadSize()
@@ -120,12 +120,6 @@ void DojoSession::AddNetFrame(const char* received_data)
 	{
 		if (effective_frame_num == last_consecutive_common_frame + 1)
 			last_consecutive_common_frame++;
-
-		//if (settings.dojo.Receiving &&
-			//effective_frame_num <= dojo.FrameNumber)
-			//pause();
-		//else
-			//resume();
 	}
 }
 
@@ -209,15 +203,7 @@ void DojoSession::StartSession(int session_delay)
 
 	session_started = true;
 	isMatchStarted = true;
-/*
-	if (hosting &&
-		settings.dojo.Transmitting &&
-		!dojo.transmitter.isStarted)
-	{
-		std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
-		t4.detach();
-	}
-*/
+
 	dojo.resume();
 
 	INFO_LOG(NETWORK, "Session Initiated");
@@ -253,14 +239,12 @@ int DojoSession::StartDojoSession()
 	if (dojo.PlayMatch)
 	{
 		if (settings.dojo.Transmitting &&
-			!dojo.transmitter.isStarted)
+			!dojo.transmitter_started)
 		{
-			//std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
-			//t4.detach();
+			std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
+			t4.detach();
 
-			//std::thread t4(&DojoSession::tcp_server_thread, std::ref(dojo));
-			//t4.detach();
-
+			transmitter_started = true;
 		}
 
 		LoadReplayFile(dojo.ReplayFilename);
@@ -269,13 +253,11 @@ int DojoSession::StartDojoSession()
 	else if (settings.dojo.Receiving &&
 			!dojo.receiver_started)
 	{
-		//std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
-		//t5.detach();
-
 		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
 		t5.detach();
 
-		resume();
+		receiver_started = true;
+		last_consecutive_common_frame = 2;
 	}
 	else
 	{
@@ -327,9 +309,15 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		else
 		{
 			std::ostringstream NoticeStream;
-			if (hosting)
+			if (hosting && !settings.dojo.Receiving)
 			{
 				NoticeStream << "Hosting game on port " << host_port;
+				gui_display_notification(NoticeStream.str().data(), 9000);
+				host_status = 3;// Hosting, Playing
+			}
+			else if (settings.dojo.Receiving)
+			{
+				NoticeStream << "Listening to game stream on port " << settings.dojo.SpectatorPort;
 				gui_display_notification(NoticeStream.str().data(), 9000);
 				host_status = 3;// Hosting, Playing
 			}
@@ -342,7 +330,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	while (isPaused & !disconnect_toggle);
+	while (isPaused && !disconnect_toggle);
 
 	// advance game state
 	if (port == 0)
@@ -429,7 +417,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 		AppendToReplayFile(this_frame);
 
-	if (transmitter.isStarted)
+	if (transmitter_started)
 		dojo.transmission_frames.push_back(this_frame);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -467,22 +455,19 @@ void DojoSession::ClientReceiveAction(const char* received_data)
 // continuously called on by client thread
 void DojoSession::ClientLoopAction()
 {
-	u32 current_port = InputPort;
-	u32 current_frame = FrameNumber;
-
-	if (last_consecutive_common_frame < (current_frame))
+	if (last_consecutive_common_frame < dojo.FrameNumber)
 		pause();
 
-	if (last_consecutive_common_frame == current_frame)
+	if (last_consecutive_common_frame == dojo.FrameNumber)
 		resume();
 }
 
 std::string currentISO8601TimeUTC() {
-  auto now = std::chrono::system_clock::now();
-  auto itt = std::chrono::system_clock::to_time_t(now);
-  std::ostringstream ss;
-  ss << std::put_time(gmtime(&itt), "%FT%TZ");
-  return ss.str();
+	auto now = std::chrono::system_clock::now();
+	auto itt = std::chrono::system_clock::to_time_t(now);
+	std::ostringstream ss;
+	ss << std::put_time(gmtime(&itt), "%FT%TZ");
+	return ss.str();
 }
 
 std::string DojoSession::CreateReplayFile()
@@ -551,16 +536,47 @@ void DojoSession::LoadReplayFile(std::string path)
 
 void DojoSession::receiver_thread()
 {
-    try
-    {
+	try
+	{
 		asio::io_context io_context;
 		async_tcp_server s(io_context, atoi(settings.dojo.SpectatorPort.data()));
 		io_context.run();
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Exception: " << e.what() << "\n";
-    }
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Exception: " << e.what() << "\n";
+	}
+}
+
+void DojoSession::transmitter_thread()
+{
+	try
+	{
+		asio::io_context io_context;
+
+		tcp::resolver resolver(io_context);
+		tcp::resolver::results_type endpoints =
+			resolver.resolve(settings.dojo.SpectatorIP, settings.dojo.SpectatorPort);
+
+		tcp::socket socket(io_context);
+		asio::connect(socket, endpoints);
+
+		transmitter_started = true;
+
+		for (;;)
+		{
+			bool transmission_in_progress = !dojo.transmission_frames.empty();
+			if (transmission_in_progress)
+			{
+				asio::write(socket, asio::buffer(transmission_frames.front().data(), FRAME_SIZE));
+				transmission_frames.pop_front();
+			}
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Exception: " << e.what() << "\n";
+	}
 }
 
 DojoSession dojo;

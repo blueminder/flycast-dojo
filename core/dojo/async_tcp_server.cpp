@@ -15,29 +15,30 @@ void receiver_session::start()
 void receiver_session::do_read()
 {
     auto self(shared_from_this());
-    socket_.async_read_some(asio::buffer(data_, max_length),
+    socket_.async_read_some(asio::buffer(data_, FRAME_SIZE),
         [this, self](std::error_code ec, std::size_t length)
         {
             if (!ec)
             {
                 if (length == 0)
                 {
-                    //INFO_LOG(NETWORK, "client disconnected");
-                    std::cout << "client disconnected";
+                    INFO_LOG(NETWORK, "Client disconnected");
                     socket_.close();
                 }
 
-                if (length >= 12)
+                if (length == FRAME_SIZE)
                 {
-
-                    std::string frame = std::string(data_, max_length);
-                    //INFO_LOG(NETWORK, "SPECTATED %s", frame_s.data());
-                    INFO_LOG(NETWORK, "FRAME %d", (int)dojo.FrameNumber);
+                    std::string frame = std::string(data_, FRAME_SIZE);
                     dojo.AddNetFrame(frame.data());
                     dojo.PrintFrameData("ADDED", (u8*)frame.data());
+
+                    // buffer stream past naomi boot sequence
+		            if (dojo.net_inputs[1].size() == 600)
+			            dojo.resume();
                 }
 
-                do_write(length);
+                do_read();
+
             }
         });
 }
@@ -50,7 +51,6 @@ void receiver_session::do_write(std::size_t length)
         {
             if (!ec)
             {
-
                 INFO_LOG(NETWORK, "Message Sent: %s", data_);
                 do_read();
             }

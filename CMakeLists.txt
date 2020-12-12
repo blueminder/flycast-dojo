@@ -693,8 +693,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/dojo/filesystem.hpp
-        core/dojo/async_tcp_client.hpp
-        core/dojo/async_tcp_client.cpp
         core/dojo/async_tcp_server.hpp
         core/dojo/async_tcp_server.cpp
         core/dojo/DojoGui.cpp
@@ -704,9 +702,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/dojo/DojoSession.cpp
         core/dojo/DojoSession.hpp
         core/dojo/EmulatorHooks.cpp
-        core/dojo/TCPClient.cpp
-        core/dojo/TCPServer.cpp
-        core/dojo/TCP.hpp
         core/dojo/UDPClient.cpp
         core/dojo/UDP.hpp)
 

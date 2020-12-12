@@ -18,14 +18,12 @@
 #include <rend/gui.h>
 
 #include "types.h"
-#include "dojo/TCP.hpp"
 #include "dojo/UDP.hpp"
 #include "dojo/DojoLobby.hpp"
 
 #include "emulator.h"
 
 #include "asio.hpp"
-#include "async_tcp_client.hpp"
 #include "async_tcp_server.hpp"
 //#include "async_udp_server.hpp"
 
@@ -58,9 +56,12 @@ private:
 	bool started;
 
 	void receiver_thread();
+	void transmitter_thread();
 
 public:
 	DojoSession();
+
+	asio::ip::tcp::socket* tcp_client_socket_;
 
 	bool enabled;
 	int local_port;
@@ -124,8 +125,9 @@ public:
 
 	UDPClient client;
 	DojoLobby presence;
-	TCPClient transmitter;
+	//TCPClient transmitter;
 	//TCPServer receiver;
+	bool transmitter_started;
 	bool receiver_started;
 
 	bool lobby_active;
@@ -174,9 +176,9 @@ public:
 	bool disconnect_toggle;
 	
 	std::deque<std::string> transmission_frames;
+	std::atomic<bool> write_out;
 protected:
-        asio::io_context io_context;
-
+    asio::io_context io_context;
 
 };
 
