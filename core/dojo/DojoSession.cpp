@@ -258,8 +258,8 @@ int DojoSession::StartDojoSession()
 			//std::thread t4(&TCPClient::TransmissionThread, std::ref(dojo.transmitter));
 			//t4.detach();
 
-			std::thread t4(&DojoSession::tcp_server_thread, std::ref(dojo));
-			t4.detach();
+			//std::thread t4(&DojoSession::tcp_server_thread, std::ref(dojo));
+			//t4.detach();
 
 		}
 
@@ -272,7 +272,7 @@ int DojoSession::StartDojoSession()
 		//std::thread t5(&TCPServer::ReceiverThread, std::ref(dojo.receiver));
 		//t5.detach();
 
-		std::thread t5(&DojoSession::tcp_server_thread, std::ref(dojo));
+		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
 		t5.detach();
 
 		resume();
@@ -549,7 +549,7 @@ void DojoSession::LoadReplayFile(std::string path)
 	delete[] buffer;
 }
 
-void DojoSession::tcp_server_thread()
+void DojoSession::receiver_thread()
 {
     try
     {

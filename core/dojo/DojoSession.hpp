@@ -25,8 +25,9 @@
 #include "emulator.h"
 
 #include "asio.hpp"
+#include "async_tcp_client.hpp"
 #include "async_tcp_server.hpp"
-#include "async_udp_server.hpp"
+//#include "async_udp_server.hpp"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -56,8 +57,7 @@ private:
 
 	bool started;
 
-	void tcp_server_thread();
-	void tcp_client_thread();
+	void receiver_thread();
 
 public:
 	DojoSession();
