@@ -24,8 +24,7 @@
 #include "emulator.h"
 
 #include "asio.hpp"
-#include "async_tcp_server.hpp"
-//#include "async_udp_server.hpp"
+#include "AsyncTcpServer.hpp"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -125,8 +124,7 @@ public:
 
 	UDPClient client;
 	DojoLobby presence;
-	//TCPClient transmitter;
-	//TCPServer receiver;
+
 	bool transmitter_started;
 	bool receiver_started;
 
@@ -177,8 +175,6 @@ public:
 	
 	std::deque<std::string> transmission_frames;
 	std::atomic<bool> write_out;
-protected:
-    asio::io_context io_context;
 
 };
 

@@ -539,7 +539,7 @@ void DojoSession::receiver_thread()
 	try
 	{
 		asio::io_context io_context;
-		async_tcp_server s(io_context, atoi(settings.dojo.SpectatorPort.data()));
+		AsyncTcpServer s(io_context, atoi(settings.dojo.SpectatorPort.data()));
 		io_context.run();
 	}
 	catch (std::exception& e)
