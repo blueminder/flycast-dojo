@@ -189,7 +189,8 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
             {
                 active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
                 
-                int avg_ping_ms = dojo.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
+                //int avg_ping_ms = dojo.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
+                int avg_ping_ms = 0;
                 active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
             }
             else

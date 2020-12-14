@@ -344,7 +344,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			bool is_selected;
 			int beacon_ping = dojo.presence.active_beacon_ping[beacon_id];
 			std::string beacon_ping_str = "";
-			//if (beacon_ping > 0)
+			if (beacon_ping > 0)
 				beacon_ping_str = std::to_string(beacon_ping);
 
 			if (beacon_status == "Hosting, Waiting" &&
