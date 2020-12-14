@@ -692,7 +692,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_platform.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/dojo/filesystem.hpp
+        core/dojo/deps/filesystem.hpp
         core/dojo/AsyncTcpServer.hpp
         core/dojo/AsyncTcpServer.cpp
         core/dojo/DojoGui.cpp
