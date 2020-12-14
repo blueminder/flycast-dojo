@@ -6,7 +6,7 @@ void DojoLobby::BeaconThread()
 	{
 		asio::io_context io_context;
 		Beacon b(io_context,
-			asio::ip::make_address("224.0.0.1"));
+			asio::ip::make_address("239.255.200.1"));
 		io_context.run();
 	}
 	catch (...) {}
@@ -19,7 +19,7 @@ void DojoLobby::ListenerThread()
 		asio::io_context io_context;
 		Listener l(io_context,
 			asio::ip::make_address("0.0.0.0"),
-			asio::ip::make_address("224.0.0.1"));
+			asio::ip::make_address("239.255.200.1"));
 
 		dojo.lobby_active = true;
 
@@ -60,7 +60,7 @@ std::string DojoLobby::ConstructMsg()
 	}
 
 	std::stringstream message_ss("");
-	message_ss << settings.dojo.ServerPort << "__" << status << "__" << current_game << "__" << settings.dojo.PlayerName;
+	message_ss << "2001_" << settings.dojo.ServerPort << "__" << status << "__" << current_game << "__" << settings.dojo.PlayerName;
 	if (dojo.host_status == 2 || dojo.host_status == 3)
 	{
 		message_ss << " vs " << settings.dojo.OpponentName << "__";
@@ -77,6 +77,11 @@ std::string DojoLobby::ConstructMsg()
 
 void DojoLobby::ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length)
 {
+	if (memcmp(msgbuf, "2001_", strlen("2001_")) == 0)
+	{
+		// omit multicast packet unique identifier
+		msgbuf = msgbuf + strlen("2001_");
+
 		std::string ip_str = beacon_endpoint.address().to_string();
 		std::string port_str = std::to_string(beacon_endpoint.port());
 
@@ -108,6 +113,8 @@ void DojoLobby::ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* ms
 
 			last_seen[beacon_id] = dojo.unix_timestamp();
 		}
+
+	}
 }
 
 Beacon::Beacon(asio::io_context& io_context,
