@@ -1,60 +1,47 @@
 #pragma once
 
-#pragma comment(lib, "Ws2_32.lib")
-#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
-
-#ifdef _WIN32
-    #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
-    #include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
-    #include <Windows.h>
-#else
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <time.h>
-#endif
-
-#define SOCKET_ERROR -1
-
 #include <map>
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 #include "stdclass.h"
-
-#define MSGBUFSIZE 256
 
 class DojoLobby
 {
 public:
-    DojoLobby();
-    void BeaconThread();
-    void ListenerThread();
+	DojoLobby() {};
 
-    std::map<std::string, std::string> active_beacons;
-    std::map<std::string, int> active_beacon_ping;
-    std::map<std::string, long> last_seen;
+	void BeaconThread();
+	void ListenerThread();
+	void ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length);
 
-    void ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length);
+	std::string ConstructMsg();
+
+	std::map<std::string, std::string> active_beacons;
+	std::map<std::string, int> active_beacon_ping;
+	std::map<std::string, long> last_seen;
+};
+
+constexpr short multicast_port = 7776;
+
+class Beacon
+{
+public:
+	Beacon(asio::io_context& io_context,
+		const asio::ip::address& multicast_address);
 
 private:
-    int beacon(char* group, int port, int delay_secs);
-    //int listener(char* group, int port);
+	void do_send();
+	void do_timeout();
 
-    int listener_sock;
-    int beacon_sock;
-
-    int Init();
-
-    sockaddr_in SetDestination(char* group, short port);
-
-    int BeaconLoop(sockaddr_in addr, int delay_secs);
-    std::string ConstructMsg();
-
-    void CloseSocket(int sock);
+private:
+	asio::ip::udp::endpoint endpoint_;
+	asio::ip::udp::socket socket_;
+	asio::steady_timer timer_;
+	int message_count_;
+	std::string message_;
 };
 
 class Listener
@@ -65,7 +52,7 @@ public:
 		const asio::ip::address& multicast_address);
 
 private:
-    void do_receive();
+	void do_receive();
 
 	asio::ip::udp::socket socket_;
 	asio::ip::udp::endpoint beacon_endpoint_;
