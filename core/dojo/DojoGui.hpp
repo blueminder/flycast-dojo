@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dojo/DojoSession.hpp"
-#include "dojo/filesystem.hpp"
+#include "dojo/deps/filesystem.hpp"
 
 #include <mutex>
 #include "rend/gui.h"
