@@ -1,14 +1,12 @@
 #include "DojoSession.hpp"
 
+DojoLobby::DojoLobby()
+{
+}
+
 void DojoLobby::BeaconThread()
 {
     beacon("224.0.0.1", 7776, 5);
-}
-
-void DojoLobby::ListenerThread()
-{
-    dojo.lobby_active = true;
-    listener("224.0.0.1", 7776);
 }
 
 int DojoLobby::Init()
@@ -150,34 +148,23 @@ char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
-int DojoLobby::ListenerLoop(sockaddr_in addr)
+int DojoLobby::beacon(char* group, int port, int delay_secs)
 {
-    while (dojo.host_status == 0 && !dc_is_running())
-    {
-        char msgbuf[MSGBUFSIZE];
-        char ip_str[128];
+    beacon_sock = Init();
+    sockaddr_in addr = SetDestination(group, port);
+    BeaconLoop(addr, delay_secs);
+    CloseSocket(beacon_sock);
 
-        int addrlen = sizeof(addr);
-        int nbytes = recvfrom(
-            listener_sock,
-            msgbuf,
-            MSGBUFSIZE,
-            0,
-            (struct sockaddr *) &addr,
-            (socklen_t *)&addrlen
-        );
-        if (nbytes < 0) {
-            perror("recvfrom");
-            return 1;
-        }
-        msgbuf[nbytes] = '\0';
-        
-        get_ip_str((struct sockaddr *) &addr, ip_str, 128);
-        INFO_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
-        INFO_LOG(NETWORK, msgbuf);
-        
+    return 0;
+}
+
+void DojoLobby::ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length)
+{
+        std::string ip_str = beacon_endpoint.address().to_string();
+        std::string port_str = std::to_string(beacon_endpoint.port());
+
         std::stringstream bi;
-        bi << ip_str << ":" << std::to_string(addr.sin_port);
+        bi << ip_str << ":" << port_str;
         std::string beacon_id = bi.str();
         
         std::stringstream bm;
@@ -204,60 +191,62 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
             
             last_seen[beacon_id] = dojo.unix_timestamp();
         }
-    }
-
-    return 0;
 }
 
-int DojoLobby::beacon(char* group, int port, int delay_secs)
+Listener::Listener(asio::io_context& io_context,
+		const asio::ip::address& listen_address,
+		const asio::ip::address& multicast_address)
+	: socket_(io_context)
 {
-    beacon_sock = Init();
-    sockaddr_in addr = SetDestination(group, port);
-    BeaconLoop(addr, delay_secs);
-    CloseSocket(beacon_sock);
+	// create socket so that multiple may be bound to the same address
+	asio::ip::udp::endpoint listen_endpoint(
+		listen_address, 7776);
+	socket_.open(listen_endpoint.protocol());
+	socket_.set_option(asio::ip::udp::socket::reuse_address(true));
+	socket_.bind(listen_endpoint);
 
-    return 0;
+	// join multicast group
+	socket_.set_option(
+		asio::ip::multicast::join_group(multicast_address));
+
+	do_receive();
 }
 
-int DojoLobby::listener(char* group, int port)
+void Listener::do_receive()
 {
-    listener_sock = Init();
+	if (dojo.host_status != 0 || dc_is_running())
+		return;
 
-    // allow multiple sockets to use the same port number
-    u_int yes = 1;
-    if (
-        setsockopt(
-            listener_sock, SOL_SOCKET, SO_REUSEADDR, (char*) &yes, sizeof(yes)
-        ) < 0
-    ){
-       perror("Reusing ADDR failed");
-       return 1;
-    }
+	socket_.async_receive_from(
+		asio::buffer(data_), beacon_endpoint_,
+		[this](std::error_code ec, std::size_t length)
+		{
+			if (!ec)
+			{
+				//std::cout.write(data_.data(), length);
+				//std::cout << std::endl;
 
-    sockaddr_in addr = SetDestination(0, port);
+				dojo.presence.ListenerAction(beacon_endpoint_, data_.data(), length);
 
-    // bind to receive address
-    if (bind(listener_sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
-        perror("bind");
-        return 1;
-    }
-
-    // use setsockopt() to request that the kernel join a multicast group
-    struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(group);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (
-        setsockopt(
-            listener_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq)
-        ) < 0
-    ){
-        perror("setsockopt");
-        return 1;
-    }
-
-    ListenerLoop(addr);
-    CloseSocket(listener_sock);
-
-    return 0;
+				do_receive();
+			}
+		});
 }
+
+void DojoLobby::ListenerThread()
+{
+    try
+    {
+        asio::io_context io_context;
+        Listener l(io_context,
+            asio::ip::make_address("0.0.0.0"),
+            asio::ip::make_address("224.0.0.1"));
+
+        dojo.lobby_active = true;
+
+        io_context.run();
+    }
+    catch (...) {}
+}
+
 

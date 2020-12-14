@@ -18,13 +18,12 @@
 #include <rend/gui.h>
 
 #include "types.h"
-#include "dojo/UDP.hpp"
-#include "dojo/DojoLobby.hpp"
-
 #include "emulator.h"
 
 #include "asio.hpp"
-#include "AsyncTcpServer.hpp"
+#include "dojo/UDP.hpp"
+#include "dojo/DojoLobby.hpp"
+#include "dojo/AsyncTcpServer.hpp"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6

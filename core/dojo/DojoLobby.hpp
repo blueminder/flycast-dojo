@@ -30,6 +30,7 @@
 class DojoLobby
 {
 public:
+    DojoLobby();
     void BeaconThread();
     void ListenerThread();
 
@@ -37,9 +38,11 @@ public:
     std::map<std::string, int> active_beacon_ping;
     std::map<std::string, long> last_seen;
 
+    void ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length);
+
 private:
     int beacon(char* group, int port, int delay_secs);
-    int listener(char* group, int port);
+    //int listener(char* group, int port);
 
     int listener_sock;
     int beacon_sock;
@@ -51,6 +54,21 @@ private:
     int BeaconLoop(sockaddr_in addr, int delay_secs);
     std::string ConstructMsg();
 
-    int ListenerLoop(sockaddr_in addr);
     void CloseSocket(int sock);
 };
+
+class Listener
+{
+public:
+	Listener(asio::io_context& io_context,
+		const asio::ip::address& listen_address,
+		const asio::ip::address& multicast_address);
+
+private:
+    void do_receive();
+
+	asio::ip::udp::socket socket_;
+	asio::ip::udp::endpoint beacon_endpoint_;
+	std::array<char, 1024> data_;
+};
+
