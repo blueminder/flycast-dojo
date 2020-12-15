@@ -22,9 +22,10 @@ public:
 	std::map<std::string, std::string> active_beacons;
 	std::map<std::string, uint64_t> active_beacon_ping;
 	std::map<std::string, uint64_t> last_seen;
+
+	short multicast_port;
 };
 
-constexpr short multicast_port = 7776;
 
 class Beacon
 {

@@ -562,6 +562,22 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
+
+				char LobbyMulticastAddress[256];
+
+				strcpy(LobbyMulticastAddress, settings.dojo.LobbyMulticastAddress.c_str());
+				ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Multicast IP Address for Lobby to Target");
+				settings.dojo.LobbyMulticastAddress = LobbyMulticastAddress;
+
+				char LobbyMulticastPort[256];
+
+				strcpy(LobbyMulticastPort, settings.dojo.LobbyMulticastPort.c_str());
+				ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Multicast Port for Lobby to Target");
+				settings.dojo.LobbyMulticastPort = LobbyMulticastPort;
 			}
 		}
 		ImGui::PopStyleVar();

@@ -517,6 +517,8 @@ struct settings_t
 		bool TestGame;
 		std::string SpectatorIP;
 		std::string SpectatorPort;
+		std::string LobbyMulticastAddress;
+		std::string LobbyMulticastPort;
 	} dojo;
 };
 

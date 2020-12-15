@@ -806,19 +806,21 @@ void InitSettings()
 	settings.dojo.Transmitting = false;
 	settings.dojo.Receiving = false;
 	settings.dojo.ServerIP = "127.0.0.1";
-	settings.dojo.ServerPort = "7777";
+	settings.dojo.ServerPort = "6000";
 	settings.dojo.Delay = 1;
 	settings.dojo.Debug = 8;
 	settings.dojo.ReplayFilename = "";
-	settings.dojo.PacketsPerFrame = 2;
+	settings.dojo.PacketsPerFrame = 3;
 	settings.dojo.EnableBackfill = true;
-	settings.dojo.NumBackFrames = 3;
+	settings.dojo.NumBackFrames = 4;
 	settings.dojo.EnableLobby = false;
 	settings.dojo.PlayerName = "Player";
 	settings.dojo.OpponentName = "Opponent";
 	settings.dojo.TestGame = false;
 	settings.dojo.SpectatorIP = "127.0.0.1";
-	settings.dojo.SpectatorPort = "54000";
+	settings.dojo.SpectatorPort = "7000";
+	settings.dojo.LobbyMulticastAddress = "239.255.200.255";
+	settings.dojo.LobbyMulticastPort = "7776";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -948,6 +950,8 @@ void LoadSettings(bool game_specific)
 	settings.dojo.TestGame = cfgLoadBool("dojo", "TestGame", settings.dojo.TestGame);
 	settings.dojo.SpectatorIP = cfgLoadStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
 	settings.dojo.SpectatorPort = cfgLoadStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
+	settings.dojo.LobbyMulticastAddress = cfgLoadStr("dojo", "LobbyMulticastAddress", settings.dojo.LobbyMulticastAddress.c_str());
+	settings.dojo.LobbyMulticastPort = cfgLoadStr("dojo", "LobbyMulticastPort", settings.dojo.LobbyMulticastPort.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1130,6 +1134,8 @@ void SaveSettings()
 	cfgSaveBool("dojo", "TestGame", settings.dojo.TestGame);
 	cfgSaveStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
 	cfgSaveStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
+	cfgSaveStr("dojo", "LobbyMulticastAddress", settings.dojo.LobbyMulticastAddress.c_str());
+	cfgSaveStr("dojo", "LobbyMulticastPort", settings.dojo.LobbyMulticastPort.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

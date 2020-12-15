@@ -4,9 +4,11 @@ void DojoLobby::BeaconThread()
 {
 	try
 	{
+		dojo.presence.multicast_port = std::stoul(settings.dojo.LobbyMulticastPort);
+
 		asio::io_context io_context;
 		Beacon b(io_context,
-			asio::ip::make_address("239.255.200.1"));
+			asio::ip::make_address(settings.dojo.LobbyMulticastAddress));
 		io_context.run();
 	}
 	catch (...) {}
@@ -16,10 +18,12 @@ void DojoLobby::ListenerThread()
 {
 	try
 	{
+		dojo.presence.multicast_port = std::stoul(settings.dojo.LobbyMulticastPort);
+
 		asio::io_context io_context;
 		Listener l(io_context,
 			asio::ip::make_address("0.0.0.0"),
-			asio::ip::make_address("239.255.200.1"));
+			asio::ip::make_address(settings.dojo.LobbyMulticastAddress));
 
 		dojo.lobby_active = true;
 
@@ -118,7 +122,7 @@ void DojoLobby::ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* ms
 
 Beacon::Beacon(asio::io_context& io_context,
 		const asio::ip::address& multicast_address)
-	: endpoint_(multicast_address, multicast_port),
+	: endpoint_(multicast_address, dojo.presence.multicast_port),
 		socket_(io_context, endpoint_.protocol()),
 		timer_(io_context)
 {
@@ -156,7 +160,7 @@ Listener::Listener(asio::io_context& io_context,
 {
 	// create socket so that multiple may be bound to the same address
 	asio::ip::udp::endpoint listen_endpoint(
-		listen_address, multicast_port);
+		listen_address, dojo.presence.multicast_port);
 	socket_.open(listen_endpoint.protocol());
 	socket_.set_option(asio::ip::udp::socket::reuse_address(true));
 	socket_.bind(listen_endpoint);
