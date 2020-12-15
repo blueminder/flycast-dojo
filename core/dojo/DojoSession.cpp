@@ -51,6 +51,8 @@ DojoSession::DojoSession()
 
 	receiver_started = false;
 	transmitter_started = false;
+
+	frame_timeout = 0;
 }
 
 int DojoSession::DetectDelay(const char* ipAddr)
@@ -401,6 +403,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 			if (!this_frame.empty())
 			{
+				frame_timeout = 0;
+
 				if (settings.dojo.Debug == DEBUG_APPLY ||
 					settings.dojo.Debug == DEBUG_APPLY_BACKFILL ||
 					settings.dojo.Debug == DEBUG_APPLY_BACKFILL_RECV ||
@@ -415,6 +419,12 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			// fill audio stream with 0 to mute repeated frame audio
 			for (int i = 0; i < 512; i++)
 				WriteSample(0, 0);
+
+			frame_timeout++;
+
+			// give ~10 seconds for connection to continue
+			if (frame_timeout > 600)
+				disconnect_toggle = true;
 		};
 	}
 

@@ -175,6 +175,8 @@ public:
 	std::deque<std::string> transmission_frames;
 	std::atomic<bool> write_out;
 
+	int frame_timeout;
+
 };
 
 extern DojoSession dojo;
