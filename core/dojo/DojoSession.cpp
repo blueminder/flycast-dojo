@@ -1,4 +1,5 @@
 #include "DojoSession.hpp"
+#include <oslib/oslib.h>
 
 DojoSession::DojoSession()
 {
@@ -409,7 +410,12 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 				}
 			}
 		}
-		catch (const std::out_of_range& oor) {};
+		catch (const std::out_of_range& oor)
+		{
+			// fill audio stream with 0 to mute repeated frame audio
+			for (int i = 0; i < 512; i++)
+				WriteSample(0, 0);
+		};
 	}
 
 	std::string to_apply(this_frame);
