@@ -22,8 +22,6 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 
 	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	dojo.host_status = 1;
-
 	ImGui::Text("Waiting for opponent to connect...");
 
 	if (!dojo.OpponentIP.empty())

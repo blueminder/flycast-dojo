@@ -1874,7 +1874,10 @@ static void gui_display_loadscreen()
 				else
 				{
 					if (settings.dojo.ActAsServer)
+					{
+						dojo.host_status = 1;
 						gui_open_host_wait();
+					}
 					else
 						gui_open_guest_wait();
 				}
