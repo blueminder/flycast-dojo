@@ -125,7 +125,10 @@ public:
 	DojoLobby presence;
 
 	bool transmitter_started;
+	bool transmitter_ended;
+
 	bool receiver_started;
+	bool receiver_ended;
 
 	bool lobby_active;
 
@@ -176,7 +179,7 @@ public:
 	std::atomic<bool> write_out;
 
 	int frame_timeout;
-
+	u32 last_received_frame;
 };
 
 extern DojoSession dojo;

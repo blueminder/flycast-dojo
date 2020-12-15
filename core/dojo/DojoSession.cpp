@@ -50,9 +50,13 @@ DojoSession::DojoSession()
 	disconnect_toggle = false;
 
 	receiver_started = false;
+	receiver_ended = false;
+
 	transmitter_started = false;
+	transmitter_ended = false;
 
 	frame_timeout = 0;
+	last_received_frame = 0;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -321,7 +325,6 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			{
 				NoticeStream << "Listening to game stream on port " << settings.dojo.SpectatorPort;
 				gui_display_notification(NoticeStream.str().data(), 9000);
-				host_status = 3;// Hosting, Playing
 			}
 			else
 			{
@@ -332,12 +335,26 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
+	if (settings.dojo.Receiving &&
+		receiver_ended &&
+		disconnect_toggle)
+	{
+		gui_state = EndSpectate;
+	}
+
 	while (isPaused && !disconnect_toggle);
 
 	// advance game state
 	if (port == 0)
 	{
 		FrameNumber++;
+
+		if (settings.dojo.Receiving &&
+			receiver_ended &&
+			FrameNumber > last_received_frame)
+		{
+			disconnect_toggle = true;
+		}
 
 		if (!spectating && !dojo.PlayMatch)
 		{
@@ -367,6 +384,9 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
+		if (settings.dojo.Transmitting)
+			transmitter_ended = true;
+
 		gui_state = EndReplay;
 	}
 /*
@@ -406,6 +426,13 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			// give ~10 seconds for connection to continue
 			if (frame_timeout > 600)
 				disconnect_toggle = true;
+
+			if (settings.dojo.Receiving &&
+				FrameNumber > last_received_frame)
+			{
+				pause();
+			}
+
 		};
 	}
 
@@ -558,15 +585,22 @@ void DojoSession::transmitter_thread()
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
 
+		socket.set_option(tcp::no_delay(true));
+
 		transmitter_started = true;
 
 		for (;;)
 		{
-			bool transmission_in_progress = !dojo.transmission_frames.empty();
+			bool transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
 			if (transmission_in_progress)
 			{
 				asio::write(socket, asio::buffer(transmission_frames.front().data(), FRAME_SIZE));
 				transmission_frames.pop_front();
+			}
+
+			if (transmitter_ended)
+			{
+				asio::write(socket, asio::buffer("000000000000", FRAME_SIZE));
 			}
 		}
 	}

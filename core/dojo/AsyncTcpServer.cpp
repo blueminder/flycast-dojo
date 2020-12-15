@@ -15,6 +15,7 @@ void receiver_session::start()
 void receiver_session::do_read()
 {
 	auto self(shared_from_this());
+
 	socket_.async_read_some(asio::buffer(data_, FRAME_SIZE),
 		[this, self](std::error_code ec, std::size_t length)
 		{
@@ -29,12 +30,23 @@ void receiver_session::do_read()
 				if (length == FRAME_SIZE)
 				{
 					std::string frame = std::string(data_, FRAME_SIZE);
-					dojo.AddNetFrame(frame.data());
-					dojo.PrintFrameData("ADDED", (u8*)frame.data());
+					//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+					if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+					{
+						dojo.receiver_ended = true;
+					}
+					else
+					{
+						dojo.AddNetFrame(frame.data());
+						dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-					// buffer stream past naomi boot sequence
-					if (dojo.net_inputs[1].size() == 600)
-						dojo.resume();
+						dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+						// buffer stream past naomi boot sequence
+						if (dojo.net_inputs[1].size() == 600 &&
+							dojo.FrameNumber < dojo.last_received_frame)
+							dojo.resume();
+					}
 				}
 
 				do_read();
