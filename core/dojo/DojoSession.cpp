@@ -55,21 +55,20 @@ DojoSession::DojoSession()
 	frame_timeout = 0;
 }
 
-int DojoSession::DetectDelay(const char* ipAddr)
+uint64_t DojoSession::DetectDelay(const char* ipAddr)
 {
-	int avg_ping_ms = client.GetOpponentAvgPing();
+	uint64_t avg_ping_ms = client.GetOpponentAvgPing();
 
-	int delay = (int)ceil((avg_ping_ms * 1.0f) / 32.0f);
+	int delay = (int)ceil(((int)avg_ping_ms * 1.0f) / 32.0f);
 	settings.dojo.Delay = delay > 1 ? delay : 1;
 
 	return avg_ping_ms;
 }
 
-long DojoSession::unix_timestamp()
+uint64_t DojoSession::unix_timestamp()
 {
-	time_t t = time(0);
-	long int now = static_cast<long int> (t);
-	return now;
+	using namespace std::chrono;
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); 
 }
 
 int DojoSession::PayloadSize()
@@ -376,24 +375,6 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		gui_state = EndSpectate;
 	}
-*/
-/*
-	// define max ms to wait for new packets before close
-	int max_timeout = 10000;
-	int current_timeout = 0;
-
-	DWORD start = GetTickCount64();
-	while (net_input_keys[port].count(FrameNumber - 1) == 0)
-	{
-		if ((client.disconnect_toggle || current_timeout >= max_timeout) &&
-			gui_state != Commands && !settings.dojo.PlayMatch)
-			dc_exit();
-
-		DWORD end = GetTickCount64();
-		current_timeout = (end - start);
-	}
-
-	current_timeout = 0;
 */
 
 	while (this_frame.empty() && !disconnect_toggle)

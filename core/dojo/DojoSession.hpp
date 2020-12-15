@@ -162,8 +162,8 @@ public:
 
 	std::string replay_filename;
 
-	static long unix_timestamp();
-	int DetectDelay(const char* ipAddr);
+	uint64_t unix_timestamp();
+	uint64_t DetectDelay(const char* ipAddr);
 
 	int host_status;
 

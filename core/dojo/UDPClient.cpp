@@ -46,6 +46,25 @@ unsigned long mix(unsigned long a, unsigned long b, unsigned long c)
     return c;
 }
 
+std::string UDPClient::random_hex_string(int length, int seed)
+{
+	srand(seed);
+
+	char hex_out[1024] = { 0 };
+	char hex_chars[] =
+		{'0','1','2','3','4','5','6','7',
+		 '8','9','A','B','C','D','E','F'};
+
+	for (int i = 0; i < length; i++)
+	{
+		hex_out[i] = hex_chars[rand() % 16];
+	}
+
+	std::string x_out(hex_out, strlen(hex_out));
+
+	return x_out;
+}
+
 // udp ping, seeds with random number
 int UDPClient::PingAddress(sockaddr_in target_addr, int add_to_seed)
 {
@@ -56,15 +75,14 @@ int UDPClient::PingAddress(sockaddr_in target_addr, int add_to_seed)
 
 	if (ping_send_ts.count(rnd_num_cmp) == 0)
 	{
-
 		std::stringstream ping_ss("");
-		ping_ss << "PING " << rnd_num_cmp;
+		ping_ss << "PING " << rnd_num_cmp << " " << random_hex_string(32, seed);
 		std::string to_send_ping = ping_ss.str();
 
 		sendto(local_socket, (const char*)to_send_ping.data(), strlen(to_send_ping.data()), 0, (const struct sockaddr*)&target_addr, sizeof(target_addr));
 		INFO_LOG(NETWORK, "Sent %s", to_send_ping.data());
 
-		long current_timestamp = dojo.unix_timestamp();
+		uint64_t current_timestamp = dojo.unix_timestamp();
 		ping_send_ts.emplace(rnd_num_cmp, current_timestamp);
 	}
 
@@ -82,7 +100,7 @@ int UDPClient::PingAddress(const char * ip_addr, int port, int add_to_seed)
 	return PingAddress(target_addr, add_to_seed);
 }
 
-int UDPClient::GetAvgPing(const char * ip_addr, int port)
+uint64_t UDPClient::GetAvgPing(const char * ip_addr, int port)
 {
 	for (int i = 0; i < 5; i++)
 	{
@@ -92,7 +110,7 @@ int UDPClient::GetAvgPing(const char * ip_addr, int port)
 	return avg_ping_ms;
 }
 
-int UDPClient::GetOpponentAvgPing()
+uint64_t UDPClient::GetOpponentAvgPing()
 {
 	for (int i = 0; i < 5; i++)
 	{
@@ -284,12 +302,12 @@ void UDPClient::ClientLoop()
 			if (memcmp("PONG", buffer, 4) == 0)
 			{
 				int rnd_num_cmp = atoi(buffer + 5);
-				long ret_timestamp = dojo.unix_timestamp();
+				uint64_t ret_timestamp = dojo.unix_timestamp();
 				
 				if (ping_send_ts.count(rnd_num_cmp) == 1)
 				{
 
-					long rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
+					uint64_t rtt = ret_timestamp - ping_send_ts[rnd_num_cmp];
 					INFO_LOG(NETWORK, "Received PONG %d, RTT: %d ms", rnd_num_cmp, rtt);
 					
 					ping_rtt.push_back(rtt);

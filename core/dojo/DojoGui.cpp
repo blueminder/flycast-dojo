@@ -27,7 +27,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 	if (!dojo.OpponentIP.empty())
 	{
 		dojo.host_status = 2;
-		//dojo.DetectDelay(dojo.OpponentIP.data());
+		dojo.DetectDelay(dojo.OpponentIP.data());
 
 		gui_state = Closed;
 		gui_open_host_delay(settings_opening);
@@ -182,7 +182,6 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
-	/*
 	if (!dojo.OpponentIP.empty())
 	{
 		if (ImGui::Button("Detect Delay"))
@@ -194,7 +193,6 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 			ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
 		}
 	}
-	*/
 
 	if (ImGui::Button("Start Game"))
 	{
@@ -309,7 +307,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		std::string beacon_id = it->first;
 		std::vector<std::string> beacon_entry;
 
-		if (dojo.presence.last_seen[beacon_id] + 10 > dojo.unix_timestamp())
+		if (dojo.presence.last_seen[beacon_id] + 10000 > dojo.unix_timestamp())
 		{
 			size_t pos = 0;
 			std::string token;

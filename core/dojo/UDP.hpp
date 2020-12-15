@@ -11,9 +11,9 @@ private:
 	int port;
 	bool isLoopStarted;
 
-	std::map<int, long> ping_send_ts;
-	std::vector<long> ping_rtt;
-	int avg_ping_ms;
+	std::map<int, uint64_t> ping_send_ts;
+	std::vector<uint64_t> ping_rtt;
+	uint64_t avg_ping_ms;
 
 	std::atomic<bool> write_out;
 	unsigned char to_send[256];
@@ -41,11 +41,13 @@ public:
 
 	void SetHost(std::string host, int port);
 
+	std::string random_hex_string(int length, int seed);
+
 	int PingAddress(const char * ip_addr, int port, int add_to_seed);
 	int PingAddress(sockaddr_in target_addr, int add_to_seed);
 
-	int GetAvgPing(const char * ip_addr, int port);
-	int GetOpponentAvgPing();
+	uint64_t GetAvgPing(const char * ip_addr, int port);
+	uint64_t GetOpponentAvgPing();
 
 	int SendData(std::string data);
 	void SendMsg(std::string msg, sockaddr_in target);

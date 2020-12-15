@@ -98,9 +98,8 @@ void DojoLobby::ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* ms
 			{
 				active_beacons.insert(std::pair<std::string, std::string>(beacon_id, bm.str()));
 
-				//int avg_ping_ms = dojo.client.GetAvgPing(beacon_id.c_str(), addr.sin_port);
-				int avg_ping_ms = 0;
-				active_beacon_ping.insert(std::pair<std::string, int>(beacon_id, avg_ping_ms));
+				uint64_t avg_ping_ms = dojo.client.GetAvgPing(beacon_id.c_str(), beacon_endpoint.port());
+				active_beacon_ping.insert(std::pair<std::string, uint64_t>(beacon_id, avg_ping_ms));
 			}
 			else
 			{
