@@ -566,6 +566,26 @@ void DojoSession::LoadReplayFile(std::string path)
 	delete[] buffer;
 }
 
+void DojoSession::RequestSpectate(std::string host, std::string port)
+{
+	using asio::ip::udp;
+
+	asio::io_context io_context;
+	udp::socket s(io_context, udp::endpoint(udp::v4(), 0));
+
+	udp::resolver resolver(io_context);
+	udp::resolver::results_type endpoints =
+		resolver.resolve(udp::v4(), host, port);
+
+	std::string request = "SPECTATE " + settings.dojo.SpectatorPort;
+	for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
+	{
+		s.send_to(asio::buffer(request, request.length()), *endpoints.begin());
+	}
+
+	s.close();
+}
+
 void DojoSession::receiver_thread()
 {
 	try

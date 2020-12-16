@@ -182,6 +182,8 @@ public:
 	u32 last_received_frame;
 
 	int remaining_spectators;
+
+	void RequestSpectate(std::string host, std::string port);
 };
 
 extern DojoSession dojo;

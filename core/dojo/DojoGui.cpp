@@ -380,10 +380,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 						settings.dojo.ActAsServer = false;
 						dojo.hosting = false;
 
-						dojo.client.SetHost(beacon_ip, std::stoi(beacon_server_port));
-
-						// set server to send spectate call
-						//dojo.SendSpectate();
+						dojo.RequestSpectate(beacon_ip, beacon_server_port);
 
 						gui_start_game(beacon_game_path);
 					}
