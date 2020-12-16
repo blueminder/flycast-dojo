@@ -37,6 +37,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		dojo.remaining_spectators == 0)
 	{
 		dojo.StartTransmitterThread();
+		ImGui::Text("This match is being spectated.");
 	}
 
 	ImGui::End();
