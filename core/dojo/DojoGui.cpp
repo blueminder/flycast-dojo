@@ -293,7 +293,8 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
 	ImGui::Separator();
 	ImGui::SetColumnWidth(0, ImGui::CalcTextSize("Ping").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
-	ImGui::Text("Ping"); ImGui::NextColumn();
+	//ImGui::Text("Ping"); ImGui::NextColumn();
+	ImGui::Text("    "); ImGui::NextColumn();
 	ImGui::Text("Players"); ImGui::NextColumn();
 	ImGui::Text("Status"); ImGui::NextColumn();
 	ImGui::Text("Game"); ImGui::NextColumn();

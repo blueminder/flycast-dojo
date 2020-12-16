@@ -1643,9 +1643,9 @@ static void gui_display_content()
     else
         ImGui::Text("GAMES");
 
-    if (settings.dojo.Enable && settings.dojo.EnableLobby)
+    if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
-    else if (settings.dojo.Enable && !settings.dojo.EnableLobby)
+    else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
         ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
 
     static ImGuiTextFilter filter;
@@ -1656,7 +1656,7 @@ static void gui_display_content()
     }
     if (gui_state != SelectDisk)
     {
-		if (settings.dojo.Enable && settings.dojo.EnableLobby)
+		if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
