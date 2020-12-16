@@ -73,6 +73,7 @@ std::string DojoLobby::ConstructMsg()
 	{
 		message_ss << "__";
 	}
+	message_ss << dojo.remaining_spectators << "__";
 	std::string message_str = message_ss.str();
 
 	return message_str;

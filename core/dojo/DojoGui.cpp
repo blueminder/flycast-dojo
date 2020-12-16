@@ -326,6 +326,8 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			std::string beacon_game = beacon_entry[3].c_str();
 			std::string beacon_game_path = "";
 
+			std::string beacon_remaining_spectators = beacon_entry[4].c_str();
+
 			std::vector<GameMedia> games = game_list;
 			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
 				[&](GameMedia gm) { return ( gm.name.rfind(beacon_game, 0) == 0 ); });

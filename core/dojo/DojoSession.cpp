@@ -57,6 +57,8 @@ DojoSession::DojoSession()
 
 	frame_timeout = 0;
 	last_received_frame = 0;
+
+	remaining_spectators = 0;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)

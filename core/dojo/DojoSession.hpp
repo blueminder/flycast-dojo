@@ -180,6 +180,8 @@ public:
 
 	int frame_timeout;
 	u32 last_received_frame;
+
+	int remaining_spectators;
 };
 
 extern DojoSession dojo;

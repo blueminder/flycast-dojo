@@ -1876,6 +1876,7 @@ static void gui_display_loadscreen()
 					if (settings.dojo.ActAsServer)
 					{
 						dojo.host_status = 1;
+						dojo.remaining_spectators = settings.dojo.Transmitting ? 1 : 0;
 						gui_open_host_wait();
 					}
 					else
