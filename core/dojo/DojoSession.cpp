@@ -241,6 +241,12 @@ void DojoSession::FillDelay(int fill_delay)
 
 int DojoSession::StartDojoSession()
 {
+	if (receiving)
+		settings.dojo.Receiving = true;
+
+	if (settings.dojo.Receiving)
+		receiving = true;
+
 	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 		replay_filename = CreateReplayFile();
 

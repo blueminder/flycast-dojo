@@ -6,7 +6,7 @@ void DojoSession::LoadNetConfig()
 	hosting = settings.dojo.ActAsServer;
 	spectating = settings.dojo.Spectating;
 	transmitting = settings.dojo.Transmitting;
-	receiving = settings.dojo.Receiving;
+	//receiving = settings.dojo.Receiving;
 
 	if (spectating)
 	{

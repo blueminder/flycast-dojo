@@ -326,7 +326,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			std::string beacon_game = beacon_entry[3].c_str();
 			std::string beacon_game_path = "";
 
-			std::string beacon_remaining_spectators = beacon_entry[4].c_str();
+			std::string beacon_remaining_spectators = beacon_entry[5];
 
 			std::vector<GameMedia> games = game_list;
 			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
@@ -359,6 +359,35 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 				gui_state = Closed;
 				gui_start_game(beacon_game_path);
+			}
+
+			std::string popup_name = "Options " + beacon_id;
+			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 1))
+			{
+				if (beacon_remaining_spectators == "0")
+				{
+					ImGui::MenuItem("Spectate", NULL, false, false);
+				}
+				else
+				{
+					if (ImGui::MenuItem("Spectate"))
+					{
+						dojo.PlayMatch = false;
+
+						settings.dojo.Receiving = true;
+						dojo.receiving = true;
+
+						settings.dojo.ActAsServer = false;
+						dojo.hosting = false;
+
+						// set server to send spectate call
+						//dojo.SendSpectate();
+
+						gui_start_game(beacon_game_path);
+					}
+				}
+
+				ImGui::EndPopup();
 			}
 
 			ImGui::NextColumn();

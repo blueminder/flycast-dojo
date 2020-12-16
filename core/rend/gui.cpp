@@ -1869,7 +1869,7 @@ static void gui_display_loadscreen()
 				else if (settings.dojo.Receiving)
 				{
 					gui_state = Closed;
-					ImGui::Text("LOADING RECEIVED SESSION...");
+					ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
 				}
 				else
 				{

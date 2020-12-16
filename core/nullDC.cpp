@@ -1121,7 +1121,7 @@ void SaveSettings()
 	//cfgSaveInt("dojo", "Delay", settings.dojo.Delay);
 	cfgSaveBool("dojo", "Spectating", settings.dojo.Spectating);
 	//cfgSaveBool("dojo", "Transmitting", settings.dojo.Transmitting);
-	cfgSaveBool("dojo", "Receiving", settings.dojo.Receiving);
+	//cfgSaveBool("dojo", "Receiving", settings.dojo.Receiving);
 	cfgSaveBool("dojo", "RecordMatches", settings.dojo.RecordMatches);
 	//cfgSaveBool("dojo", "PlayMatch", settings.dojo.PlayMatch);
 	cfgSaveStr("dojo", "ReplayFilename", settings.dojo.ReplayFilename.c_str());
