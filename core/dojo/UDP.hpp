@@ -36,6 +36,9 @@ public:
 	UDPClient();
 	void ClientThread();
 
+	void SendSpectate();
+	void SendSpectateOK(sockaddr_in target_addr);
+
 	void StartSession();
 	void EndSession();
 

@@ -131,6 +131,16 @@ void UDPClient::SendMsg(std::string msg, sockaddr_in target)
 	INFO_LOG(NETWORK, "Message Sent: %s", msg.data());
 }
 
+void UDPClient::SendSpectate()
+{
+	SendMsg("SPECTATE " + settings.dojo.SpectatorPort, host_addr);
+}
+
+void UDPClient::SendSpectateOK(sockaddr_in target_addr)
+{
+	SendMsg("OK SPECTATE", target_addr);
+}
+
 void UDPClient::StartSession()
 {
 	std::stringstream start_ss("");
@@ -269,6 +279,18 @@ void UDPClient::ClientLoop()
 		int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 		if (bytes_read)
 		{
+			if (memcmp("SPECTATE", buffer, 8) == 0)
+			{
+				if (dojo.remaining_spectators > 0)
+				{
+					int port = atoi(buffer + 9);
+					settings.dojo.SpectatorIP = std::string(inet_ntoa(sender.sin_addr));
+					settings.dojo.SpectatorPort = std::to_string(port);
+					SendSpectateOK(sender);
+					dojo.remaining_spectators--;
+				}
+			}
+
 			if (memcmp("NAME", buffer, 4) == 0)
 			{
 				settings.dojo.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
@@ -328,7 +350,6 @@ void UDPClient::ClientLoop()
 				}
 				
 			}
-
 			if (memcmp("START", buffer, 5) == 0)
 			{
 				int delay = atoi(buffer + 6);
