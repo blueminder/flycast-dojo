@@ -632,7 +632,8 @@ void DojoSession::transmitter_thread()
 				transmission_frames.pop_front();
 			}
 
-			if (transmitter_ended)
+			if (transmitter_ended ||
+				(disconnect_toggle && !transmission_in_progress))
 			{
 				asio::write(socket, asio::buffer("000000000000", FRAME_SIZE));
 			}
