@@ -82,6 +82,8 @@ public:
 	int StartDojoSession();
 	void StartSession(int delay);
 
+	void StartTransmitterThread();
+
 	// frame data extraction methods
 	int GetPlayer(u8* data);
 	int GetDelay(u8* data);

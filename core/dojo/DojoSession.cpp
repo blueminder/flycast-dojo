@@ -239,6 +239,20 @@ void DojoSession::FillDelay(int fill_delay)
 
 }
 
+void DojoSession::StartTransmitterThread()
+{
+	if (transmitter_started)
+		return;
+
+	if (settings.dojo.Transmitting)
+	{
+		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
+		t4.detach();
+
+		transmitter_started = true;
+	}
+}
+
 int DojoSession::StartDojoSession()
 {
 	if (receiving)
@@ -252,15 +266,7 @@ int DojoSession::StartDojoSession()
 
 	if (dojo.PlayMatch)
 	{
-		if (settings.dojo.Transmitting &&
-			!dojo.transmitter_started)
-		{
-			std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
-			t4.detach();
-
-			transmitter_started = true;
-		}
-
+		StartTransmitterThread();
 		LoadReplayFile(dojo.ReplayFilename);
 		//resume();
 	}

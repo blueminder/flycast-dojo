@@ -33,6 +33,12 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		gui_open_host_delay(settings_opening);
 	}
 
+	if (settings.dojo.Transmitting &&
+		dojo.remaining_spectators == 0)
+	{
+		dojo.StartTransmitterThread();
+	}
+
 	ImGui::End();
 
     ImGui::Render();
