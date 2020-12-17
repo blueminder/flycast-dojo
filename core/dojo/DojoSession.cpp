@@ -110,9 +110,12 @@ void DojoSession::AddNetFrame(const char* received_data)
 	const char data[FRAME_SIZE] = { 0 };
 	memcpy((void*)data, received_data, FRAME_SIZE);
 
+	u32 effective_frame_num = GetEffectiveFrameNumber((u8*)data);
+	if (effective_frame_num == 0)
+		return;
+
 	u32 frame_player = data[0];
 	u32 frame_player_opponent = frame_player == 0 ? 1 : 0;
-	u32 effective_frame_num = GetEffectiveFrameNumber((u8*)data);
 
 	std::string data_to_queue(data, data + FRAME_SIZE);
 
@@ -221,9 +224,13 @@ void DojoSession::FillDelay(int fill_delay)
 {
 	for (int j = 0; j < MaxPlayers; j++)
 	{
-		std::string first_frame = CreateFrame(1, j, 1, 0);
+		std::string first_frame = CreateFrame(1, j, 0, 0);
 		int first_index = GetEffectiveFrameNumber((u8*)first_frame.data());
 		net_inputs[j][first_index] = first_frame;
+
+		std::string second_frame = CreateFrame(1, j, 1, 0);
+		int second_index = GetEffectiveFrameNumber((u8*)second_frame.data());
+		net_inputs[j][second_index] = second_frame;
 
 		for (int i = 1; i <= fill_delay; i++)
 		{
