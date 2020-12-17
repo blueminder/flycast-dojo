@@ -15,7 +15,7 @@ DojoSession::DojoSession()
 
 	session_started = false;
 
-	FrameNumber = 2;
+	FrameNumber = 1;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -27,7 +27,7 @@ DojoSession::DojoSession()
 	DojoLobby presence;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 2;
+	last_consecutive_common_frame = 1;
 	started = false;
 
 	spectating = false;
@@ -145,6 +145,14 @@ std::string DojoSession::CreateFrame(unsigned int frame_num, int player, int del
 
 	if (input != 0)
 		memcpy(new_frame + 6, (const char*)input, INPUT_SIZE);
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	{
+		// dc analog starting position
+		new_frame[10] = -128;
+		new_frame[11] = -128;
+	}
 
 	char ret_frame[FRAME_SIZE] = { 0 };
 	memcpy((void*)ret_frame, new_frame, FRAME_SIZE);
