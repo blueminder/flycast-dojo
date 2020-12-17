@@ -288,12 +288,9 @@ int DojoSession::StartDojoSession()
 		t5.detach();
 
 		receiver_started = true;
-		last_consecutive_common_frame = 2;
 	}
 	else
 	{
-		last_consecutive_common_frame = 2;
-
 		LoadNetConfig();
 
 		try
