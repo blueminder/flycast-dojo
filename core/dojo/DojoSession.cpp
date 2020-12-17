@@ -15,7 +15,7 @@ DojoSession::DojoSession()
 
 	session_started = false;
 
-	FrameNumber = 1;
+	FrameNumber = 0;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -27,7 +27,7 @@ DojoSession::DojoSession()
 	DojoLobby presence;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 1;
+	last_consecutive_common_frame = 0;
 	started = false;
 
 	spectating = false;
@@ -232,13 +232,9 @@ void DojoSession::FillDelay(int fill_delay)
 {
 	for (int j = 0; j < MaxPlayers; j++)
 	{
-		std::string first_frame = CreateFrame(1, j, 0, 0);
-		int first_index = GetEffectiveFrameNumber((u8*)first_frame.data());
-		net_inputs[j][first_index] = first_frame;
-
-		std::string second_frame = CreateFrame(1, j, 1, 0);
-		int second_index = GetEffectiveFrameNumber((u8*)second_frame.data());
-		net_inputs[j][second_index] = second_frame;
+		net_inputs[j][0] = CreateFrame(0, j, 0, 0);
+		net_inputs[j][1] = CreateFrame(1, j, 0, 0);
+		net_inputs[j][2] = CreateFrame(1, j, 1, 0);
 
 		for (int i = 1; i <= fill_delay; i++)
 		{
