@@ -41,10 +41,6 @@
 
 #include "dojo/DojoGui.hpp"
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
