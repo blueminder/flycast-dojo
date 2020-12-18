@@ -578,6 +578,9 @@ void DojoSession::LoadReplayFile(std::string path)
 	}
 
 	delete[] buffer;
+
+	FrameNumber = *net_input_keys[1].begin();
+	last_consecutive_common_frame = FrameNumber;
 }
 
 void DojoSession::RequestSpectate(std::string host, std::string port)
