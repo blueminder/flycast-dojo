@@ -800,7 +800,7 @@ void InitSettings()
 	settings.network.server = "";
 
 	settings.dojo.Enable = false;
-	settings.dojo.ActAsServer = false;
+	settings.dojo.ActAsServer = true;
 	settings.dojo.RecordMatches = false;
 	settings.dojo.Spectating = false;
 	settings.dojo.Transmitting = false;
@@ -810,17 +810,17 @@ void InitSettings()
 	settings.dojo.Delay = 1;
 	settings.dojo.Debug = 8;
 	settings.dojo.ReplayFilename = "";
-	settings.dojo.PacketsPerFrame = 3;
+	settings.dojo.PacketsPerFrame = 2;
 	settings.dojo.EnableBackfill = true;
-	settings.dojo.NumBackFrames = 4;
+	settings.dojo.NumBackFrames = 3;
 	settings.dojo.EnableLobby = false;
 	settings.dojo.PlayerName = "Player";
 	settings.dojo.OpponentName = "Opponent";
 	settings.dojo.TestGame = false;
 	settings.dojo.SpectatorIP = "127.0.0.1";
 	settings.dojo.SpectatorPort = "7000";
-	settings.dojo.LobbyMulticastAddress = "239.255.200.255";
-	settings.dojo.LobbyMulticastPort = "7776";
+	settings.dojo.LobbyMulticastAddress = "224.0.0.255";
+	settings.dojo.LobbyMulticastPort = "52001";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
