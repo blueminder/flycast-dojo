@@ -27,7 +27,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 	if (!dojo.OpponentIP.empty())
 	{
 		dojo.host_status = 2;
-		dojo.DetectDelay(dojo.OpponentIP.data());
+		dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
 
 		gui_state = Closed;
 		gui_open_host_delay(settings_opening);
@@ -37,7 +37,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		dojo.remaining_spectators == 0)
 	{
 		dojo.StartTransmitterThread();
-		ImGui::Text("This match is being spectated.");
+		ImGui::Text("This match will be spectated.");
 	}
 
 	ImGui::End();
@@ -189,16 +189,13 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
-	if (!dojo.OpponentIP.empty())
-	{
-		if (ImGui::Button("Detect Delay"))
-			dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
+	if (ImGui::Button("Detect Delay"))
+		dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
 
-		if (dojo.OpponentPing > 0)
-		{
-			ImGui::SameLine();
-			ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
-		}
+	if (dojo.OpponentPing > 0)
+	{
+		ImGui::SameLine();
+		ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
 	}
 
 	if (ImGui::Button("Start Game"))
