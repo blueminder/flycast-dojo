@@ -284,6 +284,10 @@ int DojoSession::StartDojoSession()
 	else if (settings.dojo.Receiving &&
 			!dojo.receiver_started)
 	{
+		dojo.last_consecutive_common_frame = 2;
+		dojo.FrameNumber = 2;
+		dojo.FillDelay(2);
+
 		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
 		t5.detach();
 
