@@ -15,7 +15,7 @@ DojoSession::DojoSession()
 
 	session_started = false;
 
-	FrameNumber = 0;
+	FrameNumber = 2;
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -27,7 +27,7 @@ DojoSession::DojoSession()
 	DojoLobby presence;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 0;
+	last_consecutive_common_frame = 2;
 	started = false;
 
 	spectating = false;
