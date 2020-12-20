@@ -288,10 +288,14 @@ int DojoSession::StartDojoSession()
 		dojo.FrameNumber = 2;
 		dojo.FillDelay(2);
 
-		std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
-		t5.detach();
+		if (!receiver_started)
+		{
+			std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
+			t5.detach();
 
-		receiver_started = true;
+			receiver_started = true;
+		}
+
 	}
 	else
 	{
@@ -589,6 +593,12 @@ void DojoSession::LoadReplayFile(std::string path)
 
 void DojoSession::RequestSpectate(std::string host, std::string port)
 {
+	// start receiver before game load so host can immediately respond
+	std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
+	t5.detach();
+
+	receiver_started = true;
+
 	using asio::ip::udp;
 
 	asio::io_context io_context;
