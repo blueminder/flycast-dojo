@@ -391,7 +391,8 @@ void UDPClient::ClientLoop()
 		}
 	}
 
-	SendDisconnect();
+	if (!settings.dojo.Receiving)
+		SendDisconnect();
 }
 
 void UDPClient::ClientThread()
