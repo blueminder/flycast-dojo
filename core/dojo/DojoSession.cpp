@@ -281,8 +281,7 @@ int DojoSession::StartDojoSession()
 		LoadReplayFile(dojo.ReplayFilename);
 		//resume();
 	}
-	else if (settings.dojo.Receiving &&
-			!dojo.receiver_started)
+	else if (settings.dojo.Receiving)
 	{
 		dojo.last_consecutive_common_frame = 2;
 		dojo.FrameNumber = 2;
@@ -295,7 +294,6 @@ int DojoSession::StartDojoSession()
 
 			receiver_started = true;
 		}
-
 	}
 	else
 	{
