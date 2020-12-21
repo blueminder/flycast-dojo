@@ -116,7 +116,7 @@ struct socket_pair
 			}
 			if (r < 0)
 			{
-				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+				if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 				{
 					perror("recv tcp socket");
 					closesocket(native_sock);
