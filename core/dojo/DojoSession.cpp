@@ -641,8 +641,6 @@ void DojoSession::transmitter_thread()
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
 
-		socket.set_option(tcp::no_delay(true));
-
 		transmitter_started = true;
 
 		for (;;)
