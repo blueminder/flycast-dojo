@@ -1,7 +1,5 @@
 /*
-    Created on: Oct 18, 2019
-
-	Copyright 2019 flyinghead
+	Copyright 2020 flyinghead
 
 	This file is part of Flycast.
 
@@ -18,40 +16,21 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "context.h"
-#include "rend/gui.h"
+#pragma once
+#include "types.h"
 
-#ifdef USE_VULKAN
-VulkanContext theVulkanContext;
-#endif
+extern bool mainui_enabled;		// Signals the UI thread to exit
+extern int renderer_changed;	// Signals the UI thread to switch renderer when different from settings.pvr.rend
+extern u32 MainFrameCount;
 
-void InitRenderApi()
+bool mainui_rend_frame();
+void mainui_init();
+void mainui_term();
+void mainui_loop();
+void mainui_stop();
+void mainui_reinit();
+
+static inline bool mainui_loop_enabled()
 {
-#ifdef USE_VULKAN
-	if (!settings.pvr.IsOpenGL())
-	{
-		if (theVulkanContext.Init())
-			return;
-		// Fall back to Open GL
-		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
-		settings.pvr.rend = RenderType::OpenGL;
-	}
-#endif
-	if (!theGLContext.Init())
-		exit(1);
-}
-
-void SwitchRenderApi(RenderType newApi)
-{
-	TermRenderApi();
-	settings.pvr.rend = newApi;
-	InitRenderApi();
-}
-
-void TermRenderApi()
-{
-#ifdef USE_VULKAN
-	theVulkanContext.Term();
-#endif
-	theGLContext.Term();
+	return mainui_enabled;
 }

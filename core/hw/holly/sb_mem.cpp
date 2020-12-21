@@ -164,13 +164,13 @@ void FixUpFlash()
 	}
 }
 
-static bool nvmem_load(const std::string& root)
+static bool nvmem_load()
 {
 	bool rc;
 	if (settings.dojo.Enable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-			rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin.net", "nvram");
+			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin.net", "nvram");
 		else
 			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem.net");
 		if (!rc)
@@ -181,7 +181,7 @@ static bool nvmem_load(const std::string& root)
 	else
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-			rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin", "nvram");
+			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 		else
 			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
 		if (!rc)
@@ -193,12 +193,12 @@ static bool nvmem_load(const std::string& root)
 	return true;
 }
 
-bool LoadRomFiles(const std::string& root)
+bool LoadRomFiles()
 {
-	nvmem_load(root);
+	nvmem_load();
 	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 	{
-		if (sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 			bios_loaded = true;
 		else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			return false;
@@ -207,13 +207,13 @@ bool LoadRomFiles(const std::string& root)
 	return true;
 }
 
-void SaveRomFiles(const std::string& root)
+void SaveRomFiles()
 {
 	// make no changes to netplay memory
 	if (!settings.dojo.Enable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-			sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
+			sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 		else
 			sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -221,9 +221,9 @@ void SaveRomFiles(const std::string& root)
 	}
 }
 
-bool LoadHle(const std::string& root)
+bool LoadHle()
 {
-	if (!nvmem_load(root))
+	if (!nvmem_load())
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 
 	reios_reset(sys_rom->data);
@@ -355,7 +355,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		ReadMemArrRet(aica_ram.data,addr&ARAM_MASK,sz);
+		return (T)ReadMemArr<sz>(aica_ram.data, addr & ARAM_MASK);
 	}
 	//map 0x0100 to 0x01FF
 	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1
@@ -446,7 +446,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) // AICA- Wave Memory
 	{
-		WriteMemArr(aica_ram.data, addr & ARAM_MASK, data, sz);
+		WriteMemArr<sz>(aica_ram.data, addr & ARAM_MASK, data);
 	}
 	//map 0x0100 to 0x01FF
 	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1

@@ -20,8 +20,6 @@
 #endif
 #endif
 
-float fb_scale_x, fb_scale_y; // FIXME
-
 //Fragment and vertex shaders code
 
 static const char* VertexShaderSource = R"(%s
@@ -908,11 +906,6 @@ bool gles_init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	theGLContext.Swap();
-
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
@@ -1350,43 +1343,35 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-void rend_set_fb_scale(float x, float y)
+bool OpenGLRenderer::Init()
 {
-	fb_scale_x = x;
-	fb_scale_y = y;
+	return gles_init();
 }
 
-struct glesrend : Renderer
+void OpenGLRenderer::Term()
 {
-	bool Init() override { return gles_init(); }
-	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
-	void Term() override
-	{
-		TexCache.Clear();
-		gles_term();
-	}
+	TexCache.Clear();
+	gles_term();
+}
 
-	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
-	bool Render() override
-	{
-		RenderFrame();
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+bool OpenGLRenderer::Render()
+{
+	RenderFrame();
+	if (pvrrc.isRTT)
+		return false;
 
-		return !pvrrc.isRTT;
-	}
-	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
-	void Present() override { theGLContext.Swap(); }
+	DrawOSD(false);
+	frameRendered = true;
 
-	void DrawOSD(bool clear_screen) override
-	{
-		OSD_DRAW(clear_screen);
-	}
+	return true;
+}
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
-	{
-		return gl_GetTexture(tsp, tcw);
-	}
-};
+bool OpenGLRenderer::RenderLastFrame()
+{
+	return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false;
+}
 
-Renderer* rend_GLES2() { return new glesrend(); }
+Renderer* rend_GLES2()
+{
+	return new OpenGLRenderer();
+}

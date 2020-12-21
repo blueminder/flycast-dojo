@@ -46,4 +46,4 @@ void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
 
-static std::string get_savestate_file_path();
+static std::string get_savestate_file_path(bool writable);

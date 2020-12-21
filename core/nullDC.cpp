@@ -15,12 +15,12 @@
 
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/holly/sb_mem.h"
 
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
@@ -35,6 +35,7 @@
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
 #include "dojo/DojoSession.hpp"
+#include "rend/mainui.h"
 
 void FlushCache();
 static void LoadCustom();
@@ -171,6 +172,13 @@ static void LoadSpecialSettings()
 			settings.rend.ExtraDepthScale = 100;
 			extra_depth_game = true;
 		}
+		// Samurai Shodown 6 dc port
+		else if (!strncmp("T0002M", prod_id, 6))
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			settings.rend.ExtraDepthScale = 1e26;
+			extra_depth_game = true;
+		}
 		// Super Producers
 		if (!strncmp("T14303M", prod_id, 7)
 			// Giant Killers
@@ -196,7 +204,11 @@ static void LoadSpecialSettings()
 			// StarLancer (EU) (for online support)
 			|| !strncmp("T17723D 05", prod_id, 10)
 			// Heroes of might and magic III
-			|| !strncmp("T0000M", prod_id, 6))
+			|| !strncmp("T0000M", prod_id, 6)
+			// WebTV
+			|| !strncmp("6107117", prod_id, 7)
+			// PBA
+			|| !strncmp("T26702N", prod_id, 7))
 		{
 			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
 			settings.dynarec.disable_vmem32 = true;
@@ -423,6 +435,7 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
+	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -551,16 +564,15 @@ static void dc_start_game(const char* path)
 	InitSettings();
 	dc_reset(true);
 	LoadSettings(false);
-
-	std::string data_path = get_readonly_data_path(DATA_PATH);
+	
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles(data_path))
+		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles())
 		{
 			if (forced_bios_file)
 				throw ReicastException("No BIOS file found");
 
-			if (!LoadHle(data_path))
+			if (!LoadHle())
 				throw ReicastException("Failed to initialize HLE BIOS");
 
 			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
@@ -568,7 +580,7 @@ static void dc_start_game(const char* path)
 	}
 	else
 	{
-		LoadRomFiles(data_path);
+		LoadRomFiles();
 	}
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -592,7 +604,7 @@ static void dc_start_game(const char* path)
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
 					forced_bios_file = true;
-					if (!LoadRomFiles(data_path))
+					if (!LoadRomFiles())
 						throw ReicastException("No BIOS file found");
 					InitDrive();
 				}
@@ -633,7 +645,7 @@ static void dc_start_game(const char* path)
 
 	if (settings.dojo.Enable)
 	{
-		std::string net_save_path = get_savestate_file_path();
+		std::string net_save_path = get_savestate_file_path(false);
 		net_save_path.append(".net");
 		dc_loadstate(net_save_path);
 	}
@@ -647,10 +659,6 @@ bool dc_is_running()
 #ifndef TARGET_DISPFRAME
 void* dc_run(void*)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(0);
-#endif
-
 	InitAudio();
 
 	if (settings.dynarec.Enable)
@@ -668,7 +676,7 @@ void* dc_run(void*)
 
 		sh4_cpu.Run();
 
-   		SaveRomFiles(get_writable_data_path(DATA_PATH));
+   		SaveRomFiles();
    		if (reset_requested)
    		{
    			dc_reset(false);
@@ -727,7 +735,7 @@ void dc_exit()
 	else
 	{
 		dc_stop();
-		rend_stop_renderer();
+		mainui_stop();
 	}
 }
 
@@ -773,7 +781,6 @@ void InitSettings()
 	settings.rend.WidescreenGameHacks = false;
 
 	settings.pvr.ta_skip			= 0;
-	settings.pvr.rend				= 0;
 
 	settings.pvr.MaxThreads		    = 3;
 	settings.pvr.SynchronousRender	= true;
@@ -897,9 +904,6 @@ void LoadSettings(bool game_specific)
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	if (!game_specific)
-		// crashes if switching gl <-> vulkan
-		settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
@@ -1007,7 +1011,7 @@ static void LoadCustom()
 		if (*p == '\0')
 			return;
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else
 	{
 		reios_id = naomi_game_id;
 	}
@@ -1025,9 +1029,9 @@ void SaveSettings()
 {
 	cfgSetAutoSave(false);
 	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
-	if (forced_game_cable == -1 || forced_game_cable != settings.dreamcast.cable)
+	if (forced_game_cable == -1 || forced_game_cable != (int)settings.dreamcast.cable)
 		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
-	if (forced_game_region == -1 || forced_game_region != settings.dreamcast.region)
+	if (forced_game_region == -1 || forced_game_region != (int)settings.dreamcast.region)
 		cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
@@ -1077,7 +1081,7 @@ void SaveSettings()
 	if (!naomi_rotate_screen || !settings.rend.Rotate90)
 		cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
-	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveInt("config", "pvr.rend", (int)settings.pvr.rend);
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
@@ -1161,7 +1165,7 @@ static void cleanup_serialize(void *data)
 		free(data) ;
 }
 
-static std::string get_savestate_file_path()
+static std::string get_savestate_file_path(bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -1178,12 +1182,15 @@ static std::string get_savestate_file_path()
 	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
-	return get_writable_data_path(DATA_PATH) + state_file;
+	if (writable)
+		return get_writable_data_path(state_file);
+	else
+		return get_readonly_data_path(state_file);
 }
 
 void dc_savestate()
 {
-	dc_savestate(get_savestate_file_path());
+	dc_savestate(get_savestate_file_path(false));
 }
 
 void dc_savestate(std::string filename)
@@ -1222,6 +1229,7 @@ void dc_savestate(std::string filename)
     	return;
 	}
 
+	filename = get_savestate_file_path(true);
 	f = fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
@@ -1242,7 +1250,7 @@ void dc_savestate(std::string filename)
 
 void dc_loadstate()
 {
-	dc_loadstate(get_savestate_file_path());
+	dc_loadstate(get_savestate_file_path(false));
 }
 
 void dc_loadstate(std::string filename)
@@ -1254,6 +1262,7 @@ void dc_loadstate(std::string filename)
 
 	dc_stop();
 
+	filename = get_savestate_file_path(false);
 	f = fopen(filename.c_str(), "rb") ;
 
 	if ( f == NULL )

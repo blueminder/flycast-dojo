@@ -286,7 +286,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
     		gui_state = Main;
 	}
 
-	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
 	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 	{
 		settings.dojo.ActAsServer = true;
@@ -442,7 +442,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		gui_state = Main;
 	}
 
-	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);
 
 	ImGui::Checkbox("Record All Sessions", &settings.dojo.RecordMatches);
 	ImGui::SameLine();

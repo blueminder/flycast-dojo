@@ -113,7 +113,7 @@ public:
 
 		texCommandPool.BeginFrame();
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
-		textureCache.CollectCleanup();
+		textureCache.Cleanup();
 
 		bool result;
 
@@ -131,11 +131,6 @@ public:
 			texCommandPool.EndFrame();
 
 		return result;
-	}
-
-	void Present() override
-	{
-		GetContext()->Present();
 	}
 
 	void Resize(int w, int h) override

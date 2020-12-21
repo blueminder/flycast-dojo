@@ -10,6 +10,10 @@
 #include "sdl_keyboard.h"
 #include "wsi/context.h"
 #include "emulator.h"
+#include "stdclass.h"
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include "linux-dist/icon.h"
+#endif
 
 #ifdef USE_VULKAN
 #include <SDL2/SDL_vulkan.h>
@@ -41,7 +45,7 @@ static void sdl_open_joystick(int index)
 		INFO_LOG(INPUT, "SDL: Cannot open joystick %d", index + 1);
 		return;
 	}
-	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, pJoystick);
+	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 	SDLGamepadDevice::AddSDLGamepad(gamepad);
 }
 
@@ -59,9 +63,17 @@ void input_sdl_init()
 		// We want joystick events even if we loose focus
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
-		{
 			die("SDL: error initializing Joystick subsystem");
+
+		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
+		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		if (rv < 0)
+		{
+			db = get_readonly_config_path("gamecontrollerdb.txt");
+			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 		}
+		if (rv > 0)
+			DEBUG_LOG(INPUT ,"%d mappings loaded from %s", rv, db.c_str());
 	}
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
@@ -77,33 +89,17 @@ void input_sdl_init()
 #endif
 }
 
-static int mouse_prev_x = -1;
-static int mouse_prev_y = -1;
-
 static void set_mouse_position(int x, int y)
 {
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
-	{
-		float scale = 480.f / height;
-		mo_x_abs = (x - (width - 640.f / scale) / 2.f) * scale;
-		mo_y_abs = y * scale;
-		if (mouse_prev_x != -1)
-		{
-			mo_x_delta += (f32)(x - mouse_prev_x) * settings.input.MouseSensitivity / 100.f;
-			mo_y_delta += (f32)(y - mouse_prev_y) * settings.input.MouseSensitivity / 100.f;
-		}
-		mouse_prev_x = x;
-		mouse_prev_y = y;
-	}
+		SetMousePosition(x, y, width, height);
 }
 
-// FIXME this shouldn't be done by port. Need something like: handle_events() then get_port(0), get_port(2), ...
-void input_sdl_handle(u32 port)
+void input_sdl_handle()
 {
-	if (port == 0)	// FIXME hack
-		SDLGamepadDevice::UpdateRumble();
+	SDLGamepadDevice::UpdateRumble();
 
 	#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
 	SDL_Event event;
@@ -282,6 +278,21 @@ void sdl_recreate_window(u32 flags)
 	window = SDL_CreateWindow("Flycast Dojo", x, y, window_width, window_height, flags);
 	if (!window)
 		die("error creating SDL window");
+
+#ifndef _WIN32
+	// Set the window icon
+	u32 pixels[48 * 48];
+	for (int i = 0; i < 48 * 48; i++)
+		pixels[i] = reicast_icon[i + 2];
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+	if (surface == NULL)
+	  INFO_LOG(COMMON, "Creating surface failed: %s", SDL_GetError());
+	else
+	{
+		SDL_SetWindowIcon(window, surface);
+		SDL_FreeSurface(surface);
+	}
+#endif
 
 #ifdef USE_VULKAN
 	theVulkanContext.SetWindow(window, nullptr);

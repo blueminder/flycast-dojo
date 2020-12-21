@@ -1,5 +1,5 @@
 #include "DojoSession.hpp"
-#include <oslib/oslib.h>
+#include <oslib/audiostream.h>
 
 DojoSession::DojoSession()
 {

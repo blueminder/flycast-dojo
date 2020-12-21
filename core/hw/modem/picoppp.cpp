@@ -65,10 +65,99 @@ static struct pico_socket *pico_tcp_socket, *pico_udp_socket;
 struct pico_ip4 public_ip;
 struct pico_ip4 afo_ip;
 
-// src socket -> socket fd
-static std::map<struct pico_socket *, sock_t> tcp_sockets;
+struct socket_pair
+{
+	socket_pair() : pico_sock(nullptr), native_sock(INVALID_SOCKET) {}
+	socket_pair(pico_socket *pico_sock, sock_t native_sock) : pico_sock(pico_sock), native_sock(native_sock) {}
+	~socket_pair() {
+		if (pico_sock != nullptr)
+			pico_socket_close(pico_sock);
+		if (native_sock != INVALID_SOCKET)
+			closesocket(native_sock);
+	}
+	socket_pair(socket_pair &&) = default;
+	socket_pair(const socket_pair&) = delete;
+	socket_pair& operator=(const socket_pair&) = delete;
+
+	pico_socket *pico_sock;
+	sock_t native_sock;
+	std::vector<char> in_buffer;
+	bool shutdown = false;
+
+	void receive_native()
+	{
+		size_t len;
+		const char *data;
+		char buf[536];
+
+		if (!in_buffer.empty())
+		{
+			len = in_buffer.size();
+			data = &in_buffer[0];
+		}
+		else
+		{
+			if (native_sock == INVALID_SOCKET)
+			{
+				if (!shutdown && pico_sock->q_out.size == 0)
+				{
+					pico_socket_shutdown(pico_sock, PICO_SHUT_RDWR);
+					shutdown = true;
+				}
+				return;
+			}
+			int r = recv(native_sock, buf, sizeof(buf), 0);
+			if (r == 0)
+			{
+				INFO_LOG(MODEM, "Socket[%d] recv(%zd) returned 0 -> EOF", short_be(pico_sock->remote_port), sizeof(buf));
+				closesocket(native_sock);
+				native_sock = INVALID_SOCKET;
+				return;
+			}
+			if (r < 0)
+			{
+				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+				{
+					perror("recv tcp socket");
+					closesocket(native_sock);
+					native_sock = INVALID_SOCKET;
+				}
+				return;
+			}
+			len = r;
+			data = buf;
+		}
+		if (pico_sock->remote_port == short_be(5011) && len >= 5)
+		{
+			// Visual Concepts sport games
+			if (buf[0] == 1)
+				memcpy(&buf[1], &pico_sock->local_addr.ip4.addr, 4);
+		}
+
+		int r2 = pico_socket_send(pico_sock, data, len);
+		if (r2 < 0)
+			INFO_LOG(MODEM, "error TCP sending: %s", strerror(pico_err));
+		else if (r2 < (int)len)
+		{
+			if (r2 > 0 || in_buffer.empty())
+			{
+				len -= r2;
+				std::vector<char> remain(len);
+				memcpy(&remain[0], &data[r2], len);
+				std::swap(in_buffer, remain);
+			}
+		}
+		else
+		{
+			in_buffer.clear();
+		}
+	}
+};
+
+// tcp sockets
+static std::map<struct pico_socket *, socket_pair> tcp_sockets;
 static std::map<struct pico_socket *, sock_t> tcp_connecting_sockets;
-// src port -> socket fd
+// udp sockets: src port -> socket fd
 static std::map<uint16_t, sock_t> udp_sockets;
 
 static const uint16_t games_udp_ports[] = {
@@ -105,6 +194,9 @@ static const uint16_t games_tcp_ports[] = {
 // listening port -> socket fd
 static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
+static bool pico_stack_inited;
+static bool pico_thread_running = false;
+
 static void read_native_sockets();
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
 int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr);
@@ -131,10 +223,17 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 	u8 *p = (u8 *)data;
 
 	in_buffer_lock.lock();
-	while (len > 0)
+	for (int i = 0; i < len; i++)
 	{
+		while (in_buffer.size() > 1024)
+		{
+			in_buffer_lock.unlock();
+			if (!pico_thread_running)
+				return 0;
+			usleep(5000);
+			in_buffer_lock.lock();
+		}
 		in_buffer.push(*p++);
-		len--;
 	}
 	in_buffer_lock.unlock();
 
@@ -175,8 +274,6 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 		if (send(nat_sock, buf, r, 0) < r)
 		{
 			perror("tcp_callback send");
-			closesocket(nat_sock);
-			pico_socket_close(pico_sock);
 			tcp_sockets.erase(pico_sock);
 		}
 	}
@@ -184,8 +281,6 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 
 static void tcp_callback(uint16_t ev, struct pico_socket *s)
 {
-	int r = 0;
-
 	if (ev & PICO_SOCK_EV_RD)
 	{
 		auto it = tcp_sockets.find(s);
@@ -196,13 +291,12 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		}
 		else
 		{
-			read_from_dc_socket(it->first, it->second);
+			read_from_dc_socket(it->first, it->second.native_sock);
 		}
 	}
 
 	if (ev & PICO_SOCK_EV_CONN)
 	{
-		uint32_t ka_val = 0;
 		struct pico_ip4 orig;
 		uint16_t port;
 		char peer[30];
@@ -218,10 +312,11 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		else
 		{
 			pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-			//printf("Connection established from %s:%d to %08x:%d\n", peer, short_be(port), sock_a->local_addr.ip4.addr, short_be(sock_a->local_port));
+			//printf("Connection established from port %d to %s:%d\n", short_be(port), peer, short_be(sock_a->local_port));
 			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
+			pico_tcp_set_linger(sock_a, 10000);
 			/* Set keepalive options */
-	//		ka_val = 5;
+	//		uint32_t ka_val = 5;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPCNT, &ka_val);
 	//		ka_val = 30000;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPIDLE, &ka_val);
@@ -262,7 +357,9 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 				{
 					set_tcp_nodelay(sockfd);
 
-					tcp_sockets[sock_a] = sockfd;
+					tcp_sockets.emplace(std::piecewise_construct,
+					              std::forward_as_tuple(sock_a),
+					              std::forward_as_tuple(sock_a, sockfd));
 				}
 			}
 		}
@@ -270,14 +367,20 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 	if (ev & PICO_SOCK_EV_FIN) {
 		auto it = tcp_sockets.find(s);
-		if (it == tcp_sockets.end())
+		if (it != tcp_sockets.end())
 		{
-			INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
+			tcp_sockets.erase(it);
 		}
 		else
 		{
-			closesocket(it->second);
-			tcp_sockets.erase(it);
+			auto it2 = tcp_connecting_sockets.find(s);
+			if (it2 != tcp_connecting_sockets.end())
+			{
+				closesocket(it2->second);
+				tcp_connecting_sockets.erase(it2);
+			}
+			else
+				INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 	}
 
@@ -285,14 +388,9 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		INFO_LOG(MODEM, "Socket error received: %s", strerror(pico_err));
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
-		{
 			INFO_LOG(MODEM, "PICO_SOCK_EV_ERR: Unknown socket: remote port %d", short_be(s->remote_port));
-		}
 		else
-		{
-			closesocket(it->second);
 			tcp_sockets.erase(it);
-		}
 	}
 
 	if (ev & PICO_SOCK_EV_CLOSE)
@@ -304,7 +402,8 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		}
 		else
 		{
-			shutdown(it->second, SHUT_WR);
+			if (it->second.native_sock != INVALID_SOCKET)
+				shutdown(it->second.native_sock, SHUT_WR);
 			pico_socket_shutdown(s, PICO_SHUT_RD);
 		}
 	}
@@ -416,7 +515,11 @@ static void read_native_sockets()
     	}
     	set_non_blocking(sockfd);
     	set_tcp_nodelay(sockfd);
-    	tcp_sockets[ps] = sockfd;
+
+		tcp_sockets.emplace(std::piecewise_construct,
+		              std::forward_as_tuple(ps),
+		              std::forward_as_tuple(ps, sockfd));
+
 	}
 
 	// Check connecting outbound TCP sockets
@@ -457,7 +560,10 @@ static void read_native_sockets()
 			else
 			{
 				set_tcp_nodelay(it->second);
-				tcp_sockets[it->first] = it->second;
+
+				tcp_sockets.emplace(std::piecewise_construct,
+				              std::forward_as_tuple(it->first),
+				              std::forward_as_tuple(it->first, it->second));
 
 				read_from_dc_socket(it->first, it->second);
 			}
@@ -465,15 +571,8 @@ static void read_native_sockets()
 		}
 	}
 
-	char buf[1500];		// FIXME MTU ?
+	char buf[1500];
 	struct pico_msginfo msginfo;
-
-	// If modem buffer is full, wait
-	in_buffer_lock.lock();
-	size_t in_buffer_size = in_buffer.size();
-	in_buffer_lock.unlock();
-	if (in_buffer_size >= 256)
-		return;
 
 	// Read UDP sockets
 	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
@@ -506,45 +605,11 @@ static void read_native_sockets()
 	// Read TCP sockets
 	for (auto it = tcp_sockets.begin(); it != tcp_sockets.end(); )
 	{
-		uint32_t space;
-		pico_tcp_get_bufspace_out(it->first, &space);
-		if (space < sizeof(buf))
-		{
-			// Wait for the out buffer to empty a bit
-			it++;
-			continue;
-		}
-		r = recv(it->second, buf, sizeof(buf), 0);
-		if (r > 0)
-		{
-			if (it->first->remote_port == short_be(5011) && r >= 5)
-			{
-				// Visual Concepts sport games
-				if (buf[0] == 1)
-					memcpy(&buf[1], &it->first->local_addr.ip4.addr, 4);
-			}
-
-			int r2 = pico_socket_send(it->first, buf, r);
-			if (r2 < 0)
-				INFO_LOG(MODEM, "error TCP sending: %s", strerror(pico_err));
-			else if (r2 < r)
-				// FIXME EAGAIN errors. Need to buffer data or wait for call back.
-				INFO_LOG(MODEM, "truncated send: %d -> %d", r, r2);
-		}
-		else if (r == 0)
-		{
-			pico_socket_shutdown(it->first, PICO_SHUT_WR);
-			shutdown(it->second, SHUT_RD);
-		}
-		else if (r < 0 && get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
-		{
-			perror("recv tcp socket");
-			closesocket(it->second);
-			pico_socket_close(it->first);
+		it->second.receive_native();
+		if (it->second.pico_sock == nullptr)
 			it = tcp_sockets.erase(it);
-			continue;
-		}
-		it++;
+		else
+			it++;
 	}
 }
 
@@ -553,11 +618,6 @@ void close_native_sockets()
 	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
 		closesocket(it->second);
 	udp_sockets.clear();
-	for (auto it = tcp_sockets.begin(); it != tcp_sockets.end(); it++)
-	{
-		pico_socket_close(it->first);
-		closesocket(it->second);
-	}
 	tcp_sockets.clear();
 	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
 	{
@@ -571,21 +631,6 @@ static int modem_set_speed(struct pico_device *dev, uint32_t speed)
 {
     return 0;
 }
-
-#if 0 // _WIN32
-static void usleep(unsigned int usec)
-{
-	HANDLE timer;
-	LARGE_INTEGER ft;
-
-	ft.QuadPart = -(10 * (__int64)usec);
-
-	timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
-	WaitForSingleObject(timer, INFINITE);
-	CloseHandle(timer);
-}
-#endif
 
 static void check_dns_entries()
 {
@@ -665,14 +710,9 @@ static void check_dns_entries()
 	}
 }
 
-static bool pico_stack_inited;
-static bool pico_thread_running = false;
-
 static void *pico_thread_func(void *)
 {
-    struct pico_ip4 ipaddr, netmask, zero = {
-    	    0
-    	};
+    struct pico_ip4 ipaddr;
 
     if (!pico_stack_inited)
     {
@@ -729,7 +769,7 @@ static void *pico_thread_func(void *)
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sin_family = AF_INET;
 	saddr.sin_addr.s_addr = INADDR_ANY;
-    for (int i = 0; i < sizeof(games_udp_ports) / sizeof(uint16_t); i++)
+    for (u32 i = 0; i < sizeof(games_udp_ports) / sizeof(uint16_t); i++)
     {
     	uint16_t port = short_be(games_udp_ports[i]);
 		sock_t sockfd = find_udp_socket(port);
@@ -746,7 +786,7 @@ static void *pico_thread_func(void *)
 		}
     }
 
-    for (int i = 0; i < sizeof(games_tcp_ports) / sizeof(uint16_t); i++)
+    for (u32 i = 0; i < sizeof(games_tcp_ports) / sizeof(uint16_t); i++)
     {
     	uint16_t port = short_be(games_tcp_ports[i]);
     	saddr.sin_port = port;
@@ -767,6 +807,18 @@ static void *pico_thread_func(void *)
 		tcp_listening_sockets[port] = sockfd;
     }
 
+    {
+		std::queue<u8> empty;
+		in_buffer_lock.lock();
+		std::swap(in_buffer, empty);
+		in_buffer_lock.unlock();
+
+		std::queue<u8> empty2;
+		out_buffer_lock.lock();
+		std::swap(out_buffer, empty2);
+		out_buffer_lock.unlock();
+    }
+
     pico_ppp_set_serial_read(ppp, modem_read);
     pico_ppp_set_serial_write(ppp, modem_write);
     pico_ppp_set_serial_set_speed(ppp, modem_set_speed);
@@ -778,7 +830,7 @@ static void *pico_thread_func(void *)
     	read_native_sockets();
     	pico_stack_tick();
     	check_dns_entries();
-    	usleep(1000);
+    	usleep(5000);
     }
 
     for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)

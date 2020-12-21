@@ -19,6 +19,7 @@
 
 #include <mutex>
 #include "gui.h"
+#include "osd.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
@@ -27,21 +28,23 @@
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "network/naomi_network.h"
-#include "gles/gles.h"
+#include "wsi/context.h"
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
 #include "version.h"
+#include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 #include "dojo/DojoGui.hpp"
 
-extern void UpdateInputState(u32 port);
+extern void UpdateInputState();
 extern bool game_started;
 
 extern int screen_width, screen_height;
@@ -162,7 +165,7 @@ void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	UpdateInputState(0);
+	UpdateInputState();
 
 	// Read keyboard modifiers inputs
 	io.KeyCtrl = (kb_shift & (0x01 | 0x10)) != 0;
@@ -176,27 +179,22 @@ void ImGui_Impl_NewFrame()
 			io.KeysDown[kb_key[i]] = true;
 		else
 			break;
-	float scale = screen_height / 480.0f;
-	float x_offset = (screen_width - 640.0f * scale) / 2;
-	int real_x = mo_x_abs * scale + x_offset;
-	int real_y = mo_y_abs * scale;
-	if (real_x < 0 || real_x >= screen_width || real_y < 0 || real_y >= screen_height)
+	if (mo_x_phy < 0 || mo_x_phy >= screen_width || mo_y_phy < 0 || mo_y_phy >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(real_x, real_y);
+		io.MousePos = ImVec2(mo_x_phy, mo_y_phy);
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
 	if ((mo_buttons & 0xf) == 0xf)
 	{
 		if (touch_up)
-		{
 			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-			touch_up = false;
-		}
 		else if (io.MouseDown[0])
 			touch_up = true;
 	}
+	else
+		touch_up = false;
 #endif
 	if (io.WantCaptureMouse)
 	{
@@ -483,18 +481,22 @@ const DreamcastKey button_keys[] = {
 		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
+		DC_BTN_RELOAD,
 		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT
 };
 const char *button_names[] = {
 		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
+		"Reload",
 		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right"
 };
 const char *arcade_button_names[] = {
 		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8", "N/A", "N/A", "N/A", "N/A"
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
+		"Reload",
+		"N/A", "N/A", "N/A", "N/A"
 };
 const DreamcastKey axis_keys[] = {
 		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
@@ -593,11 +595,10 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		const float width = screen_width / 2;
-		const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
-		const float col1_width = width
+		const float col_width = (width
 				- ImGui::GetStyle().GrabMinSize
-				- (col0_width + ImGui::GetStyle().ItemSpacing.x)
-				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				- (0 + ImGui::GetStyle().ItemSpacing.x)
+				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)) / 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
@@ -626,7 +627,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			}
 			ImGui::PopItemWidth();
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Arcade button names").x
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Arcade button names").x
 				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
 		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
 
@@ -636,13 +637,20 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 
 		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col0_width);
-		ImGui::SetColumnWidth(1, col1_width);
+		ImGui::SetColumnWidth(0, col_width);
+		ImGui::SetColumnWidth(1, col_width);
 		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
 		{
 			sprintf(key_id, "key_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
+
+			const char *btn_name = arcade_button_mode ? arcade_button_names[j] : button_names[j];
+			const char *game_btn_name = GetCurrentGameButtonName(button_keys[j]);
+			if (game_btn_name != nullptr)
+				ImGui::Text("%s - %s", btn_name, game_btn_name);
+			else
+				ImGui::Text("%s", btn_name);
+
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
 			if (code != (u32)-1)
@@ -675,14 +683,21 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		ImGui::Text("  Analog Axes  ");
 		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col0_width);
-		ImGui::SetColumnWidth(1, col1_width);
+		ImGui::SetColumnWidth(0, col_width);
+		ImGui::SetColumnWidth(1, col_width);
 
 		for (u32 j = 0; j < ARRAY_SIZE(axis_keys); j++)
 		{
 			sprintf(key_id, "axis_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", arcade_button_mode ? arcade_axis_names[j] : axis_names[j]);
+
+			const char *axis_name = arcade_button_mode ? arcade_axis_names[j] : axis_names[j];
+			const char *game_axis_name = GetCurrentGameAxisName(axis_keys[j]);
+			if (game_axis_name != nullptr)
+				ImGui::Text("%s - %s", axis_name, game_axis_name);
+			else
+				ImGui::Text("%s", axis_name);
+
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
 			if (code != (u32)-1)
@@ -723,7 +738,7 @@ static void error_popup()
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 			ImGui::TextWrapped("%s", error_msg.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
 			{
@@ -739,21 +754,21 @@ static void error_popup()
 
 static void contentpath_warning_popup()
 {
-    static bool show_contentpath_warning_popup = true;
-    static bool show_contentpath_selection = false;
-    if (show_contentpath_warning_popup && scanner.path_is_too_dirty)
+    static bool show_contentpath_selection;
+
+    if (scanner.content_path_looks_incorrect)
     {
         ImGui::OpenPopup("Incorrect Content Location?");
         if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  Still searching in %d folders, no game can be found!  ", scanner.still_no_rom_counter);
+            ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            float currentwidth = ImGui::GetContentRegionAvail().x;
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
             if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
             {
-                show_contentpath_warning_popup = false;
+            	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
                 show_contentpath_selection = true;
             }
@@ -762,8 +777,10 @@ static void contentpath_warning_popup()
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
             if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
             {
-                show_contentpath_warning_popup = false;
+            	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
+                scanner.stop();
+                settings.dreamcast.ContentPath.clear();
             }
             ImGui::SetItemDefaultFocus();
             ImGui::PopStyleVar();
@@ -772,24 +789,17 @@ static void contentpath_warning_popup()
     }
     if (show_contentpath_selection)
     {
-        static auto original = settings.dreamcast.ContentPath;
-        settings.dreamcast.ContentPath.clear();
         scanner.stop();
         ImGui::OpenPopup("Select Directory");
         select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
         {
             show_contentpath_selection = false;
-            show_contentpath_warning_popup = true;
             if (!cancelled)
             {
+                settings.dreamcast.ContentPath.clear();
                 settings.dreamcast.ContentPath.push_back(selection);
-                scanner.refresh();
             }
-            else
-            {
-                settings.dreamcast.ContentPath = original;
-                scanner.refresh();
-            }
+            scanner.refresh();
         });
     }
 }
@@ -798,6 +808,7 @@ void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
+		scanner.stop();
 		settings.dreamcast.ContentPath.push_back(selection);
 		scanner.refresh();
 	}
@@ -811,8 +822,8 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	int pvr_rend = settings.pvr.rend;
-	bool vulkan = pvr_rend == 4 || pvr_rend == 5;
+	RenderType pvr_rend = settings.pvr.rend;
+	bool vulkan = !settings.pvr.IsOpenGL();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -946,7 +957,7 @@ static void gui_display_settings()
                 	ImGui::PushID(settings.dreamcast.ContentPath[i].c_str());
                     ImGui::AlignTextToFramePadding();
                 	ImGui::Text("%s", settings.dreamcast.ContentPath[i].c_str());
-                	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
+                	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
                 	if (ImGui::Button("X"))
                 		to_delete = i;
                 	ImGui::PopID();
@@ -960,6 +971,7 @@ static void gui_display_settings()
         		ImGui::ListBoxFooter();
             	if (to_delete >= 0)
             	{
+            		scanner.stop();
             		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
         			scanner.refresh();
             	}
@@ -972,7 +984,7 @@ static void gui_display_settings()
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
 #ifdef __ANDROID__
-                ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
                 	gui_state = Onboarding;
 #endif
@@ -1132,7 +1144,7 @@ static void gui_display_settings()
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	int renderer = (pvr_rend == 3 || pvr_rend == 5) ? 2 : settings.rend.PerStripSorting ? 1 : 0;
+		    	int renderer = (pvr_rend == RenderType::OpenGL_OIT || pvr_rend == RenderType::Vulkan_OIT) ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -1153,23 +1165,23 @@ static void gui_display_settings()
 		    	{
 		    	case 0:
 		    		if (!vulkan)
-		    			pvr_rend = 0;					// regular Open GL
+		    			pvr_rend = RenderType::OpenGL;	// regular Open GL
 		    		else
-		    			pvr_rend = 4;					// regular Vulkan
+		    			pvr_rend = RenderType::Vulkan;	// regular Vulkan
 		    		settings.rend.PerStripSorting = false;
 		    		break;
 		    	case 1:
 		    		if (!vulkan)
-		    			pvr_rend = 0;
+		    			pvr_rend = RenderType::OpenGL;
 		    		else
-		    			pvr_rend = 4;
+		    			pvr_rend = RenderType::Vulkan;
 		    		settings.rend.PerStripSorting = true;
 		    		break;
 		    	case 2:
 		    		if (!vulkan)
-		    			pvr_rend = 3;
+		    			pvr_rend = RenderType::OpenGL_OIT;
 		    		else
-		    			pvr_rend = 5;
+		    			pvr_rend = RenderType::Vulkan_OIT;
 		    		break;
 		    	}
 		    }
@@ -1555,7 +1567,7 @@ static void gui_display_settings()
 		    	}
 	    	}
 #ifdef USE_VULKAN
-	    	else if (settings.pvr.rend == 4 || settings.pvr.rend == 5)
+	    	else
 	    	{
 				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -1580,15 +1592,19 @@ static void gui_display_settings()
 		ImGui::EndTabBar();
     }
     ImGui::PopStyleVar();
+
+    ImVec2 mouse_delta = ImGui::GetIO().MouseDelta;
+    ScrollWhenDraggingOnVoid(ImVec2(0.0f, -mouse_delta.y), ImGuiMouseButton_Left);
     ImGui::End();
     ImGui::PopStyleVar();
 
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-    if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
-        pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
-    renderer_changed = pvr_rend;
+    if (vulkan != !settings.pvr.IsOpenGL())
+        pvr_rend = !vulkan ? RenderType::OpenGL
+        		: settings.pvr.rend == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
+    renderer_changed = (int)pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
@@ -1640,9 +1656,9 @@ static void gui_display_content()
         ImGui::Text("GAMES");
 
     if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
 
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
@@ -1654,18 +1670,18 @@ static void gui_display_content()
     {
 		if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Lobby;
 		}
 		if (settings.dojo.Enable)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Replays;
 		}
 
-		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
 			gui_state = Settings;
     }
@@ -1741,16 +1757,32 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
+		selection += "/";
 		set_user_config_dir(selection);
-		set_user_data_dir(selection);
+		add_system_data_dir(selection);
+
+		std::string data_path = selection + "data/";
+		set_user_data_dir(data_path);
+		if (!file_exists(data_path))
+		{
+			if (!make_directory(data_path))
+			{
+				WARN_LOG(BOOT, "Cannot create 'data' directory");
+				set_user_data_dir(selection);
+			}
+		}
+
 		if (cfgOpen())
 		{
 			LoadSettings(false);
 			// Make sure the renderer type doesn't change mid-flight
-			settings.pvr.rend = 0;
+			settings.pvr.rend = RenderType::OpenGL;
 			gui_state = Main;
 			if (settings.dreamcast.ContentPath.empty())
+			{
+				scanner.stop();
 				settings.dreamcast.ContentPath.push_back(selection);
+			}
 			SaveSettings();
 		}
 	}
@@ -1811,7 +1843,7 @@ static void gui_network_start()
 	}
 	ImGui::Text("%s", get_notification().c_str());
 
-	float currentwidth = ImGui::GetContentRegionAvailWidth();
+	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
@@ -1900,7 +1932,7 @@ static void gui_display_loadscreen()
 		ImGui::SameLine();
 		ImGui::Text("%s", get_notification().c_str());
 
-		float currentwidth = ImGui::GetContentRegionAvailWidth();
+		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 		ImGui::SetCursorPosY(126.f * scaling);
 		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
@@ -2010,9 +2042,9 @@ static std::string getFPSNotification()
 	{
 		double now = os_GetSeconds();
 		if (now - LastFPSTime >= 1.0) {
-			fps = (FrameCount - lastFrameCount) / (now - LastFPSTime);
+			fps = (MainFrameCount - lastFrameCount) / (now - LastFPSTime);
 			LastFPSTime = now;
-			lastFrameCount = FrameCount;
+			lastFrameCount = MainFrameCount;
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];

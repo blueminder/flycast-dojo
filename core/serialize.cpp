@@ -17,8 +17,6 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 
-#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
-
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 //./core/hw/arm7/arm_mem.cpp
@@ -112,6 +110,7 @@ extern int modem_sched;
 
 //./core/hw/pvr/Renderer_if.o
 extern bool pend_rend;
+extern u32 fb_w_cur;
 
 //./core/hw/pvr/pvr_mem.o
 extern u32 YUV_tempdata[512/4];//512 bytes
@@ -131,6 +130,7 @@ extern u32 in_vblank;
 extern u32 clc_pvr_scanline;
 extern int render_end_schid;
 extern int vblank_schid;
+extern bool maple_int_pending;
 
 //./core/hw/pvr/ta.o
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -275,7 +275,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 
-	serialize_version_enum version = V11;
+	serialize_version_enum version = V12;
 
 	*total_size = 0 ;
 
@@ -375,6 +375,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(in_vblank);
 	REICAST_S(clc_pvr_scanline);
+	REICAST_S(maple_int_pending);
+	REICAST_S(fb_w_cur);
 
 	REICAST_S(ta_fsm[2048]);
 	REICAST_S(ta_fsm_cl);
@@ -573,17 +575,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
 
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		REICAST_US(sys_nvmem->size);
 		REICAST_US(sys_nvmem->mask);
 		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
-	}
-	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-	{
-		REICAST_US(sys_rom->size);
-		REICAST_US(sys_rom->mask);
-		REICAST_USA(sys_rom->data, sys_rom->size);
 	}
 	else
 	{
@@ -591,12 +587,19 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 		REICAST_US(i);
 	}
 
-	if (settings.platform.system != DC_PLATFORM_NAOMI)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		REICAST_US(sys_nvmem->size);
 		REICAST_US(sys_nvmem->mask);
 		REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
 		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+	}
+	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	{
+		REICAST_US(sys_rom->size);
+		REICAST_US(sys_rom->mask);
+		REICAST_US(static_cast<DCFlashChip*>(sys_rom)->state);
+		REICAST_USA(sys_rom->data, sys_rom->size);
 	}
 	else
 	{
@@ -654,12 +657,13 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US(in_vblank);
 	REICAST_US(clc_pvr_scanline);
+	fb_w_cur = 1;
 
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 	pal_needs_update = true;
 
-	UnserializeTAContext(data, total_size);
+	UnserializeTAContext(data, total_size, VCUR_LIBRETRO);
 
 	REICAST_USA(vram.data, vram.size);
 
@@ -974,6 +978,13 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4 * 256);
 		REICAST_SKIP(2048);		// ta_fsm
 	}
+	if (version >= V12)
+	{
+		REICAST_US(maple_int_pending);
+		REICAST_US(fb_w_cur);
+	}
+	else
+		fb_w_cur = 1;
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 
@@ -987,7 +998,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 	}
 	if (version >= V11)
-		UnserializeTAContext(data, total_size);
+		UnserializeTAContext(data, total_size, version);
 
 	REICAST_USA(vram.data, vram.size);
 	pal_needs_update = true;

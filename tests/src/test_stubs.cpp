@@ -24,7 +24,7 @@ void os_SetupInput()
 {
 }
 
-void UpdateInputState(u32 port)
+void UpdateInputState()
 {
 }
 
@@ -34,9 +34,4 @@ void os_DoEvents()
 
 void os_CreateWindow()
 {
-}
-
-int get_mic_data(u8* buffer)
-{
-	return 0;
 }
