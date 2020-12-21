@@ -457,6 +457,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			if (!settings.dojo.Receiving && frame_timeout > 600)
 				disconnect_toggle = true;
 
+			// give ~30 seconds for spectating connection to continue
+			if (settings.dojo.Receiving && frame_timeout > 1800)
+				receiver_ended = true;
+
 			if (settings.dojo.Receiving &&
 				FrameNumber >= last_consecutive_common_frame)
 			{
