@@ -245,6 +245,9 @@ void DojoSession::FillDelay(int fill_delay)
 
 			if (settings.dojo.RecordMatches && !dojo.PlayMatch)
 				AppendToReplayFile(new_frame);
+
+			if (transmitter_started)
+				dojo.transmission_frames.push_back(new_frame);
 		}
 	}
 
