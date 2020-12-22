@@ -9,13 +9,13 @@ General information about flycast configuration and supported features can be fo
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.218** romset.
 
-If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMS` while non-Fightcade users are free to create a `games` directory inside of the folder they installed Flycast, or point to any other directory on their computer as a **"Content Directory"** in the settings.
+If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMS` while non-Fightcade users are free to create a `games` directory inside of the folder they installed Flycast, or point to any other directory on their computer as a **"Content Location"** in the settings.
 
 For the sake of performance, it is advised that you keep your games and the emulator on the same drive.
 
 If you are using the preferred romset, a BIOS is generally not necessary. If Flycast ends up asking you for a BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` for NAOMI games into your `data` directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your **"Home Directory"**.
 
-If you plan on using the built-in LAN Lobby, make sure that your **"Content Directory"** is set to wherever you are holding your ROMs.
+If you plan on using the built-in LAN Lobby, make sure that your **"Content Location"** is set to wherever you are holding your ROMs.
 
 For more information on verifying your BIOS files, you can head to the [Flycast wiki page](https://github.com/TheArcadeStriker/flycast-wiki/wiki/Verifying-your-BIOS-and-Arcade-ROMs) on the topic.
 
@@ -28,7 +28,7 @@ Select the **Arcade button names** checkbox to show the arcade button mapping. I
 
 The following is a sample mapping for XInput (XBOX 360) Controllers created by **pokeshark** on the [Official Fightcade Discord](https://discord.com/invite/EyERRSg). Note that the the triggers are on the right hand side, corresponding with analog axes.
 
-![CvS2 Sample Mapping for XInput Controllers](CVS2_Sample_Mapping_for_XInput_Controllers.png =640x)
+<img alt="CvS2 Sample Mapping for XInput Controllers" src="CVS2_Sample_Mapping_for_XInput_Controllers.png" width="640">
 
 # Starting a Netplay Session
 You can find the Netplay settings under the "Netplay" section of the emulator's settings:
