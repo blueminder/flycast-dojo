@@ -1,10 +1,34 @@
-Flycast Dojo
-===========
+# Flycast Dojo
+
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
 
 **Flycast Dojo** can be retrieved standalone from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. Either way you retrieve it, you will always have the option to use it alone for P2P games either over a virtual LAN, or through a direct connection.
 
 General information about flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
+
+# Contents
+- [Getting Started](#getting-started)
+- [Setting Controls](#setting-controls)
+- [Starting a Netplay Session](#starting-a-netplay-session)
+  * [Lobby Quick Start](#lobby-quick-start)
+    + [As Guest](#as-guest)
+    + [As Host](#as-host)
+      - [Set Delay](#set-delay)
+    + [As Spectator](#as-spectator)
+- [Replays](#replays)
+  * [Manual Operation](#manual-operation)
+    + [Set Server IP & Port](#set-server-ip--port)
+    + [Delay Calculation](#manual-delay-calculation)
+    + [Launch Game](#launch-game)
+- [Command Line](#command-line)
+  * [Server](#server)
+  * [Client](#client)
+  * [TCP Match Transmission (Spectating)](#tcp-match-transmission-spectating)
+  * [TCP Match Receiving (Spectating)](#tcp-match-receiving-spectating)
+  * [Test Game Screen](#test-game-screen)
+- [Other Guides](#other-guides)
+- [Video Demos](#video-demos)
+- [Roadmap](#roadmap)
 
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.218** romset.
@@ -87,7 +111,7 @@ If you are hosting and do not wish to use the lobby system, you can enter your s
 
 If you are a guest, make sure that "Act As Server" is not checked and that you have entered the matching IP address and port of your opponent in the "Server" column.
 
-#### Manual Delay Calculation
+### Manual Delay Calculation
 To calculate delay, we would use the following formula:
 
 `Ceiling( Ping / 2 * FrameDuration (16 ms) ) = Delay #`
