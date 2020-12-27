@@ -82,7 +82,7 @@ public:
 
 	void LoadNetConfig();
 	int StartDojoSession();
-	void StartSession(int delay);
+	void StartSession(int session_delay, int session_ppf, int session_num_bf);
 
 	void StartTransmitterThread();
 
@@ -188,6 +188,9 @@ public:
 	int remaining_spectators;
 
 	void RequestSpectate(std::string host, std::string port);
+
+	int packets_per_frame;
+	int num_back_frames;
 };
 
 extern DojoSession dojo;

@@ -123,7 +123,7 @@ uint64_t UDPClient::GetOpponentAvgPing()
 // for messages sent outside the game loop
 void UDPClient::SendMsg(std::string msg, sockaddr_in target)
 {
-	for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
+	for (int i = 0; i < dojo.packets_per_frame; i++)
 	{
 		sendto(local_socket, (const char*)msg.data(), strlen(msg.data()), 0, (const struct sockaddr*)&target, sizeof(target));
 	}
@@ -145,8 +145,8 @@ void UDPClient::StartSession()
 {
 	std::stringstream start_ss("");
 	start_ss << "START " << dojo.delay
-		<< " " << settings.dojo.PacketsPerFrame
-		<< " " << settings.dojo.NumBackFrames;
+		<< " " << dojo.packets_per_frame
+		<< " " << dojo.num_back_frames;
 
 	std::string to_send_start = start_ss.str();
 
@@ -257,7 +257,7 @@ void UDPClient::ClientLoop()
 			memcmp(to_send, last_sent.data(), dojo.PayloadSize()) != 0)
 		{
 			// send payload until morale improves
-			for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
+			for (int i = 0; i < dojo.packets_per_frame; i++)
 			{
 				sendto(local_socket, (const char*)to_send, dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 			}
@@ -364,10 +364,8 @@ void UDPClient::ClientLoop()
 
 				if (!dojo.session_started)
 				{
-					// adopt host packet settings
-					settings.dojo.PacketsPerFrame = ppf;
-					settings.dojo.NumBackFrames = nbf;
-					dojo.StartSession(delay);
+					// adopt host delay and payload settings
+					dojo.StartSession(delay, ppf, nbf);
 				}
 			}
 

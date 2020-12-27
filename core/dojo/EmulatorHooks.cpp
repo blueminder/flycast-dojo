@@ -8,6 +8,9 @@ void DojoSession::LoadNetConfig()
 	transmitting = settings.dojo.Transmitting;
 	//receiving = settings.dojo.Receiving;
 
+	packets_per_frame = settings.dojo.PacketsPerFrame;
+	num_back_frames = settings.dojo.NumBackFrames;
+
 	if (spectating)
 	{
 		client_input_authority = false;
@@ -225,7 +228,7 @@ void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 				std::accumulate(last_inputs.begin(), last_inputs.end(), std::string(""));
 
 			// fill rest of payload with cached local inputs
-			if (GetEffectiveFrameNumber(data) > settings.dojo.NumBackFrames + delay + 1)
+			if (GetEffectiveFrameNumber(data) > num_back_frames + delay + 1)
 				to_send.replace(FRAME_SIZE, dojo.PayloadSize() - FRAME_SIZE, combined_last_inputs);
 		}
 

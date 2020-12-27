@@ -80,7 +80,7 @@ uint64_t DojoSession::unix_timestamp()
 int DojoSession::PayloadSize()
 {
 	if (settings.dojo.EnableBackfill)
-		return settings.dojo.NumBackFrames * INPUT_SIZE + FRAME_SIZE;
+		return num_back_frames * INPUT_SIZE + FRAME_SIZE;
 	else
 		return FRAME_SIZE;
 }
@@ -212,10 +212,12 @@ void DojoSession::resume()
 	isPaused = false;
 }
 
-void DojoSession::StartSession(int session_delay)
+void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
 	FillDelay(session_delay);
 	delay = session_delay;
+	packets_per_frame = session_ppf;
+	num_back_frames = session_num_bf;
 
 	if (hosting)
 		client.StartSession();
@@ -611,7 +613,7 @@ void DojoSession::RequestSpectate(std::string host, std::string port)
 		resolver.resolve(udp::v4(), host, port);
 
 	std::string request = "SPECTATE " + settings.dojo.SpectatorPort;
-	for (int i = 0; i < settings.dojo.PacketsPerFrame; i++)
+	for (int i = 0; i < packets_per_frame; i++)
 	{
 		s.send_to(asio::buffer(request, request.length()), *endpoints.begin());
 	}

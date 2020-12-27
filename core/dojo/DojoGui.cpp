@@ -203,7 +203,9 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 		dojo.PlayMatch = false;
 
 		dojo.isMatchStarted = true;
-		dojo.StartSession(settings.dojo.Delay);
+		dojo.StartSession(settings.dojo.Delay,
+			settings.dojo.PacketsPerFrame,
+			settings.dojo.NumBackFrames);
 		dojo.resume();
 
 		gui_state = Closed;
