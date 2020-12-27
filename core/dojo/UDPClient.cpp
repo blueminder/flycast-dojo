@@ -144,7 +144,10 @@ void UDPClient::SendSpectateOK(sockaddr_in target_addr)
 void UDPClient::StartSession()
 {
 	std::stringstream start_ss("");
-	start_ss << "START " << dojo.delay;
+	start_ss << "START " << dojo.delay
+		<< " " << settings.dojo.PacketsPerFrame
+		<< " " << settings.dojo.NumBackFrames;
+
 	std::string to_send_start = start_ss.str();
 
 	SendMsg(to_send_start, opponent_addr);
@@ -352,9 +355,18 @@ void UDPClient::ClientLoop()
 			}
 			if (memcmp("START", buffer, 5) == 0)
 			{
-				int delay = atoi(buffer + 6);
+				std::string buffer_str(buffer + 6, strlen(buffer + 6));
+				auto tokens = stringfix::split(" ", buffer_str);
+
+				int delay = atoi(tokens[0].data());
+				int ppf = atoi(tokens[1].data());
+				int nbf = atoi(tokens[2].data());
+
 				if (!dojo.session_started)
 				{
+					// adopt host packet settings
+					settings.dojo.PacketsPerFrame = ppf;
+					settings.dojo.NumBackFrames = nbf;
 					dojo.StartSession(delay);
 				}
 			}

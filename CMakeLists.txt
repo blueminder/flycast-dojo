@@ -693,6 +693,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/dojo/deps/filesystem.hpp
+        core/dojo/deps/StringFix.cpp
+        core/dojo/deps/StringFix.h
         core/dojo/AsyncTcpServer.hpp
         core/dojo/AsyncTcpServer.cpp
         core/dojo/DojoGui.cpp
