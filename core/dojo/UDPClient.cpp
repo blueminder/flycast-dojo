@@ -253,26 +253,35 @@ void UDPClient::ClientLoop()
 	while (!dojo.disconnect_toggle)
 	{
 		// if opponent detected, shoot packets at them
-		if (opponent_addr.sin_port > 0 &&
-			memcmp(to_send, last_sent.data(), dojo.PayloadSize()) != 0)
+		if (opponent_addr.sin_port > 0)
 		{
-			// send payload until morale improves
-			for (int i = 0; i < dojo.packets_per_frame; i++)
+			if (memcmp(to_send, last_sent.data(), dojo.PayloadSize()) != 0)
 			{
-				sendto(local_socket, (const char*)to_send, dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				// send payload until morale improves
+				for (int i = 0; i < dojo.packets_per_frame; i++)
+				{
+					sendto(local_socket, (const char*)to_send, dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				}
+
+				if (settings.dojo.Debug == DEBUG_SEND ||
+					settings.dojo.Debug == DEBUG_SEND_RECV ||
+					settings.dojo.Debug == DEBUG_ALL)
+				{
+					dojo.PrintFrameData("Sent", (u8*)to_send);
+				}
+
+				last_sent = std::string(to_send, to_send + dojo.PayloadSize());
+
+				if (dojo.client_input_authority)
+					dojo.AddNetFrame((const char*)to_send);
 			}
 
-			if (settings.dojo.Debug == DEBUG_SEND ||
-				settings.dojo.Debug == DEBUG_SEND_RECV ||
-				settings.dojo.Debug == DEBUG_ALL)
+			if (request_repeat &&
+				!last_sent.empty())
 			{
-				dojo.PrintFrameData("Sent", (u8 *)to_send);
+				sendto(local_socket, "REP", strlen("REP"), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				request_repeat = false;
 			}
-
-			last_sent = std::string(to_send, to_send + dojo.PayloadSize());
-
-			if (dojo.client_input_authority)
-				dojo.AddNetFrame((const char*)to_send);
 		}
 
 		struct sockaddr_in sender;
@@ -313,6 +322,17 @@ void UDPClient::ClientLoop()
 			if (memcmp("OK NAME", buffer, 7) == 0)
 			{
 				name_acknowledged = true;
+			}
+
+			if (memcmp("REP", buffer, 3) == 0)
+			{
+				if (!last_sent.empty())
+				{
+					for (int i = 0; i < dojo.packets_per_frame; i++)
+					{
+						sendto(local_socket, (const char*)last_sent.data(), dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+					}
+				}
 			}
 
 			if (memcmp("PING", buffer, 4) == 0)

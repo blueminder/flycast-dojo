@@ -53,6 +53,7 @@ public:
 	uint64_t GetOpponentAvgPing();
 
 	int SendData(std::string data);
+
 	void SendMsg(std::string msg, sockaddr_in target);
 	void SendPlayerName();
 	void SendNameOK();
@@ -63,5 +64,6 @@ public:
 	bool opponent_disconnected;
 
 	bool name_acknowledged;
+	bool request_repeat;
 };
 
