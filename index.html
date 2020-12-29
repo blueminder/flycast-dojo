@@ -1,0 +1,97 @@
+<html>
+	<head>
+		<title>Flycast Dojo</title>
+		<style type="text/css">
+h1 {
+	margin-bottom: 0;
+}
+		
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.tabs label {
+	order: 1;
+	display: block;
+	padding: 1rem 2rem;
+	margin-right: 0.2rem;
+	cursor: pointer;
+	background: #fff;
+	font-weight: bold;
+	transition: background ease 0.2s;
+	width: 230px;
+}
+
+.tabs .tab {
+	order: 99;
+	width: 560px;
+	display: none;
+	padding: 1rem;
+	background: #ffb4b4;
+}
+
+.tabs input[type="radio"] {
+	display: none;
+}
+
+.tabs input[type="radio"]:checked + label {
+	background: #ffb4b4;
+}
+
+.tabs input[type="radio"]:checked + label + .tab {
+	display: block;
+}
+
+@media (max-width: 45em) {
+	.tabs .tab,
+	.tabs label {
+		order: initial;
+	}
+	.tabs label {
+		width: 100%;
+		margin-right: 0;
+		margin-top: 0.2rem;
+	}
+}
+
+body {
+	background: #eee;
+	min-height: 100vh;
+	box-sizing: border-box;
+	padding-top: 10vh;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", serif; 
+	font-weight: 300;
+	line-height: 1.5;
+	max-width: 60rem;
+	margin: 0 auto;
+	font-size: 112%;
+}
+		</style>
+	</head>
+	<body>
+		<h1>Flycast Dojo</h1>
+		<i>Peer-to-peer Netplay for Dreamcast / NAOMI / Atomiswave</i>
+		<p>Available via <a href="https://www.fightcade.com/">Fightcade</a> &amp; <a href="https://github.com/blueminder/flycast-dojo/releases">GitHub</a></p>
+
+		<h3>Quick Start Videos</h3>
+		<div class="tabs">
+		    <input type="radio" name="tabs" id="tab_fightcade" checked="checked">
+		    <label for="tab_fightcade">Via Fightcade</label>
+		    <div class="tab">
+				<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/47oJOUoGYmI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			</div>
+
+			<input type="radio" name="tabs" id="tab_lan">
+		    <label for="tab_lan">Via Virtual LAN</label>
+		    <div class="tab">
+				<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/VcalBJpbjxA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			</div>
+		</div>
+
+		<p>
+			<a href="https://github.com/blueminder/flycast-dojo#flycast-dojo">Documentation</a> | 
+			<a href="https://github.com/blueminder/flycast-dojo#video-demos">Video Demos</a>
+		</p>
+	</body>
+</html>
