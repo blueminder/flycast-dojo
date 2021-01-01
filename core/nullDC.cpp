@@ -831,6 +831,7 @@ void InitSettings()
 	settings.dojo.EnableMatchCode = false;
 	settings.dojo.MatchmakingServerAddress = "match.dojo.ooo";
 	settings.dojo.MatchmakingServerPort = "52001";
+	settings.dojo.MatchCode = "";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -962,6 +963,7 @@ void LoadSettings(bool game_specific)
 	settings.dojo.EnableMatchCode = cfgLoadBool("dojo", "EnableMatchCode", settings.dojo.EnableMatchCode);
 	settings.dojo.MatchmakingServerAddress = cfgLoadStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
 	settings.dojo.MatchmakingServerPort = cfgLoadStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
+	settings.dojo.MatchCode = cfgLoadStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
 
 
 #if SUPPORT_DISPMANX
@@ -1150,6 +1152,7 @@ void SaveSettings()
 	cfgSaveBool("dojo", "EnableMatchCode", settings.dojo.EnableMatchCode);
 	cfgSaveStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
 	cfgSaveStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
+	//cfgSaveStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

@@ -10,6 +10,25 @@ UDPClient::UDPClient()
 	name_acknowledged = false;
 };
 
+// connects to matchmaking server
+void UDPClient::ConnectMMServer()
+{
+	sockaddr_in mms_addr;
+	mms_addr.sin_family = AF_INET;
+	//mms_addr.sin_port = htons((u16)port);
+	mms_addr.sin_port = htons((u16)std::stoul(settings.dojo.MatchmakingServerPort));
+	inet_pton(AF_INET, settings.dojo.MatchmakingServerAddress.data(), &mms_addr.sin_addr);
+
+	std::string mm_msg;
+	if (dojo.hosting)
+		mm_msg = "host:cmd:";
+	else
+		mm_msg = "guest:cmd:" + settings.dojo.MatchCode;
+
+	sendto(local_socket, (const char*)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr*)&mms_addr, sizeof(mms_addr));
+	INFO_LOG(NETWORK, "Connecting to Matchmaking Relay");
+}
+
 void UDPClient::SetHost(std::string host, int port)
 {
 	host_addr.sin_family = AF_INET;
@@ -291,6 +310,11 @@ void UDPClient::ClientLoop()
 		int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender, &senderlen);
 		if (bytes_read)
 		{
+			if (memcmp("CODE", buffer, 4) == 0)
+			{
+				settings.dojo.MatchCode = std::string(buffer + 5, strlen(buffer + 5));
+			}
+
 			if (memcmp("SPECTATE", buffer, 8) == 0)
 			{
 				if (dojo.remaining_spectators > 0)
@@ -428,6 +452,14 @@ void UDPClient::ClientLoop()
 void UDPClient::ClientThread()
 {
 	Init(dojo.hosting);
+
+	// if match code enabled
+	// connect to matchmaking server
+	if (settings.dojo.EnableMatchCode)
+	{
+		ConnectMMServer();
+	}
+
 	ClientLoop();
 	EndSession();
 }

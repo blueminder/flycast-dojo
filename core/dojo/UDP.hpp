@@ -42,6 +42,8 @@ public:
 	void StartSession();
 	void EndSession();
 
+	void ConnectMMServer();
+
 	void SetHost(std::string host, int port);
 
 	std::string random_hex_string(int length, int seed);

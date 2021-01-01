@@ -531,6 +531,7 @@ struct settings_t
 		bool EnableMatchCode;
 		std::string MatchmakingServerAddress;
 		std::string MatchmakingServerPort;
+		std::string MatchCode;
 	} dojo;
 };
 
