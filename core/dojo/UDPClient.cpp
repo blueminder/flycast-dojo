@@ -315,6 +315,25 @@ void UDPClient::ClientLoop()
 				settings.dojo.MatchCode = std::string(buffer + 5, strlen(buffer + 5));
 			}
 
+			if (memcmp("OPPADDR", buffer, 7) == 0)
+			{
+				if (settings.dojo.EnableMatchCode)
+				{
+					std::string data = std::string(buffer + 8, strlen(buffer + 5));
+					std::vector<std::string> opp = stringfix::split(":", data);
+
+					if (!settings.dojo.ActAsServer)
+					{
+						settings.dojo.ServerIP = opp[0];
+						//settings.dojo.ServerPort = opp[1];
+					}
+
+					opponent_addr.sin_family = AF_INET;
+					opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
+					inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
+				}
+			}
+
 			if (memcmp("SPECTATE", buffer, 8) == 0)
 			{
 				if (dojo.remaining_spectators > 0)
