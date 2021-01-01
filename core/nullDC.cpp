@@ -828,6 +828,9 @@ void InitSettings()
 	settings.dojo.SpectatorPort = "7000";
 	settings.dojo.LobbyMulticastAddress = "224.0.0.255";
 	settings.dojo.LobbyMulticastPort = "52001";
+	settings.dojo.EnableMatchCode = false;
+	settings.dojo.MatchmakingServerAddress = "match.dojo.ooo";
+	settings.dojo.MatchmakingServerPort = "52001";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -956,6 +959,10 @@ void LoadSettings(bool game_specific)
 	settings.dojo.SpectatorPort = cfgLoadStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
 	settings.dojo.LobbyMulticastAddress = cfgLoadStr("dojo", "LobbyMulticastAddress", settings.dojo.LobbyMulticastAddress.c_str());
 	settings.dojo.LobbyMulticastPort = cfgLoadStr("dojo", "LobbyMulticastPort", settings.dojo.LobbyMulticastPort.c_str());
+	settings.dojo.EnableMatchCode = cfgLoadBool("dojo", "EnableMatchCode", settings.dojo.EnableMatchCode);
+	settings.dojo.MatchmakingServerAddress = cfgLoadStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
+	settings.dojo.MatchmakingServerPort = cfgLoadStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
+
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1140,6 +1147,9 @@ void SaveSettings()
 	cfgSaveStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
 	cfgSaveStr("dojo", "LobbyMulticastAddress", settings.dojo.LobbyMulticastAddress.c_str());
 	cfgSaveStr("dojo", "LobbyMulticastPort", settings.dojo.LobbyMulticastPort.c_str());
+	cfgSaveBool("dojo", "EnableMatchCode", settings.dojo.EnableMatchCode);
+	cfgSaveStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
+	cfgSaveStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

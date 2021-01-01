@@ -539,11 +539,52 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ShowHelpMarker("Name visible to other players");
 			settings.dojo.PlayerName = std::string(PlayerName, strlen(PlayerName));
 
+			if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::Checkbox("Enable Internet Matchmaking", &settings.dojo.EnableMatchCode);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable Internet matchmaking. Establishes direct connection via public server relay.");
+
+				if (settings.dojo.EnableMatchCode)
+				{
+					char MatchmakingServerAddress[256];
+
+					strcpy(MatchmakingServerAddress, settings.dojo.MatchmakingServerAddress.c_str());
+					ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					settings.dojo.MatchmakingServerAddress = MatchmakingServerAddress;
+
+					char MatchmakingServerPort[256];
+
+					strcpy(MatchmakingServerPort, settings.dojo.MatchmakingServerPort.c_str());
+					ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					settings.dojo.MatchmakingServerPort = MatchmakingServerPort;
+				}
+			}
+
 			if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				ImGui::Checkbox("Enable Lobby", &settings.dojo.EnableLobby);
 				ImGui::SameLine();
 				ShowHelpMarker("Enable discovery and matchmaking on LAN");
+
+				if (settings.dojo.EnableLobby)
+				{
+					char LobbyMulticastAddress[256];
+
+					strcpy(LobbyMulticastAddress, settings.dojo.LobbyMulticastAddress.c_str());
+					ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast IP Address for Lobby to Target");
+					settings.dojo.LobbyMulticastAddress = LobbyMulticastAddress;
+
+					char LobbyMulticastPort[256];
+
+					strcpy(LobbyMulticastPort, settings.dojo.LobbyMulticastPort.c_str());
+					ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast Port for Lobby to Target");
+					settings.dojo.LobbyMulticastPort = LobbyMulticastPort;
+				}
 			}
 
 			if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
@@ -599,22 +640,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
-
-				char LobbyMulticastAddress[256];
-
-				strcpy(LobbyMulticastAddress, settings.dojo.LobbyMulticastAddress.c_str());
-				ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("Multicast IP Address for Lobby to Target");
-				settings.dojo.LobbyMulticastAddress = LobbyMulticastAddress;
-
-				char LobbyMulticastPort[256];
-
-				strcpy(LobbyMulticastPort, settings.dojo.LobbyMulticastPort.c_str());
-				ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("Multicast Port for Lobby to Target");
-				settings.dojo.LobbyMulticastPort = LobbyMulticastPort;
 			}
 		}
 		ImGui::PopStyleVar();

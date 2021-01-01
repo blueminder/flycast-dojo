@@ -528,6 +528,9 @@ struct settings_t
 		std::string SpectatorPort;
 		std::string LobbyMulticastAddress;
 		std::string LobbyMulticastPort;
+		bool EnableMatchCode;
+		std::string MatchmakingServerAddress;
+		std::string MatchmakingServerPort;
 	} dojo;
 };
 
