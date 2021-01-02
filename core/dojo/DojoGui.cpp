@@ -623,43 +623,46 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
-			if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
+			if (!settings.dojo.EnableLobby && !settings.dojo.EnableMatchCode)
 			{
-				ImGui::Checkbox("Act as Server", &settings.dojo.ActAsServer);
-				ImGui::SameLine();
-				ShowHelpMarker("Host netplay game");
-
-				char ServerIP[256];
-				std::string IPLabel;
-				std::string IPDescription;
-				std::string PortDescription;
-
-				IPLabel = "Server IP##DojoSession";
-				IPDescription = "The server IP to connect to";
-				if (settings.dojo.ActAsServer)
+				if (ImGui::CollapsingHeader("Manual Operation", ImGuiTreeNodeFlags_None))
 				{
-					PortDescription = "The server port to listen on";
-				}
-				else
-				{
-					PortDescription = "The server port to connect to";
-				}
-
-				if (!settings.dojo.ActAsServer)
-				{
-					strcpy(ServerIP, settings.dojo.ServerIP.c_str());
-					ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::Checkbox("Act as Server", &settings.dojo.ActAsServer);
 					ImGui::SameLine();
-					ShowHelpMarker(IPDescription.c_str());
-					settings.dojo.ServerIP = ServerIP;
-				}
+					ShowHelpMarker("Host netplay game");
 
-				char ServerPort[256];
-				strcpy(ServerPort, settings.dojo.ServerPort.c_str());
-				ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker(PortDescription.c_str());
-				settings.dojo.ServerPort = ServerPort;
+					char ServerIP[256];
+					std::string IPLabel;
+					std::string IPDescription;
+					std::string PortDescription;
+
+					IPLabel = "Server IP##DojoSession";
+					IPDescription = "The server IP to connect to";
+					if (settings.dojo.ActAsServer)
+					{
+						PortDescription = "The server port to listen on";
+					}
+					else
+					{
+						PortDescription = "The server port to connect to";
+					}
+
+					if (!settings.dojo.ActAsServer)
+					{
+						strcpy(ServerIP, settings.dojo.ServerIP.c_str());
+						ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker(IPDescription.c_str());
+						settings.dojo.ServerIP = ServerIP;
+					}
+
+					char ServerPort[256];
+					strcpy(ServerPort, settings.dojo.ServerPort.c_str());
+					ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker(PortDescription.c_str());
+					settings.dojo.ServerPort = ServerPort;
+				}
 			}
 
 			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
