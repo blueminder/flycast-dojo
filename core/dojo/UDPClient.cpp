@@ -13,10 +13,15 @@ UDPClient::UDPClient()
 // connects to matchmaking server
 void UDPClient::ConnectMMServer()
 {
+
+	struct hostent* mm_host;
+	mm_host = gethostbyname(settings.dojo.MatchmakingServerAddress.data());
+
 	sockaddr_in mms_addr;
 	mms_addr.sin_family = AF_INET;
 	mms_addr.sin_port = htons((u16)std::stoul(settings.dojo.MatchmakingServerPort));
-	inet_pton(AF_INET, settings.dojo.MatchmakingServerAddress.data(), &mms_addr.sin_addr);
+	memcpy(&mms_addr.sin_addr, mm_host->h_addr_list[0], mm_host->h_length);
+	//inet_pton(AF_INET, settings.dojo.MatchmakingServerAddress.data(), &mms_addr.sin_addr);
 
 	std::string mm_msg;
 	if (dojo.hosting)
@@ -475,7 +480,7 @@ void UDPClient::ClientThread()
 	// connect to matchmaking server
 	if (settings.dojo.EnableMatchCode)
 	{
-		if (!dojo.hosting)
+		if (!settings.dojo.ActAsServer)
 			while (dojo.MatchCode.empty());
 		ConnectMMServer();
 	}

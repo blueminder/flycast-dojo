@@ -23,7 +23,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	if (settings.dojo.EnableMatchCode && !settings.dojo.MatchCode.empty())
-		ImGui::Text("Match Code: %s", settings.dojo.MatchCode);
+		ImGui::Text("Match Code: %s", settings.dojo.MatchCode.data());
 
 	ImGui::Text("Waiting for opponent to connect...");
 
