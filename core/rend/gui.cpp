@@ -1647,50 +1647,58 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 
-	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE" };
-	static int item_current_idx = 0;
+	if (settings.dojo.Enable && settings.dojo.Receiving)
+        ImGui::Text("RECEIVE");
+	else
+	{
+		static ImGuiComboFlags flags = 0;
+		const char* items[] = { "HOST", "JOIN", "OFFLINE" };
+		static int item_current_idx = 0;
+		static int last_item_current_idx = 3;
 
-	// Here our selection data is an index.
-	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+		// Here our selection data is an index.
+		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 
-	ImGui::PushItemWidth(ImGui::CalcTextSize("RECEIVE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
-	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
-	if (item_current_idx == 0)
-	{
-		settings.dojo.Enable = false;
-	}
-	else if (item_current_idx == 1)
-	{
-		settings.dojo.Enable = true;
-		settings.dojo.ActAsServer = true;
-		settings.dojo.Receiving = false;
-	}
-	else if (item_current_idx == 2)
-	{
-		settings.dojo.Enable = true;
-		settings.dojo.ActAsServer = false;
-		settings.dojo.Receiving = false;
-	}
-	else if (item_current_idx == 3)
-	{
-		settings.dojo.Enable = true;
-		settings.dojo.Receiving = true;
-		settings.dojo.ActAsServer = true;
+		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+
+		if (last_item_current_idx == 3)
+		{
+			// set hosting as default action
+			settings.dojo.Enable = true;
+			settings.dojo.ActAsServer = true;
+			settings.dojo.Receiving = false;
+		}
+
+		if (item_current_idx == 0)
+		{
+			settings.dojo.Enable = true;
+			settings.dojo.ActAsServer = true;
+			settings.dojo.Receiving = false;
+		}
+		else if (item_current_idx == 1)
+		{
+			settings.dojo.Enable = true;
+			settings.dojo.ActAsServer = false;
+			settings.dojo.Receiving = false;
+
+			settings.dojo.ServerIP = "";
+		}
+		else if (item_current_idx == 2)
+		{
+			settings.dojo.Enable = false;
+		}
+
+		if (item_current_idx != last_item_current_idx)
+		{
+			SaveSettings();
+			last_item_current_idx = item_current_idx;
+		}
 	}
 
 	ImGui::SameLine();
-/*
-    if (settings.dojo.Enable && settings.dojo.Receiving)
-        ImGui::Text("RECEIVE");
-    else if (settings.dojo.Enable && settings.dojo.ActAsServer)
-        ImGui::Text("HOST");
-    else if (settings.dojo.Enable && !settings.dojo.ActAsServer)
-        ImGui::Text("GUEST");
-    else
-        ImGui::Text("GAMES");
-*/
+
     if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
@@ -1925,6 +1933,8 @@ static void gui_display_loadscreen()
 			}
 			else if (settings.dojo.Enable)
 			{
+
+
 				dojo.StartDojoSession();
 
 				if (dojo.PlayMatch)
