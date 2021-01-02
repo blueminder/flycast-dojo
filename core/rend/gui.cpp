@@ -1636,16 +1636,52 @@ static void gui_display_demo()
 static void gui_display_content()
 {
 	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
+	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+	ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
-    ImGui::AlignTextToFramePadding();
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
+	ImGui::AlignTextToFramePadding();
+
+	static ImGuiComboFlags flags = 0;
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE" };
+	static int item_current_idx = 0;
+
+	// Here our selection data is an index.
+	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+
+	ImGui::PushItemWidth(ImGui::CalcTextSize("RECEIVE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+
+	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+	if (item_current_idx == 0)
+	{
+		settings.dojo.Enable = false;
+	}
+	else if (item_current_idx == 1)
+	{
+		settings.dojo.Enable = true;
+		settings.dojo.ActAsServer = true;
+		settings.dojo.Receiving = false;
+	}
+	else if (item_current_idx == 2)
+	{
+		settings.dojo.Enable = true;
+		settings.dojo.ActAsServer = false;
+		settings.dojo.Receiving = false;
+	}
+	else if (item_current_idx == 3)
+	{
+		settings.dojo.Enable = true;
+		settings.dojo.Receiving = true;
+		settings.dojo.ActAsServer = true;
+	}
+
+	ImGui::SameLine();
+/*
     if (settings.dojo.Enable && settings.dojo.Receiving)
         ImGui::Text("RECEIVE");
     else if (settings.dojo.Enable && settings.dojo.ActAsServer)
@@ -1654,23 +1690,25 @@ static void gui_display_content()
         ImGui::Text("GUEST");
     else
         ImGui::Text("GAMES");
-
+*/
     if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
     else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
+    else if (!settings.dojo.Enable)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2);
 
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
     {
-        ImGui::SameLine(0, 32 * scaling);
+        ImGui::SameLine(0, 16 * scaling);
     	filter.Draw("Filter");
     }
     if (gui_state != SelectDisk)
     {
 		if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Lobby;
 		}
