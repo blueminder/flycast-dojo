@@ -264,6 +264,15 @@ bool UDPClient::Init(bool hosting)
 	}
 	else
 	{
+		if (settings.dojo.EnableMatchCode)
+		{
+			settings.dojo.ServerIP = "";
+		}
+		else
+		{
+			while (settings.dojo.ServerIP.empty());
+			SetHost(settings.dojo.ServerIP, atoi(settings.dojo.ServerPort.data()));
+		}
 		opponent_addr = host_addr;
 		return CreateLocalSocket(0);
 	}

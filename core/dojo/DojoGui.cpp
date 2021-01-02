@@ -124,8 +124,9 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
    				{
 					settings.dojo.ServerIP = std::string(si, strlen(si));
 					settings.dojo.ServerPort = std::string(sp, strlen(sp));
-					//cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
-					//cfgSaveStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
+					cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+					cfgSaveStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
+
    					ImGui::CloseCurrentPopup();
    				}
 				
