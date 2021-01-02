@@ -191,6 +191,8 @@ public:
 
 	int packets_per_frame;
 	int num_back_frames;
+
+	std::string MatchCode;
 };
 
 extern DojoSession dojo;

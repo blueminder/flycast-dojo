@@ -59,6 +59,8 @@ DojoSession::DojoSession()
 	last_received_frame = 0;
 
 	remaining_spectators = 0;
+
+	MatchCode = "";
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)

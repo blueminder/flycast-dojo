@@ -15,7 +15,6 @@ void UDPClient::ConnectMMServer()
 {
 	sockaddr_in mms_addr;
 	mms_addr.sin_family = AF_INET;
-	//mms_addr.sin_port = htons((u16)port);
 	mms_addr.sin_port = htons((u16)std::stoul(settings.dojo.MatchmakingServerPort));
 	inet_pton(AF_INET, settings.dojo.MatchmakingServerAddress.data(), &mms_addr.sin_addr);
 
@@ -23,7 +22,7 @@ void UDPClient::ConnectMMServer()
 	if (dojo.hosting)
 		mm_msg = "host:cmd:";
 	else
-		mm_msg = "guest:cmd:" + settings.dojo.MatchCode;
+		mm_msg = "guest:cmd:" + dojo.MatchCode;
 
 	sendto(local_socket, (const char*)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr*)&mms_addr, sizeof(mms_addr));
 	INFO_LOG(NETWORK, "Connecting to Matchmaking Relay");
@@ -476,6 +475,8 @@ void UDPClient::ClientThread()
 	// connect to matchmaking server
 	if (settings.dojo.EnableMatchCode)
 	{
+		if (!dojo.hosting)
+			while (dojo.MatchCode.empty());
 		ConnectMMServer();
 	}
 
