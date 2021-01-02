@@ -633,24 +633,26 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				std::string IPLabel;
 				std::string IPDescription;
 				std::string PortDescription;
+
+				IPLabel = "Server IP##DojoSession";
+				IPDescription = "The server IP to connect to";
 				if (settings.dojo.ActAsServer)
 				{
-					IPLabel = "Opponent IP##DojoSession";
-					IPDescription = "Opponent IP to detect delay against (optional)";
 					PortDescription = "The server port to listen on";
 				}
 				else
 				{
-					IPLabel = "Server IP##DojoSession";
-					IPDescription = "The server IP to connect to";
 					PortDescription = "The server port to connect to";
 				}
 
-				strcpy(ServerIP, settings.dojo.ServerIP.c_str());
-				ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker(IPDescription.c_str());
-				settings.dojo.ServerIP = ServerIP;
+				if (!settings.dojo.ActAsServer)
+				{
+					strcpy(ServerIP, settings.dojo.ServerIP.c_str());
+					ImGui::InputText(IPLabel.c_str(), ServerIP, sizeof(ServerIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker(IPDescription.c_str());
+					settings.dojo.ServerIP = ServerIP;
+				}
 
 				char ServerPort[256];
 				strcpy(ServerPort, settings.dojo.ServerPort.c_str());
