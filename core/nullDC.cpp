@@ -647,7 +647,7 @@ static void dc_start_game(const char* path)
 	{
 		std::string net_save_path = get_savestate_file_path(false);
 		net_save_path.append(".net");
-		dc_loadstate(net_save_path);
+		//dc_loadstate(net_save_path);
 	}
 }
 
