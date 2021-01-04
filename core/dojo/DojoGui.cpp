@@ -84,6 +84,13 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 					static char mc[128] = "";
 					ImGui::InputTextWithHint("", "ABC123", mc, IM_ARRAYSIZE(mc), ImGuiInputTextFlags_CharsUppercase);
 
+					ImGui::SameLine();
+					if (ImGui::Button("Paste"))
+					{
+						char* pasted_txt = SDL_GetClipboardText();
+						memcpy(mc, pasted_txt, strlen(pasted_txt));
+					}
+
 					if (ImGui::Button("Start Session"))
 					{
 						dojo.MatchCode = std::string(mc, strlen(mc));
