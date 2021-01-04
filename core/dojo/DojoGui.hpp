@@ -39,6 +39,9 @@ public:
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
 
 	void insert_netplay_tab(ImVec2 normal_padding);
+
+	std::string current_filename;
+	std::string current_checksum;
 };
 
 extern DojoGui dojo_gui;

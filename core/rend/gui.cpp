@@ -1749,6 +1749,7 @@ static void gui_display_content()
 
 		ImGui::PopID();
 
+		std::string checksum;
 		{
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
@@ -1783,14 +1784,37 @@ static void gui_display_content()
 						}
 					}
 
+					bool checksum_calculated = false;
+
 					std::string popup_name = "Options " + game.path;
 					if (ImGui::BeginPopupContextItem(popup_name.c_str()))
 					{
 						if (ImGui::MenuItem("Calculate MD5 Sum"))
 						{
 							std::FILE* file = std::fopen(game.path.c_str(), "rb");
-							INFO_LOG(NETWORK, "%s", md5file(file).data());
+							dojo_gui.current_filename = game.path.substr(game.path.find_last_of("/\\") + 1);
+							dojo_gui.current_checksum = md5file(file);
+							checksum_calculated = true;
 						}
+						ImGui::EndPopup();
+					}
+
+					if (checksum_calculated)
+					{
+						INFO_LOG(NETWORK, "%s", dojo_gui.current_checksum.c_str());
+						ImGui::OpenPopup("MD5 Checksum");
+					}
+
+					if (ImGui::BeginPopupModal("MD5 Checksum"))
+					{
+						ImGui::Text("%s\n%s", dojo_gui.current_filename.c_str(), dojo_gui.current_checksum.c_str());
+
+						if (ImGui::Button("Close"))
+						{
+							checksum_calculated = false;
+							ImGui::CloseCurrentPopup();
+						}
+
 						ImGui::EndPopup();
 					}
 
