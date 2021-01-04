@@ -25,7 +25,7 @@
 #include "dojo/DojoLobby.hpp"
 #include "dojo/AsyncTcpServer.hpp"
 
-#include "dojo/deps/StringFix.h"
+#include "dojo/deps/StringFix/StringFix.h"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6

@@ -1746,6 +1746,7 @@ static void gui_display_content()
 			gui_state = Closed;
 			gui_start_game("");
 		}
+
 		ImGui::PopID();
 
 		{
@@ -1781,6 +1782,18 @@ static void gui_display_content()
 							scanner.get_mutex().lock();
 						}
 					}
+
+					std::string popup_name = "Options " + game.path;
+					if (ImGui::BeginPopupContextItem(popup_name.c_str()))
+					{
+						if (ImGui::MenuItem("Calculate MD5 Sum"))
+						{
+							std::FILE* file = std::fopen(game.path.c_str(), "rb");
+							INFO_LOG(NETWORK, "%s", md5file(file).data());
+						}
+						ImGui::EndPopup();
+					}
+
 					ImGui::PopID();
 				}
 			}
