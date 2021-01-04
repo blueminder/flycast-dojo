@@ -352,7 +352,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			std::ostringstream NoticeStream;
 			if (hosting && !settings.dojo.Receiving)
 			{
-				NoticeStream << "Hosting game on port " << host_port;
+				NoticeStream << "Hosting game on port " << host_port << " @ Delay " << delay;
+
 				gui_display_notification(NoticeStream.str().data(), 9000);
 				host_status = 3;// Hosting, Playing
 			}
@@ -363,7 +364,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			}
 			else
 			{
-				NoticeStream << "Connected to " << host_ip.data() << ":" << host_port;
+				NoticeStream << "Connected to " << host_ip.data() << ":" << host_port << " @ Delay " << delay;
 				gui_display_notification(NoticeStream.str().data(), 9000);
 				host_status = 5;// Guest, Playing
 			}
