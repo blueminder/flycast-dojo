@@ -1785,6 +1785,7 @@ static void gui_display_content()
 					}
 
 					bool checksum_calculated = false;
+					bool checksum_same = false;
 
 					std::string popup_name = "Options " + game.path;
 					if (ImGui::BeginPopupContextItem(popup_name.c_str()))
@@ -1799,22 +1800,55 @@ static void gui_display_content()
 						ImGui::EndPopup();
 					}
 
+					static char md5[128] = "";
+					static char verify_md5[128] = "";
 					if (checksum_calculated)
 					{
 						INFO_LOG(NETWORK, "%s", dojo_gui.current_checksum.c_str());
+						memcpy(md5, dojo_gui.current_checksum.c_str(), strlen(dojo_gui.current_checksum.c_str()));
 						ImGui::OpenPopup("MD5 Checksum");
 					}
 
-					if (ImGui::BeginPopupModal("MD5 Checksum"))
+					if (ImGui::BeginPopupModal("MD5 Checksum", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 					{
-						ImGui::Text("%s\n%s", dojo_gui.current_filename.c_str(), dojo_gui.current_checksum.c_str());
+						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2 * scaling, 4 * scaling));
+
+						ImGui::Text("%s", dojo_gui.current_filename.c_str());
+
+						ImGui::InputText("##Calculated", md5, IM_ARRAYSIZE(md5), ImGuiInputTextFlags_ReadOnly);
+
+						ImGui::SameLine();
+						if (ImGui::Button("Copy"))
+						{
+							SDL_SetClipboardText(dojo_gui.current_checksum.data());
+						}
+
+						ImGui::InputTextWithHint("", "MD5 Checksum to Compare", verify_md5, IM_ARRAYSIZE(verify_md5));
+
+						ImGui::SameLine();
+						if (ImGui::Button("Paste & Verify"))
+						{
+							char* pasted_txt = SDL_GetClipboardText();
+							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
+						}
 
 						if (ImGui::Button("Close"))
 						{
 							checksum_calculated = false;
+							memset(verify_md5, 0, 128);
 							ImGui::CloseCurrentPopup();
 						}
 
+						ImGui::SameLine();
+						if (strlen(verify_md5) > 0)
+						{
+							if (memcmp(verify_md5, dojo_gui.current_checksum.data(), strlen(dojo_gui.current_checksum.data())) == 0)
+								ImGui::TextColored(ImVec4(0, 128, 0, 1), "Verified!");
+							else
+								ImGui::TextColored(ImVec4(255, 0, 0, 1), "Mismatch.");
+						}
+
+						ImGui::PopStyleVar();
 						ImGui::EndPopup();
 					}
 
