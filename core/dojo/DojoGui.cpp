@@ -33,6 +33,18 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		}
 	}
 
+	ImGui::SameLine();
+	if (ImGui::Button("Cancel"))
+	{
+		ImGui::CloseCurrentPopup();
+
+		// Exit to main menu
+		gui_state = Main;
+		game_started = false;
+		settings.imgread.ImagePath[0] = '\0';
+		dc_reset(true);
+	}
+
 	if (!dojo.OpponentIP.empty())
 	{
 		dojo.host_status = 2;
