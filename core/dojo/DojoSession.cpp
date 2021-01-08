@@ -532,9 +532,15 @@ void DojoSession::ClientLoopAction()
 std::string currentISO8601TimeUTC() {
 	auto now = std::chrono::system_clock::now();
 	auto itt = std::chrono::system_clock::to_time_t(now);
+#ifndef _MSC_VER
+	char buf[128] = { 0 };
+	strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&itt));
+	return buf;
+#else
 	std::ostringstream ss;
 	ss << std::put_time(gmtime(&itt), "%FT%TZ");
 	return ss.str();
+#endif
 }
 
 std::string DojoSession::CreateReplayFile()
