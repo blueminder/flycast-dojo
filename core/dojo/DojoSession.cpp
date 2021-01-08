@@ -216,6 +216,9 @@ void DojoSession::resume()
 
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
+	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
+		dojo.CreateReplayFile();
+
 	FillDelay(session_delay);
 	delay = session_delay;
 	packets_per_frame = session_ppf;
@@ -278,9 +281,6 @@ int DojoSession::StartDojoSession()
 
 	if (settings.dojo.Receiving)
 		receiving = true;
-
-	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
-		replay_filename = CreateReplayFile();
 
 	if (dojo.PlayMatch)
 	{
@@ -561,6 +561,7 @@ std::string DojoSession::CreateReplayFile()
 	// TODO define metadata at beginning of file
 
 	dojo.ReplayFilename = filename;
+	dojo.replay_filename = filename;
 
 	return filename;
 }
