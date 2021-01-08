@@ -152,6 +152,8 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 					cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
 					cfgSaveStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
 
+					dojo.client.SetHost(settings.dojo.ServerIP, atoi(settings.dojo.ServerPort.data()));
+
    					ImGui::CloseCurrentPopup();
    				}
 				
