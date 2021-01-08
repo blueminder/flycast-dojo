@@ -167,14 +167,36 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 					game_started = false;
 					settings.imgread.ImagePath[0] = '\0';
 					dc_reset(true);
+
+					settings.dojo.ServerIP = "";
+					cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
 				}
 
    				ImGui::EndPopup();
    			}
 		}
 
-		ImGui::Text("Connecting to host...");
-		dojo.client.SendPlayerName();
+		if (!settings.dojo.ServerIP.empty())
+		{
+			ImGui::Text("Connecting to host...");
+
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				ImGui::CloseCurrentPopup();
+
+				// Exit to main menu
+				gui_state = Main;
+				game_started = false;
+				settings.imgread.ImagePath[0] = '\0';
+				dc_reset(true);
+
+				settings.dojo.ServerIP = "";
+				cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+			}
+
+			dojo.client.SendPlayerName();
+		}
 	}
 	else
 	{
