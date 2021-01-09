@@ -27,7 +27,11 @@ void UDPClient::ConnectMMServer()
 	if (dojo.hosting)
 		mm_msg = "host:cmd:";
 	else
+	{
+		while (dojo.MatchCode.empty())
+			std::this_thread::sleep_for (std::chrono::milliseconds(1));
 		mm_msg = "guest:cmd:" + dojo.MatchCode;
+	}
 
 	sendto(local_socket, (const char*)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr*)&mms_addr, sizeof(mms_addr));
 	INFO_LOG(NETWORK, "Connecting to Matchmaking Relay");
