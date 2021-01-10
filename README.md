@@ -10,10 +10,14 @@ General information about Flycast configuration and supported features can be fo
 - [Getting Started](#getting-started)
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
-  * [Lobby Quick Start](#lobby-quick-start)
-    + [As Guest](#as-guest)
+  * [Match Code Quick Start](#match-code-quick-start)
     + [As Host](#as-host)
       - [Set Delay](#set-delay)
+    + [As Guest](#as-guest)
+  * [Lobby Quick Start](#lobby-quick-start)
+    + [As Guest](#as-guest-1)
+    + [As Host](#as-host-1)
+      - [Set Delay](#set-delay-1)
     + [As Spectator](#as-spectator)
 - [Replays](#replays)
   * [Manual Operation](#manual-operation)
@@ -39,6 +43,8 @@ For the sake of performance, it is advised that you keep your games and the emul
 
 If you are using the preferred romset, a BIOS is generally not necessary. If Flycast ends up asking you for a BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` for NAOMI games into your `data` directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your **"Home Directory"**.
 
+*In the case of The King of Fighters XI (**kofxi.zip**), the **MAME 0.226** version is known to work, and is the preferred ROM. You will also need **awbios.zip** in this case.*
+
 If you plan on using the built-in LAN Lobby, make sure that your **"Content Location"** is set to wherever you are holding your ROMs.
 
 For more information on verifying your BIOS files, you can head to the [Flycast wiki page](https://github.com/TheArcadeStriker/flycast-wiki/wiki/Verifying-your-BIOS-and-Arcade-ROMs) on the topic.
@@ -58,6 +64,33 @@ The following is a sample mapping for XInput (XBOX 360) Controllers created by *
 You can find the Netplay settings under the "Netplay" section of the emulator's settings:
 
 ![Netplay Options](netplay1.png)
+## Match Code Quick Start
+Using Match Codes, Flycast Dojo can start a P2P game session behind firewalls, so that you can play against others without the need of Radmin or Fightcade. No need to sign up for any accounts or download additional software than Flycast Dojo itself. You should be able to play any games supported by Flycast, so long as you and your opponent have the same ROM.
+
+The methods used by this feature should work with most consumer routers, but you may run into trouble over some cloud gaming services or corporate networks. (It is confirmed to work over Paperspace though, where I did much of my testing). In this case, you would need to adjust your firewall rules and explicitly forward ports. See [Manual Operation](#manual-operation) for more information.
+
+### As Host
+You can set yourself as a host by making sure __HOST__ is selected in the drop-down box on the left, then click on the game to begin.
+
+![Flycast Dojo Default Screen](match-code-1.png)
+
+This will contact the default matchmaking relay and give you a code to send to your opponent. To make code transfer easier, press the __Copy Match Code__ button to add the code to your clipboard to paste to your opponent.
+
+![Host Match Code Screen](match-code-2.png)
+
+#### Set Delay
+When a guest joins a session, the host can set the delay according to packet round trip time by pressing **"Detect Delay"**. Use the slider to adjust the game to your liking, and press "Start Game" to begin your session.
+
+Depending on the connection between you and your opponent and the tendency for network spikes, you may have to bump delay up to make your game smoother. The best course of action is to start low, and go higher until both you and your opponent have a smooth framerate.
+
+![Host Delay Selection](hostdelay-1.png)
+
+### As Guest
+To join a game, click on the dropdown on the left and select __JOIN__ then select the game of your choice. It will prompt you for the match code. If you have copied the Match Code from your opponent, you can press the __Paste__ button, otherwise, you can enter in the match code manually.
+
+Once you are done, you can press __Start Session__.
+
+![Host Match Code Screen](match-code-3.png)
 
 ## Lobby Quick Start
 If you are connected to your opponents on a shared LAN or are using software that emulates local connections like ZeroTier or Radmin VPN, you can make your life easier by enabling lobbies.
