@@ -43,6 +43,7 @@
 #include "rend/mainui.h"
 
 #include "dojo/DojoGui.hpp"
+#include "dojo/DojoFile.hpp"
 
 extern void UpdateInputState();
 extern bool game_started;
@@ -1796,6 +1797,20 @@ static void gui_display_content()
 							dojo_gui.current_filename = game.path.substr(game.path.find_last_of("/\\") + 1);
 							dojo_gui.current_checksum = md5file(file);
 							checksum_calculated = true;
+
+							try
+							{
+								dojo_gui.current_json_match = dojo_file.CompareRom(game.path, dojo_gui.current_checksum);
+								INFO_LOG(NETWORK, "CompareRom: %s", std::to_string(dojo_gui.current_json_match).data());
+							}
+							catch (json::out_of_range& e)
+							{
+								dojo_gui.current_json_match = true;
+							}
+							catch (std::exception& e)
+							{
+								dojo_gui.current_json_match = true;
+							}
 						}
 						ImGui::EndPopup();
 					}
@@ -1830,6 +1845,13 @@ static void gui_display_content()
 						{
 							char* pasted_txt = SDL_GetClipboardText();
 							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
+						}
+
+						if (!dojo_gui.current_json_match)
+						{
+							ImGui::TextColored(ImVec4(128, 128, 0, 1), "Validation File Mismatch!");
+							ImGui::SameLine();
+							ShowHelpMarker("This file does not match the checksum in flycast_roms.json.\nMake sure you have the correct ROM before you play against others online.");
 						}
 
 						if (ImGui::Button("Close"))
