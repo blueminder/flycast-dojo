@@ -33,6 +33,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		}
 	}
 
+	/*
 	ImGui::SameLine();
 	if (ImGui::Button("Cancel"))
 	{
@@ -44,6 +45,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		settings.imgread.ImagePath[0] = '\0';
 		dc_reset(true);
 	}
+	*/
 
 	if (!dojo.OpponentIP.empty())
 	{
@@ -115,6 +117,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 						ImGui::CloseCurrentPopup();
 					}
 
+					/*
 					ImGui::SameLine();
 					if (ImGui::Button("Cancel"))
 					{
@@ -126,6 +129,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 						settings.imgread.ImagePath[0] = '\0';
 						dc_reset(true);
 					}
+					*/
 
 					ImGui::EndPopup();
 				}
@@ -180,6 +184,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 		{
 			ImGui::Text("Connecting to host...");
 
+			/*
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel"))
 			{
@@ -194,6 +199,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 				settings.dojo.ServerIP = "";
 				cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
 			}
+			*/
 
 			dojo.client.SendPlayerName();
 		}
