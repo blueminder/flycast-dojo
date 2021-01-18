@@ -72,6 +72,16 @@ static void term_vmus();
 
 GameScanner scanner;
 
+#include <codecvt>
+#include <cpprest/http_client.h>
+#include <cpprest/filestream.h>
+
+using namespace utility;                    // Common utilities like string conversions
+using namespace web;                        // Common features like URIs.
+using namespace web::http;                  // Common HTTP functionality
+using namespace web::http::client;          // HTTP client features
+using namespace concurrency::streams;
+
 float gui_get_scaling()
 {
 	return scaling;
@@ -1509,6 +1519,94 @@ static void gui_display_settings()
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::SameLine();
+				if (ImGui::Button("Update"))
+				{
+					std::string tag_name;
+					std::string download_url;
+
+					http_client client2(U("https://api.github.com/repos/blueminder/flycast-dojo/releases/latest"));
+					client2.request(methods::GET).then([&tag_name, &download_url](http_response response)
+					{
+						if(response.status_code() == status_codes::OK)
+						{
+							auto body = response.extract_string().get();
+							std::string bodys(body.begin(), body.end());
+
+							// nlohmann::json is much nicer to work with than cpprestsdk's
+							nlohmann::json j = nlohmann::json::parse(bodys);
+
+							tag_name = j["tag_name"].get<std::string>();
+							download_url = j["assets"][0]["browser_download_url"].get<std::string>();
+						}
+					})
+					.wait();
+
+					if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
+					{
+						auto filename = stringfix::split("//", download_url).back();
+						auto filename_w = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(filename);
+
+						const string_t outputFileName = filename_w;
+						auto fileStream = std::make_shared<ostream>();
+
+						auto fileBuffer = std::make_shared<streambuf<uint8_t>>();
+						file_buffer<uint8_t>::open(outputFileName, std::ios::out)
+							.then([=](streambuf<uint8_t> outFile) -> pplx::task<http_response> 
+							{
+								*fileBuffer = outFile;
+
+								auto url = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(download_url);
+								http_client client(url);
+								return client.request(methods::GET);
+							})
+								.then([=](http_response response) -> pplx::task<size_t> {
+								INFO_LOG(NETWORK, "Response status code %u returned.\n", response.status_code());
+
+								return response.body().read_to_end(*fileBuffer);
+							})
+
+							.then([=](size_t) { return fileBuffer->close(); })
+
+							.wait();
+
+						dojo_file.Unzip(filename);
+						dojo_file.OverwriteDataFolder("flycast-" + tag_name);
+						dojo_file.CopyNewFlycast("flycast-" + tag_name);
+
+						ImGui::OpenPopup("Update");
+					}
+					else
+					{
+						ImGui::OpenPopup("Updated");
+					}
+
+				}
+
+				if (ImGui::BeginPopupModal("Updated", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					ImGui::Text("Flycast Dojo is already on the newest version.");
+
+					if (ImGui::Button("Close"))
+					{
+						ImGui::CloseCurrentPopup();
+					}
+
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					ImGui::Text("Update complete.\nPlease restart Flycast Dojo to use new version.");
+
+					if (ImGui::Button("Exit"))
+					{
+						exit(0);
+					}
+
+					ImGui::EndPopup();
+				}
+
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 				ImGui::Text("Target: %s",
@@ -1803,7 +1901,7 @@ static void gui_display_content()
 								dojo_gui.current_json_match = dojo_file.CompareRom(game.path, dojo_gui.current_checksum);
 								INFO_LOG(NETWORK, "CompareRom: %s", std::to_string(dojo_gui.current_json_match).data());
 							}
-							catch (json::out_of_range& e)
+							catch (nlohmann::json::out_of_range& e)
 							{
 								dojo_gui.current_json_match = true;
 							}
