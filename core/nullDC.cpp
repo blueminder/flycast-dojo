@@ -826,7 +826,7 @@ void InitSettings()
 	settings.dojo.TestGame = false;
 	settings.dojo.SpectatorIP = "127.0.0.1";
 	settings.dojo.SpectatorPort = "7000";
-	settings.dojo.LobbyMulticastAddress = "224.0.0.255";
+	settings.dojo.LobbyMulticastAddress = "26.255.255.255";
 	settings.dojo.LobbyMulticastPort = "52001";
 	settings.dojo.EnableMatchCode = false;
 	settings.dojo.MatchmakingServerAddress = "match.dojo.ooo";
