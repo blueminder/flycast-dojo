@@ -340,6 +340,9 @@ void gui_start_game(const std::string& path)
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
+	if (settings.dojo.Enable)
+		dojo_file.ValidateAndCopyMem(path_copy.c_str());
+
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
@@ -1898,8 +1901,8 @@ static void gui_display_content()
 
 							try
 							{
-								dojo_gui.current_json_match = dojo_file.CompareRom(game.path, dojo_gui.current_checksum);
-								INFO_LOG(NETWORK, "CompareRom: %s", std::to_string(dojo_gui.current_json_match).data());
+								dojo_gui.current_json_match = dojo_file.CompareEntry(game.path, dojo_gui.current_checksum, "md5_checksum");
+								INFO_LOG(NETWORK, "CompareEntry: %s", std::to_string(dojo_gui.current_json_match).data());
 							}
 							catch (nlohmann::json::out_of_range& e)
 							{

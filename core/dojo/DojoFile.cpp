@@ -21,11 +21,11 @@ nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
     return ret;
 }
 
-bool DojoFile::CompareRom(std::string file_path, std::string md5_checksum)
+bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
 {
     std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
     std::string entry_name = "flycast_" + stringfix::split(".", current_filename)[0];
-    std::string entry_md5_checksum = LoadedFileDefinitions[entry_name]["md5_checksum"];
+    std::string entry_md5_checksum = LoadedFileDefinitions[entry_name][field_name];
     
 	std::FILE* file = std::fopen(file_path.data(), "rb");
     std::string file_checksum = md5file(file);
@@ -108,6 +108,58 @@ int DojoFile::Unzip(std::string archive_path)
         //fprintf(stderr, "%s: can't close zip archive `%s'/n", prg, archive);
         return 1;
     }
+}
+
+void DojoFile::ValidateAndCopyMem(std::string rom_path)
+{
+    std::string data_path = "data/";
+    std::string default_path = "default/";
+
+    std::string rom_filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
+
+    std::string eeprom_filename = rom_filename + ".eeprom.net";
+    std::string nvmem_filename = rom_filename + ".nvmem.net";
+    std::string nvmem2_filename = rom_filename + ".nvmem2.net";
+
+    Unzip("data/default.zip");
+
+    std::string current_path;
+    std::FILE* file;
+
+    if (ghc::filesystem::exists(data_path + eeprom_filename))
+    {
+        current_path = data_path + eeprom_filename;
+	    file = std::fopen(current_path.data(), "rb");
+        if (!CompareEntry(data_path + eeprom_filename, md5file(file), "eeprom_checksum"))
+        {
+            ghc::filesystem::copy_file(default_path + eeprom_filename, data_path + eeprom_filename,
+                ghc::filesystem::copy_options::overwrite_existing);
+        }
+    }
+
+    if (ghc::filesystem::exists(data_path + nvmem_filename))
+    {
+        current_path = data_path + nvmem_filename;
+	    file = std::fopen(current_path.data(), "rb");
+        if (!CompareEntry(data_path + nvmem_filename, md5file(file), "nvmem_checksum"))
+        {
+            ghc::filesystem::copy_file(default_path + nvmem_filename, data_path + nvmem_filename,
+                ghc::filesystem::copy_options::overwrite_existing);
+        }
+    }
+
+    if (ghc::filesystem::exists(data_path + nvmem2_filename))
+    {
+        current_path = data_path + nvmem2_filename;
+	    file = std::fopen(current_path.data(), "rb");
+        if (!CompareEntry(data_path + nvmem2_filename, md5file(file), "nvmem2_checksum"))
+        {
+            ghc::filesystem::copy_file(default_path + nvmem2_filename, data_path + nvmem2_filename,
+                ghc::filesystem::copy_options::overwrite_existing);
+        }
+    }
+
+    ghc::filesystem::remove_all(default_path);
 }
 
 void DojoFile::OverwriteDataFolder(std::string new_root)

@@ -32,10 +32,11 @@ private:
 
 public:
 	DojoFile();
-	bool CompareRom(std::string filename, std::string md5_checksum);
+	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
 	int Unzip(std::string archive_path);
 	void OverwriteDataFolder(std::string new_root);
 	void CopyNewFlycast(std::string new_root);
+	void ValidateAndCopyMem(std::string rom_path);
 };
 
 extern DojoFile dojo_file;
