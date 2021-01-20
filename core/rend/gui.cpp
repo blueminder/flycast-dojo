@@ -1981,6 +1981,23 @@ static void gui_display_content()
 			scanner.get_mutex().unlock();
 		}
         ImGui::PopStyleVar();
+
+		for (auto it = dojo_file.LoadedFileDefinitions.begin(); it != dojo_file.LoadedFileDefinitions.end(); ++it)
+		{
+			std::string filename = (*it)["filename"].get<std::string>();
+			std::string download_url = (*it)["download"].get<std::string>();
+			//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
+			if (filename.find("chd") == std::string::npos &&
+				filename.find("data") == std::string::npos &&
+				!download_url.empty())
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
+				if (ImGui::Selectable(filename.c_str()))
+				{
+				}
+				ImGui::PopStyleColor();
+			}
+		}
     }
 	ImGui::EndChild();
 	ImGui::End();

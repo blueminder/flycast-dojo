@@ -28,10 +28,10 @@ class DojoFile
 {
 private:
 	nlohmann::json LoadJsonFromFile(std::string filename);
-	nlohmann::json LoadedFileDefinitions;
 
 public:
 	DojoFile();
+	nlohmann::json LoadedFileDefinitions;
 	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
 	int Unzip(std::string archive_path);
 	void OverwriteDataFolder(std::string new_root);
