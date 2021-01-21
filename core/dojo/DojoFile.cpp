@@ -175,7 +175,8 @@ void DojoFile::OverwriteDataFolder(std::string new_root)
 
 void DojoFile::CopyNewFlycast(std::string new_root)
 {
-   if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe"))
+   if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe",
+	   ghc::filesystem::copy_options::overwrite_existing))
    {
 	   remove("flycast_old.exe");
 	   rename("flycast.exe", "flycast_old.exe");
