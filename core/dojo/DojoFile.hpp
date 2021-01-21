@@ -24,6 +24,16 @@ struct GameMedia {
 };
 #endif
 
+#include <codecvt>
+#include <cpprest/http_client.h>
+#include <cpprest/filestream.h>
+
+using namespace utility;                    // Common utilities like string conversions
+using namespace web;                        // Common features like URIs.
+using namespace web::http;                  // Common HTTP functionality
+using namespace web::http::client;          // HTTP client features
+using namespace concurrency::streams;
+
 class DojoFile
 {
 private:
@@ -37,6 +47,8 @@ public:
 	void OverwriteDataFolder(std::string new_root);
 	void CopyNewFlycast(std::string new_root);
 	void ValidateAndCopyMem(std::string rom_path);
+	std::tuple<std::string, std::string> GetLatestDownloadUrl();
+	std::string DownloadFile(std::string download_url);
 };
 
 extern DojoFile dojo_file;

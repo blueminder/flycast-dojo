@@ -72,16 +72,6 @@ static void term_vmus();
 
 GameScanner scanner;
 
-#include <codecvt>
-#include <cpprest/http_client.h>
-#include <cpprest/filestream.h>
-
-using namespace utility;                    // Common utilities like string conversions
-using namespace web;                        // Common features like URIs.
-using namespace web::http;                  // Common HTTP functionality
-using namespace web::http::client;          // HTTP client features
-using namespace concurrency::streams;
-
 float gui_get_scaling()
 {
 	return scaling;
@@ -1527,51 +1517,11 @@ static void gui_display_settings()
 				{
 					std::string tag_name;
 					std::string download_url;
-
-					http_client client2(U("https://api.github.com/repos/blueminder/flycast-dojo/releases/latest"));
-					client2.request(methods::GET).then([&tag_name, &download_url](http_response response)
-					{
-						if(response.status_code() == status_codes::OK)
-						{
-							auto body = response.extract_string().get();
-							std::string bodys(body.begin(), body.end());
-
-							// nlohmann::json is much nicer to work with than cpprestsdk's
-							nlohmann::json j = nlohmann::json::parse(bodys);
-
-							tag_name = j["tag_name"].get<std::string>();
-							download_url = j["assets"][0]["browser_download_url"].get<std::string>();
-						}
-					})
-					.wait();
+					std::tie(tag_name, download_url) = dojo_file.GetLatestDownloadUrl();
 
 					if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
 					{
-						auto filename = stringfix::split("//", download_url).back();
-						auto filename_w = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(filename);
-
-						const string_t outputFileName = filename_w;
-						auto fileStream = std::make_shared<ostream>();
-
-						auto fileBuffer = std::make_shared<streambuf<uint8_t>>();
-						file_buffer<uint8_t>::open(outputFileName, std::ios::out)
-							.then([=](streambuf<uint8_t> outFile) -> pplx::task<http_response> 
-							{
-								*fileBuffer = outFile;
-
-								auto url = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(download_url);
-								http_client client(url);
-								return client.request(methods::GET);
-							})
-								.then([=](http_response response) -> pplx::task<size_t> {
-								INFO_LOG(NETWORK, "Response status code %u returned.\n", response.status_code());
-
-								return response.body().read_to_end(*fileBuffer);
-							})
-
-							.then([=](size_t) { return fileBuffer->close(); })
-
-							.wait();
+						auto filename = dojo_file.DownloadFile(download_url);
 
 						dojo_file.Unzip(filename);
 						dojo_file.OverwriteDataFolder("flycast-" + tag_name);
