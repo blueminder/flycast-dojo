@@ -56,6 +56,8 @@ public:
 	//std::string GetGameDescription(std::string filename);
 	void RemoveFromRemaining(std::string rom_path);
 
+	std::unordered_map<std::string, std::string> game_descriptions;
+
 	std::string status = "Idle";
 };
 

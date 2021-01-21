@@ -1958,18 +1958,20 @@ static void gui_display_content()
 			{
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
-				std::string arcade_game_name;
-				//if (scanner.arcade_games.count(short_game_name) == 1)
-					//arcade_game_name = filename + " (" + scanner.arcade_games.at(short_game_name)->description + ")";
-				//else
-					arcade_game_name = filename;
-				if (ImGui::Selectable(arcade_game_name.c_str()))
+
+				std::string game_name;
+				if (dojo_file.game_descriptions.count(short_game_name) == 1)
+					game_name = filename + " (" + dojo_file.game_descriptions.at(short_game_name) + ")";
+				else
+					game_name = filename;
+				if (ImGui::Selectable(game_name.data()))
 				{
 					if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
 						settings.dreamcast.ContentPath.push_back("ROMS");
 					dojo_file.DownloadFile(download_url, "ROMS");
 					scanner.refresh();
 				}
+
 				ImGui::PopStyleColor();
 				ImGui::PopStyleVar();
 			}

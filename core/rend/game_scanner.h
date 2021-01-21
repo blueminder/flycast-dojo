@@ -169,6 +169,13 @@ public:
 						if (game->gdrom_name != nullptr)
 							arcade_gdroms.insert(game->gdrom_name);
 					}
+				if (dojo_file.game_descriptions.empty())
+					for (int gameid = 0; Games[gameid].name != nullptr; gameid++)
+					{
+						const Game *game = &Games[gameid];
+						dojo_file.game_descriptions[game->name] = game->description;
+					}
+
 				{
 					std::lock_guard<std::mutex> guard(mutex);
 					game_list.clear();
