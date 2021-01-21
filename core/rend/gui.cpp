@@ -1958,6 +1958,7 @@ static void gui_display_content()
 			{
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
+				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(255, 145, 145, 1));
 
 				std::string game_name;
 				if (dojo_file.game_descriptions.count(short_game_name) == 1)
@@ -1972,6 +1973,7 @@ static void gui_display_content()
 					scanner.refresh();
 				}
 
+				ImGui::PopStyleColor();
 				ImGui::PopStyleColor();
 				ImGui::PopStyleVar();
 			}
