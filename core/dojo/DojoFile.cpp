@@ -5,6 +5,7 @@ DojoFile dojo_file;
 DojoFile::DojoFile()
 {
 	LoadedFileDefinitions = LoadJsonFromFile("flycast_roms.json");
+	RemainingFileDefinitions = LoadJsonFromFile("flycast_roms.json");
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
@@ -261,6 +262,19 @@ std::string DojoFile::DownloadDependencies(std::string filename)
 	return "";
 }
 
+
+void DojoFile::RemoveFromRemaining(std::string rom_path)
+{
+	std::string filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
+	auto game_name = stringfix::split(".", filename)[0];
+	auto entry_name = "flycast_" + game_name;
+
+	if (RemainingFileDefinitions.count(entry_name) == 1)
+	{
+		nlohmann::json::const_iterator it = RemainingFileDefinitions.find(entry_name);
+		RemainingFileDefinitions.erase(it);
+	}
+}
 
 void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
 {

@@ -37,6 +37,8 @@ struct GameMedia {
 };
 #endif
 
+#include "dojo/DojoFile.hpp"
+
 static bool operator<(const GameMedia &left, const GameMedia &right)
 {
 	return left.name < right.name;
@@ -55,6 +57,7 @@ class GameScanner
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		game_list.insert(std::upper_bound(game_list.begin(), game_list.end(), game), game);
+		dojo_file.RemoveFromRemaining(game.path);
 	}
 
 	void add_game_directory(const std::string& path)

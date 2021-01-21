@@ -1933,7 +1933,7 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
 
-		for (auto it = dojo_file.LoadedFileDefinitions.begin(); it != dojo_file.LoadedFileDefinitions.end(); ++it)
+		for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
 		{
 			std::string filename = (*it)["filename"].get<std::string>();
 			std::string download_url = (*it)["download"].get<std::string>();

@@ -42,6 +42,7 @@ private:
 public:
 	DojoFile();
 	nlohmann::json LoadedFileDefinitions;
+	nlohmann::json RemainingFileDefinitions;
 	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
 	int Unzip(std::string archive_path);
 	void OverwriteDataFolder(std::string new_root);
@@ -53,6 +54,7 @@ public:
 	void Update(std::tuple<std::string, std::string> tag_download);
 	std::string DownloadDependencies(std::string filename);
 	//std::string GetGameDescription(std::string filename);
+	void RemoveFromRemaining(std::string rom_path);
 
 	std::string status = "Idle";
 };
