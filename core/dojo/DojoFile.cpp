@@ -216,9 +216,17 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 
 std::string DojoFile::DownloadFile(std::string download_url)
 {
+	return DownloadFile(download_url, "");
+}
+
+
+std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
+{
 	status = "Downloading";
 
 	auto filename = stringfix::split("//", download_url).back();
+	if (!dest_folder.empty())
+		filename = dest_folder + "//" + filename;
 	auto filename_w = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(filename);
 
 	const string_t outputFileName = filename_w;
@@ -247,6 +255,13 @@ std::string DojoFile::DownloadFile(std::string download_url)
 	return filename;
 }
 
+std::string DojoFile::DownloadDependencies(std::string filename)
+{
+
+	return "";
+}
+
+
 void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
 {
 	auto tag_name = std::get<0>(tag_download);
@@ -258,4 +273,20 @@ void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
 
 	status = "Update complete.\nPlease restart Flycast Dojo to use new version.";
 }
+/*
+std::string DojoFile::GetGameDescription(std::string filename)
+{
+	std::string short_game_name = stringfix::split(".", filename)[0];
+
+	auto full_game_name = std::find_if(
+		Games.begin(),
+		Games.end(),
+		[&filename](Game const& c) {
+			if (c.name == short_game_name)
+				return c.description;
+		}
+	);
+}
+*/
+
 

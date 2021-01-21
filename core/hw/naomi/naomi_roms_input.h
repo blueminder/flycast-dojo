@@ -19,6 +19,8 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #ifndef CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
 #define CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
 

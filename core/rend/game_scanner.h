@@ -49,7 +49,6 @@ class GameScanner
 	std::unique_ptr<std::thread> scan_thread;
 	bool scan_done = false;
 	bool running = false;
-	std::unordered_map<std::string, const Game*> arcade_games;
 	std::unordered_set<std::string> arcade_gdroms;
 
 	void insert_game(const GameMedia& game)
@@ -187,4 +186,5 @@ public:
 	const std::vector<GameMedia>& get_game_list() { return game_list; }
     unsigned int empty_folders_scanned = 0;
     bool content_path_looks_incorrect = false;
+	std::unordered_map<std::string, const Game*> arcade_games;
 };

@@ -1938,15 +1938,40 @@ static void gui_display_content()
 			std::string filename = (*it)["filename"].get<std::string>();
 			std::string download_url = (*it)["download"].get<std::string>();
 			//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
+
+			/*
+			auto game_found = std::find_if(
+				scanner.get_game_list().begin(),
+				scanner.get_game_list().end(),
+				[&filename](GameMedia const& c) {
+					return c.name.find(filename) != std::string::npos;
+				}
+			);
+			*/
+
+			std::string short_game_name = stringfix::split(".", filename)[0];
+
+			//if (game_found == scanner.get_game_list().end() &&
 			if (filename.find("chd") == std::string::npos &&
 				filename.find("data") == std::string::npos &&
 				!download_url.empty())
 			{
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
-				if (ImGui::Selectable(filename.c_str()))
+				std::string arcade_game_name;
+				//if (scanner.arcade_games.count(short_game_name) == 1)
+					//arcade_game_name = filename + " (" + scanner.arcade_games.at(short_game_name)->description + ")";
+				//else
+					arcade_game_name = filename;
+				if (ImGui::Selectable(arcade_game_name.c_str()))
 				{
+					if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
+						settings.dreamcast.ContentPath.push_back("ROMS");
+					dojo_file.DownloadFile(download_url, "ROMS");
+					scanner.refresh();
 				}
 				ImGui::PopStyleColor();
+				ImGui::PopStyleVar();
 			}
 		}
     }
@@ -2095,8 +2120,6 @@ static void gui_display_loadscreen()
 			}
 			else if (settings.dojo.Enable)
 			{
-
-
 				dojo.StartDojoSession();
 
 				if (dojo.PlayMatch)

@@ -49,7 +49,10 @@ public:
 	void ValidateAndCopyMem(std::string rom_path);
 	std::tuple<std::string, std::string> GetLatestDownloadUrl();
 	std::string DownloadFile(std::string download_url);
+	std::string DownloadFile(std::string download_url, std::string dest_folder);
 	void Update(std::tuple<std::string, std::string> tag_download);
+	std::string DownloadDependencies(std::string filename);
+	//std::string GetGameDescription(std::string filename);
 
 	std::string status = "Idle";
 };
