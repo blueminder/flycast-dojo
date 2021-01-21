@@ -187,6 +187,8 @@ void DojoFile::CopyNewFlycast(std::string new_root)
 
 std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 {
+	status = "Checking For Updates";
+
 	std::string tag_name;
 	std::string download_url;
 
@@ -213,6 +215,8 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 
 std::string DojoFile::DownloadFile(std::string download_url)
 {
+	status = "Downloading";
+
 	auto filename = stringfix::split("//", download_url).back();
 	auto filename_w = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(filename);
 
@@ -241,3 +245,16 @@ std::string DojoFile::DownloadFile(std::string download_url)
 
 	return filename;
 }
+
+void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
+{
+	auto tag_name = std::get<0>(tag_download);
+	auto download_url = std::get<1>(tag_download);
+	auto filename = dojo_file.DownloadFile(download_url);
+	Unzip(filename);
+	OverwriteDataFolder("flycast-" + tag_name);
+	CopyNewFlycast("flycast-" + tag_name);
+
+	status = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+}
+

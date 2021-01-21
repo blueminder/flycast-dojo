@@ -1511,23 +1511,36 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+				if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					ImGui::Text(dojo_file.status.c_str());
+
+					if (strcmp(dojo_file.status.c_str(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+					{
+						if (ImGui::Button("Exit"))
+						{
+							exit(0);
+						}
+					}
+
+					ImGui::EndPopup();
+				}
+
 				ImGui::Text("Version: %s", REICAST_VERSION);
 				ImGui::SameLine();
 				if (ImGui::Button("Update"))
 				{
 					std::string tag_name;
 					std::string download_url;
-					std::tie(tag_name, download_url) = dojo_file.GetLatestDownloadUrl();
+
+					std::tuple<std::string, std::string> tag_download = dojo_file.GetLatestDownloadUrl();
+					std::tie(tag_name, download_url) = tag_download;
 
 					if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
 					{
-						auto filename = dojo_file.DownloadFile(download_url);
-
-						dojo_file.Unzip(filename);
-						dojo_file.OverwriteDataFolder("flycast-" + tag_name);
-						dojo_file.CopyNewFlycast("flycast-" + tag_name);
-
 						ImGui::OpenPopup("Update");
+
+						dojo_file.Update(tag_download);
 					}
 					else
 					{
@@ -1543,18 +1556,6 @@ static void gui_display_settings()
 					if (ImGui::Button("Close"))
 					{
 						ImGui::CloseCurrentPopup();
-					}
-
-					ImGui::EndPopup();
-				}
-
-				if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
-				{
-					ImGui::Text("Update complete.\nPlease restart Flycast Dojo to use new version.");
-
-					if (ImGui::Button("Exit"))
-					{
-						exit(0);
 					}
 
 					ImGui::EndPopup();
