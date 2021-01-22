@@ -225,25 +225,41 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 {
 	status_text = "Checking For Updates";
 
-	std::string tag_name;
-	std::string download_url;
+	std::string tag_name = "";
+	std::string download_url = "";
 
-	http_client client2(U("https://api.github.com/repos/blueminder/flycast-dojo/releases/latest"));
-	client2.request(methods::GET).then([&tag_name, &download_url](http_response response)
-	{
-		if(response.status_code() == status_codes::OK)
+	std::string latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
+
+	std::ostringstream os;
+
+	try {
+		curlpp::Cleanup cleaner;
+		curlpp::Easy req;
+
+		std::list<std::string> headers;
+		headers.push_back("User-Agent: flycast-dojo");
+
+		req.setOpt(new curlpp::options::HttpHeader(headers));
+		req.setOpt(new curlpp::options::WriteStream(&os));
+		req.setOpt(new curlpp::options::Url(latest_url));
+
+		req.perform();
+
+		auto body = os.str();
+
+		if (!body.empty())
 		{
-			auto body = response.extract_string().get();
-			std::string bodys(body.begin(), body.end());
-
-			// nlohmann::json is much nicer to work with than cpprestsdk's
-			nlohmann::json j = nlohmann::json::parse(bodys);
-
+			nlohmann::json j = nlohmann::json::parse(body);
 			tag_name = j["tag_name"].get<std::string>();
 			download_url = j["assets"][0]["browser_download_url"].get<std::string>();
 		}
-	})
-	.wait();
+	}
+	catch ( curlpp::LogicError & e ) {
+		std::cout << e.what() << std::endl;
+	}
+	catch ( curlpp::RuntimeError & e ) {
+		std::cout << e.what() << std::endl;
+	}
 
 	return std::make_tuple(tag_name, download_url);
 }
@@ -260,30 +276,27 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	auto filename = stringfix::split("//", download_url).back();
 	if (!dest_folder.empty())
 		filename = dest_folder + "//" + filename;
-	auto filename_w = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(filename);
 
-	const string_t outputFileName = filename_w;
-	auto fileStream = std::make_shared<ostream>();
+	std::ofstream of(filename, std::ofstream::out | std::ofstream::binary);
 
-	auto fileBuffer = std::make_shared<streambuf<uint8_t>>();
-	file_buffer<uint8_t>::open(outputFileName, std::ios::out)
-		.then([=](streambuf<uint8_t> outFile) -> pplx::task<http_response> 
-		{
-			*fileBuffer = outFile;
-
-			auto url = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(download_url);
-			http_client client(url);
-			return client.request(methods::GET);
-		})
-			.then([=](http_response response) -> pplx::task<size_t> {
-			INFO_LOG(NETWORK, "DOJO: Response status code %u returned.\n", response.status_code());
-
-			return response.body().read_to_end(*fileBuffer);
-		})
-
-		.then([=](size_t) { return fileBuffer->close(); })
-
-		.wait();
+	cURLpp::Easy req;
+	req.setOpt(cURLpp::Options::Url(download_url));
+	req.setOpt(cURLpp::Options::NoProgress(false));
+	req.setOpt(cURLpp::Options::FollowLocation(true));
+	req.setOpt(cURLpp::Options::ProgressFunction([&](std::size_t total, std::size_t done, auto...)
+	{
+		std::stringstream s;
+		s << "\r" << done << " of " << total
+			<< " bytes received (" << int(total ? done*100./total : 0) << "%)" << std::flush;
+		INFO_LOG(NETWORK, "DOJO: %s", s.str().data());
+	    return 0;
+	}));
+	req.setOpt(cURLpp::Options::WriteFunction([&](const char* p, std::size_t size, std::size_t nmemb)
+	{
+	    of.write(p, size*nmemb);
+	    return size*nmemb;
+	}));
+	req.perform();
 
 	return filename;
 }

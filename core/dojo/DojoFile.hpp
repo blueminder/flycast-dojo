@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 #include <cstdio>
@@ -24,15 +25,10 @@ struct GameMedia {
 };
 #endif
 
-#include <codecvt>
-#include <cpprest/http_client.h>
-#include <cpprest/filestream.h>
-
-using namespace utility;                    // Common utilities like string conversions
-using namespace web;                        // Common features like URIs.
-using namespace web::http;                  // Common HTTP functionality
-using namespace web::http::client;          // HTTP client features
-using namespace concurrency::streams;
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Infos.hpp>
 
 class DojoFile
 {
