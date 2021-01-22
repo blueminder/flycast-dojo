@@ -46,6 +46,11 @@ static void safe_create_dir(const char* dir)
 
 int DojoFile::Unzip(std::string archive_path)
 {
+	return Unzip(archive_path, "");
+}
+
+int DojoFile::Unzip(std::string archive_path, std::string dest_dir)
+{
 	const char *archive;
 	struct zip *za{};
 	struct zip_file *zf;
@@ -99,6 +104,10 @@ int DojoFile::Unzip(std::string archive_path)
 				}
 				close(fd);
 				zip_fclose(zf);
+			}
+			if (!dest_dir.empty())
+			{
+				ghc::filesystem::rename(sb.name, dest_dir + "//" + sb.name);
 			}
 		} else {
 			printf("File[%s] Line[%d]/n", __FILE__, __LINE__);
@@ -256,12 +265,33 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	return filename;
 }
 
-std::string DojoFile::DownloadDependencies(std::string filename)
+void DojoFile::DownloadDependencies(std::string rom_path)
 {
+	std::string filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
+	auto game_name = stringfix::split(".", filename)[0];
+	auto entry_name = "flycast_" + game_name;
+	std::vector<std::string> required = LoadedFileDefinitions[entry_name]["require"];
 
-	return "";
+	for(std::vector<std::string>::iterator it = std::begin(required); it != std::end(required); ++it) {
+		DownloadEntry(*it);
+	}
 }
 
+std::string DojoFile::DownloadEntry(std::string entry_name)
+{
+	std::string filename = LoadedFileDefinitions[entry_name]["filename"];
+	auto dir_name = stringfix::split("//", filename)[1];
+	std::string download_url = LoadedFileDefinitions[entry_name]["download"];
+	auto dest_filename = DownloadFile(download_url, dir_name);
+
+	// unzip bios if detected in bundled download
+	if (dir_name == "data" && filename.find("zip") != std::string::npos)
+	{
+		Unzip(dest_filename, "data");
+	}
+
+	return filename;
+}
 
 void DojoFile::RemoveFromRemaining(std::string rom_path)
 {

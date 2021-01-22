@@ -1970,6 +1970,7 @@ static void gui_display_content()
 					if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
 						settings.dreamcast.ContentPath.push_back("ROMS");
 					dojo_file.DownloadFile(download_url, "ROMS");
+					dojo_file.DownloadDependencies(game_name);
 					scanner.refresh();
 				}
 

@@ -45,6 +45,7 @@ public:
 	nlohmann::json RemainingFileDefinitions;
 	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
 	int Unzip(std::string archive_path);
+	int Unzip(std::string archive_path, std::string dest_dir);
 	void OverwriteDataFolder(std::string new_root);
 	void CopyNewFlycast(std::string new_root);
 	void ValidateAndCopyMem(std::string rom_path);
@@ -52,7 +53,8 @@ public:
 	std::string DownloadFile(std::string download_url);
 	std::string DownloadFile(std::string download_url, std::string dest_folder);
 	void Update(std::tuple<std::string, std::string> tag_download);
-	std::string DownloadDependencies(std::string filename);
+	void DownloadDependencies(std::string rom_path);
+	std::string DownloadEntry(std::string entry_name);
 	//std::string GetGameDescription(std::string filename);
 	void RemoveFromRemaining(std::string rom_path);
 
