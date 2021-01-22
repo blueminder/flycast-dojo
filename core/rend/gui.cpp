@@ -1983,12 +1983,16 @@ static void gui_display_content()
 					game_name = filename + " (" + dojo_file.game_descriptions.at(short_game_name) + ")";
 				else
 					game_name = filename;
-				if (ImGui::Selectable(game_name.data()))
+
+				if (filter.PassFilter(game_name.data()))
 				{
-					if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
-						settings.dreamcast.ContentPath.push_back("ROMS");
-					dojo_file.DownloadEntry("flycast_" + short_game_name);
-					scanner.refresh();
+					if (ImGui::Selectable(game_name.data()))
+					{
+						if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
+							settings.dreamcast.ContentPath.push_back("ROMS");
+						dojo_file.DownloadEntry("flycast_" + short_game_name);
+						scanner.refresh();
+					}
 				}
 
 				ImGui::PopStyleColor();
