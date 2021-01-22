@@ -43,6 +43,7 @@ public:
 	std::string current_filename;
 	std::string current_checksum;
 	bool current_json_match = true;
+	bool current_json_found = false;
 };
 
 extern DojoGui dojo_gui;

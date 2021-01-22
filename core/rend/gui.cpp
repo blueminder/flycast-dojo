@@ -1851,15 +1851,18 @@ static void gui_display_content()
 							try
 							{
 								dojo_gui.current_json_match = dojo_file.CompareEntry(game.path, dojo_gui.current_checksum, "md5_checksum");
+								dojo_gui.current_json_found = true;
 								INFO_LOG(NETWORK, "CompareEntry: %s", std::to_string(dojo_gui.current_json_match).data());
 							}
 							catch (nlohmann::json::out_of_range& e)
 							{
-								dojo_gui.current_json_match = true;
+								dojo_gui.current_json_match = false;
+								dojo_gui.current_json_found = false;
 							}
 							catch (std::exception& e)
 							{
-								dojo_gui.current_json_match = true;
+								dojo_gui.current_json_match = false;
+								dojo_gui.current_json_found = false;
 							}
 						}
 						ImGui::EndPopup();
@@ -1897,11 +1900,20 @@ static void gui_display_content()
 							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
 						}
 
-						if (!dojo_gui.current_json_match)
+						if (dojo_gui.current_json_found)
 						{
-							ImGui::TextColored(ImVec4(128, 128, 0, 1), "Validation File Mismatch!");
-							ImGui::SameLine();
-							ShowHelpMarker("This file does not match the checksum in flycast_roms.json.\nMake sure you have the correct ROM before you play against others online.");
+							if (dojo_gui.current_json_match)
+							{
+								ImGui::Text("Validation File Match.");
+								ImGui::SameLine();
+								ShowHelpMarker("This file matches the checksum in the provided flycast_roms.json.");
+							}
+							else
+							{
+								ImGui::TextColored(ImVec4(128, 128, 0, 1), "Validation File Mismatch!");
+								ImGui::SameLine();
+								ShowHelpMarker("This file does not match the checksum in flycast_roms.json.\nMake sure you have the correct ROM before you play against others online.");
+							}
 						}
 
 						if (ImGui::Button("Close"))
@@ -1915,9 +1927,17 @@ static void gui_display_content()
 						if (strlen(verify_md5) > 0)
 						{
 							if (memcmp(verify_md5, dojo_gui.current_checksum.data(), strlen(dojo_gui.current_checksum.data())) == 0)
+							{
 								ImGui::TextColored(ImVec4(0, 128, 0, 1), "Verified!");
+								ImGui::SameLine();
+								ShowHelpMarker("This file matches the checksum of the pasted text.\nMatching ROM & nvmem.net files with your opponent safeguards against desyncs.");
+							}
 							else
+							{
 								ImGui::TextColored(ImVec4(255, 0, 0, 1), "Mismatch.");
+								ImGui::SameLine();
+								ShowHelpMarker("This file does not match the checksum of the pasted text.\nMatching ROM & nvmem.net files with your opponent safeguards against desyncs.");
+							}
 						}
 
 						ImGui::PopStyleVar();
