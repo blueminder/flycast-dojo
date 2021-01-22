@@ -1705,7 +1705,7 @@ static void gui_display_content()
 	else
 	{
 		static ImGuiComboFlags flags = 0;
-		const char* items[] = { "HOST", "JOIN", "OFFLINE" };
+		const char* items[] = { "OFFLINE", "HOST", "JOIN" };
 		static int item_current_idx = 0;
 		static int last_item_current_idx = 3;
 
@@ -1718,19 +1718,17 @@ static void gui_display_content()
 
 		if (last_item_current_idx == 3)
 		{
-			// set hosting as default action
-			settings.dojo.Enable = true;
-			settings.dojo.ActAsServer = true;
-			settings.dojo.Receiving = false;
+			// set offline as default action
+			settings.dojo.Enable = false;
 		}
 
-		if (item_current_idx == 0)
+		if (item_current_idx == 1)
 		{
 			settings.dojo.Enable = true;
 			settings.dojo.ActAsServer = true;
 			settings.dojo.Receiving = false;
 		}
-		else if (item_current_idx == 1)
+		else if (item_current_idx == 2)
 		{
 			settings.dojo.Enable = true;
 			settings.dojo.ActAsServer = false;
@@ -1738,7 +1736,7 @@ static void gui_display_content()
 
 			settings.dojo.ServerIP = "";
 		}
-		else if (item_current_idx == 2)
+		else if (item_current_idx == 0)
 		{
 			settings.dojo.Enable = false;
 		}
