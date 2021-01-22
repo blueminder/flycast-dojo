@@ -72,23 +72,22 @@ int DojoFile::Unzip(std::string archive_path, std::string dest_dir)
 
 	for (i = 0; i < zip_get_num_entries(za, 0); i++) {
 		if (zip_stat_index(za, i, 0, &sb) == 0) {
-			printf("==================/n");
 			len = strlen(sb.name);
-			printf("Name: [%s], ", sb.name);
-			printf("Size: [%llu], ", sb.size);
-			printf("mtime: [%u]/n", (unsigned int)sb.mtime);
+			INFO_LOG(NETWORK, "Name: [%s], ", sb.name);
+			INFO_LOG(NETWORK, "Size: [%llu], ", sb.size);
+			INFO_LOG(NETWORK, "mtime: [%u]/n", (unsigned int)sb.mtime);
 			if (sb.name[len - 1] == '/') {
 				safe_create_dir(sb.name);
 			} else {
 				zf = zip_fopen_index(za, i, 0);
 				if (!zf) {
-					fprintf(stderr, "boese, boese/n");
+					fprintf(stderr, "error/n");
 					exit(100);
 				}
 
 				fd = open(sb.name, O_RDWR | O_TRUNC | O_CREAT | O_BINARY, 0644);
 				if (fd < 0) {
-					fprintf(stderr, "boese, boese/n");
+					fprintf(stderr, "error/n");
 					exit(101);
 				}
 
@@ -96,7 +95,7 @@ int DojoFile::Unzip(std::string archive_path, std::string dest_dir)
 				while (sum != sb.size) {
 					len = zip_fread(zf, buf, 100);
 					if (len < 0) {
-						fprintf(stderr, "boese, boese/n");
+						fprintf(stderr, "error/n");
 						exit(102);
 					}
 					write(fd, buf, len);
@@ -182,7 +181,6 @@ void DojoFile::OverwriteDataFolder(std::string new_root)
 	}
 }
 
-
 void DojoFile::CopyNewFlycast(std::string new_root)
 {
    if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe",
@@ -195,10 +193,9 @@ void DojoFile::CopyNewFlycast(std::string new_root)
    }
 }
 
-
 std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 {
-	status = "Checking For Updates";
+	status_text = "Checking For Updates";
 
 	std::string tag_name;
 	std::string download_url;
@@ -223,16 +220,14 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 	return std::make_tuple(tag_name, download_url);
 }
 
-
 std::string DojoFile::DownloadFile(std::string download_url)
 {
 	return DownloadFile(download_url, "");
 }
 
-
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
 {
-	status = "Downloading";
+	status_text = "Downloading";
 
 	auto filename = stringfix::split("//", download_url).back();
 	if (!dest_folder.empty())
@@ -265,11 +260,8 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	return filename;
 }
 
-void DojoFile::DownloadDependencies(std::string rom_path)
+void DojoFile::DownloadDependencies(std::string entry_name)
 {
-	std::string filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
-	auto game_name = stringfix::split(".", filename)[0];
-	auto entry_name = "flycast_" + game_name;
 	std::vector<std::string> required = LoadedFileDefinitions[entry_name]["require"];
 
 	for(std::vector<std::string>::iterator it = std::begin(required); it != std::end(required); ++it) {
@@ -280,17 +272,70 @@ void DojoFile::DownloadDependencies(std::string rom_path)
 std::string DojoFile::DownloadEntry(std::string entry_name)
 {
 	std::string filename = LoadedFileDefinitions[entry_name]["filename"];
-	auto dir_name = stringfix::split("//", filename)[1];
+	if (filename.at(0) == '/')
+		filename.erase(0, 1);
 	std::string download_url = LoadedFileDefinitions[entry_name]["download"];
-	auto dest_filename = DownloadFile(download_url, dir_name);
+	std::string dir_name;
 
-	// unzip bios if detected in bundled download
-	if (dir_name == "data" && filename.find("zip") != std::string::npos)
+	if (entry_name.find("bios") != std::string::npos)
+		dir_name = "data";
+	else
+		dir_name = "ROMS";
+
+	if (!ghc::filesystem::exists(dir_name))
+		ghc::filesystem::create_directory(dir_name);
+
+	if (entry_name.find("chd") != std::string::npos)
 	{
-		Unzip(dest_filename, "data");
+		auto chd_dir_name = stringfix::split("//", filename)[0];
+
+		if (!ghc::filesystem::exists(dir_name + "/" + chd_dir_name))
+			ghc::filesystem::create_directory(dir_name + "/" + chd_dir_name);
+	}
+
+	// check if destination filename exists, return if so
+	std::string target = dir_name + "/" + filename;
+	if (ghc::filesystem::exists(target))
+		return target;
+
+	if (entry_name.find("chd") != std::string::npos ||
+		entry_name.find("bios") != std::string::npos)
+	{
+		filename = DownloadFile(download_url);
+		ExtractEntry(entry_name);
+	}
+	else
+	{
+		DownloadDependencies(entry_name);
+		auto dir_name = "ROMS";
+		DownloadFile(download_url, "ROMS");
 	}
 
 	return filename;
+}
+
+void DojoFile::ExtractEntry(std::string entry_name)
+{
+	std::string download_url = LoadedFileDefinitions[entry_name]["download"];
+	std::string filename = download_url.substr(download_url.find_last_of("/") + 1);
+
+	if (entry_name.find("bios") != std::string::npos)
+	{
+		Unzip(filename, "data");
+	}
+	else
+	{
+		auto entry = LoadedFileDefinitions.find(entry_name);
+
+		Unzip(filename);
+
+		std::string src = (*entry)["extract_to"][0]["src"];
+		std::string dst = (*entry)["extract_to"][0]["dst"];
+
+		std::string dir_name = "ROMS";
+
+		ghc::filesystem::rename(src, dir_name + dst);
+	}
 }
 
 void DojoFile::RemoveFromRemaining(std::string rom_path)
@@ -315,22 +360,5 @@ void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
 	OverwriteDataFolder("flycast-" + tag_name);
 	CopyNewFlycast("flycast-" + tag_name);
 
-	status = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+	status_text = "Update complete.\nPlease restart Flycast Dojo to use new version.";
 }
-/*
-std::string DojoFile::GetGameDescription(std::string filename)
-{
-	std::string short_game_name = stringfix::split(".", filename)[0];
-
-	auto full_game_name = std::find_if(
-		Games.begin(),
-		Games.end(),
-		[&filename](Game const& c) {
-			if (c.name == short_game_name)
-				return c.description;
-		}
-	);
-}
-*/
-
-

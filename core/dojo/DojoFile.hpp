@@ -57,10 +57,11 @@ public:
 	std::string DownloadEntry(std::string entry_name);
 	//std::string GetGameDescription(std::string filename);
 	void RemoveFromRemaining(std::string rom_path);
+	void ExtractEntry(std::string entry_name);
 
 	std::unordered_map<std::string, std::string> game_descriptions;
 
-	std::string status = "Idle";
+	std::string status_text = "Idle";
 };
 
 extern DojoFile dojo_file;

@@ -1513,9 +1513,9 @@ static void gui_display_settings()
 		    {
 				if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 				{
-					ImGui::Text(dojo_file.status.c_str());
+					ImGui::Text(dojo_file.status_text.data());
 
-					if (strcmp(dojo_file.status.c_str(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+					if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
 					{
 						if (ImGui::Button("Exit"))
 						{
@@ -1969,8 +1969,7 @@ static void gui_display_content()
 				{
 					if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
 						settings.dreamcast.ContentPath.push_back("ROMS");
-					dojo_file.DownloadFile(download_url, "ROMS");
-					dojo_file.DownloadDependencies(game_name);
+					dojo_file.DownloadEntry("flycast_" + short_game_name);
 					scanner.refresh();
 				}
 
