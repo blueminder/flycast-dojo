@@ -44,6 +44,7 @@ public:
 	nlohmann::json LoadedFileDefinitions;
 	nlohmann::json RemainingFileDefinitions;
 	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
+	bool CompareFile(std::string file_path, std::string entry_name);
 	int Unzip(std::string archive_path);
 	int Unzip(std::string archive_path, std::string dest_dir);
 	void OverwriteDataFolder(std::string new_root);

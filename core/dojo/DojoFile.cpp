@@ -34,6 +34,24 @@ bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std
 	return (entry_md5_checksum == file_checksum);
 }
 
+bool DojoFile::CompareFile(std::string file_path, std::string entry_name)
+{
+	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
+	std::string entry_md5_checksum = LoadedFileDefinitions[entry_name]["md5_checksum"];
+
+	std::FILE* file = std::fopen(file_path.data(), "rb");
+	std::string file_checksum = md5file(file);
+
+	bool result = (entry_md5_checksum == file_checksum);
+
+	if (result)
+		INFO_LOG(NETWORK, "DOJO: MD5 checksum matches %s.", entry_name.data());
+	else
+		INFO_LOG(NETWORK, "DOJO: MD5 checksum mismatch with %s. Please try download again.", entry_name.data());
+
+	return result;
+}
+
 static void safe_create_dir(const char* dir)
 {
 	if (mkdir(dir) < 0) {
@@ -143,7 +161,10 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		{
 			ghc::filesystem::copy_file(default_path + eeprom_filename, data_path + eeprom_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename);
 		}
+		else
+			INFO_LOG(NETWORK, "DOJO: %s unchanged", eeprom_filename.data());
 	}
 
 	if (ghc::filesystem::exists(data_path + nvmem_filename))
@@ -154,10 +175,14 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		{
 			ghc::filesystem::copy_file(default_path + nvmem_filename, data_path + nvmem_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename);
 		}
+		else
+			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem_filename.data());
 	}
 
-	if (ghc::filesystem::exists(data_path + nvmem2_filename))
+
+	if (ghc::filesystem::exists(data_path + nvmem2_filename.data()))
 	{
 		current_path = data_path + nvmem2_filename;
 		file = std::fopen(current_path.data(), "rb");
@@ -165,7 +190,10 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		{
 			ghc::filesystem::copy_file(default_path + nvmem2_filename, data_path + nvmem2_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename);
 		}
+		else
+			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem2_filename.data());
 	}
 
 	ghc::filesystem::remove_all(default_path);
@@ -248,7 +276,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 			return client.request(methods::GET);
 		})
 			.then([=](http_response response) -> pplx::task<size_t> {
-			INFO_LOG(NETWORK, "Response status code %u returned.\n", response.status_code());
+			INFO_LOG(NETWORK, "DOJO: Response status code %u returned.\n", response.status_code());
 
 			return response.body().read_to_end(*fileBuffer);
 		})
@@ -308,7 +336,8 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	{
 		DownloadDependencies(entry_name);
 		auto dir_name = "ROMS";
-		DownloadFile(download_url, "ROMS");
+		filename = DownloadFile(download_url, "ROMS");
+		CompareFile(filename, entry_name);
 	}
 
 	return filename;
@@ -322,6 +351,8 @@ void DojoFile::ExtractEntry(std::string entry_name)
 	if (entry_name.find("bios") != std::string::npos)
 	{
 		Unzip(filename, "data");
+		CompareFile("data/naomi.zip", "flycast_naomi_bios");
+		CompareFile("data/awbios.zip", "flycast_atomiswave_bios");
 	}
 	else
 	{
@@ -335,6 +366,9 @@ void DojoFile::ExtractEntry(std::string entry_name)
 		std::string dir_name = "ROMS";
 
 		ghc::filesystem::rename(src, dir_name + dst);
+
+		if (entry_name.find("chd") != std::string::npos)
+			CompareFile(dir_name + dst, entry_name);
 	}
 }
 
