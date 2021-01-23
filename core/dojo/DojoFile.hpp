@@ -63,10 +63,15 @@ public:
 	std::string status_text = "Idle";
 	bool start_update;
 	bool update_started;
+	bool start_download;
+	bool download_started;
+	bool download_ended;
 	std::tuple<std::string, std::string> tag_download;
 
 	size_t total_size;
 	size_t downloaded_size;
+
+	std::string entry_name;
 };
 
 extern DojoFile dojo_file;

@@ -2003,8 +2003,9 @@ static void gui_display_content()
 					{
 						if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
 							settings.dreamcast.ContentPath.push_back("ROMS");
-						dojo_file.DownloadEntry("flycast_" + short_game_name);
-						scanner.refresh();
+						ImGui::OpenPopup("Download");
+						dojo_file.entry_name = "flycast_" + short_game_name;
+						dojo_file.start_download = true;
 					}
 				}
 
@@ -2014,6 +2015,37 @@ static void gui_display_content()
 			}
 		}
     }
+
+	if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::Text(dojo_file.status_text.data());
+		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.download_ended)
+		{
+			ImGui::CloseCurrentPopup();
+			scanner.refresh();
+			dojo_file.start_download = false;
+			dojo_file.download_started = false;
+			dojo_file.download_ended = false;
+		}
+		else
+		{
+			float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+			char buf[32];
+			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+		}
+		ImGui::EndPopup();
+	}
+
+	if (dojo_file.start_download && !dojo_file.download_started)
+	{
+		dojo_file.download_started = true;
+		std::thread t([&]() {
+			dojo_file.DownloadEntry(dojo_file.entry_name);
+		});
+		t.detach();
+	}
+
 	ImGui::EndChild();
 	ImGui::End();
     ImGui::PopStyleVar();

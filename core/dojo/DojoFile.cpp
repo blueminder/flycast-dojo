@@ -8,6 +8,9 @@ DojoFile::DojoFile()
 	RemainingFileDefinitions = LoadJsonFromFile("flycast_roms.json");
 	start_update = false;
 	update_started = false;
+	start_download = false;
+	download_started = false;
+	download_ended = false;
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
@@ -352,15 +355,19 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	if (entry_name.find("chd") != std::string::npos ||
 		entry_name.find("bios") != std::string::npos)
 	{
+		status_text = "Downloading " + entry_name;
 		filename = DownloadFile(download_url, "", download_size);
+		status_text = "Extracting " + entry_name;
 		ExtractEntry(entry_name);
 	}
 	else
 	{
 		DownloadDependencies(entry_name);
 		auto dir_name = "ROMS";
+		status_text = "Downloading " + filename;
 		filename = DownloadFile(download_url, "ROMS", download_size);
 		CompareFile(filename, entry_name);
+		dojo_file.download_ended = true;
 	}
 
 	return filename;
