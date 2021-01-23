@@ -226,6 +226,11 @@ void DojoFile::CopyNewFlycast(std::string new_root)
    }
 }
 
+size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
+    data->append((char*) ptr, size * nmemb);
+    return size * nmemb;
+}
+
 std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 {
 	status_text = "Checking For Updates";
@@ -235,22 +240,22 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 
 	std::string latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
 
-	std::ostringstream os;
+	auto curl = curl_easy_init();
+	if (curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_URL, latest_url.data());
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "flycast-dojo");
 
-	try {
-		curlpp::Cleanup cleaner;
-		curlpp::Easy req;
+		std::string body;
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
 
-		std::list<std::string> headers;
-		headers.push_back("User-Agent: flycast-dojo");
+		long response_code;
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		req.setOpt(new curlpp::options::HttpHeader(headers));
-		req.setOpt(new curlpp::options::WriteStream(&os));
-		req.setOpt(new curlpp::options::Url(latest_url));
-
-		req.perform();
-
-		auto body = os.str();
+		curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
 
 		if (!body.empty())
 		{
@@ -259,19 +264,41 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 			download_url = j["assets"][0]["browser_download_url"].get<std::string>();
 		}
 	}
-	catch ( curlpp::LogicError & e ) {
-		std::cout << e.what() << std::endl;
+	else
+	{
+		tag_name = "";
+		download_url = "";
 	}
-	catch ( curlpp::RuntimeError & e ) {
-		std::cout << e.what() << std::endl;
-	}
-
 	return std::make_tuple(tag_name, download_url);
 }
 
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
 {
 	return DownloadFile(download_url, "", 0);
+}
+
+static int xferinfo(void *p,
+                    curl_off_t dltotal, curl_off_t dlnow,
+                    curl_off_t ultotal, curl_off_t ulnow)
+{
+	std::stringstream s;
+
+	if (dltotal == 0)
+		dltotal = dojo_file.total_size;
+
+	dojo_file.total_size = dltotal;
+	dojo_file.downloaded_size = dlnow;
+
+	s << "\r" << dlnow << " of " << dltotal
+		<< " bytes received (" << int(dltotal ? dlnow*100./dltotal : 0) << "%)" << std::flush;
+	INFO_LOG(NETWORK, "DOJO: %s", s.str().data());
+
+	return 0;
+}
+
+size_t writeFileFunction(const char *p, size_t size, size_t nmemb) {
+	dojo_file.of.write(p, size * nmemb);
+	return size * nmemb;
 }
 
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
@@ -281,33 +308,26 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	if (!dest_folder.empty())
 		filename = dest_folder + "//" + filename;
 
-	std::ofstream of(filename, std::ofstream::out | std::ofstream::binary);
+	of = std::ofstream(filename, std::ofstream::out | std::ofstream::binary);
 
-	cURLpp::Easy req;
-	req.setOpt(cURLpp::Options::Url(download_url));
-	req.setOpt(cURLpp::Options::NoProgress(false));
-	req.setOpt(cURLpp::Options::FollowLocation(true));
-	req.setOpt(cURLpp::Options::ProgressFunction([&](std::size_t total, std::size_t done, auto...)
+	total_size = download_size;
+
+	auto curl = curl_easy_init();
+	CURLcode res = CURLE_OK;
+	if (curl)
 	{
-		std::stringstream s;
+		curl_easy_setopt(curl, CURLOPT_URL, download_url.data());
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, xferinfo);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFileFunction);
 
-		if (total == 0)
-			total = download_size;
+		res = curl_easy_perform(curl);
+		if(res != CURLE_OK)
+			fprintf(stderr, "%s\n", curl_easy_strerror(res));
 
-		total_size = total;
-		downloaded_size = done;
-
-		s << "\r" << done << " of " << total
-			<< " bytes received (" << int(total ? done*100./total : 0) << "%)" << std::flush;
-		INFO_LOG(NETWORK, "DOJO: %s", s.str().data());
-	    return 0;
-	}));
-	req.setOpt(cURLpp::Options::WriteFunction([&](const char* p, std::size_t size, std::size_t nmemb)
-	{
-	    of.write(p, size*nmemb);
-	    return size*nmemb;
-	}));
-	req.perform();
+		curl_easy_cleanup(curl);
+	}
 
 	return filename;
 }

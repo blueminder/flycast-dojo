@@ -166,8 +166,8 @@ if (MSVC)
     target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
 endif()
 
-find_package(unofficial-curlpp CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::curlpp::curlpp)
+find_package(CURL CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
 
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)

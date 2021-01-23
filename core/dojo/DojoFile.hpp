@@ -25,10 +25,8 @@ struct GameMedia {
 };
 #endif
 
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Infos.hpp>
+#include <curl/curl.h>
+#include <curl/easy.h>
 
 class DojoFile
 {
@@ -72,6 +70,7 @@ public:
 	size_t downloaded_size;
 
 	std::string entry_name;
+	std::ofstream of;
 };
 
 extern DojoFile dojo_file;
