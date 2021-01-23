@@ -264,12 +264,12 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 	return std::make_tuple(tag_name, download_url);
 }
 
-std::string DojoFile::DownloadFile(std::string download_url)
+std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
 {
-	return DownloadFile(download_url, "");
+	return DownloadFile(download_url, "", 0);
 }
 
-std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
+std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
 {
 	status_text = "Downloading";
 
@@ -286,6 +286,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	req.setOpt(cURLpp::Options::ProgressFunction([&](std::size_t total, std::size_t done, auto...)
 	{
 		std::stringstream s;
+
+		if (total == 0)
+			total = download_size;
+
 		s << "\r" << done << " of " << total
 			<< " bytes received (" << int(total ? done*100./total : 0) << "%)" << std::flush;
 		INFO_LOG(NETWORK, "DOJO: %s", s.str().data());
@@ -318,6 +322,8 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	std::string download_url = LoadedFileDefinitions[entry_name]["download"];
 	std::string dir_name;
 
+	size_t download_size = LoadedFileDefinitions[entry_name]["download_size"];
+
 	if (entry_name.find("bios") != std::string::npos)
 		dir_name = "data";
 	else
@@ -342,14 +348,14 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	if (entry_name.find("chd") != std::string::npos ||
 		entry_name.find("bios") != std::string::npos)
 	{
-		filename = DownloadFile(download_url);
+		filename = DownloadFile(download_url, "", download_size);
 		ExtractEntry(entry_name);
 	}
 	else
 	{
 		DownloadDependencies(entry_name);
 		auto dir_name = "ROMS";
-		filename = DownloadFile(download_url, "ROMS");
+		filename = DownloadFile(download_url, "ROMS", download_size);
 		CompareFile(filename, entry_name);
 	}
 
@@ -402,7 +408,7 @@ void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
 {
 	auto tag_name = std::get<0>(tag_download);
 	auto download_url = std::get<1>(tag_download);
-	auto filename = dojo_file.DownloadFile(download_url);
+	auto filename = dojo_file.DownloadFile(download_url, "");
 	Unzip(filename);
 	OverwriteDataFolder("flycast-" + tag_name);
 	CopyNewFlycast("flycast-" + tag_name);

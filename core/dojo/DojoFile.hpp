@@ -47,8 +47,10 @@ public:
 	void CopyNewFlycast(std::string new_root);
 	void ValidateAndCopyMem(std::string rom_path);
 	std::tuple<std::string, std::string> GetLatestDownloadUrl();
-	std::string DownloadFile(std::string download_url);
+
 	std::string DownloadFile(std::string download_url, std::string dest_folder);
+	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size);
+
 	void Update(std::tuple<std::string, std::string> tag_download);
 	void DownloadDependencies(std::string rom_path);
 	std::string DownloadEntry(std::string entry_name);
