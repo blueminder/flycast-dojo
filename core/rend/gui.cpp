@@ -1424,7 +1424,6 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-
 		dojo_gui.insert_netplay_tab(normal_padding);
 
 		if (ImGui::BeginTabItem("Advanced"))
@@ -1511,10 +1510,31 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::SameLine();
+				if (ImGui::Button("Update"))
+				{
+					ImGui::OpenPopup("Update");
+
+					std::string tag_name;
+					std::string download_url;
+
+					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
+					std::tie(tag_name, download_url) = dojo_file.tag_download;
+
+					if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
+					{
+						dojo_file.start_update = true;
+					}
+					else
+					{
+						ImGui::OpenPopup("Updated");
+					}
+				}
+
 				if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 				{
 					ImGui::Text(dojo_file.status_text.data());
-
 					if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
 					{
 						if (ImGui::Button("Exit"))
@@ -1522,31 +1542,14 @@ static void gui_display_settings()
 							exit(0);
 						}
 					}
-
-					ImGui::EndPopup();
-				}
-
-				ImGui::Text("Version: %s", REICAST_VERSION);
-				ImGui::SameLine();
-				if (ImGui::Button("Update"))
-				{
-					std::string tag_name;
-					std::string download_url;
-
-					std::tuple<std::string, std::string> tag_download = dojo_file.GetLatestDownloadUrl();
-					std::tie(tag_name, download_url) = tag_download;
-
-					if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
-					{
-						ImGui::OpenPopup("Update");
-
-						dojo_file.Update(tag_download);
-					}
 					else
 					{
-						ImGui::OpenPopup("Updated");
+						float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+						char buf[32];
+						sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+						ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
 					}
-
+					ImGui::EndPopup();
 				}
 
 				if (ImGui::BeginPopupModal("Updated", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -1559,6 +1562,14 @@ static void gui_display_settings()
 					}
 
 					ImGui::EndPopup();
+				}
+
+				if (dojo_file.start_update && !dojo_file.update_started)
+				{
+					std::thread t([&]() {
+						dojo_file.Update();
+					});
+					t.detach();
 				}
 
 				ImGui::Text("Git Hash: %s", GIT_HASH);
@@ -1659,6 +1670,8 @@ static void gui_display_settings()
         		: settings.pvr.rend == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
     renderer_changed = (int)pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
+
+
 }
 
 void gui_display_notification(const char *msg, int duration)

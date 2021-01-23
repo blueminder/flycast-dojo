@@ -51,7 +51,7 @@ public:
 	std::string DownloadFile(std::string download_url, std::string dest_folder);
 	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size);
 
-	void Update(std::tuple<std::string, std::string> tag_download);
+	void Update();
 	void DownloadDependencies(std::string rom_path);
 	std::string DownloadEntry(std::string entry_name);
 	//std::string GetGameDescription(std::string filename);
@@ -61,6 +61,12 @@ public:
 	std::unordered_map<std::string, std::string> game_descriptions;
 
 	std::string status_text = "Idle";
+	bool start_update;
+	bool update_started;
+	std::tuple<std::string, std::string> tag_download;
+
+	size_t total_size;
+	size_t downloaded_size;
 };
 
 extern DojoFile dojo_file;

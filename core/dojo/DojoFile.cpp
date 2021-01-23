@@ -6,6 +6,8 @@ DojoFile::DojoFile()
 {
 	LoadedFileDefinitions = LoadJsonFromFile("flycast_roms.json");
 	RemainingFileDefinitions = LoadJsonFromFile("flycast_roms.json");
+	start_update = false;
+	update_started = false;
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
@@ -271,7 +273,6 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
 {
-	status_text = "Downloading";
 
 	auto filename = stringfix::split("//", download_url).back();
 	if (!dest_folder.empty())
@@ -289,6 +290,9 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 
 		if (total == 0)
 			total = download_size;
+
+		total_size = total;
+		downloaded_size = done;
 
 		s << "\r" << done << " of " << total
 			<< " bytes received (" << int(total ? done*100./total : 0) << "%)" << std::flush;
@@ -404,10 +408,12 @@ void DojoFile::RemoveFromRemaining(std::string rom_path)
 	}
 }
 
-void DojoFile::Update(std::tuple<std::string, std::string> tag_download)
+void DojoFile::Update()
 {
+	update_started = true;
 	auto tag_name = std::get<0>(tag_download);
 	auto download_url = std::get<1>(tag_download);
+	status_text = "Downloading Latest Update";
 	auto filename = dojo_file.DownloadFile(download_url, "");
 	Unzip(filename);
 	OverwriteDataFolder("flycast-" + tag_name);
