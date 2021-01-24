@@ -206,18 +206,29 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 
 void DojoFile::OverwriteDataFolder(std::string new_root)
 {
-	if(ghc::filesystem::exists(new_root + "/data"))
+	std::string extracted_data_path = new_root + "/data";
+	if (ghc::filesystem::exists(extracted_data_path) &&
+		ghc::filesystem::exists("data"))
 	{
-		ghc::filesystem::copy(new_root + "/data", "data",
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator("data"))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_write);
+
+		ghc::filesystem::copy(extracted_data_path, "data",
 			ghc::filesystem::copy_options::overwrite_existing |
 			ghc::filesystem::copy_options::recursive);
+
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator("data"))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_read,
+				ghc::filesystem::perm_options::replace);
 	}
 }
 
 void DojoFile::CopyNewFlycast(std::string new_root)
 {
    if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe",
-	   ghc::filesystem::copy_options::overwrite_existing))
+		ghc::filesystem::copy_options::overwrite_existing))
    {
 	   remove("flycast_old.exe");
 	   rename("flycast.exe", "flycast_old.exe");
@@ -247,6 +258,9 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "flycast-dojo");
 
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
 		std::string body;
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
@@ -274,7 +288,7 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
 {
-	return DownloadFile(download_url, "", 0);
+	return DownloadFile(download_url, dest_folder, 0);
 }
 
 static int xferinfo(void *p,
@@ -317,6 +331,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	if (curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_URL, download_url.data());
+
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, xferinfo);
@@ -376,7 +394,14 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 		entry_name.find("bios") != std::string::npos)
 	{
 		status_text = "Downloading " + entry_name;
-		filename = DownloadFile(download_url, "", download_size);
+		if (!ghc::filesystem::exists("cache"))
+			ghc::filesystem::create_directory("cache");
+
+		// if file exists from past download, and checksum matches, use that file instead
+		if (!ghc::filesystem::exists("cache/" + filename)
+			&& !CompareFile("cache/" + filename, entry_name))
+			filename = DownloadFile(download_url, "cache", download_size);
+
 		status_text = "Extracting " + entry_name;
 		ExtractEntry(entry_name);
 	}
@@ -400,7 +425,7 @@ void DojoFile::ExtractEntry(std::string entry_name)
 
 	if (entry_name.find("bios") != std::string::npos)
 	{
-		Unzip(filename, "data");
+		Unzip("cache/" + filename, "data");
 		CompareFile("data/naomi.zip", "flycast_naomi_bios");
 		CompareFile("data/awbios.zip", "flycast_atomiswave_bios");
 	}
@@ -408,14 +433,14 @@ void DojoFile::ExtractEntry(std::string entry_name)
 	{
 		auto entry = LoadedFileDefinitions.find(entry_name);
 
-		Unzip(filename);
+		Unzip("cache/" + filename, "cache");
 
 		std::string src = (*entry)["extract_to"][0]["src"];
 		std::string dst = (*entry)["extract_to"][0]["dst"];
 
 		std::string dir_name = "ROMS";
 
-		ghc::filesystem::rename(src, dir_name + dst);
+		ghc::filesystem::rename("cache/" + src, dir_name + dst);
 
 		if (entry_name.find("chd") != std::string::npos)
 			CompareFile(dir_name + dst, entry_name);
@@ -441,10 +466,13 @@ void DojoFile::Update()
 	auto tag_name = std::get<0>(tag_download);
 	auto download_url = std::get<1>(tag_download);
 	status_text = "Downloading Latest Update";
-	auto filename = dojo_file.DownloadFile(download_url, "");
+	std::string filename = dojo_file.DownloadFile(download_url, "");
+	auto dirname = stringfix::remove_extension(filename);
 	Unzip(filename);
 	OverwriteDataFolder("flycast-" + tag_name);
 	CopyNewFlycast("flycast-" + tag_name);
 
 	status_text = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+
+	ghc::filesystem::remove_all(dirname);
 }
