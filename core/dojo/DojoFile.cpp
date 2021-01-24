@@ -153,6 +153,15 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 	std::string nvmem_filename = rom_filename + ".nvmem.net";
 	std::string nvmem2_filename = rom_filename + ".nvmem2.net";
 
+	if (ghc::filesystem::exists(default_path))
+	{
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator(default_path))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_write);
+
+		ghc::filesystem::remove_all(default_path);
+	}
+
 	Unzip("data/default.zip");
 
 	std::string current_path;
@@ -164,12 +173,24 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		file = std::fopen(current_path.data(), "rb");
 		if (!CompareEntry(data_path + eeprom_filename, md5file(file), "eeprom_checksum"))
 		{
+			ghc::filesystem::permissions(data_path + eeprom_filename,
+				ghc::filesystem::perms::owner_write);
+
 			ghc::filesystem::copy_file(default_path + eeprom_filename, data_path + eeprom_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
-			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename);
+
+			ghc::filesystem::permissions(default_path + eeprom_filename,
+				ghc::filesystem::perms::owner_read,
+				ghc::filesystem::perm_options::replace);
+
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename.data());
 		}
 		else
+		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", eeprom_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged", eeprom_filename.data());
+		}
 	}
 
 	if (ghc::filesystem::exists(data_path + nvmem_filename))
@@ -178,12 +199,24 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		file = std::fopen(current_path.data(), "rb");
 		if (!CompareEntry(data_path + nvmem_filename, md5file(file), "nvmem_checksum"))
 		{
+			ghc::filesystem::permissions(data_path + nvmem_filename,
+				ghc::filesystem::perms::owner_write);
+
 			ghc::filesystem::copy_file(default_path + nvmem_filename, data_path + nvmem_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
-			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename);
+
+			ghc::filesystem::permissions(default_path + nvmem_filename,
+				ghc::filesystem::perms::owner_read,
+				ghc::filesystem::perm_options::replace);
+
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename.data());
 		}
 		else
+		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged", nvmem_filename.data());
+		}
 	}
 
 
@@ -193,15 +226,34 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		file = std::fopen(current_path.data(), "rb");
 		if (!CompareEntry(data_path + nvmem2_filename, md5file(file), "nvmem2_checksum"))
 		{
+			ghc::filesystem::permissions(data_path + nvmem2_filename,
+				ghc::filesystem::perms::owner_write);
+
 			ghc::filesystem::copy_file(default_path + nvmem2_filename, data_path + nvmem2_filename,
 				ghc::filesystem::copy_options::overwrite_existing);
-			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename);
+
+			ghc::filesystem::permissions(default_path + nvmem2_filename,
+				ghc::filesystem::perms::owner_read,
+				ghc::filesystem::perm_options::replace);
+
+			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename.data());
 		}
 		else
+		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem2_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged", nvmem2_filename.data());
+		}
 	}
 
-	ghc::filesystem::remove_all(default_path);
+	if (ghc::filesystem::exists(default_path))
+	{
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator(default_path))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_write);
+
+		ghc::filesystem::remove_all(default_path);
+	}
 }
 
 void DojoFile::OverwriteDataFolder(std::string new_root)
