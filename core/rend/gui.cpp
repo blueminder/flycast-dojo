@@ -1967,6 +1967,8 @@ static void gui_display_content()
 		for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
 		{
 			std::string filename = (*it)["filename"].get<std::string>();
+			if (!(*it).contains("download"))
+				continue;
 			std::string download_url = (*it)["download"].get<std::string>();
 			//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
 
