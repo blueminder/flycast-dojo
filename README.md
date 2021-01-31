@@ -14,6 +14,7 @@ General information about Flycast configuration and supported features can be fo
     + [As Host](#as-host)
       - [Set Delay](#set-delay)
     + [As Guest](#as-guest)
+    + [Troubleshooting](#troubleshooting)
   * [Lobby Quick Start](#lobby-quick-start)
     + [As Guest](#as-guest-1)
     + [As Host](#as-host-1)
@@ -24,6 +25,7 @@ General information about Flycast configuration and supported features can be fo
     + [Set Server IP & Port](#set-server-ip--port)
     + [Delay Calculation](#manual-delay-calculation)
     + [Launch Game](#launch-game)
+- [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
 - [Command Line](#command-line)
   * [Server](#server)
   * [Client](#client)
@@ -41,9 +43,9 @@ If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulato
 
 For the sake of performance, it is advised that you keep your games and the emulator on the same drive.
 
-If you are using the preferred romset, a BIOS is generally not necessary. If Flycast ends up asking you for a BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` for NAOMI games into your `data` directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your **"Home Directory"**.
+For the BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` for NAOMI games into your `data` directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your **"Home Directory"**.
 
-*In the case of The King of Fighters XI (**kofxi.zip**), the **MAME 0.226** version is known to work, and is the preferred ROM. You will also need **awbios.zip** in this case.*
+*In the case of The King of Fighters XI (**kofxi.zip**), the **MAME 0.226** version is known to work, and is the preferred ROM.*
 
 If you plan on using the built-in LAN Lobby, make sure that your **"Content Location"** is set to wherever you are holding your ROMs.
 
@@ -60,6 +62,7 @@ The following is a sample mapping for XInput (XBOX 360) Controllers created by *
 
 <img alt="CvS2 Sample Mapping for XInput Controllers" src="CVS2_Sample_Mapping_for_XInput_Controllers.png" width="640">
 
+
 # Starting a Netplay Session
 You can find the Netplay settings under the "Netplay" section of the emulator's settings:
 
@@ -67,7 +70,7 @@ You can find the Netplay settings under the "Netplay" section of the emulator's 
 ## Match Code Quick Start
 Using Match Codes, Flycast Dojo can start a P2P game session behind firewalls, so that you can play against others without the need of Radmin or Fightcade. No need to sign up for any accounts or download additional software than Flycast Dojo itself. You should be able to play any games supported by Flycast, so long as you and your opponent have the same ROM.
 
-The methods used by this feature should work with most consumer routers, but you may run into trouble over some cloud gaming services or corporate networks. (It is confirmed to work over Paperspace though, where I did much of my testing). In this case, you would need to adjust your firewall rules and explicitly forward ports. See [Manual Operation](#manual-operation) for more information.
+The methods used by this feature should work with most consumer routers, but you may run into trouble over some cloud gaming services or corporate networks. (It is confirmed to work over Paperspace though, where I did much of my testing).
 
 ### As Host
 You can set yourself as a host by making sure __HOST__ is selected in the drop-down box on the left, then click on the game to begin.
@@ -91,6 +94,16 @@ To join a game, click on the dropdown on the left and select __JOIN__ then selec
 Once you are done, you can press __Start Session__.
 
 ![Host Match Code Screen](match-code-3.png)
+
+### Troubleshooting
+
+If you notice disconnects at some regular interval (e.g. every 6 minutes, 10, minutes, 15 minutes), it may be possible that your router is closing the UDP route that was established by the matchmaking service by having a low UDP Timeout. This is similar to what can happen with VoIP calls on restrictive routers.
+
+To fix this, find your router's **UDP Timeout** settings and set it to **90 seconds** or higher.  
+
+If you are unable to find this setting, you can forward your router's port and [connect manually](#manual-operation), or use the [LAN Lobby](#lobby-quick-start) over a Virtual LAN service like ZeroTier or Radmin VPN.
+
+For more information, check out [10 VoIP Problems: How to Fix Them Forever](https://www.nextiva.com/blog/voip-problems.html#s2).
 
 ## Lobby Quick Start
 If you are connected to your opponents on a shared LAN or are using software that emulates local connections like ZeroTier or Radmin VPN, you can make your life easier by enabling lobbies.
@@ -162,6 +175,25 @@ For instance, if my opponent’s average ping is 42 ms, I would divide it by 32 
 On the Flycast main screen, you may now select your game of choice. You may also filter your list of games by typing in the text box on the top of the screen.
 
 If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else's game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `eeprom.net`/`nvmem.net` files found in your `data/` subdirectory.
+
+# MD5 Checksum Calculation & Validation
+In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
+
+![MD5 Checksum Window](validation-1.png)
+
+To access this, just right click on any ROM name, and click "Calculate MD5 Checksum". A dialog will pop up showing the MD5 checksum of the selected ROM, and a button to easily copy it to the clipboard to share with your opponent.
+
+![MD5 Checksum Context Menu](validation-2.png)
+
+To verify that you have the same ROM as your opponent, just copy the MD5 checksum given to you, and click the "Paste & Verify" button. If your ROMs match, you'll see a green "Verified!" by the Close button. If the hashes do not match, it will say "Mismatch." in red.
+
+![MD5 Checksum Window - Verified!](validation-3.png)
+
+If a `flycast_roms.json` file is found, it should contain a listing of MD5 checksums for approved ROMs between users. This format is intended for communities to share common ROM metadata between users to ensure that everyone has the same files.
+
+If your ROM is found in this file, the MD5 Checksum window will say *"Validation File Match"*. So long as you see this, you should be good to go!
+
+![MD5 Checksum Window - Verified!](validation-4.png)
 
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
