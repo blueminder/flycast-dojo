@@ -833,6 +833,7 @@ void InitSettings()
 	settings.dojo.MatchmakingServerAddress = "match.dojo.ooo";
 	settings.dojo.MatchmakingServerPort = "52001";
 	settings.dojo.MatchCode = "";
+	settings.dojo.GameName = "";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -965,7 +966,31 @@ void LoadSettings(bool game_specific)
 	settings.dojo.MatchmakingServerAddress = cfgLoadStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
 	settings.dojo.MatchmakingServerPort = cfgLoadStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
 	settings.dojo.MatchCode = cfgLoadStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
+	settings.dojo.GameName = cfgLoadStr("dojo", "GameName", settings.dojo.GameName.c_str());
 
+	if (!settings.dojo.ProtoCall.empty())
+	{
+		std::vector<std::string> call_split = stringfix::split("/", settings.dojo.ProtoCall);
+		auto mm_address = stringfix::split(":", call_split[1])[0];
+		auto mm_port = stringfix::split(":", call_split[1])[1];
+
+		settings.dojo.Enable = true;
+
+		settings.dojo.MatchmakingServerAddress = mm_address;
+		settings.dojo.MatchmakingServerPort = mm_port;
+
+		settings.dojo.GameName = call_split[2];
+
+		if (call_split.size() == 4)
+		{
+			settings.dojo.ActAsServer = false;
+			settings.dojo.MatchCode = call_split[3];
+		}
+		else
+		{
+			settings.dojo.ActAsServer = true;
+		}
+	}
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);

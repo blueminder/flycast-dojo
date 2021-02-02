@@ -140,7 +140,11 @@ bool ParseCommandLine(int argc,char* argv[])
 		{
 			char* extension = strrchr(*arg, '.');
 
-			if (extension
+			if (memcmp(*arg, "flycast-dojo://", strlen("flycast-dojo://")) == 0)
+			{
+				settings.dojo.ProtoCall = *arg;
+			}
+			else if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
 					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
 			{

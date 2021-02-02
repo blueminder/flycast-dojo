@@ -1955,7 +1955,7 @@ static void gui_display_content()
 					if (ImGui::Selectable(game_name.data()))
 					{
 						if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
-							settings.dreamcast.ContentPath.push_back("ROMS");
+							settings.dreamcast.ContentPath.push_back(get_writable_config_path("") + "ROMS");
 						ImGui::OpenPopup("Download");
 						dojo_file.entry_name = "flycast_" + short_game_name;
 						dojo_file.start_download = true;
@@ -2037,6 +2037,22 @@ static void gui_display_content()
 
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+
+	if (!settings.dojo.GameName.empty() && !scanner.get_game_list().empty())
+	{
+		auto filename = settings.dojo.GameName;
+
+		auto game_found = std::find_if(
+			scanner.get_game_list().begin(),
+			scanner.get_game_list().end(),
+			[&filename](GameMedia const& c) {
+				return c.name.find(filename) != std::string::npos;
+			}
+		);
+
+		if (!(game_found->path.empty()))
+			gui_start_game(game_found->path);
+	}
 }
 
 static void systemdir_selected_callback(bool cancelled, std::string selection)

@@ -528,3 +528,4 @@ void DojoFile::Update()
 
 	ghc::filesystem::remove_all(dirname);
 }
+

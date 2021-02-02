@@ -30,6 +30,7 @@ void DojoSession::LoadNetConfig()
 
 	//PlayMatch = settings.dojo.PlayMatch;
 	ReplayFilename = settings.dojo.ReplayFilename;
+
 }
 
 // packet data format

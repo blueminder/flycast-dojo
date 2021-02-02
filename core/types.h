@@ -532,6 +532,8 @@ struct settings_t
 		std::string MatchmakingServerAddress;
 		std::string MatchmakingServerPort;
 		std::string MatchCode;
+		std::string ProtoCall;
+		std::string GameName;
 	} dojo;
 };
 
