@@ -36,6 +36,7 @@
 #include "network/naomi_network.h"
 #include "dojo/DojoSession.hpp"
 #include "rend/mainui.h"
+#include "dojo/deps/filesystem.hpp"
 
 void FlushCache();
 static void LoadCustom();
@@ -994,6 +995,15 @@ void LoadSettings(bool game_specific)
 			start = end + 1;
 		}
 		settings.dreamcast.HideLegacyNaomiRoms = cfgLoadBool(config_section, "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
+
+		std::string rom_path;
+		rom_path = get_writable_config_path("") + "ROMS";
+
+		if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), rom_path) == settings.dreamcast.ContentPath.end())
+			settings.dreamcast.ContentPath.push_back(rom_path);
+
+		if (!ghc::filesystem::exists(rom_path))
+			ghc::filesystem::create_directory(rom_path);
 	}
 /*
 	//make sure values are valid
