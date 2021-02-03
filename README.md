@@ -37,17 +37,13 @@ General information about Flycast configuration and supported features can be fo
 - [Roadmap](#roadmap)
 
 # Getting Started
-To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.218** romset.
+To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.226** romset.
 
-If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMS` while non-Fightcade users are free to create a `games` directory inside of the folder they installed Flycast, or point to any other directory on their computer as a **"Content Location"** in the settings.
+If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMS` while non-Fightcade users can use the `ROMS` folder in the Flycast folder.
 
 For the sake of performance, it is advised that you keep your games and the emulator on the same drive.
 
 For the BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` for NAOMI games into your `data` directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your **"Home Directory"**.
-
-*In the case of The King of Fighters XI (**kofxi.zip**), the **MAME 0.226** version is known to work, and is the preferred ROM.*
-
-If you plan on using the built-in LAN Lobby, make sure that your **"Content Location"** is set to wherever you are holding your ROMs.
 
 For more information on verifying your BIOS files, you can head to the [Flycast wiki page](https://github.com/TheArcadeStriker/flycast-wiki/wiki/Verifying-your-BIOS-and-Arcade-ROMs) on the topic.
 
@@ -64,9 +60,16 @@ The following is a sample mapping for XInput (XBOX 360) Controllers created by *
 
 
 # Starting a Netplay Session
+
+## Netplay Settings
 You can find the Netplay settings under the "Netplay" section of the emulator's settings:
 
 ![Netplay Options](netplay1.png)
+
+Match Codes are enabled by default, pointing to the default matchmaking relay. To use the LAN Lobby or Manual Operation (i.e., Command Line or External Lobbies) just disable the checkbox from "Enable Internet Matchmaking", or pass `dojo:EnableMatchCode=no` to the command line options.
+
+![Netplay Options - Match Codes Disabled](netplay2.png)
+
 ## Match Code Quick Start
 Using Match Codes, Flycast Dojo can start a P2P game session behind firewalls, so that you can play against others without the need of Radmin or Fightcade. No need to sign up for any accounts or download additional software than Flycast Dojo itself. You should be able to play any games supported by Flycast, so long as you and your opponent have the same ROM.
 
@@ -198,11 +201,11 @@ If your ROM is found in this file, the MD5 Checksum window will say *"Validation
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
-## Server
-```flycast.exe -config dojo:Enable -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
+## Server (Without Match Codes)
+```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
-## Client
-```flycast.exe -config dojo:Enable -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
+## Client (Without Match Codes)
+```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
 ## TCP Match Transmission (Spectating)
 _append to server arguments_
