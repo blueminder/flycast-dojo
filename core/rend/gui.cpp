@@ -1956,8 +1956,8 @@ static void gui_display_content()
 					{
 						if (ImGui::Selectable(game_name.data()))
 						{
-							if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
-								settings.dreamcast.ContentPath.push_back(get_writable_config_path("") + "ROMS");
+							if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), get_writable_config_path("")) == settings.dreamcast.ContentPath.end())
+								settings.dreamcast.ContentPath.push_back(get_writable_config_path(""));
 							ImGui::OpenPopup("Download");
 							dojo_file.entry_name = "flycast_" + short_game_name;
 							dojo_file.start_download = true;

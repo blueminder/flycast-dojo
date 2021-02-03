@@ -1056,7 +1056,7 @@ void LoadSettings(bool game_specific)
 		settings.dreamcast.HideLegacyNaomiRoms = cfgLoadBool(config_section, "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
 
 		std::string rom_path;
-		rom_path = get_writable_config_path("") + "ROMS";
+		rom_path = get_writable_config_path("");
 
 		if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), rom_path) == settings.dreamcast.ContentPath.end())
 			settings.dreamcast.ContentPath.push_back(rom_path);
