@@ -763,26 +763,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 void DojoGui::update_action()
 {
-	if (ImGui::BeginPopupModal("Update"))
-	{
-		ImGui::Text(dojo_file.status_text.data());
-		if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
-		{
-			if (ImGui::Button("Exit"))
-			{
-				exit(0);
-			}
-		}
-		else
-		{
-			float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-			char buf[32];
-			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
-		}
-		ImGui::EndPopup();
-	}
-
 	if (ImGui::BeginPopupModal("Update?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		std::string tag_name;
@@ -793,6 +773,26 @@ void DojoGui::update_action()
 		if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
 		{
 			ImGui::Text("There is a new version of Flycast Dojo available.\nWould you like to Update?");
+
+			if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				ImGui::Text(dojo_file.status_text.data());
+				if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+				{
+					if (ImGui::Button("Exit"))
+					{
+						exit(0);
+					}
+				}
+				else
+				{
+					float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+					char buf[32];
+					sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+					ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+				}
+				ImGui::EndPopup();
+			}
 
 			if (ImGui::Button("Update"))
 			{
