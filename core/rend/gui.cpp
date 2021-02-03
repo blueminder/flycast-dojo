@@ -1915,56 +1915,59 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
 
-		for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
+		if (settings.dojo.GameName.empty())
 		{
-			std::string filename = (*it)["filename"].get<std::string>();
-			if (!(*it).contains("download"))
-				continue;
-			std::string download_url = (*it)["download"].get<std::string>();
-			//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
-
-			/*
-			auto game_found = std::find_if(
-				scanner.get_game_list().begin(),
-				scanner.get_game_list().end(),
-				[&filename](GameMedia const& c) {
-					return c.name.find(filename) != std::string::npos;
-				}
-			);
-			*/
-
-			std::string short_game_name = stringfix::split(".", filename)[0];
-
-			//if (game_found == scanner.get_game_list().end() &&
-			if (filename.find("chd") == std::string::npos &&
-				filename.find("data") == std::string::npos &&
-				!download_url.empty())
+			for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
 			{
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
-				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(255, 145, 145, 1));
+				std::string filename = (*it)["filename"].get<std::string>();
+				if (!(*it).contains("download"))
+					continue;
+				std::string download_url = (*it)["download"].get<std::string>();
+				//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
 
-				std::string game_name;
-				if (dojo_file.game_descriptions.count(short_game_name) == 1)
-					game_name = filename + " (" + dojo_file.game_descriptions.at(short_game_name) + ")";
-				else
-					game_name = filename;
-
-				if (filter.PassFilter(game_name.data()))
-				{
-					if (ImGui::Selectable(game_name.data()))
-					{
-						if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
-							settings.dreamcast.ContentPath.push_back(get_writable_config_path("") + "ROMS");
-						ImGui::OpenPopup("Download");
-						dojo_file.entry_name = "flycast_" + short_game_name;
-						dojo_file.start_download = true;
+				/*
+				auto game_found = std::find_if(
+					scanner.get_game_list().begin(),
+					scanner.get_game_list().end(),
+					[&filename](GameMedia const& c) {
+						return c.name.find(filename) != std::string::npos;
 					}
-				}
+				);
+				*/
 
-				ImGui::PopStyleColor();
-				ImGui::PopStyleColor();
-				ImGui::PopStyleVar();
+				std::string short_game_name = stringfix::split(".", filename)[0];
+
+				//if (game_found == scanner.get_game_list().end() &&
+				if (filename.find("chd") == std::string::npos &&
+					filename.find("data") == std::string::npos &&
+					!download_url.empty())
+				{
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
+					ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(255, 145, 145, 1));
+
+					std::string game_name;
+					if (dojo_file.game_descriptions.count(short_game_name) == 1)
+						game_name = filename + " (" + dojo_file.game_descriptions.at(short_game_name) + ")";
+					else
+						game_name = filename;
+
+					if (filter.PassFilter(game_name.data()))
+					{
+						if (ImGui::Selectable(game_name.data()))
+						{
+							if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), "ROMS") == settings.dreamcast.ContentPath.end())
+								settings.dreamcast.ContentPath.push_back(get_writable_config_path("") + "ROMS");
+							ImGui::OpenPopup("Download");
+							dojo_file.entry_name = "flycast_" + short_game_name;
+							dojo_file.start_download = true;
+						}
+					}
+
+					ImGui::PopStyleColor();
+					ImGui::PopStyleColor();
+					ImGui::PopStyleVar();
+				}
 			}
 		}
     }

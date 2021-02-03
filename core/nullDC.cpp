@@ -971,24 +971,58 @@ void LoadSettings(bool game_specific)
 	if (!settings.dojo.ProtoCall.empty())
 	{
 		std::vector<std::string> call_split = stringfix::split("/", settings.dojo.ProtoCall);
-		auto mm_address = stringfix::split(":", call_split[1])[0];
-		auto mm_port = stringfix::split(":", call_split[1])[1];
+		auto target = stringfix::split(":", call_split[1]);
+		auto proto_method = target[0];
+
+		std::string mm_address;
+		std::string mm_port;
+
+		if (target.size() == 2)
+		{
+			mm_address = "";
+			mm_port = target[1];
+		}
+		if (target.size() == 3)
+		{
+			mm_address = target[1];
+			mm_port = target[2];
+		}
 
 		settings.dojo.Enable = true;
-
-		settings.dojo.MatchmakingServerAddress = mm_address;
-		settings.dojo.MatchmakingServerPort = mm_port;
-
 		settings.dojo.GameName = call_split[2];
 
-		if (call_split.size() == 4)
+		if (memcmp(proto_method.data(), "p2p", strlen("p2p")) == 0)
 		{
-			settings.dojo.ActAsServer = false;
-			settings.dojo.MatchCode = call_split[3];
+			settings.dojo.EnableMatchCode = false;
+
+			if (mm_address.empty())
+			{
+				settings.dojo.ActAsServer = true;
+			}
+			else
+			{
+				settings.dojo.ActAsServer = false;
+				settings.dojo.ServerIP = mm_address;
+			}
+
+			settings.dojo.ServerPort = mm_port;
 		}
-		else
+		else if (memcmp(proto_method.data(), "mm", strlen("mm")) == 0)
 		{
-			settings.dojo.ActAsServer = true;
+			settings.dojo.EnableMatchCode = true;
+
+			settings.dojo.MatchmakingServerAddress = mm_address;
+			settings.dojo.MatchmakingServerPort = mm_port;
+
+			if (call_split.size() == 4)
+			{
+				settings.dojo.ActAsServer = false;
+				settings.dojo.MatchCode = call_split[3];
+			}
+			else
+			{
+				settings.dojo.ActAsServer = true;
+			}
 		}
 	}
 
