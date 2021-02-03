@@ -331,7 +331,10 @@ void gui_start_game(const std::string& path)
 	path_copy = path;	// path may be a local var
 
 	if (settings.dojo.Enable)
+	{
+		cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
 		dojo_file.ValidateAndCopyMem(path_copy.c_str());
+	}
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
@@ -1800,7 +1803,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, -(ImGui::CalcTextSize("Foo").y + ImGui::GetStyle().FramePadding.y * 4.0f)), true);
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
@@ -2049,7 +2052,87 @@ static void gui_display_content()
 	}
 
 	ImGui::EndChild();
-	ImGui::End();
+
+	if (settings.dojo.Enable)
+	{
+		char PlayerName[256] = { 0 };
+		strcpy(PlayerName, settings.dojo.PlayerName.c_str());
+		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Name visible to other players");
+		settings.dojo.PlayerName = std::string(PlayerName, strlen(PlayerName));
+	}
+	else
+	{
+		ImGui::Text("");
+	}
+
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+
+	if (ImGui::Button(REICAST_VERSION))
+	{
+		ImGui::OpenPopup("Update");
+
+		std::string tag_name;
+		std::string download_url;
+
+		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
+		std::tie(tag_name, download_url) = dojo_file.tag_download;
+
+		if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
+		{
+			dojo_file.start_update = true;
+		}
+		else
+		{
+			ImGui::OpenPopup("Updated");
+		}
+	}
+	ImGui::SameLine();
+	ShowHelpMarker("Current Flycast Dojo version. Click to check for new updates.");
+
+	if (ImGui::BeginPopupModal("Update"))
+	{
+		ImGui::Text(dojo_file.status_text.data());
+		if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+		{
+			if (ImGui::Button("Exit"))
+			{
+				exit(0);
+			}
+		}
+		else
+		{
+			float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+			char buf[32];
+			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Updated", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::Text("Flycast Dojo is already on the newest version.");
+
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (dojo_file.start_update && !dojo_file.update_started)
+	{
+		std::thread t([&]() {
+			dojo_file.Update();
+		});
+		t.detach();
+	}
+
+    ImGui::End();
     ImGui::PopStyleVar();
 
 	error_popup();
