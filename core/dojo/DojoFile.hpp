@@ -17,6 +17,8 @@
 #include <dojo/deps/StringFix/StringFix.h>
 #include "dojo/deps/filesystem.hpp"
 
+#include <version.h>
+
 #ifndef _STRUCT_GAMEMEDIA
 #define _STRUCT_GAMEMEDIA
 struct GameMedia {

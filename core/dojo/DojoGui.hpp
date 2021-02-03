@@ -4,6 +4,8 @@
 #include "dojo/deps/filesystem.hpp"
 #include <dojo/deps/md5/md5.h>
 
+#include "dojo/DojoFile.hpp"
+
 #include <mutex>
 #include "rend/gui.h"
 #include "cfg/cfg.h"
@@ -39,6 +41,8 @@ public:
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
 
 	void insert_netplay_tab(ImVec2 normal_padding);
+
+	void update_action();
 
 	std::string current_filename;
 	std::string current_checksum;

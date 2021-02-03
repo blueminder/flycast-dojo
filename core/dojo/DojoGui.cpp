@@ -761,5 +761,68 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	}
 }
 
+void DojoGui::update_action()
+{
+	if (ImGui::BeginPopupModal("Update"))
+	{
+		ImGui::Text(dojo_file.status_text.data());
+		if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+		{
+			if (ImGui::Button("Exit"))
+			{
+				exit(0);
+			}
+		}
+		else
+		{
+			float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+			char buf[32];
+			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Update?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		std::string tag_name;
+		std::string download_url;
+
+		std::tie(tag_name, download_url) = dojo_file.tag_download;
+
+		if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
+		{
+			ImGui::Text("There is a new version of Flycast Dojo available.\nWould you like to Update?");
+
+			if (ImGui::Button("Update"))
+			{
+				ImGui::OpenPopup("Update");
+				dojo_file.start_update = true;
+			}
+			ImGui::SameLine();
+		}
+		else
+		{
+			ImGui::Text("Flycast Dojo is already on the newest version.");
+		}
+
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (dojo_file.start_update && !dojo_file.update_started)
+	{
+		std::thread t([&]() {
+			dojo_file.Update();
+		});
+		t.detach();
+	}
+
+}
+
 DojoGui dojo_gui;
 
