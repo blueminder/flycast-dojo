@@ -1213,7 +1213,7 @@ void SaveSettings()
 	cfgSaveBool("dojo", "EnableLobby", settings.dojo.EnableLobby);
 	cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
 	cfgSaveStr("dojo", "OpponentName", settings.dojo.OpponentName.c_str());
-	cfgSaveBool("dojo", "TestGame", settings.dojo.TestGame);
+	//cfgSaveBool("dojo", "TestGame", settings.dojo.TestGame);
 	cfgSaveStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
 	cfgSaveStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
 	cfgSaveStr("dojo", "LobbyMulticastAddress", settings.dojo.LobbyMulticastAddress.c_str());
