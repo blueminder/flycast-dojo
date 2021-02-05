@@ -340,6 +340,13 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
+	if (settings.dojo.EnableOfflineReplay && settings.dojo.RecordMatches && !dojo.PlayMatch)
+	{
+		settings.dojo.OpponentName = "";
+		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
+		dojo.CreateReplayFile(rom_name);
+	}
+
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
@@ -1684,11 +1691,14 @@ static void gui_display_content()
 
 		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
-		if (last_item_current_idx == 3)
+		if (last_item_current_idx == 3 && gui_state != Replays)
 		{
 			// set offline as default action
 			settings.dojo.Enable = false;
 		}
+
+		if (gui_state == Replays)
+			settings.dojo.Enable = true;
 
 		if (item_current_idx == 1)
 		{
@@ -1723,7 +1733,7 @@ static void gui_display_content()
     else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
     else if (!settings.dojo.Enable)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
 
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
@@ -1739,11 +1749,11 @@ static void gui_display_content()
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
 				gui_state = Lobby;
 		}
-		if (settings.dojo.Enable)
+
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+		if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
-			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
-				gui_state = Replays;
+			gui_state = Replays;
 		}
 
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
@@ -2194,12 +2204,13 @@ static void gui_display_loadscreen()
 			{
 				start_network();
 			}
-			else if (settings.dojo.Enable)
+			else if (settings.dojo.Enable || dojo.PlayMatch)
 			{
 				dojo.StartDojoSession();
 
 				if (dojo.PlayMatch)
 				{
+					settings.dojo.Enable = true;
 					gui_state = Closed;
 					ImGui::Text("LOADING REPLAY...");
 				}
@@ -2219,6 +2230,12 @@ static void gui_display_loadscreen()
 					else
 						gui_open_guest_wait();
 				}
+			}
+			else if (settings.dojo.EnableOfflineReplay && !dojo.PlayMatch)
+			{
+				dojo.LoadOfflineConfig();
+				gui_state = Closed;
+				ImGui::Text("STARTING...");
 			}
 			else
 			{

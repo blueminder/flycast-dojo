@@ -33,6 +33,28 @@ void DojoSession::LoadNetConfig()
 
 }
 
+void DojoSession::LoadOfflineConfig()
+{
+	enabled = settings.dojo.Enable;
+	hosting = settings.dojo.ActAsServer;
+	spectating = settings.dojo.Spectating;
+	transmitting = settings.dojo.Transmitting;
+	//receiving = settings.dojo.Receiving;
+
+	player = 0;
+	opponent = 1;
+
+	//delay = settings.dojo.Delay;
+	//debug = settings.dojo.Debug;
+
+	//PlayMatch = settings.dojo.PlayMatch;
+	ReplayFilename = settings.dojo.ReplayFilename;
+
+	dojo.last_consecutive_common_frame = 1;
+	dojo.FrameNumber = 1;
+	//dojo.FillDelay(1);
+}
+
 // packet data format
 // 0: player (u8)
 // 1: delay (u8)
@@ -190,6 +212,50 @@ u8* DojoSession::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 	return data;
 }
 
+u8* DojoSession::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons, int player_num)
+{
+	static u8 data[FRAME_SIZE];
+
+	for (int i = 0; i < FRAME_SIZE; i++)
+		data[i] = 0;
+
+	data[0] = player_num;
+	data[1] = delay;
+
+	// enter current frame count in last 4 bytes
+	int frame = FrameNumber;
+	memcpy(data + 2, (u8*)&frame, 4);
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	{
+		u16 qout = 0;
+
+		for (int i = 0; i < 13; i++) {
+			if ((pjs->kcode & maple_bitmasks[i]) == 0) {
+				qout ^= maple_bitmasks[i];
+			}
+		}
+
+		data[6] = qout & 0xff;
+		data[7] = (qout >> 8) & 0xff;
+
+		// dc triggers
+		data[8] = pjs->trigger[PJTI_R];
+		data[9] = pjs->trigger[PJTI_L];
+
+		// dc analog
+		data[10] = pjs->joy[PJAI_X1];
+		data[11] = pjs->joy[PJAI_Y1];
+	}
+	else
+	{
+		data[6] = buttons & 0xff;
+		data[7] = (buttons >> 8) & 0xff;
+	}
+	return data;
+}
+
 void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs)
 {
 	return CaptureAndSendLocalFrame(pjs, 0);
@@ -262,8 +328,13 @@ void DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 std::string DojoSession::GetRomNamePrefix()
 {
-	// shamelessly stolen from nullDC.cpp#get_savestate_file_path()
 	std::string state_file = settings.imgread.ImagePath;
+	return GetRomNamePrefix(state_file);
+}
+
+std::string DojoSession::GetRomNamePrefix(std::string state_file)
+{
+	// shamelessly stolen from nullDC.cpp#get_savestate_file_path()
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');

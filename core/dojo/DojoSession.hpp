@@ -82,6 +82,7 @@ public:
 	u32 last_consecutive_common_frame;
 
 	void LoadNetConfig();
+	void LoadOfflineConfig();
 	int StartDojoSession();
 	void StartSession(int session_delay, int session_ppf, int session_num_bf);
 
@@ -115,6 +116,8 @@ public:
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs);
 	u8* TranslateInputToFrameData(u16 buttons);
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons);
+
+	u8* TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons, int player_num);
 
 	void CaptureAndSendLocalFrame(u16 buttons);
 	void CaptureAndSendLocalFrame(PlainJoystickState* pjs);
@@ -164,7 +167,10 @@ public:
 	bool receiving;
 
 	std::string GetRomNamePrefix();
+	std::string GetRomNamePrefix(std::string state_file);
+
 	std::string CreateReplayFile();
+	std::string CreateReplayFile(std::string rom_name);
 	void AppendToReplayFile(std::string frame);
 	void LoadReplayFile(std::string path);
 

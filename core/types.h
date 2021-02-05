@@ -535,6 +535,7 @@ struct settings_t
 		std::string ProtoCall;
 		std::string GameName;
 		bool EnableMemRestore;
+		bool EnableOfflineReplay;
 	} dojo;
 };
 

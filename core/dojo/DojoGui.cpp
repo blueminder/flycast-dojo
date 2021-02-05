@@ -641,11 +641,15 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
 			gui_state = Closed;
 			//dojo.StartDojoSession();
+
+			settings.dojo.Enable = true;
 			gui_start_game(game_path);
 		}
 		ImGui::NextColumn();
 
-		std::string players = host_player + " vs " + guest_player;
+		std::string players = host_player;
+		if (!guest_player.empty())
+			players += " vs " + guest_player;
 		ImGui::Text(players.c_str());  ImGui::NextColumn();
 		ImGui::Text(game_name.c_str());  ImGui::NextColumn();
 	}

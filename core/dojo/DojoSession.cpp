@@ -545,10 +545,15 @@ std::string currentISO8601TimeUTC() {
 
 std::string DojoSession::CreateReplayFile()
 {
+	std::string rom_name = GetRomNamePrefix();
+	return CreateReplayFile(rom_name);
+}
+
+std::string DojoSession::CreateReplayFile(std::string rom_name)
+{
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
-	std::string rom_name = GetRomNamePrefix();
 	std::string filename =
 		"replays/" + rom_name +  "__" +
 		timestamp + "__" +

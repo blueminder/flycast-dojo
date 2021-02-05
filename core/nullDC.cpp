@@ -835,6 +835,7 @@ void InitSettings()
 	settings.dojo.MatchCode = "";
 	settings.dojo.GameName = "";
 	settings.dojo.EnableMemRestore = true;
+	settings.dojo.EnableOfflineReplay = true;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;

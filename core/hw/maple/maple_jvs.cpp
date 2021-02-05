@@ -1449,6 +1449,28 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 										dojo.net_coin_press = true;
 								}
 							}
+
+							if (settings.platform.system == DC_PLATFORM_NAOMI &&
+								settings.dojo.RecordMatches && !dojo.PlayMatch &&
+								settings.dojo.EnableOfflineReplay)
+							{
+								dojo.delay = 0;
+
+								std::string current_frame_data((const char*)dojo.TranslateInputToFrameData(0, btns[player], player), FRAME_SIZE);
+								dojo.AddNetFrame(current_frame_data.data());
+
+								std::string blank_opponent_frame = dojo.CreateFrame(dojo.FrameNumber, 1, 0, 0);
+								dojo.AddNetFrame(blank_opponent_frame.data());
+
+								if (dojo.net_inputs[0].count(dojo.FrameNumber) == 1 &&
+									dojo.net_inputs[1].count(dojo.FrameNumber) == 1)
+								{
+									dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber));
+									dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber));
+									dojo.FrameNumber++;
+								}
+							}
+
 							LOGJVS("P%d %02x ", player + 1 + first_player, btns[player] >> 8);
 							JVS_OUT(btns[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
