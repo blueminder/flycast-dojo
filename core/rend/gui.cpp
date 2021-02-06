@@ -342,6 +342,7 @@ void gui_start_game(const std::string& path)
 
 	if (settings.dojo.EnableOfflineReplay && settings.dojo.RecordMatches && !dojo.PlayMatch)
 	{
+		cfgSaveInt("dojo", "Delay", settings.dojo.Delay);
 		settings.dojo.OpponentName = "";
 		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
 		dojo.CreateReplayFile(rom_name);
@@ -2030,7 +2031,17 @@ static void gui_display_content()
 	}
 	else
 	{
-		ImGui::Text("");
+		int delay_min = 0;
+		int delay_max = 10;
+		ImGui::PushItemWidth(80);
+		int delay_one = 1;
+		ImGui::InputScalar("Offline Delay", ImGuiDataType_S8, &settings.dojo.Delay, &delay_one, NULL, "%d");
+
+		if (settings.dojo.Delay < 0)
+			settings.dojo.Delay = 0;
+
+		if (settings.dojo.Delay > 10)
+			settings.dojo.Delay = 10;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
@@ -2211,6 +2222,7 @@ static void gui_display_loadscreen()
 				if (dojo.PlayMatch)
 				{
 					settings.dojo.Enable = true;
+
 					gui_state = Closed;
 					ImGui::Text("LOADING REPLAY...");
 				}
@@ -2233,6 +2245,10 @@ static void gui_display_loadscreen()
 			}
 			else if (settings.dojo.EnableOfflineReplay && !dojo.PlayMatch)
 			{
+				//dojo.delay = 0;
+				dojo.delay = settings.dojo.Delay;
+				if (dojo.delay > 0)
+					dojo.FillDelay(dojo.delay);
 				dojo.LoadOfflineConfig();
 				gui_state = Closed;
 				ImGui::Text("STARTING...");
