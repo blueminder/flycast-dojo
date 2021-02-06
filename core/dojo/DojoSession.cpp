@@ -217,7 +217,7 @@ void DojoSession::resume()
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
 	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
-		dojo.CreateReplayFile();
+		CreateReplayFile();
 
 	FillDelay(session_delay);
 	delay = session_delay;
@@ -689,6 +689,47 @@ void DojoSession::transmitter_thread()
 	{
 		std::cerr << "Exception: " << e.what() << "\n";
 	}
+}
+
+u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
+{
+	std::string current_frame_data((const char*)TranslateInputToFrameData(pjs, 0, port), FRAME_SIZE);
+	AddNetFrame(current_frame_data.data());
+	if (dojo.delay > 0)
+	{
+		std::string this_frame;
+		while(this_frame.empty())
+			this_frame = dojo.net_inputs[port].at(FrameNumber);
+
+		if (pjs)
+		{
+			PlainJoystickState blank_pjs;
+			memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
+			TranslateFrameDataToInput((u8*)this_frame.data(), pjs);
+		}
+		else if (buttons)
+		{
+			buttons = TranslateFrameDataToInput((u8*)this_frame.data(), buttons);
+		}
+
+	}
+
+	if (net_inputs[0].count(FrameNumber + delay) == 1 &&
+		net_inputs[1].count(FrameNumber + delay) == 1)
+	{
+		if (settings.dojo.RecordMatches)
+		{
+			AppendToReplayFile(net_inputs[0].at(FrameNumber + delay));
+			AppendToReplayFile(net_inputs[1].at(FrameNumber + delay));
+		}
+
+		FrameNumber++;
+	}
+
+	if (pjs)
+		return 0;
+	else if (buttons)
+		return buttons;
 }
 
 DojoSession dojo;

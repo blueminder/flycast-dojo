@@ -573,6 +573,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
+		cfgSaveBool("dojo", "RecordMatches", settings.dojo.RecordMatches);
 		if (game_started)
 			gui_state = Commands;
 		else

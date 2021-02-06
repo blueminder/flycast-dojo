@@ -1438,43 +1438,25 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
-							     settings.dojo.Enable)
+							if (settings.platform.system == DC_PLATFORM_NAOMI)
 							{
-								btns[player] = dojo.ApplyNetInputs(btns[player], player);
 
-								if (player == 0)
+								if (settings.dojo.Enable)
 								{
-									if (btns[0] & 1)
-										dojo.net_coin_press = true;
-								}
-							}
+									btns[player] = dojo.ApplyNetInputs(btns[player], player);
 
-							if (settings.platform.system == DC_PLATFORM_NAOMI &&
-								!dojo.PlayMatch &&
-								!settings.dojo.Enable)
-							{
-								std::string current_frame_data((const char*)dojo.TranslateInputToFrameData(0, btns[player], player), FRAME_SIZE);
-								dojo.AddNetFrame(current_frame_data.data());
-
-								if (dojo.delay > 0)
-								{
-									std::string this_frame;
-									while(this_frame.empty())
-										this_frame = dojo.net_inputs[player].at(dojo.FrameNumber);
-									dojo.TranslateFrameDataToInput((u8*)this_frame.data(), btns[player]);
-								}
-
-								if (dojo.net_inputs[0].count(dojo.FrameNumber + dojo.delay) == 1 &&
-									dojo.net_inputs[1].count(dojo.FrameNumber + dojo.delay) == 1)
-								{
-									if (settings.dojo.RecordMatches)
+									if (player == 0)
 									{
-										dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber + dojo.delay));
-										dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber + dojo.delay));
+										if (btns[0] & 1)
+											dojo.net_coin_press = true;
 									}
-
-									dojo.FrameNumber++;
+								}
+								else
+								{
+									if (!dojo.PlayMatch)
+									{
+										dojo.ApplyOfflineInputs(0, btns[player], player);
+									}
 								}
 							}
 

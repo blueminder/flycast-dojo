@@ -200,6 +200,8 @@ public:
 	int num_back_frames;
 
 	std::string MatchCode;
+
+	u16 ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port);
 };
 
 extern DojoSession dojo;

@@ -153,35 +153,13 @@ struct maple_sega_controller: maple_base
 						}
 					}
 				}
-
-				if ((settings.platform.system == DC_PLATFORM_DREAMCAST ||
-					 settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
-					!dojo.PlayMatch &&
-					!settings.dojo.Enable)
+				else
 				{
-					std::string current_frame_data((const char*)dojo.TranslateInputToFrameData(&pjs, 0, bus_id), FRAME_SIZE);
-					dojo.AddNetFrame(current_frame_data.data());
-					if (dojo.delay > 0)
+					if (!dojo.PlayMatch)
 					{
-						PlainJoystickState blank_pjs;
-						memcpy(&pjs, &blank_pjs, sizeof(blank_pjs));
-
-						std::string this_frame;
-						while(this_frame.empty())
-							this_frame = dojo.net_inputs[bus_id].at(dojo.FrameNumber);
-						dojo.TranslateFrameDataToInput((u8*)this_frame.data(), &pjs);
-					}
-
-					if (dojo.net_inputs[0].count(dojo.FrameNumber + dojo.delay) == 1 &&
-						dojo.net_inputs[1].count(dojo.FrameNumber + dojo.delay) == 1)
-					{
-						if (settings.dojo.RecordMatches)
-						{
-							dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber + dojo.delay));
-							dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber + dojo.delay));
-						}
-
-						dojo.FrameNumber++;
+						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+							settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+							dojo.ApplyOfflineInputs(&pjs, 0, bus_id);
 					}
 				}
 

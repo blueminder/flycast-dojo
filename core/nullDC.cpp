@@ -815,7 +815,7 @@ void InitSettings()
 	settings.dojo.Receiving = false;
 	settings.dojo.ServerIP = "127.0.0.1";
 	settings.dojo.ServerPort = "6000";
-	settings.dojo.Delay = 1;
+	settings.dojo.Delay = 0;
 	settings.dojo.Debug = 8;
 	settings.dojo.ReplayFilename = "";
 	settings.dojo.PacketsPerFrame = 2;
