@@ -285,6 +285,7 @@ int DojoSession::StartDojoSession()
 	if (dojo.PlayMatch)
 	{
 		StartTransmitterThread();
+		FillDelay(1);
 		LoadReplayFile(dojo.ReplayFilename);
 		//resume();
 	}

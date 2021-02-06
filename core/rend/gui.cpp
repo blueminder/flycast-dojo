@@ -340,12 +340,13 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
-	if (settings.dojo.EnableOfflineReplay && settings.dojo.RecordMatches && !dojo.PlayMatch)
+	if (!settings.dojo.Enable && !dojo.PlayMatch)
 	{
 		cfgSaveInt("dojo", "Delay", settings.dojo.Delay);
 		settings.dojo.OpponentName = "";
 		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
-		dojo.CreateReplayFile(rom_name);
+		if (settings.dojo.RecordMatches)
+			dojo.CreateReplayFile(rom_name);
 	}
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
@@ -2040,8 +2041,8 @@ static void gui_display_content()
 		if (settings.dojo.Delay < 0)
 			settings.dojo.Delay = 0;
 
-		if (settings.dojo.Delay > 10)
-			settings.dojo.Delay = 10;
+		if (settings.dojo.Delay > 60)
+			settings.dojo.Delay = 60;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
@@ -2243,9 +2244,8 @@ static void gui_display_loadscreen()
 						gui_open_guest_wait();
 				}
 			}
-			else if (settings.dojo.EnableOfflineReplay && !dojo.PlayMatch)
+			else if (!settings.dojo.Enable && !dojo.PlayMatch)
 			{
-				//dojo.delay = 0;
 				dojo.delay = settings.dojo.Delay;
 				if (dojo.delay > 0)
 					dojo.FillDelay(dojo.delay);

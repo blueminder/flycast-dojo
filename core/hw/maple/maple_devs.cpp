@@ -155,9 +155,9 @@ struct maple_sega_controller: maple_base
 				}
 
 				if ((settings.platform.system == DC_PLATFORM_DREAMCAST ||
-						settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
-					settings.dojo.RecordMatches && !dojo.PlayMatch &&
-					settings.dojo.EnableOfflineReplay)
+					 settings.platform.system == DC_PLATFORM_ATOMISWAVE) &&
+					!dojo.PlayMatch &&
+					!settings.dojo.Enable)
 				{
 					std::string current_frame_data((const char*)dojo.TranslateInputToFrameData(&pjs, 0, bus_id), FRAME_SIZE);
 					dojo.AddNetFrame(current_frame_data.data());
@@ -175,8 +175,11 @@ struct maple_sega_controller: maple_base
 					if (dojo.net_inputs[0].count(dojo.FrameNumber + dojo.delay) == 1 &&
 						dojo.net_inputs[1].count(dojo.FrameNumber + dojo.delay) == 1)
 					{
-						dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber + dojo.delay));
-						dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber + dojo.delay));
+						if (settings.dojo.RecordMatches)
+						{
+							dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber + dojo.delay));
+							dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber + dojo.delay));
+						}
 
 						dojo.FrameNumber++;
 					}

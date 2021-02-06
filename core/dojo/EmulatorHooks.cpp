@@ -52,7 +52,6 @@ void DojoSession::LoadOfflineConfig()
 
 	dojo.last_consecutive_common_frame = 1;
 	dojo.FrameNumber = 1;
-	//dojo.FillDelay(1);
 }
 
 // packet data format

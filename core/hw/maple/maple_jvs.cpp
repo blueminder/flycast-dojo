@@ -1451,22 +1451,29 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 
 							if (settings.platform.system == DC_PLATFORM_NAOMI &&
-								settings.dojo.RecordMatches && !dojo.PlayMatch &&
-								settings.dojo.EnableOfflineReplay)
+								!dojo.PlayMatch &&
+								!settings.dojo.Enable)
 							{
-								dojo.delay = 0;
-
 								std::string current_frame_data((const char*)dojo.TranslateInputToFrameData(0, btns[player], player), FRAME_SIZE);
 								dojo.AddNetFrame(current_frame_data.data());
 
-								std::string blank_opponent_frame = dojo.CreateFrame(dojo.FrameNumber, 1, 0, 0);
-								dojo.AddNetFrame(blank_opponent_frame.data());
-
-								if (dojo.net_inputs[0].count(dojo.FrameNumber) == 1 &&
-									dojo.net_inputs[1].count(dojo.FrameNumber) == 1)
+								if (dojo.delay > 0)
 								{
-									dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber));
-									dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber));
+									std::string this_frame;
+									while(this_frame.empty())
+										this_frame = dojo.net_inputs[player].at(dojo.FrameNumber);
+									dojo.TranslateFrameDataToInput((u8*)this_frame.data(), btns[player]);
+								}
+
+								if (dojo.net_inputs[0].count(dojo.FrameNumber + dojo.delay) == 1 &&
+									dojo.net_inputs[1].count(dojo.FrameNumber + dojo.delay) == 1)
+								{
+									if (settings.dojo.RecordMatches)
+									{
+										dojo.AppendToReplayFile(dojo.net_inputs[0].at(dojo.FrameNumber + dojo.delay));
+										dojo.AppendToReplayFile(dojo.net_inputs[1].at(dojo.FrameNumber + dojo.delay));
+									}
+
 									dojo.FrameNumber++;
 								}
 							}
