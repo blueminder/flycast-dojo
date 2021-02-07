@@ -2039,10 +2039,10 @@ static void gui_display_content()
 		ImGui::InputScalar("Offline Delay", ImGuiDataType_S8, &settings.dojo.Delay, &delay_one, NULL, "%d");
 
 		if (settings.dojo.Delay < 0)
-			settings.dojo.Delay = 0;
+			settings.dojo.Delay = 10;
 
-		if (settings.dojo.Delay > 60)
-			settings.dojo.Delay = 60;
+		if (settings.dojo.Delay > 10)
+			settings.dojo.Delay = 0;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
