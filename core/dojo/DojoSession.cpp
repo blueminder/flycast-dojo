@@ -3,6 +3,11 @@
 
 DojoSession::DojoSession()
 {
+	Init();
+}
+
+void DojoSession::Init()
+{
 	// set defaults before attempting config load
 	enabled = false;
 	hosting = false;
@@ -55,12 +60,23 @@ DojoSession::DojoSession()
 	transmitter_started = false;
 	transmitter_ended = false;
 
+	transmission_frames.clear();
+
 	frame_timeout = 0;
 	last_received_frame = 0;
 
 	remaining_spectators = 0;
 
 	MatchCode = "";
+	if (!net_inputs[0].empty())
+	{
+		net_inputs[0].clear();
+		net_input_keys[0].clear();
+
+		net_inputs[1].clear();
+		net_input_keys[1].clear();
+	}
+
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)

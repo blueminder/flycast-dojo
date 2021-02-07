@@ -411,12 +411,6 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		// clear cached inputs, reset dojo session
-		dojo.net_inputs[0].clear();
-		dojo.net_inputs[1].clear();
-		dojo.session_started = false;
-		dojo.FrameNumber = 2;
-
 		if (settings.dojo.Enable && dojo.isMatchStarted)
 		{
 			dojo.disconnect_toggle = true;
@@ -430,6 +424,9 @@ static void gui_display_commands()
 			settings.imgread.ImagePath[0] = '\0';
 			dc_reset(true);
 		}
+
+		// clear cached inputs, reset dojo session
+		dojo.Init();
 	}
 
 	ImGui::End();

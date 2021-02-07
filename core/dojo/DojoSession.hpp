@@ -61,6 +61,7 @@ private:
 
 public:
 	DojoSession();
+	void Init();
 
 	asio::ip::tcp::socket* tcp_client_socket_;
 
