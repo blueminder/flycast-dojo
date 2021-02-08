@@ -1455,7 +1455,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								{
 									if (!dojo.PlayMatch)
 									{
-										dojo.ApplyOfflineInputs(0, btns[player], player);
+										btns[player] = dojo.ApplyOfflineInputs(0, btns[player], player);
 									}
 								}
 							}

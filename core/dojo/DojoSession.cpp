@@ -709,7 +709,13 @@ void DojoSession::transmitter_thread()
 
 u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
-	std::string current_frame_data((const char*)TranslateInputToFrameData(pjs, 0, port), FRAME_SIZE);
+	std::string current_frame_data;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		current_frame_data = std::string((const char*)TranslateInputToFrameData(pjs, 0, port), FRAME_SIZE);
+	else
+		current_frame_data = std::string((const char*)TranslateInputToFrameData(0, buttons, port), FRAME_SIZE);
+
 	AddNetFrame(current_frame_data.data());
 	if (dojo.delay > 0)
 	{
@@ -717,17 +723,17 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		while(this_frame.empty())
 			this_frame = dojo.net_inputs[port].at(FrameNumber);
 
-		if (pjs)
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+			settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
 			PlainJoystickState blank_pjs;
 			memcpy(pjs, &blank_pjs, sizeof(blank_pjs));
 			TranslateFrameDataToInput((u8*)this_frame.data(), pjs);
 		}
-		else if (buttons)
+		else
 		{
 			buttons = TranslateFrameDataToInput((u8*)this_frame.data(), buttons);
 		}
-
 	}
 
 	if (net_inputs[0].count(FrameNumber + delay) == 1 &&
@@ -742,9 +748,10 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		FrameNumber++;
 	}
 
-	if (pjs)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		return 0;
-	else if (buttons)
+	else
 		return buttons;
 }
 
