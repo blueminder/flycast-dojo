@@ -430,10 +430,10 @@ static void gui_display_commands()
 	}
 
 	ImGui::End();
+	ImGui::Render();
 
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
-    settings_opening = false;
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+	settings_opening = false;
 }
 
 const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
@@ -2308,6 +2308,9 @@ void gui_display_ui()
 		dojo_gui.gui_display_replays(scaling, scanner.get_game_list());
 		scanner.get_mutex().unlock();
 		break;
+	case ReplayPause:
+		dojo_gui.gui_display_paused(&settings_opening, scaling);
+		break;
 	case TestGame:
 		dojo_gui.gui_display_test_game(&settings_opening, scaling);
 		break;
@@ -2433,6 +2436,9 @@ void gui_display_osd()
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
+
+	if (dojo.PlayMatch)
+		dojo_gui.show_playback_menu(&settings_opening, scaling, false);
 }
 
 void gui_open_onboarding()

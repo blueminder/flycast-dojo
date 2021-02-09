@@ -545,6 +545,48 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
+void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
+{
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowBgAlpha(20);
+
+	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
+
+	unsigned int total = dojo.net_inputs[0].size();
+
+	ImGui::Text("%u / %u", dojo.FrameNumber.load(), total);
+
+	if (!paused)
+	{
+		if (ImGui::Button("Pause"))
+		{
+			gui_state = ReplayPause;
+			*settings_opening = true;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Play"))
+		{
+			gui_state = Closed;
+			*settings_opening = false;
+		}
+	}
+
+	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+}
+
+void DojoGui::gui_display_paused(bool* settings_opening, float scaling)
+{
+	dc_stop();
+	show_playback_menu(settings_opening, scaling, true);
+    *settings_opening = true;
+}
+
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 static void ShowHelpMarker(const char* desc)
 {
@@ -577,7 +619,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		if (game_started)
 			gui_state = Commands;
 		else
-		gui_state = Main;
+			gui_state = Main;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);

@@ -50,6 +50,7 @@ typedef enum {
 	NetworkStart,
 	Lobby,
 	Replays,
+	ReplayPause,
 	TestGame,
 	HostDelay,
 	HostWait,

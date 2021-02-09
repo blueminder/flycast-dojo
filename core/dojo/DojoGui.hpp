@@ -36,6 +36,9 @@ public:
 	void gui_display_end_spectate(bool* settings_opening, float scaling);
 	void gui_display_host_delay(bool* settings_opening, float scaling);
 	void gui_display_test_game(bool* settings_opening, float scaling);
+	void gui_display_paused(bool* settings_opening, float scaling);
+
+	void show_playback_menu(bool* settings_opening, float scaling, bool paused);
 
 	void gui_display_lobby(float scaling, std::vector<GameMedia> game_list);
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
@@ -48,6 +51,10 @@ public:
 	std::string current_checksum;
 	bool current_json_match = true;
 	bool current_json_found = false;
+
+
+	void ShowExampleAppSimpleOverlay(bool* p_open);
+
 };
 
 extern DojoGui dojo_gui;
