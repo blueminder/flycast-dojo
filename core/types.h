@@ -534,6 +534,7 @@ struct settings_t
 		std::string MatchCode;
 		std::string ProtoCall;
 		std::string GameName;
+		bool EnableMemRestore;
 	} dojo;
 };
 

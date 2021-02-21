@@ -754,6 +754,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
+
+				ImGui::Checkbox("Enable Memory Restoration", &settings.dojo.EnableMemRestore);
+				ImGui::SameLine();
+				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
 			}
 		}
 		ImGui::PopStyleVar();

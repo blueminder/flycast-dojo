@@ -834,6 +834,7 @@ void InitSettings()
 	settings.dojo.MatchmakingServerPort = "52001";
 	settings.dojo.MatchCode = "";
 	settings.dojo.GameName = "";
+	settings.dojo.EnableMemRestore = true;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -967,6 +968,7 @@ void LoadSettings(bool game_specific)
 	settings.dojo.MatchmakingServerPort = cfgLoadStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
 	settings.dojo.MatchCode = cfgLoadStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
 	settings.dojo.GameName = cfgLoadStr("dojo", "GameName", settings.dojo.GameName.c_str());
+	settings.dojo.EnableMemRestore = cfgLoadBool("dojo", "EnableMemRestore", settings.dojo.EnableMemRestore);
 
 	if (!settings.dojo.ProtoCall.empty())
 	{
@@ -1222,6 +1224,7 @@ void SaveSettings()
 	cfgSaveStr("dojo", "MatchmakingServerAddress", settings.dojo.MatchmakingServerAddress.c_str());
 	cfgSaveStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
 	//cfgSaveStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
+	cfgSaveBool("dojo", "EnableMemRestore", settings.dojo.EnableMemRestore);
 
 	GamepadDevice::SaveMaplePorts();
 

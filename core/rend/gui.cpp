@@ -333,7 +333,11 @@ void gui_start_game(const std::string& path)
 	if (settings.dojo.Enable)
 	{
 		cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
-		dojo_file.ValidateAndCopyMem(path_copy.c_str());
+
+		if (settings.dojo.EnableMemRestore)
+		{
+			dojo_file.ValidateAndCopyMem(path_copy.c_str());
+		}
 	}
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
