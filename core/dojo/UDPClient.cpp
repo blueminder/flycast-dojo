@@ -173,7 +173,8 @@ void UDPClient::StartSession()
 	std::stringstream start_ss("");
 	start_ss << "START " << dojo.delay
 		<< " " << dojo.packets_per_frame
-		<< " " << dojo.num_back_frames;
+		<< " " << dojo.num_back_frames
+		<< " " << settings.dojo.PlayerName;
 
 	std::string to_send_start = start_ss.str();
 
@@ -374,7 +375,7 @@ void UDPClient::ClientLoop()
 			if (memcmp("NAME", buffer, 4) == 0)
 			{
 				settings.dojo.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
-				
+
 				opponent_addr = sender;
 
 				// prepare for delay selection
@@ -449,6 +450,9 @@ void UDPClient::ClientLoop()
 				int delay = atoi(tokens[0].data());
 				int ppf = atoi(tokens[1].data());
 				int nbf = atoi(tokens[2].data());
+				std::string op = tokens[3];
+
+				settings.dojo.OpponentName = op;
 
 				if (!dojo.session_started)
 				{

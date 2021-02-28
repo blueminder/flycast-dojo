@@ -837,6 +837,7 @@ void InitSettings()
 	settings.dojo.GameName = "";
 	settings.dojo.EnableMemRestore = true;
 	settings.dojo.EnableOfflineReplay = true;
+	settings.dojo.EnablePlayerNameOverlay = false;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -971,6 +972,7 @@ void LoadSettings(bool game_specific)
 	settings.dojo.MatchCode = cfgLoadStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
 	settings.dojo.GameName = cfgLoadStr("dojo", "GameName", settings.dojo.GameName.c_str());
 	settings.dojo.EnableMemRestore = cfgLoadBool("dojo", "EnableMemRestore", settings.dojo.EnableMemRestore);
+	settings.dojo.EnablePlayerNameOverlay = cfgLoadBool("dojo", "EnablePlayerNameOverlay", settings.dojo.EnablePlayerNameOverlay);
 
 	if (!settings.dojo.ProtoCall.empty())
 	{
@@ -1216,7 +1218,7 @@ void SaveSettings()
 	cfgSaveInt("dojo", "NumBackFrames", settings.dojo.NumBackFrames);
 	cfgSaveBool("dojo", "EnableLobby", settings.dojo.EnableLobby);
 	cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
-	cfgSaveStr("dojo", "OpponentName", settings.dojo.OpponentName.c_str());
+	//cfgSaveStr("dojo", "OpponentName", settings.dojo.OpponentName.c_str());
 	//cfgSaveBool("dojo", "TestGame", settings.dojo.TestGame);
 	cfgSaveStr("dojo", "SpectatorIP", settings.dojo.SpectatorIP.c_str());
 	cfgSaveStr("dojo", "SpectatorPort", settings.dojo.SpectatorPort.c_str());
@@ -1227,6 +1229,7 @@ void SaveSettings()
 	cfgSaveStr("dojo", "MatchmakingServerPort", settings.dojo.MatchmakingServerPort.c_str());
 	//cfgSaveStr("dojo", "MatchCode", settings.dojo.MatchCode.c_str());
 	cfgSaveBool("dojo", "EnableMemRestore", settings.dojo.EnableMemRestore);
+	cfgSaveBool("dojo", "EnablePlayerNameOverlay", settings.dojo.EnablePlayerNameOverlay);
 
 	GamepadDevice::SaveMaplePorts();
 

@@ -536,6 +536,7 @@ struct settings_t
 		std::string GameName;
 		bool EnableMemRestore;
 		bool EnableOfflineReplay;
+		bool EnablePlayerNameOverlay;
 	} dojo;
 };
 

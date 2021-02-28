@@ -587,6 +587,46 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
+void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bool paused)
+{
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	std::string player_1;
+	std::string player_2;
+
+	if (dojo.hosting)
+	{
+		player_1 = settings.dojo.PlayerName;
+		player_2 = settings.dojo.OpponentName;
+	}
+	else
+	{
+		player_1 = settings.dojo.OpponentName;
+		player_2 = settings.dojo.PlayerName;
+	}
+
+	std::string players = player_1 + " vs " + player_2;
+	float font_size = ImGui::GetFontSize() * players.size() / 2;
+
+	ImGui::SetNextWindowBgAlpha(0.6f);
+	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - (font_size / 2), 0));
+	ImGui::SetNextWindowSize(ImVec2(font_size + 10, 35));
+
+	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
+
+	ImGui::SameLine(
+        ImGui::GetWindowSize().x / 2 -
+        font_size + (font_size / 2)
+    );
+
+    ImGui::Text(players.c_str());
+
+	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+}
+
 void DojoGui::gui_display_paused(bool* settings_opening, float scaling)
 {
 	dc_stop();
@@ -736,6 +776,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ImGui::SameLine();
 			ShowHelpMarker(PortDescription.c_str());
 			settings.dojo.ServerPort = ServerPort;
+
+			ImGui::Checkbox("Enable Player Name Overlay", &settings.dojo.EnablePlayerNameOverlay);
+			ImGui::SameLine();
+			ShowHelpMarker("Enable overlay showing player names during netplay matches");
 
 			if (!settings.dojo.EnableLobby)
 			{

@@ -2438,7 +2438,14 @@ void gui_display_osd()
 	}
 
 	if (dojo.PlayMatch)
+	{
 		dojo_gui.show_playback_menu(&settings_opening, scaling, false);
+	}
+	else
+	{
+		if (settings.dojo.Enable && settings.dojo.EnablePlayerNameOverlay)
+			dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
+	}
 }
 
 void gui_open_onboarding()
