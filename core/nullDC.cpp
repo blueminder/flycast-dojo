@@ -729,7 +729,8 @@ void dc_exit()
 		gui_state != EndReplay &&
 		gui_state != TestGame &&
 		gui_state != Settings &&
-		gui_state != Onboarding)
+		gui_state != Onboarding &&
+		!dojo.PlayMatch)
 	{
 		dojo.disconnect_toggle = true;
 	}

@@ -51,10 +51,6 @@ public:
 	std::string current_checksum;
 	bool current_json_match = true;
 	bool current_json_found = false;
-
-
-	void ShowExampleAppSimpleOverlay(bool* p_open);
-
 };
 
 extern DojoGui dojo_gui;

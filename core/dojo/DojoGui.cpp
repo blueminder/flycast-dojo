@@ -550,13 +550,20 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::SetNextWindowBgAlpha(20);
+	ImGui::SetNextWindowBgAlpha(0.6f);
+	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 195, screen_height - 45));
+	ImGui::SetNextWindowSize(ImVec2(390, 40));
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
 
 	unsigned int total = dojo.net_inputs[0].size();
 
-	ImGui::Text("%u / %u", dojo.FrameNumber.load(), total);
+	int position = dojo.FrameNumber.load();
+	ImGui::SliderInt("", &position, 0, total);
+	ImGui::SameLine();
+	ImGui::Text("%u", total);
+
+	ImGui::SameLine();
 
 	if (!paused)
 	{
