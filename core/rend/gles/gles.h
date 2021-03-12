@@ -3,11 +3,12 @@
 #include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
+#include "glcache.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-#define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
+#define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -143,7 +144,6 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -226,10 +226,24 @@ public:
 	virtual bool Delete() override;
 };
 
-class TextureCache final : public BaseTextureCache<TextureCacheData>
+class GlTextureCache final : public BaseTextureCache<TextureCacheData>
 {
+public:
+	void Cleanup()
+	{
+		if (!texturesToDelete.empty())
+		{
+			glcache.DeleteTextures((GLsizei)texturesToDelete.size(), &texturesToDelete[0]);
+			texturesToDelete.clear();
+		}
+		CollectCleanup();
+	}
+	void DeleteLater(GLuint texId) { texturesToDelete.push_back(texId); }
+
+private:
+	std::vector<GLuint> texturesToDelete;
 };
-extern TextureCache TexCache;
+extern GlTextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];

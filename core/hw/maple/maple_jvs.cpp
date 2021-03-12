@@ -38,15 +38,15 @@ void load_naomi_eeprom()
 		EEPROM_loaded = true;
 		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 		std::string eeprom_file;
-		if (settings.dojo.Enable)
+		if (config::DojoEnable)
 			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom.net";
 		else
 			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-		FILE* f = fopen(eeprom_file.c_str(), "rb");
+		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
-			fread(EEPROM, 1, 0x80, f);
-			fclose(f);
+			std::fread(EEPROM, 1, 0x80, f);
+			std::fclose(f);
 			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 		}
 		else if (naomi_default_eeprom != NULL)
@@ -173,8 +173,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	bool maple_serialize(void **data, unsigned int *total_size);
-	bool maple_unserialize(void **data, unsigned int *total_size);
+	bool serialize(void **data, unsigned int *total_size);
+	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
 
 	bool lightgun_as_analog = false;
 
@@ -478,7 +478,8 @@ protected:
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
+		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
 			return 0;
 		else
 			return 0x8000;
@@ -980,15 +981,15 @@ void maple_naomi_jamma::handle_86_subcommand()
 			//printState(Command,buffer_in,buffer_in_len);
 			memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-			if (!settings.dojo.Enable)
+			if (!config::DojoEnable)
 			{
 				std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 				std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-				FILE* f = fopen(eeprom_file.c_str(), "wb");
+				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
-					fwrite(EEPROM, 1, 0x80, f);
-					fclose(f);
+					std::fwrite(EEPROM, 1, 0x80, f);
+					std::fclose(f);
 					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 				}
 				else
@@ -1238,8 +1239,9 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	return out_len;
 }
 
-bool maple_naomi_jamma::maple_serialize(void **data, unsigned int *total_size)
+bool maple_naomi_jamma::serialize(void **data, unsigned int *total_size)
 {
+	maple_base::serialize(data, total_size);
 	REICAST_S(crazy_mode);
 	REICAST_S(jvs_repeat_request);
 	REICAST_S(jvs_receive_length);
@@ -1247,13 +1249,14 @@ bool maple_naomi_jamma::maple_serialize(void **data, unsigned int *total_size)
 	size_t board_count = io_boards.size();
 	REICAST_S(board_count);
 	for (u32 i = 0; i < io_boards.size(); i++)
-		io_boards[i]->maple_serialize(data, total_size);
+		io_boards[i]->serialize(data, total_size);
 
 	return true ;
 }
 
-bool maple_naomi_jamma::maple_unserialize(void **data, unsigned int *total_size)
+bool maple_naomi_jamma::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
 {
+	maple_base::unserialize(data, total_size, version);
 	REICAST_US(crazy_mode);
 	REICAST_US(jvs_repeat_request);
 	REICAST_US(jvs_receive_length);
@@ -1261,7 +1264,7 @@ bool maple_naomi_jamma::maple_unserialize(void **data, unsigned int *total_size)
 	size_t board_count;
 	REICAST_US(board_count);
 	for (u32 i = 0; i < board_count; i++)
-		io_boards[i]->maple_unserialize(data, total_size);
+		io_boards[i]->unserialize(data, total_size, version);
 
 	return true ;
 }
@@ -1438,10 +1441,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							if (settings.platform.system == DC_PLATFORM_NAOMI)
+							if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
+							     config::DojoEnable)
 							{
 
-								if (settings.dojo.Enable)
+								if (config::DojoEnable)
 								{
 									btns[player] = dojo.ApplyNetInputs(btns[player], player);
 
@@ -1490,8 +1494,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							u32 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
 
-							if (((keycode & mask) && !settings.dojo.Enable) ||
-								(dojo.net_coin_press && settings.dojo.Enable))
+							if (((keycode & mask) && !config::DojoEnable) ||
+								(dojo.net_coin_press && config::DojoEnable))
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
@@ -1519,57 +1523,72 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("ana ");
 						if (lightgun_as_analog)
 						{
-							u16 x;
-							u16 y;
-							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479
-									|| (kcode[first_player] & DC_BTN_RELOAD) == 0)
+							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
-								x = 0;
-								y = 0;
-							}
-							else
-							{
-								x = mo_x_abs * 0xFFFF / 639;
-								y = mo_y_abs * 0xFFFF / 479;
-							}
-							LOGJVS("x,y:%4x,%4x ", x, y);
-							JVS_OUT(x >> 8);		// X, MSB
-							JVS_OUT(x);				// X, LSB
-							JVS_OUT(y >> 8);		// Y, MSB
-							JVS_OUT(y);				// Y, LSB
-							axis = 2;
-						}
-
-						int full_axis_count = 0;
-						for (; axis < buffer_in[cmdi + 1]; axis++)
-						{
-							u16 axis_value;
-							if (NaomiGameInputs != NULL
-									&& axis < ARRAY_SIZE(NaomiGameInputs->axes)
-									&& NaomiGameInputs->axes[axis].name != NULL)
-							{
-								const AxisDescriptor& axisDesc = NaomiGameInputs->axes[axis];
-								if (axisDesc.type == Half)
+								int playerNum = first_player + axis / 2;
+								u16 x;
+								u16 y;
+								if (mo_x_abs[playerNum] < 0 || mo_x_abs[playerNum] > 639
+										|| mo_y_abs[playerNum] < 0 || mo_y_abs[playerNum] > 479
+										|| (kcode[playerNum] & DC_BTN_RELOAD) == 0)
 								{
-									if (axisDesc.axis == 4)
-										axis_value = rt[first_player] << 8;
-									else if (axisDesc.axis == 5)
-										axis_value = lt[first_player] << 8;
-									else
-										axis_value = 0;
-									if (axisDesc.inverted)
-										axis_value = 0xff00u - axis_value;
+									x = 0;
+									y = 0;
 								}
 								else
 								{
-									axis_value =  read_analog_axis(first_player, axisDesc.axis, axisDesc.inverted);
-									full_axis_count++;
+									x = mo_x_abs[playerNum] * 0xFFFF / 639;
+									y = mo_y_abs[playerNum] * 0xFFFF / 479;
+								}
+								LOGJVS("x,y:%4x,%4x ", x, y);
+								JVS_OUT(x >> 8);		// X, MSB
+								JVS_OUT(x);				// X, LSB
+								JVS_OUT(y >> 8);		// Y, MSB
+								JVS_OUT(y);				// Y, LSB
+							}
+						}
+
+						u32 player_num = first_player;
+						u32 player_axis = axis;
+						for (; axis < buffer_in[cmdi + 1]; axis++, player_axis++)
+						{
+							u16 axis_value;
+							if (NaomiGameInputs != NULL)
+							{
+								if (player_axis >= ARRAY_SIZE(NaomiGameInputs->axes)
+										|| NaomiGameInputs->axes[player_axis].name == NULL)
+								{
+									// Next player
+									player_num++;
+									player_axis = 0;
+								}
+								if (player_num < 4)
+								{
+									const AxisDescriptor& axisDesc = NaomiGameInputs->axes[player_axis];
+									if (axisDesc.type == Half)
+									{
+										if (axisDesc.axis == 4)
+											axis_value = rt[player_num] << 8;
+										else if (axisDesc.axis == 5)
+											axis_value = lt[player_num] << 8;
+										else
+											axis_value = 0;
+										if (axisDesc.inverted)
+											axis_value = 0xff00u - axis_value;
+									}
+									else
+									{
+										axis_value =  read_analog_axis(player_num, axisDesc.axis, axisDesc.inverted);
+									}
+								}
+								else
+								{
+									axis_value = 0x8000;
 								}
 							}
 							else
 							{
-								axis_value = read_analog_axis(first_player, full_axis_count, false);
-								full_axis_count++;
+								axis_value = read_analog_axis(player_num, player_axis, false);
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
 							JVS_OUT(axis_value >> 8);
@@ -1584,10 +1603,12 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						JVS_STATUS1();	// report byte
 						static s16 rotx = 0;
 						static s16 roty = 0;
-						rotx += mo_x_delta * 5;
-						roty -= mo_y_delta * 5;
-						mo_x_delta = 0;
-						mo_y_delta = 0;
+						// TODO Add more players.
+						// I can't think of any naomi multiplayer game that uses rotary encoders
+						rotx += mo_x_delta[first_player] * 5;
+						roty -= mo_y_delta[first_player] * 5;
+						mo_x_delta[first_player] = 0;
+						mo_y_delta[first_player] = 0;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
@@ -1617,22 +1638,33 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 				case 0x25:	// Read screen pos inputs
 					{
 						JVS_STATUS1();	// report byte
-						// Channel number is jvs_request[channel][cmdi + 1]
-						// specs:
-						//u16 x = mo_x_abs * 0xFFFF / 639;
-						//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
-						// Ninja Assault:
-						u32 xr = 0x19d - 0x37;
-						u32 yr = 0x1fe - 0x40;
-						s16 x = mo_x_abs * xr / 639 + 0x37;
-						s16 y = mo_y_abs * yr / 479 + 0x40;
-						if ((kcode[first_player] & DC_BTN_RELOAD) == 0)
-							x = y = 0;
+
+						// Channel number (1-based) is in jvs_request[cmdi + 1]
+						int playerNum = first_player + buffer_in[cmdi + 1] - 1;
+						s16 x;
+						s16 y;
+						if ((kcode[playerNum] & DC_BTN_RELOAD) == 0)
+						{
+							x = 0;
+							y = 0;
+						}
+						else
+						{
+							// specs:
+							//u16 x = mo_x_abs * 0xFFFF / 639;
+							//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
+							// Ninja Assault:
+							u32 xr = 0x19d - 0x37;
+							u32 yr = 0x1fe - 0x40;
+							x = mo_x_abs[playerNum] * xr / 639 + 0x37;
+							y = mo_y_abs[playerNum] * yr / 479 + 0x40;
+						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB
 						JVS_OUT(y >> 8);		// Y, MSB
 						JVS_OUT(y);				// Y, LSB
+
 						cmdi += 2;
 					}
 					break;
@@ -1680,7 +1712,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	return length;
 }
 
-bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
+bool jvs_io_board::serialize(void **data, unsigned int *total_size)
 {
 	REICAST_S(node_id);
 	REICAST_S(lightgun_as_analog);
@@ -1688,7 +1720,7 @@ bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
-bool jvs_io_board::maple_unserialize(void **data, unsigned int *total_size)
+bool jvs_io_board::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	REICAST_US(node_id);
 	REICAST_US(lightgun_as_analog);

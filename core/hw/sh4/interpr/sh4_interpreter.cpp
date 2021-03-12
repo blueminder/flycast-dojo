@@ -38,7 +38,8 @@ static u16 ReadNexOp()
 
 void Sh4_int_Run()
 {
-	sh4_int_bCpuRun=true;
+	sh4_int_bCpuRun = true;
+	RestoreHostRoundingMode();
 
 	l = SH4_TIMESLICE;
 
@@ -122,13 +123,12 @@ void Sh4_int_Reset(bool hard)
 		old_sr.status=sr.status;
 		UpdateSR();
 
-		fpscr.full = 0x0004001;
+		fpscr.full = 0x00040001;
 		old_fpscr=fpscr;
 		UpdateFPSCR();
 		icache.Reset(hard);
 		ocache.Reset(hard);
 
-		//Any more registers have default value ?
 		INFO_LOG(INTERPRETER, "Sh4 Reset");
 	}
 }

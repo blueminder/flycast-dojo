@@ -2,14 +2,14 @@
 
 void DojoSession::LoadNetConfig()
 {
-	enabled = settings.dojo.Enable;
-	hosting = settings.dojo.ActAsServer;
-	spectating = settings.dojo.Spectating;
-	transmitting = settings.dojo.Transmitting;
-	//receiving = settings.dojo.Receiving;
+	enabled = config::DojoEnable;
+	hosting = config::DojoActAsServer;
+	spectating = config::Spectating;
+	transmitting = config::Transmitting;
+	//receiving = config::Receiving;
 
-	packets_per_frame = settings.dojo.PacketsPerFrame;
-	num_back_frames = settings.dojo.NumBackFrames;
+	packets_per_frame = config::PacketsPerFrame;
+	num_back_frames = config::NumBackFrames;
 
 	if (spectating)
 	{
@@ -17,38 +17,38 @@ void DojoSession::LoadNetConfig()
 		hosting = true;
 	}
 
-	host_ip = settings.dojo.ServerIP;
-	host_port = atoi(settings.dojo.ServerPort.data());
+	host_ip = config::DojoServerIP;
+	host_port = atoi(config::DojoServerPort.get().data());
 
 	player = hosting ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 
-	delay = settings.dojo.Delay;
-	debug = settings.dojo.Debug;
+	delay = config::Delay;
+	debug = config::Debug;
 	
 	client.SetHost(host_ip.data(), host_port);
 
-	//PlayMatch = settings.dojo.PlayMatch;
-	ReplayFilename = settings.dojo.ReplayFilename;
+	//PlayMatch = config::PlayMatch;
+	ReplayFilename = config::ReplayFilename;
 
 }
 
 void DojoSession::LoadOfflineConfig()
 {
-	enabled = settings.dojo.Enable;
-	hosting = settings.dojo.ActAsServer;
-	spectating = settings.dojo.Spectating;
-	transmitting = settings.dojo.Transmitting;
-	//receiving = settings.dojo.Receiving;
+	enabled = config::DojoEnable;
+	hosting = config::ActAsServer;
+	spectating = config::Spectating;
+	transmitting = config::Transmitting;
+	//receiving = config::Receiving;
 
 	player = 0;
 	opponent = 1;
 
-	//delay = settings.dojo.Delay;
-	//debug = settings.dojo.Debug;
+	//delay = config::Delay;
+	//debug = config::Debug;
 
-	//PlayMatch = settings.dojo.PlayMatch;
-	ReplayFilename = settings.dojo.ReplayFilename;
+	//PlayMatch = config::PlayMatch;
+	ReplayFilename = config::ReplayFilename;
 
 	dojo.last_consecutive_common_frame = 1;
 	dojo.FrameNumber = 1;

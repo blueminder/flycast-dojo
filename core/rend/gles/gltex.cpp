@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-TextureCache TexCache;
+GlTextureCache TexCache;
 
 void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
@@ -136,12 +136,12 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		fbw *= settings.rend.RenderToTextureUpscale;
-		fbh *= settings.rend.RenderToTextureUpscale;
-		fbw2 *= settings.rend.RenderToTextureUpscale;
-		fbh2 *= settings.rend.RenderToTextureUpscale;
+		fbw *= config::RenderToTextureUpscale;
+		fbh *= config::RenderToTextureUpscale;
+		fbw2 *= config::RenderToTextureUpscale;
+		fbh2 *= config::RenderToTextureUpscale;
 	}
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
@@ -215,7 +215,7 @@ void ReadRTTBuffer() {
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		u32 tex_addr = gl.rtt.TexAddr << 3;
 
@@ -257,7 +257,7 @@ void ReadRTTBuffer() {
 
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
 
-    if (w > 1024 || h > 1024 || settings.rend.RenderToTextureBuffer) {
+    if (w > 1024 || h > 1024 || config::RenderToTextureBuffer) {
     	glcache.DeleteTextures(1, &gl.rtt.tex);
     }
     else
@@ -287,8 +287,7 @@ void ReadRTTBuffer() {
     		texture_data->Create();
     	texture_data->texID = gl.rtt.tex;
     	texture_data->dirty = 0;
-    	if (texture_data->lock_block == NULL)
-    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
+    	libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
     }
     gl.rtt.tex = 0;
 
@@ -321,7 +320,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 	{
 		if (tf->IsCustomTextureAvailable())
 		{
-			glcache.DeleteTextures(1, &tf->texID);
+			TexCache.DeleteLater(tf->texID);
 			tf->texID = glcache.GenTexture();
 			tf->CheckCustomTexture();
 		}
@@ -338,10 +337,6 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 
 	//return gl texture
 	return tf->texID;
-}
-
-void DoCleanup()
-{
 }
 
 GLuint fbTextureId;

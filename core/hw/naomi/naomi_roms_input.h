@@ -3,28 +3,24 @@
 
 	Copyright 2018 flyinghead
 
-	This file is part of reicast.
+	This file is part of Flycast.
 
-    reicast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 #pragma once
-
-#ifndef CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
-#define CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
-
 #include "hw/maple/maple_devs.h"
+#include "naomi_cart.h"
 
 //
 // NAOMI Games
@@ -34,6 +30,16 @@
 						 { NAOMI_TEST_KEY, "TEST" }, \
 						 { NAOMI_SERVICE_KEY, "SERVICE" },
 #define NAO_START_DESC { NAOMI_START_KEY, "START" },
+
+#define INPUT_2_BUTTONS(btn0, btn1) {	\
+	{									\
+		{ NAOMI_BTN0_KEY, btn0 },		\
+		{ NAOMI_BTN1_KEY, btn1 },		\
+		NAO_START_DESC					\
+		NAO_BASE_BTN_DESC				\
+		{ 0 },							\
+	}									\
+};										\
 
 static InputDescriptors _18wheelr_inputs = {
 	  {
@@ -276,21 +282,46 @@ static InputDescriptors vonot_inputs = {
 	  },
 };
 
-static InputDescriptors vtenis2c_inputs = {
-	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_UP_KEY, "UP" },
-			{ NAOMI_DOWN_KEY, "DOWN" },
-			{ NAOMI_LEFT_KEY, "LEFT" },
-			{ NAOMI_RIGHT_KEY, "RIGHT" },
-			NAO_START_DESC
-			NAO_BASE_BTN_DESC
-			{ 0 },
-	  },
-	  {
-			{ NULL },
-	  },
+static InputDescriptors shot12_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors shot123_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors shot1234_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3" },
+		{ NAOMI_BTN3_KEY, "SHOT4" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
 };
 
 static InputDescriptors monkeyba_inputs = {
@@ -325,6 +356,36 @@ static InputDescriptors cvs2_inputs = {
 	  {
 			{ NULL },
 	  },
+};
+
+static InputDescriptors pjustic_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3", NAOMI_BTN3_KEY },
+		{ NAOMI_BTN3_KEY, "SHOT4", NAOMI_BTN4_KEY },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors slashout_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BLADE" },
+		{ NAOMI_BTN1_KEY, "CHARGE" },
+		{ NAOMI_BTN2_KEY, "JUMP" },
+		{ NAOMI_BTN3_KEY, "SHIFT" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
 };
 
 static InputDescriptors tokyobus_inputs = {
@@ -433,6 +494,58 @@ static InputDescriptors zombie_inputs = {
 	  },
 };
 
+// World Series 99 / Super Major League 99
+// World Series Baseball / Super Major League
+static InputDescriptors wsbb_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BTN A" },
+		{ NAOMI_BTN1_KEY, "BTN B" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STICK Y", Full, 1, true },
+		{ "STICK X", Full, 0, true },
+		{ "BAT", Half, 4, true },
+		{ "", Half, 5 },	// unused but P2 starts at axis 4
+		{ NULL },
+	},
+};
+
+static InputDescriptors ringout_inputs  = {
+	{
+		{ NAOMI_BTN0_KEY, "BUMPER" },
+		{ NAOMI_BTN1_KEY, "BACK" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STEER", Full, 0 },
+		{ "ACCEL", Half, 4 },
+		{ NULL },
+	},
+};
+
+static InputDescriptors sstrkfgt_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "GUN TRIGGER" },
+		{ NAOMI_BTN1_KEY, "MISSILE BTN" },
+		{ NAOMI_BTN2_KEY, "AIR BRAKE" },
+		{ NAOMI_BTN3_KEY, "VIEW CHANGE" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "ELEVATOR", Full, 1 },
+		{ "AILERON", Full, 0 },
+		{ "THRUST LEVER", Half, 4 },
+		{ "RUDDER PEDAL", Full, 2 },
+		{ NULL },
+	},
+};
 //
 // AtomisWave games
 //
@@ -557,4 +670,3 @@ static InputDescriptors blockpong_inputs = {
 			{ NULL },
 	  },
 };
-#endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

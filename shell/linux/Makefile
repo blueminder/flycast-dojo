@@ -12,8 +12,8 @@ ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
 endif
-USE_MODEM := 1
 PLATFORM_EXT := elf
+#USE_SYSTEM_MINIUPNPC := 1
 
 CXX ?= ${CC_PREFIX}g++
 CC ?= ${CC_PREFIX}gcc
@@ -73,6 +73,8 @@ ifeq (,$(platform))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
             platform = rpi2
+        else ifneq (,$(findstring BCM2711,$(HARDWARE)))
+            platform = rpi4-mesa
         else ifneq (,$(findstring AM33XX,$(HARDWARE)))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
@@ -96,8 +98,6 @@ ifeq (,$(platform))
         else
             platform = armv7h
         endif
-    else ifneq (,$(findstring mips,$(ARCH)))
-        platform = gcwz
     else
         $(warning Unsupported CPU architecture, using lincpp)
         platform = lincpp
@@ -121,7 +121,7 @@ endif
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -m32 -DTARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
@@ -132,7 +132,7 @@ ifndef USE_SDL
     USE_X11 := 1
 endif
 	USE_VULKAN ?= 1
-    CFLAGS += -D TARGET_LINUX_x64 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
 
@@ -144,7 +144,7 @@ ifndef USE_SDL
 endif
     ARM64_REC := 1
     ISARM64 := 1
-    CFLAGS += -D TARGET_LINUX_ARMv8 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
@@ -163,10 +163,10 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CPP_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
+    CFLAGS += -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
-# Raspberry Pi 2
+# Raspberry Pi
 else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     ifneq (,$(findstring rpi2,$(platform)))
@@ -175,6 +175,10 @@ else ifneq (,$(findstring rpi,$(platform)))
     else ifneq (,$(findstring rpi3,$(platform)))
         MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+    else ifneq (,$(findstring rpi4,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        CFLAGS += -DGLES3
     endif
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
@@ -240,15 +244,19 @@ else ifneq (,$(findstring odroid,$(platform)))
         endif
     endif
 
-# GCW Zero
-else ifneq (,$(findstring gcwz,$(platform)))
-    NOT_ARM := 1
-    NO_REC := 1
-    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
-    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L./gcwz/enta_viv -lglapi
-    GCWZ_PKG = reicast-gcwz.opk
-    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
+# ROCKCHIP
+else ifneq (,$(findstring rockchip,$(platform)))
+    MFLAGS += -marm -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard -funroll-loops -mtune=cortex-a53
+    ASFLAGS += -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard
+    CXXFLAGS += -fexceptions
+    CFLAGS += -fsingle-precision-constant -DMESA_EGL_NO_X11_HEADERS=1 -DEGL_NO_X11=1 -fpermissive -fno-builtin-sqrtf
+    INCS +=  -I/opt/vc/include/ -I/opt/vc/include/libdrm
+    LIBS += -ldrm -lGLESv2
+    USE_GLES := 1
+    USE_EVDEV := 1
+    USE_UDEV := 1
+    FOR_LINUX := 1
+    ISARM64 := 1
 
 # Vero4K
 else ifneq (,$(findstring vero4k,$(platform)))
@@ -267,13 +275,14 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -I /mingw64/include
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -L${MINGW64_LIB} -lcurl -lssl -lcrypto -lssl -lcrypto -lgdi32 -lzstd -lz -lws2_32 -lunistring -lzip -lbcrypt -lbz2 -llzma -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
     USE_SDL = 1
+    STATIC_LIBZIP = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32
@@ -300,19 +309,34 @@ LDFLAGS += -g -Wl,--allow-multiple-definition,-Map,$(notdir $@).map,--gc-section
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize -Wall -Wno-unused-result
+CFLAGS += -ftree-vectorize -Wall -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef FOR_WINDOWS
+	INCS += -I$(LOCAL_PATH)/include/mingw
 	LIBS += -lm -static -lpthread
 else
+	INCS += -I$(LOCAL_PATH)/include/linux
 	LIBS += -lm -lpthread
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
+endif
+ifdef USE_SYSTEM_MINIUPNPC
+LIBS += -lminiupnpc
+endif
+ifndef STATIC_LIBZIP
+LIBS += -lzip
+endif
+
+$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
+ifdef FOR_WINDOWS
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc -f Makefile.mingw CC=gcc libminiupnpc.a
+else
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc libminiupnpc.a
 endif
 
 PREFIX ?= /usr/local
@@ -323,8 +347,7 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 	    CXXFLAGS += -D USE_SDL
-	    LIBS += -L$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lsdl2 -ldinput8  -ldxguid -ldxerr8
-	    LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	    INCS += -ISDL/include
 	else
 	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
 	    LIBS += `sdl2-config --libs`
@@ -390,8 +413,14 @@ ifdef USE_PULSEAUDIO
 endif
 
 ifdef USE_SDLAUDIO
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
-    LIBS += `sdl2-config --libs`
+	ifdef FOR_WINDOWS
+	    CXXFLAGS += -D USE_SDL_AUDIO
+	    INCS += -ISDL/include
+	    USE_SDL = 1
+	else
+	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
+	    LIBS += `sdl2-config --libs`
+	endif
 endif
 
 ifdef USE_LIBAO
@@ -417,10 +446,6 @@ ifdef DEBUGFAST
     CFLAGS += -DDEBUGFAST
 endif
 
-ifdef UNIT_TESTS
-    CFLAGS += -DUNIT_TESTS
-endif
-
 ifdef ASAN
 	CFLAGS += -fsanitize=address
 	LDFLAGS += -fsanitize=address
@@ -430,11 +455,20 @@ ifdef LOG_TO_PTY
     CFLAGS += -D LOG_TO_PTY
 endif
 
-
-EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-DC_PLATFORM=dreamcast
-EXECUTABLE=reicast.$(PLATFORM_EXT)
-EXECUTABLE_NAME=flycast
+ifdef UNIT_TESTS
+    CFLAGS += -DUNIT_TESTS
+	EXECUTABLE_STRIPPED=nosym-alltests
+	DC_PLATFORM=tests
+	EXECUTABLE=alltests.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=alltests
+	TEST_SRC_DIR:=$(RZDCY_SRC_DIR)/../tests/src
+	RZDCY_FILES += $(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
+else
+	EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
+	DC_PLATFORM=dreamcast
+	EXECUTABLE=reicast.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=flycast
+endif
 
 ifndef NOT_ARM
     AS=$(CC)
@@ -452,9 +486,33 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
-OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+OBJECTS += $(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
+
+endif
+
+ifndef USE_SYSTEM_MINIUPNPC
+OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+CFLAGS += -DMINIUPNP_STATICLIB
+endif
+
+ifdef USE_SDL
+	ifdef FOR_WINDOWS
+$(OBJECTS): SDL/lib/libSDL2.a
+ 
+SDL/lib/libSDL2.a:
+	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
+	mkdir -p SDL && \
+	  cd SDL && \
+	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake --build . --target install
+
+
+OBJECTS += SDL/lib/libSDL2.a
+LIBS += -ldinput8  -ldxguid -ldxerr8
+LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)
@@ -467,9 +525,6 @@ DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
-ifneq (,$(findstring gcwz,$(platform)))
-	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
-endif
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
@@ -509,7 +564,6 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
@@ -521,7 +575,6 @@ install: $(EXECUTABLE)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
@@ -532,27 +585,10 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER) $(TEST_OBJ) alltests
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
-TEST_SRC_DIR:=$(LOCAL_PATH)/../../tests/src
-TEST_SRC:=$(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
-TEST_OBJ:=$(TEST_SRC:.cpp=.build_obj)
-TEST_OBJ:=$(TEST_OBJ:.cc=.build_obj)
-TEST_OBJ:=$(patsubst $(TEST_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-TEST_OBJ:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-
-$(BUILDDIR)/%.build_obj : $(TEST_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(TEST_SRC_DIR)/%.cpp $(DEPDIR)/%.d
-	mkdir -p $(dir $@)
-	mkdir -p .dep-$(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
-	$(POSTCOMPILE)
-
-tests: alltests
-	./alltests
-
-alltests: $(TEST_OBJ) $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(TEST_OBJ) $(OBJECTS) $(LIBS) -o $@
+tests: alltests.$(PLATFORM_EXT)
+	./alltests.$(PLATFORM_EXT)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

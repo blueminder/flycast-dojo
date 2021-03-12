@@ -28,6 +28,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "cfg/option.h"
 
 JavaVM* g_jvm;
 
@@ -75,11 +76,11 @@ static thread_local JVMAttacher jvm_attacher;
 
 #include "android_gamepad.h"
 
-#define SETTINGS_ACCESSORS(jsetting, csetting, type)                                                                                                    \
-JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
-JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)                                                    \
+#define SETTINGS_ACCESSORS(setting, type)                                                                                                    \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## setting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## setting(JNIEnv *env, jobject obj)                                                    \
 {                                                                                                                                                       \
-    return settings.csetting;                                                                                                                           \
+    return (type)config::setting;                                                                                                                           \
 }
 
 extern "C"
@@ -107,8 +108,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
-SETTINGS_ACCESSORS(VirtualGamepadVibration, input.VirtualGamepadVibration, jint);
-SETTINGS_ACCESSORS(AicaBufferSize, aica.BufferSize, jint);
+SETTINGS_ACCESSORS(VirtualGamepadVibration, jint);
+SETTINGS_ACCESSORS(AudioBufferSize, jint);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -139,12 +140,27 @@ extern int screen_width,screen_height;
 float vjoy_pos[15][8];
 
 extern bool print_stats;
-extern bool game_started;
+static bool game_started;
 
 //stuff for saving prefs
 jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
 static ANativeWindow *g_window = 0;
+
+static void emuEventCallback(Event event)
+{
+	switch (event)
+	{
+	case Event::Pause:
+		game_started = false;
+		break;
+	case Event::Resume:
+		game_started = true;
+		break;
+	default:
+		break;
+	}
+}
 
 void os_DoEvents()
 {
@@ -216,6 +232,8 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     {
         // Do one-time initialization
     	LogManager::Init();
+    	EventManager::listen(Event::Pause, emuEventCallback);
+    	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
         int rc = reicast_init(0, NULL);
         if (rc == -4)
@@ -260,8 +278,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
         // TODO game paused/settings/...
         if (game_started) {
             dc_stop();
-            gui_state = Main;
-            game_started = false;
+            gui_state = GuiState::Main;
        		dc_reset(true);
         }
     }
@@ -292,7 +309,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
     if (game_started)
+    {
         dc_stop();
+        game_started = true; // restart when resumed
+        if (config::AutoSavestate)
+            dc_savestate();
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
@@ -303,8 +325,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (dc_is_running()) {
         dc_stop();
+        if (config::AutoSavestate)
+            dc_savestate();
+    }
+    dc_term_game();
+    gui_state = GuiState::Main;
+    settings.imgread.ImagePath[0] = '\0';
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
@@ -320,19 +348,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
         {
             KillTex=true;
             INFO_LOG(RENDERER, "Killing texture cache");
-        }
-
-        if (param==1)
-        {
-            settings.pvr.ta_skip^=1;
-            INFO_LOG(RENDERER, "settings.pvr.ta_skip: %d", settings.pvr.ta_skip);
-        }
-        if (param==2)
-        {
-#if FEAT_SHREC != DYNAREC_NONE
-            print_stats=true;
-            INFO_LOG(DYNAREC, "Storing blocks ...");
-#endif
         }
     }
     return 0;
@@ -420,15 +435,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
 {
     jint *controllers_body = env->GetIntArrayElements(controllers, 0);
-    memcpy(controllers_body, settings.input.maple_devices, sizeof(settings.input.maple_devices));
+    for (u32 i = 0; i < config::MapleMainDevices.size(); i++)
+    	controllers_body[i] = (MapleDeviceType)config::MapleMainDevices[i];
     env->ReleaseIntArrayElements(controllers, controllers_body, 0);
 
     int obj_len = env->GetArrayLength(peripherals);
     for (int i = 0; i < obj_len; ++i) {
         jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
         jint *items = env->GetIntArrayElements(port, 0);
-        items[0] = settings.input.maple_expansion_devices[i][0];
-        items[1] = settings.input.maple_expansion_devices[i][1];
+        items[0] = (MapleDeviceType)config::MapleExpansionDevices[i][0];
+        items[1] = (MapleDeviceType)config::MapleExpansionDevices[i][1];
         env->ReleaseIntArrayElements(port, items, 0);
         env->DeleteLocalRef(port);
     }
@@ -609,13 +625,13 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
 	SetMousePosition(xpos, ypos, screen_width, screen_height);
-    mo_buttons = 0xFFFF;
+    mo_buttons[0] = 0xFFFF;
     if (buttons & 1)	// Left
-    	mo_buttons &= ~4;
+    	mo_buttons[0] &= ~4;
     if (buttons & 2)	// Right
-    	mo_buttons &= ~2;
+    	mo_buttons[0] &= ~2;
     if (buttons & 4)	// Middle
-    	mo_buttons &= ~8;
+    	mo_buttons[0] &= ~8;
     mouse_gamepad.gamepad_btn_input(1, (buttons & 1) != 0);
     mouse_gamepad.gamepad_btn_input(2, (buttons & 2) != 0);
     mouse_gamepad.gamepad_btn_input(4, (buttons & 4) != 0);

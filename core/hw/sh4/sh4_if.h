@@ -296,7 +296,7 @@ struct Sh4Context
 
 void DYNACALL do_sqw_mmu(u32 dst);
 extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8* sqb);
-extern "C" void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, u8* sqb);
+void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, u8* sqb);
 void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
 
 typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
@@ -305,7 +305,7 @@ typedef void DYNACALL TaListVoidFP(void* data);
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 #define FPCB_PAD 0x100000
-#define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
+#define FPCB_OFFSET (-(int)(FPCB_SIZE * sizeof(void*) + FPCB_PAD))
 struct Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];

@@ -1,3 +1,4 @@
+#include <array>
 #include "spg.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
@@ -8,8 +9,8 @@
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 
-u32 in_vblank;
-u32 clc_pvr_scanline;
+static u32 in_vblank;
+static u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
 static u32 vblk_cnt;
@@ -23,24 +24,23 @@ static u32 Frame_Cycles;
 int render_end_schid;
 int vblank_schid;
 
-void CalculateSync()
+static std::array<double, 4> real_times;
+static std::array<u64, 4> cpu_cycles;
+static u32 cpu_time_idx;
+bool SH4FastEnough;
+u32 fskip;
+
+static u32 lightgun_line = 0xffff;
+static u32 lightgun_hpos;
+static bool maple_int_pending;
+
+static void setFramebufferScaling()
 {
-	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
-
-	// We need to calculate the pixel clock
-
-	pvr_numscanlines = SPG_LOAD.vcount + 1;
-	
-	Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
-	
 	float scale_x = 1.f;
 	float scale_y = 1.f;
 
 	if (SPG_CONTROL.interlace)
 	{
-		//this is a temp hack
-		Line_Cycles /= 2;
-
 		//u32 interl_mode=VO_CONTROL.field_mode;
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
@@ -56,18 +56,27 @@ void CalculateSync()
 	}
 
 	rend_set_fb_scale(scale_x, scale_y);
+}
+
+void CalculateSync()
+{
+	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
+
+	// We need to calculate the pixel clock
+
+	pvr_numscanlines = SPG_LOAD.vcount + 1;
+
+	Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
+	if (SPG_CONTROL.interlace)
+		Line_Cycles /= 2;
+
+	setFramebufferScaling();
 	
 	Frame_Cycles = pvr_numscanlines * Line_Cycles;
 	prv_cur_scanline = 0;
 
 	sh4_sched_request(vblank_schid, Line_Cycles);
 }
-
-static u32 lightgun_line = 0xffff;
-static u32 lightgun_hpos;
-bool maple_int_pending;
-
-u32 fskip;
 
 //called from sh4 context , should update pvr/ta state and everything else
 int spg_line_sched(int tag, int cycl, int jit)
@@ -127,13 +136,28 @@ int spg_line_sched(int tag, int cycl, int jit)
 			else
 				SPG_STATUS.fieldnum=0;
 
-			vblk_cnt++;
 			rend_vblank();
+
+			double now = os_GetSeconds() * 1000000.0;
+			cpu_time_idx = (cpu_time_idx + 1) % cpu_cycles.size();
+			if (cpu_cycles[cpu_time_idx] != 0)
+			{
+				u32 cycle_span = (u32)(sh4_sched_now64() - cpu_cycles[cpu_time_idx]);
+				double time_span = now - real_times[cpu_time_idx];
+				double cpu_speed = ((double)cycle_span / time_span) / (SH4_MAIN_CLOCK / 100000000);
+				SH4FastEnough = cpu_speed >= 85.0;
+			}
+			else
+				SH4FastEnough = false;
+			cpu_cycles[cpu_time_idx] = sh4_sched_now64();
+			real_times[cpu_time_idx] = now;
 
 #ifdef TEST_AUTOMATION
 			replay_input();
 #endif
-			
+
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+			vblk_cnt++;
 			if ((os_GetSeconds()-last_fps)>2)
 			{
 				static int Last_FC;
@@ -190,6 +214,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 				fskip=0;
 				last_fps=os_GetSeconds();
 			}
+#endif
 		}
 		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
 		{
@@ -273,6 +298,11 @@ void spg_Term()
 void spg_Reset(bool hard)
 {
 	CalculateSync();
+
+	SH4FastEnough = false;
+	cpu_time_idx = 0;
+	cpu_cycles.fill(0);
+	real_times.fill(0.0);
 }
 
 void SetREP(TA_context* cntx)
@@ -281,4 +311,53 @@ void SetREP(TA_context* cntx)
 		sh4_sched_request(render_end_schid, 500000 * 3);
 	else
 		sh4_sched_request(render_end_schid, 4096);
+}
+
+void spg_Serialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(in_vblank);
+	REICAST_S(clc_pvr_scanline);
+	REICAST_S(maple_int_pending);
+	REICAST_S(pvr_numscanlines);
+	REICAST_S(prv_cur_scanline);
+	REICAST_S(Line_Cycles);
+	REICAST_S(Frame_Cycles);
+	REICAST_S(lightgun_line);
+	REICAST_S(lightgun_hpos);
+}
+
+void spg_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+{
+	REICAST_US(in_vblank);
+	REICAST_US(clc_pvr_scanline);
+	if (version != VCUR_LIBRETRO && version < V5)
+	{
+		u32 i;
+		REICAST_US(pvr_numscanlines);
+		REICAST_US(prv_cur_scanline);
+		REICAST_US(vblk_cnt);
+		REICAST_US(Line_Cycles);
+		REICAST_US(Frame_Cycles);
+		REICAST_SKIP(8);		// speed_load_mspdf
+		REICAST_US(i);			// mips_counter
+		REICAST_SKIP(8);		// full_rps
+		REICAST_US(i);			// fskip
+	}
+	else if (version >= V12)
+	{
+		REICAST_US(maple_int_pending);
+		if (version >= V14)
+		{
+			REICAST_US(pvr_numscanlines);
+			REICAST_US(prv_cur_scanline);
+			REICAST_US(Line_Cycles);
+			REICAST_US(Frame_Cycles);
+			REICAST_US(lightgun_line);
+			REICAST_US(lightgun_hpos);
+		}
+	}
+	if (version < V14)
+		CalculateSync();
+	else
+		setFramebufferScaling();
 }

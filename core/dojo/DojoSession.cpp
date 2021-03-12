@@ -15,7 +15,7 @@ void DojoSession::Init()
 	host_port = 7777;
 	delay = 1;
 
-	player = settings.dojo.ActAsServer ? 0 : 1;
+	player = config::DojoActAsServer ? 0 : 1;
 	opponent = player == 0 ? 1 : 0;
 
 	session_started = false;
@@ -84,7 +84,7 @@ uint64_t DojoSession::DetectDelay(const char* ipAddr)
 	uint64_t avg_ping_ms = client.GetOpponentAvgPing();
 
 	int delay = (int)ceil(((int)avg_ping_ms * 1.0f) / 32.0f);
-	settings.dojo.Delay = delay > 1 ? delay : 1;
+	config::Delay = delay > 1 ? delay : 1;
 
 	return avg_ping_ms;
 }
@@ -97,7 +97,7 @@ uint64_t DojoSession::unix_timestamp()
 
 int DojoSession::PayloadSize()
 {
-	if (settings.dojo.EnableBackfill)
+	if (config::EnableBackfill)
 		return num_back_frames * INPUT_SIZE + FRAME_SIZE;
 	else
 		return FRAME_SIZE;
@@ -207,10 +207,10 @@ void DojoSession::AddBackFrames(const char* initial_frame, const char* back_inpu
 			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
 
-			if (settings.dojo.Debug == DEBUG_BACKFILL ||
-				settings.dojo.Debug == DEBUG_APPLY_BACKFILL ||
-				settings.dojo.Debug == DEBUG_APPLY_BACKFILL_RECV ||
-				settings.dojo.Debug == DEBUG_ALL)
+			if (config::Debug == DEBUG_BACKFILL ||
+				config::Debug == DEBUG_APPLY_BACKFILL ||
+				config::Debug == DEBUG_APPLY_BACKFILL_RECV ||
+				config::Debug == DEBUG_ALL)
 			{
 				PrintFrameData("Backfilled", (u8 *)frame_fill);
 			}
@@ -232,7 +232,7 @@ void DojoSession::resume()
 
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
-	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
+	if (config::RecordMatches && !dojo.PlayMatch)
 		CreateReplayFile();
 
 	FillDelay(session_delay);
@@ -266,7 +266,7 @@ void DojoSession::FillDelay(int fill_delay)
 			net_inputs[j][new_index] = new_frame;
 			net_input_keys[j].insert(new_index);
 
-			if (settings.dojo.RecordMatches && !dojo.PlayMatch)
+			if (config::RecordMatches && !dojo.PlayMatch)
 				AppendToReplayFile(new_frame);
 
 			if (transmitter_started)
@@ -281,7 +281,7 @@ void DojoSession::StartTransmitterThread()
 	if (transmitter_started)
 		return;
 
-	if (settings.dojo.Transmitting)
+	if (config::Transmitting)
 	{
 		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
 		t4.detach();
@@ -293,9 +293,9 @@ void DojoSession::StartTransmitterThread()
 int DojoSession::StartDojoSession()
 {
 	if (receiving)
-		settings.dojo.Receiving = true;
+		config::Receiving = true;
 
-	if (settings.dojo.Receiving)
+	if (config::Receiving)
 		receiving = true;
 
 	if (dojo.PlayMatch)
@@ -305,7 +305,7 @@ int DojoSession::StartDojoSession()
 		LoadReplayFile(dojo.ReplayFilename);
 		//resume();
 	}
-	else if (settings.dojo.Receiving)
+	else if (config::Receiving)
 	{
 		dojo.last_consecutive_common_frame = 2;
 		dojo.FrameNumber = 2;
@@ -328,7 +328,7 @@ int DojoSession::StartDojoSession()
 			std::thread t2(&UDPClient::ClientThread, std::ref(client));
 			t2.detach();
 
-			if (settings.dojo.EnableLobby && hosting)
+			if (config::EnableLobby && hosting)
 			{
 				std::thread t3(&DojoLobby::BeaconThread, std::ref(presence));
 				t3.detach();
@@ -367,16 +367,16 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		else
 		{
 			std::ostringstream NoticeStream;
-			if (hosting && !settings.dojo.Receiving)
+			if (hosting && !config::Receiving)
 			{
 				NoticeStream << "Hosting game on port " << host_port << " @ Delay " << delay;
 
 				gui_display_notification(NoticeStream.str().data(), 9000);
 				host_status = 3;// Hosting, Playing
 			}
-			else if (settings.dojo.Receiving)
+			else if (config::Receiving)
 			{
-				NoticeStream << "Listening to game stream on port " << settings.dojo.SpectatorPort;
+				NoticeStream << "Listening to game stream on port " << config::SpectatorPort.get();
 				gui_display_notification(NoticeStream.str().data(), 9000);
 			}
 			else
@@ -388,11 +388,11 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-	if (settings.dojo.Receiving &&
+	if (config::Receiving &&
 		receiver_ended &&
 		disconnect_toggle)
 	{
-		gui_state = EndSpectate;
+		gui_state = GuiState::EndSpectate;
 	}
 
 	while (isPaused && !disconnect_toggle);
@@ -402,7 +402,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
-		if (settings.dojo.Receiving &&
+		if (config::Receiving &&
 			receiver_ended &&
 			FrameNumber > last_received_frame)
 		{
@@ -437,16 +437,16 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
-		if (settings.dojo.Transmitting)
+		if (config::Transmitting)
 			transmitter_ended = true;
 
-		gui_state = EndReplay;
+		gui_state = GuiState::EndReplay;
 	}
 /*
-	if (settings.dojo.Receiving &&
+	if (config::Receiving &&
 		dojo.receiver.endSession)
 	{
-		gui_state = EndSpectate;
+		gui_state = GuiState::EndSpectate;
 	}
 */
 
@@ -459,10 +459,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			{
 				frame_timeout = 0;
 
-				if (settings.dojo.Debug == DEBUG_APPLY ||
-					settings.dojo.Debug == DEBUG_APPLY_BACKFILL ||
-					settings.dojo.Debug == DEBUG_APPLY_BACKFILL_RECV ||
-					settings.dojo.Debug == DEBUG_ALL)
+				if (config::Debug == DEBUG_APPLY ||
+					config::Debug == DEBUG_APPLY_BACKFILL ||
+					config::Debug == DEBUG_APPLY_BACKFILL_RECV ||
+					config::Debug == DEBUG_ALL)
 				{
 					PrintFrameData("Applied", (u8*)this_frame.data());
 				}
@@ -479,15 +479,15 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			if (!hosting && frame_timeout > delay)
 				client.request_repeat = true;
 
-			// give ~20 seconds for connection to continue
-			if (!settings.dojo.Receiving && frame_timeout > 1200)
+			// give ~10 seconds for connection to continue
+			if (!config::Receiving && frame_timeout > 1200)
 				disconnect_toggle = true;
 
-			// give ~60 seconds for spectating connection to continue
-			if (settings.dojo.Receiving && frame_timeout > 3600)
+			// give ~30 seconds for spectating connection to continue
+			if (config::Receiving && frame_timeout > 3600)
 				receiver_ended = true;
 
-			if (settings.dojo.Receiving &&
+			if (config::Receiving &&
 				FrameNumber >= last_consecutive_common_frame)
 			{
 				pause();
@@ -498,7 +498,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	std::string to_apply(this_frame);
 
-	if (settings.dojo.RecordMatches && !dojo.PlayMatch)
+	if (config::RecordMatches && !dojo.PlayMatch)
 		AppendToReplayFile(this_frame);
 
 	if (transmitter_started)
@@ -520,9 +520,9 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 // called on by client thread once data is received
 void DojoSession::ClientReceiveAction(const char* received_data)
 {
-	if (settings.dojo.Debug == DEBUG_RECV ||
-		settings.dojo.Debug == DEBUG_SEND_RECV ||
-		settings.dojo.Debug == DEBUG_ALL)
+	if (config::Debug == DEBUG_RECV ||
+		config::Debug == DEBUG_SEND_RECV ||
+		config::Debug == DEBUG_ALL)
 	{
 		PrintFrameData("Received", (u8*)received_data);
 	}
@@ -532,7 +532,7 @@ void DojoSession::ClientReceiveAction(const char* received_data)
 
 	std::string to_add(received_data, received_data + FRAME_SIZE);
 	AddNetFrame(to_add.data());
-	if (settings.dojo.EnableBackfill)
+	if (config::EnableBackfill)
 		AddBackFrames(to_add.data(), received_data + FRAME_SIZE, dojo.PayloadSize() - FRAME_SIZE);
 }
 
@@ -574,8 +574,8 @@ std::string DojoSession::CreateReplayFile(std::string rom_name)
 	std::string filename =
 		"replays/" + rom_name +  "__" +
 		timestamp + "__" +
-		settings.dojo.PlayerName + "__" + 
-		settings.dojo.OpponentName + "__" + 
+		config::PlayerName.get() + "__" + 
+		config::OpponentName.get() + "__" + 
 		".flyreplay";
 	// create replay file itself
 	std::ofstream file;
@@ -647,7 +647,7 @@ void DojoSession::RequestSpectate(std::string host, std::string port)
 	udp::resolver::results_type endpoints =
 		resolver.resolve(udp::v4(), host, port);
 
-	std::string request = "SPECTATE " + settings.dojo.SpectatorPort;
+	std::string request = "SPECTATE " + config::SpectatorPort.get();
 	for (int i = 0; i < packets_per_frame; i++)
 	{
 		s.send_to(asio::buffer(request, request.length()), *endpoints.begin());
@@ -661,7 +661,7 @@ void DojoSession::receiver_thread()
 	try
 	{
 		asio::io_context io_context;
-		AsyncTcpServer s(io_context, atoi(settings.dojo.SpectatorPort.data()));
+		AsyncTcpServer s(io_context, atoi(config::SpectatorPort.get().data()));
 		io_context.run();
 	}
 	catch (std::exception& e)
@@ -678,7 +678,7 @@ void DojoSession::transmitter_thread()
 
 		tcp::resolver resolver(io_context);
 		tcp::resolver::results_type endpoints =
-			resolver.resolve(settings.dojo.SpectatorIP, settings.dojo.SpectatorPort);
+			resolver.resolve(config::SpectatorIP, config::SpectatorPort);
 
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
@@ -739,7 +739,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	if (net_inputs[0].count(FrameNumber + delay) == 1 &&
 		net_inputs[1].count(FrameNumber + delay) == 1)
 	{
-		if (settings.dojo.RecordMatches)
+		if (config::RecordMatches)
 		{
 			AppendToReplayFile(net_inputs[0].at(FrameNumber + delay));
 			AppendToReplayFile(net_inputs[1].at(FrameNumber + delay));

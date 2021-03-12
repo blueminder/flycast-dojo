@@ -32,6 +32,9 @@
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
+unsigned int *pmo_buttons;
+float *pmo_wheel_delta;
+static UInt32 keyboardModifiers;
 
 int darw_printf(const char* text, ...)
 {
@@ -99,6 +102,12 @@ extern "C" void emu_dc_term()
 	if (dc_is_running())
 		dc_exit();
 	dc_term();
+	LogManager::Shutdown();
+}
+
+extern "C" void emu_gui_open_settings()
+{
+	gui_open_settings();
 }
 
 extern "C" void emu_dc_resume()
@@ -129,7 +138,12 @@ extern "C" int emu_single_frame(int w, int h)
     return (int)mainui_rend_frame();
 }
 
-extern "C" void emu_gles_init(int width, int height) {
+extern "C" void emu_gles_init(int width, int height)
+{
+	// work around https://bugs.swift.org/browse/SR-12263
+	pmo_buttons = mo_buttons;
+	pmo_wheel_delta = mo_wheel_delta;
+
     char *home = getenv("HOME");
     if (home != NULL)
     {
@@ -185,6 +199,11 @@ extern "C" void emu_gles_init(int width, int height) {
     CFRelease(allDisplayModes);
     
 	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
+    NSSize displayResolution;
+    displayResolution.width = CGDisplayPixelsWide(displayID);
+    displayResolution.height = CGDisplayPixelsHigh(displayID);
+    scaling = displayNativeSize.width / displayResolution.width;
+    
 	screen_width = width;
 	screen_height = height;
 
@@ -200,12 +219,19 @@ extern "C" int emu_reicast_init()
 	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 	unsigned long argc = [arguments count];
 	char **argv = (char **)malloc(argc * sizeof(char*));
+	int paramCount = 0;
 	for (unsigned long i = 0; i < argc; i++)
-		argv[i] = strdup([[arguments objectAtIndex:i] UTF8String]);
+	{
+		const char *arg = [[arguments objectAtIndex:i] UTF8String];
+		if (!strncmp(arg, "-psn_", 5))
+			// ignore Process Serial Number argument on first launch
+			continue;
+		argv[paramCount++] = strdup(arg);
+	}
 	
-	int rc = reicast_init((int)argc, argv);
+	int rc = reicast_init(paramCount, argv);
 	
-	for (unsigned long i = 0; i < argc; i++)
+	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);
 	free(argv);
 	
@@ -213,7 +239,20 @@ extern "C" int emu_reicast_init()
 }
 
 extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
-	keyboard.keyboard_input(keyCode, pressed, keyboard.convert_modifier_keys(modifierFlags));
+	if (keyCode != 0xFF)
+		keyboard.keyboard_input(keyCode, pressed, 0);
+	else
+	{
+		// Modifier keys
+		UInt32 changes = keyboardModifiers ^ modifierFlags;
+		if (changes & NSEventModifierFlagShift)
+			keyboard.keyboard_input(kVK_Shift, modifierFlags & NSEventModifierFlagShift, 0);
+		if (changes & NSEventModifierFlagControl)
+			keyboard.keyboard_input(kVK_Control, modifierFlags & NSEventModifierFlagControl, 0);
+		if (changes & NSEventModifierFlagOption)
+			keyboard.keyboard_input(kVK_Option, modifierFlags & NSEventModifierFlagOption, 0);
+		keyboardModifiers = modifierFlags;
+	}
 	if ((modifierFlags
 		 & (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand)) == 0)
 		kb_gamepad->gamepad_btn_input(keyCode, pressed);
@@ -232,4 +271,12 @@ extern "C" void emu_mouse_buttons(int button, bool pressed)
 extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
 {
 	SetMousePosition(x, y, width, height);
+}
+
+std::string os_Locale(){
+    return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
+}
+
+std::string os_PrecomposedString(std::string string){
+    return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
 }

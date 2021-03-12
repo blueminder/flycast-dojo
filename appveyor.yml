@@ -1,5 +1,5 @@
 version: git-{branch}-{build}
-image: Visual Studio 2017
+image: Visual Studio 2015
 
 configuration:
 - fast
@@ -11,7 +11,7 @@ before_build:
   - cmd: >-
       set BUILD_PATH=shell\linux
       
-      set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
+      set EXTRA_PATH=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin\
       
       set PATH=%EXTRA_PATH%;%PATH%
       
@@ -19,6 +19,8 @@ before_build:
      
       cd %BUILD_PATH%
       
+      git submodule update --init --recursive
+
 build_script:
   - cmd: >-
       if "%CONFIGURATION%"=="fast" (mingw32-make -j2 platform=win32)

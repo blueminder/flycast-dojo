@@ -1,8 +1,11 @@
 #include "ta_ctx.h"
+#include "spg.h"
 #include "oslib/oslib.h"
+#include "cfg/option.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
+static int RenderCount;
 
 TA_context* ta_ctx;
 tad_context ta_tad;
@@ -73,13 +76,18 @@ bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	if (rqueue && settings.pvr.SynchronousRender)
-		//wait for a frame if
-		//  we have another one queue'd
-		//  and SynchronousRender is enabled
+	bool skipFrame = false;
+	RenderCount++;
+	if (RenderCount % (config::SkipFrame + 1) != 0)
+		skipFrame = true;
+	else if (rqueue && (config::AutoSkipFrame == 0
+				|| (config::AutoSkipFrame == 1 && SH4FastEnough)))
+		// The previous render hasn't completed yet so we wait.
+		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
+		// fast enough over the last frames
 		frame_finished.Wait();
 
-	if (rqueue)
+	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
 		fskip++;
@@ -215,6 +223,9 @@ TA_context* tactx_Pop(u32 addr)
 
 void tactx_Term()
 {
+	if (ta_ctx != nullptr)
+		SetCurrentTARC(TACTX_NONE);
+
 	for (size_t i = 0; i < ctx_list.size(); i++)
 	{
 		ctx_list[i]->Free();

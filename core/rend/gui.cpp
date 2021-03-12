@@ -46,7 +46,7 @@
 #include "dojo/DojoFile.hpp"
 
 extern void UpdateInputState();
-extern bool game_started;
+bool game_started;
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -55,8 +55,8 @@ extern u8 kb_key[6];		// normal keys pressed
 int screen_dpi = 96;
 
 static bool inited = false;
-static float scaling = 1;
-GuiState gui_state = Main;
+float scaling = 1;
+GuiState gui_state = GuiState::Main;
 static bool settings_opening;
 #ifdef __ANDROID__
 static bool touch_up;
@@ -69,12 +69,33 @@ static std::mutex osd_message_mutex;
 static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
+static void displayCrosshairs();
 
 GameScanner scanner;
 
 float gui_get_scaling()
 {
 	return scaling;
+}
+
+static void emuEventCallback(Event event)
+{
+	switch (event)
+	{
+	case Event::Resume:
+		game_started = true;
+		break;
+	case Event::Start:
+		if (config::AutoSavestate)
+			dc_loadstate();
+		break;
+	case Event::Terminate:
+		if (config::AutoSavestate)
+			dc_savestate();
+		break;
+	default:
+		break;
+	}
 }
 
 void gui_init()
@@ -129,7 +150,7 @@ void gui_init()
 #endif
 
     // Setup Platform/Renderer bindings
-    if (settings.pvr.IsOpenGL())
+    if (config::RendererType.isOpenGL())
     	ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
@@ -146,20 +167,95 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-
+#if !(defined(_WIN32) || defined(__APPLE__))
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
+#endif
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
 
-    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
+    static const ImWchar ranges[] =
+    {
+    	0x0020, 0xFFFF, // All chars
+        0,
+    };
+
+    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
+    ImFontConfig font_cfg;
+    font_cfg.MergeMode = true;
+#ifdef _WIN32
+    u32 cp = GetACP();
+    std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
+    switch (cp)
+    {
+    case 932:	// Japanese
+		{
+			font_cfg.FontNo = 2;	// UIGothic
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+			font_cfg.FontNo = 2;	// Meiryo UI
+			if (font == nullptr)
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+		}
+		break;
+    case 949:	// Korean
+		{
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			if (font == nullptr)
+			{
+				font_cfg.FontNo = 2;	// Dotum
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			}
+		}
+    	break;
+    case 950:	// Traditional Chinese
+		{
+			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+			font_cfg.FontNo = 0;
+			if (font == nullptr)
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+		}
+    	break;
+    case 936:	// Simplified Chinese
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    	break;
+    default:
+    	break;
+    }
+#elif __APPLE__
+    std::string fontDir = std::string("/System/Library/Fonts/");
+    
+    extern std::string os_Locale();
+    std::string locale = os_Locale();
+    
+    if (locale.find("ja") == 0)             // Japanese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+    }
+    else if (locale.find("ko") == 0)       // Korean
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+    }
+    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+    }
+    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    }
+    // TODO linux, Android...
+#endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
-	gui_state = settings.dojo.TestGame ? TestGame : Main;
+	gui_state = config::TestGame ? GuiState::TestGame : GuiState::Main;
+    EventManager::listen(Event::Resume, emuEventCallback);
+    EventManager::listen(Event::Start, emuEventCallback);
+    EventManager::listen(Event::Terminate, emuEventCallback);
 }
 
 void ImGui_Impl_NewFrame()
 {
-	if (settings.pvr.IsOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();
 	ImGui::GetIO().DisplaySize.x = screen_width;
 	ImGui::GetIO().DisplaySize.y = screen_height;
@@ -187,7 +283,7 @@ void ImGui_Impl_NewFrame()
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
-	if ((mo_buttons & 0xf) == 0xf)
+	if ((mo_buttons[0] & 0xf) == 0xf)
 	{
 		if (touch_up)
 			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
@@ -199,16 +295,16 @@ void ImGui_Impl_NewFrame()
 #endif
 	if (io.WantCaptureMouse)
 	{
-		io.MouseWheel = -mo_wheel_delta / 16;
+		io.MouseWheel = -mo_wheel_delta[0] / 16;
 		// Reset all relative mouse positions
-		mo_x_delta = 0;
-		mo_y_delta = 0;
-		mo_wheel_delta = 0;
+		mo_x_delta[0] = 0;
+		mo_y_delta[0] = 0;
+		mo_wheel_delta[0] = 0;
 	}
-	io.MouseDown[0] = (mo_buttons & (1 << 2)) == 0;
-	io.MouseDown[1] = (mo_buttons & (1 << 1)) == 0;
-	io.MouseDown[2] = (mo_buttons & (1 << 3)) == 0;
-	io.MouseDown[3] = (mo_buttons & (1 << 0)) == 0;
+	io.MouseDown[0] = (mo_buttons[0] & (1 << 2)) == 0;
+	io.MouseDown[1] = (mo_buttons[0] & (1 << 1)) == 0;
+	io.MouseDown[2] = (mo_buttons[0] & (1 << 3)) == 0;
+	io.MouseDown[3] = (mo_buttons[0] & (1 << 0)) == 0;
 
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
 	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
@@ -261,64 +357,50 @@ void gui_plot_render_time(int width, int height)
 }
 #endif
 
-// Helper to display a little (?) mark which shows a tooltip when hovered.
-static void ShowHelpMarker(const char* desc)
-{
-    ImGui::TextDisabled("(?)");
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
-
 void gui_open_host_wait()
 {
-	gui_state = HostWait;
+	gui_state = GuiState::HostWait;
 	settings_opening = true;
 }
 
 void gui_open_guest_wait()
 {
-	gui_state = GuestWait;
+	gui_state = GuiState::GuestWait;
 	settings_opening = true;
 
 	//if (dojo.isMatchReady)
 	if (dojo.session_started)
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 	}
 }
 
 void gui_open_disconnected()
 {
-	gui_state = Disconnected;
+	gui_state = GuiState::Disconnected;
 	settings_opening = true;
 }
 
 void gui_open_settings()
 {
-	if (gui_state == Closed)
+	if (gui_state == GuiState::Closed)
 	{
-		gui_state = Commands;
+		gui_state = GuiState::Commands;
 		settings_opening = true;
 		HideOSD();
 	}
-	else if (gui_state == VJoyEdit)
+	else if (gui_state == GuiState::VJoyEdit)
 	{
-		gui_state = VJoyEditCommands;
+		gui_state = GuiState::VJoyEditCommands;
 	}
-	else if (gui_state == Loading)
+	else if (gui_state == GuiState::Loading)
 	{
 		dc_cancel_load();
-		gui_state = Main;
+		gui_state = GuiState::Main;
 	}
-	else if (gui_state == Commands)
+	else if (gui_state == GuiState::Commands)
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		dc_resume();
 	}
 }
@@ -326,26 +408,26 @@ void gui_open_settings()
 void gui_start_game(const std::string& path)
 {
 	scanner.stop();
-	gui_state = Loading;
+	gui_state = GuiState::Loading;
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
-	if (settings.dojo.Enable)
+	if (config::DojoEnable)
 	{
-		cfgSaveStr("dojo", "PlayerName", settings.dojo.PlayerName.c_str());
+		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
-		if (settings.dojo.EnableMemRestore)
+		if (config::EnableMemRestore)
 		{
 			dojo_file.ValidateAndCopyMem(path_copy.c_str());
 		}
 	}
 
-	if (!settings.dojo.Enable && !dojo.PlayMatch)
+	if (!config::DojoEnable && !dojo.PlayMatch)
 	{
-		cfgSaveInt("dojo", "Delay", settings.dojo.Delay);
-		settings.dojo.OpponentName = "";
+		cfgSaveInt("dojo", "Delay", config::Delay);
+		config::OpponentName = "";
 		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
-		if (settings.dojo.RecordMatches)
+		if (config::RecordMatches)
 			dojo.CreateReplayFile(rom_name);
 	}
 
@@ -358,10 +440,10 @@ static void gui_display_commands()
 
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
-    if (!settings_opening && settings.pvr.IsOpenGL())
+    if (!settings_opening && config::RendererType.isOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
 
-    if (!settings.rend.FloatVMUs)
+    if (!config::FloatVMUs)
     	// If floating VMUs, they are already visible on the background
     	display_vmus();
 
@@ -373,25 +455,25 @@ static void gui_display_commands()
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		dc_loadstate();
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		dc_savestate();
 	}
 
 	ImGui::NextColumn();
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Settings;
+		gui_state = GuiState::Settings;
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 	}
 
 	ImGui::NextColumn();
@@ -400,29 +482,29 @@ static void gui_display_commands()
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
-			gui_state = SelectDisk;
+			gui_state = GuiState::SelectDisk;
 		}
 		else
 		{
 			DiscOpenLid();
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 		}
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		if (settings.dojo.Enable && dojo.isMatchStarted)
+		if (config::DojoEnable && dojo.isMatchStarted)
 		{
 			dojo.disconnect_toggle = true;
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 		}
 		else
 		{
 			// Exit to main menu
-			gui_state = Main;
+			dc_term_game();
+			gui_state = GuiState::Main;
 			game_started = false;
 			settings.imgread.ImagePath[0] = '\0';
-			dc_reset(true);
 		}
 
 		// clear cached inputs, reset dojo session
@@ -803,7 +885,7 @@ static void contentpath_warning_popup()
             	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
                 scanner.stop();
-                settings.dreamcast.ContentPath.clear();
+                config::ContentPath.get().clear();
             }
             ImGui::SetItemDefaultFocus();
             ImGui::PopStyleVar();
@@ -819,8 +901,8 @@ static void contentpath_warning_popup()
             show_contentpath_selection = false;
             if (!cancelled)
             {
-                settings.dreamcast.ContentPath.clear();
-                settings.dreamcast.ContentPath.push_back(selection);
+            	config::ContentPath.get().clear();
+                config::ContentPath.get().push_back(selection);
             }
             scanner.refresh();
         });
@@ -832,7 +914,7 @@ void directory_selected_callback(bool cancelled, std::string selection)
 	if (!cancelled)
 	{
 		scanner.stop();
-		settings.dreamcast.ContentPath.push_back(selection);
+		config::ContentPath.get().push_back(selection);
 		scanner.refresh();
 	}
 }
@@ -844,9 +926,8 @@ static void gui_display_settings()
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
 
-	int dynarec_enabled = settings.dynarec.Enable;
-	RenderType pvr_rend = settings.pvr.rend;
-	bool vulkan = !settings.pvr.IsOpenGL();
+	RenderType pvr_rend = config::RendererType;
+	bool vulkan = !config::RendererType.isOpenGL();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -857,9 +938,9 @@ static void gui_display_settings()
     if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
     {
     	if (game_started)
-    		gui_state = Commands;
+    		gui_state = GuiState::Commands;
     	else
-    		gui_state = Main;
+    		gui_state = GuiState::Main;
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
@@ -875,19 +956,19 @@ static void gui_display_settings()
 	{
 	    ImGui::SameLine();
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
-		if (cfgHasGameSpecificConfig())
+		if (config::Settings::instance().hasPerGameConfig())
 		{
 			if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
 			{
-				cfgDeleteGameSpecificConfig();
-				InitSettings();
-				LoadSettings(false);
+				config::Settings::instance().setPerGameConfig(false);
+				config::Settings::instance().load(false);
+				LoadGameSpecificSettings();
 			}
 		}
 		else
 		{
 			if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
-				cfgMakeGameSpecificConfig();
+				config::Settings::instance().setPerGameConfig(true);
 		}
 	    ImGui::PopStyleVar();
 	}
@@ -900,86 +981,56 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
-			if (ImGui::BeginCombo("Language", languages[settings.dreamcast.language], ImGuiComboFlags_None))
-			{
-				for (int i = 0; i < IM_ARRAYSIZE(languages); i++)
-				{
-					bool is_selected = (int)settings.dreamcast.language == i;
-					if (ImGui::Selectable(languages[i], &is_selected))
-						settings.dreamcast.language = i;
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-            ImGui::SameLine();
-            ShowHelpMarker("The language as configured in the Dreamcast BIOS");
+			OptionComboBox("Language", config::Language, languages, ARRAY_SIZE(languages),
+				"The language as configured in the Dreamcast BIOS");
 
 			const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
-			if (ImGui::BeginCombo("Broadcast", broadcast[settings.dreamcast.broadcast], ImGuiComboFlags_None))
-			{
-				for (int i = 0; i < IM_ARRAYSIZE(broadcast); i++)
-				{
-					bool is_selected = (int)settings.dreamcast.broadcast == i;
-					if (ImGui::Selectable(broadcast[i], &is_selected))
-						settings.dreamcast.broadcast = i;
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-            ImGui::SameLine();
-            ShowHelpMarker("TV broadcasting standard for non-VGA modes");
+			OptionComboBox("Broadcast", config::Broadcast, broadcast, ARRAY_SIZE(broadcast),
+					"TV broadcasting standard for non-VGA modes");
 
 			const char *region[] = { "Japan", "USA", "Europe", "Default" };
-			if (ImGui::BeginCombo("Region", region[settings.dreamcast.region], ImGuiComboFlags_None))
-			{
-				for (int i = 0; i < IM_ARRAYSIZE(region); i++)
-				{
-					bool is_selected = (int)settings.dreamcast.region == i;
-					if (ImGui::Selectable(region[i], &is_selected))
-						settings.dreamcast.region = i;
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-            ImGui::SameLine();
-            ShowHelpMarker("BIOS region");
+			OptionComboBox("Region", config::Region, region, ARRAY_SIZE(region),
+						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
-			if (ImGui::BeginCombo("Cable", cable[settings.dreamcast.cable == 0 ? 0 : settings.dreamcast.cable - 1], ImGuiComboFlags_None))
+			if (config::Cable.isReadOnly())
+			{
+		        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+			if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 				{
-					bool is_selected = i == 0 ? (int)settings.dreamcast.cable <= 1 : (int)settings.dreamcast.cable - 1 == i;
+					bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
 					if (ImGui::Selectable(cable[i], &is_selected))
-						settings.dreamcast.cable = i == 0 ? 0 : i + 1;
+						config::Cable = i == 0 ? 0 : i + 1;
 	                if (is_selected)
 	                    ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
+			}
+			if (config::Cable.isReadOnly())
+			{
+		        ImGui::PopItemFlag();
+		        ImGui::PopStyleVar();
 			}
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
 
-            std::vector<const char *> paths;
-            for (auto& path : settings.dreamcast.ContentPath)
-            	paths.push_back(path.c_str());
-
             ImVec2 size;
             size.x = 0.0f;
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
-            				* (settings.dreamcast.ContentPath.size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
+            				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
 
             if (ImGui::ListBoxHeader("Content Location", size))
             {
             	int to_delete = -1;
-                for (u32 i = 0; i < settings.dreamcast.ContentPath.size(); i++)
+                for (u32 i = 0; i < config::ContentPath.get().size(); i++)
                 {
-                	ImGui::PushID(settings.dreamcast.ContentPath[i].c_str());
+                	ImGui::PushID(config::ContentPath.get()[i].c_str());
                     ImGui::AlignTextToFramePadding();
-                	ImGui::Text("%s", settings.dreamcast.ContentPath[i].c_str());
+                	ImGui::Text("%s", config::ContentPath.get()[i].c_str());
                 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
                 	if (ImGui::Button("X"))
                 		to_delete = i;
@@ -995,7 +1046,7 @@ static void gui_display_settings()
             	if (to_delete >= 0)
             	{
             		scanner.stop();
-            		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
+            		config::ContentPath.get().erase(config::ContentPath.get().begin() + to_delete);
         			scanner.refresh();
             	}
             }
@@ -1009,16 +1060,17 @@ static void gui_display_settings()
 #ifdef __ANDROID__
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
-                	gui_state = Onboarding;
+                	gui_state = GuiState::Onboarding;
 #endif
                 ImGui::ListBoxFooter();
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
-	    	if (ImGui::Checkbox("Hide Legacy Naomi Roms", &settings.dreamcast.HideLegacyNaomiRoms))
-	    		scanner.refresh();
-            ImGui::SameLine();
-            ShowHelpMarker("Hide .bin, .dat and .lst files from the content browser");
+			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
+					"Hide .bin, .dat and .lst files from the content browser"))
+				scanner.refresh();
+			OptionCheckbox("Auto load/save state", config::AutoSavestate,
+					"Automatically save the state of the game when stopping and load it at start up.");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1036,14 +1088,14 @@ static void gui_display_settings()
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
 					ImGui::PushItemWidth(w);
-					if (ImGui::BeginCombo(device_name, maple_device_name((MapleDeviceType)settings.input.maple_devices[bus]), ImGuiComboFlags_None))
+					if (ImGui::BeginCombo(device_name, maple_device_name(config::MapleMainDevices[bus]), ImGuiComboFlags_None))
 					{
 						for (int i = 0; i < IM_ARRAYSIZE(maple_device_types); i++)
 						{
-							bool is_selected = settings.input.maple_devices[bus] == maple_device_type_from_index(i);
+							bool is_selected = config::MapleMainDevices[bus] == maple_device_type_from_index(i);
 							if (ImGui::Selectable(maple_device_types[i], &is_selected))
 							{
-								settings.input.maple_devices[bus] = maple_device_type_from_index(i);
+								config::MapleMainDevices[bus] = maple_device_type_from_index(i);
 								maple_devices_changed = true;
 							}
 							if (is_selected)
@@ -1051,22 +1103,22 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2
-							: settings.input.maple_devices[bus] == MDT_LightGun || settings.input.maple_devices[bus] == MDT_TwinStick || settings.input.maple_devices[bus] == MDT_AsciiStick ? 1
+					int port_count = config::MapleMainDevices[bus] == MDT_SegaController ? 2
+							: config::MapleMainDevices[bus] == MDT_LightGun || config::MapleMainDevices[bus] == MDT_TwinStick || config::MapleMainDevices[bus] == MDT_AsciiStick ? 1
 							: 0;
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
 						sprintf(device_name, "##device%d.%d", bus, port + 1);
 						ImGui::PushID(device_name);
-						if (ImGui::BeginCombo(device_name, maple_expansion_device_name((MapleDeviceType)settings.input.maple_expansion_devices[bus][port]), ImGuiComboFlags_None))
+						if (ImGui::BeginCombo(device_name, maple_expansion_device_name(config::MapleExpansionDevices[bus][port]), ImGuiComboFlags_None))
 						{
 							for (int i = 0; i < IM_ARRAYSIZE(maple_expansion_device_types); i++)
 							{
-								bool is_selected = settings.input.maple_expansion_devices[bus][port] == maple_expansion_device_type_from_index(i);
+								bool is_selected = config::MapleExpansionDevices[bus][port] == maple_expansion_device_type_from_index(i);
 								if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
 								{
-									settings.input.maple_expansion_devices[bus][port] = maple_expansion_device_type_from_index(i);
+									config::MapleExpansionDevices[bus][port] = maple_expansion_device_type_from_index(i);
 									maple_devices_changed = true;
 								}
 								if (is_selected)
@@ -1076,13 +1128,45 @@ static void gui_display_settings()
 						}
 						ImGui::PopID();
 					}
+					if (config::MapleMainDevices[bus] == MDT_LightGun)
+					{
+						ImGui::SameLine();
+						sprintf(device_name, "##device%d.xhair", bus);
+						ImGui::PushID(device_name);
+						u32 color = config::CrosshairColor[bus];
+						float xhairColor[4] {
+							(color & 0xff) / 255.f,
+							((color >> 8) & 0xff) / 255.f,
+							((color >> 16) & 0xff) / 255.f,
+							((color >> 24) & 0xff) / 255.f
+						};
+						ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+								| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
+						ImGui::SameLine();
+						bool enabled = color != 0;
+						ImGui::Checkbox("Crosshair", &enabled);
+						if (enabled)
+						{
+							config::CrosshairColor[bus] = (u8)(xhairColor[0] * 255.f)
+									| ((u8)(xhairColor[1] * 255.f) << 8)
+									| ((u8)(xhairColor[2] * 255.f) << 16)
+									| ((u8)(xhairColor[3] * 255.f) << 24);
+							if (config::CrosshairColor[bus] == 0)
+								config::CrosshairColor[bus] = 0xC0FFFFFF;
+						}
+						else
+						{
+							config::CrosshairColor[bus] = 0;
+						}
+						ImGui::PopID();
+					}
 					ImGui::PopItemWidth();
 				}
 				ImGui::Spacing();
 		    }
 		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Columns(4, "renderers", false);
+				ImGui::Columns(4, "physicalDevices", false);
 				ImGui::Text("System");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
@@ -1133,10 +1217,10 @@ static void gui_display_settings()
 						if (ImGui::Button("Edit"))
 						{
 							vjoy_start_editing();
-							gui_state = VJoyEdit;
+							gui_state = GuiState::VJoyEdit;
 						}
 						ImGui::SameLine();
-						ImGui::SliderInt("Haptic", &settings.input.VirtualGamepadVibration, 0, 60);
+						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
 #endif
 					ImGui::NextColumn();
@@ -1146,7 +1230,7 @@ static void gui_display_settings()
 	    	ImGui::Columns(1, NULL, false);
 
 	    	ImGui::Spacing();
-			ImGui::SliderInt("Mouse sensitivity", (int *)&settings.input.MouseSensitivity, 1, 500);
+	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1167,7 +1251,7 @@ static void gui_display_settings()
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	int renderer = (pvr_rend == RenderType::OpenGL_OIT || pvr_rend == RenderType::Vulkan_OIT) ? 2 : settings.rend.PerStripSorting ? 1 : 0;
+		    	int renderer = (pvr_rend == RenderType::OpenGL_OIT || pvr_rend == RenderType::Vulkan_OIT) ? 2 : config::PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -1191,14 +1275,14 @@ static void gui_display_settings()
 		    			pvr_rend = RenderType::OpenGL;	// regular Open GL
 		    		else
 		    			pvr_rend = RenderType::Vulkan;	// regular Vulkan
-		    		settings.rend.PerStripSorting = false;
+		    		config::PerStripSorting.set(false);
 		    		break;
 		    	case 1:
 		    		if (!vulkan)
 		    			pvr_rend = RenderType::OpenGL;
 		    		else
 		    			pvr_rend = RenderType::Vulkan;
-		    		settings.rend.PerStripSorting = true;
+		    		config::PerStripSorting.set(true);
 		    		break;
 		    	case 2:
 		    		if (!vulkan)
@@ -1210,40 +1294,34 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for most platforms");
-		    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Enable clipping. May produce graphical errors when disabled");
-		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Enable modifier volumes, usually used for shadows");
-		    	ImGui::Checkbox("Fog", &settings.rend.Fog);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Enable fog effects");
-		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
-		    	ImGui::Checkbox("Widescreen Game Cheats", &settings.rend.WidescreenGameHacks);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Show on-screen frame/sec counter");
-		    	ImGui::Checkbox("Show VMU In-game", &settings.rend.FloatVMUs);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Show the VMU LCD screens while in-game");
-		    	ImGui::Checkbox("Rotate Screen 90°", &settings.rend.Rotate90);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Rotate the screen 90° counterclockwise");
-		    	ImGui::Checkbox("Delay Frame Swapping", &settings.rend.DelayFrameSwapping);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-		    	ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
+		    	ImGui::Text("Automatic Frame Skipping:");
+		    	ImGui::Columns(3, "autoskip", false);
+		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
+		    	ImGui::Columns(1, nullptr, false);
+
+		    	OptionCheckbox("Clipping", config::Clipping,
+		    			"Enable clipping. May produce graphical errors when disabled");
+		    	OptionCheckbox("Shadows", config::ModifierVolumes,
+		    			"Enable modifier volumes, usually used for shadows");
+		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
+		    	OptionCheckbox("Widescreen", config::Widescreen,
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
+		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
+		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
+		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+#ifdef USE_VULKAN
+				ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES");
-		    	
+#endif
                 const std::map<int, const char*> scalings {
                 	{ 10, "0.1"}, { 20, "0.2" }, { 30, "0.3" }, { 40, "0.4" },
 					{ 50, "0.5" }, { 60, "0.6"  }, { 70, "0.7" }, { 80, "0.8" }, { 90, "0.9" },
@@ -1251,20 +1329,20 @@ static void gui_display_settings()
 					{ 400, "4.0 (4x SSAA)" }, { 600, "6.0 (6x SSAA)" }, { 800, "8.0 (8x SSAA)" }
                 };
                 
-                if (scalings.count(settings.rend.ScreenScaling) == 0)
-                    settings.rend.ScreenScaling = 100;
-                auto scalings_it = scalings.find(settings.rend.ScreenScaling);
+                if (scalings.count(config::ScreenScaling) == 0)
+                    config::ScreenScaling.set(100);
+                auto scalings_it = scalings.find(config::ScreenScaling);
 
                 ImGuiStyle& scaling_style = ImGui::GetStyle();
                 float scaling_spacing = scaling_style.ItemInnerSpacing.x;
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - scaling_spacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Scaling", scalings.at(settings.rend.ScreenScaling), ImGuiComboFlags_NoArrowButton))
+                if (ImGui::BeginCombo("##Scaling", scalings.at(config::ScreenScaling), ImGuiComboFlags_NoArrowButton))
                 {
                     for (const auto& kv : scalings)
                     {
-                        bool is_selected = (kv.first == settings.rend.ScreenScaling);
+                        bool is_selected = (kv.first == config::ScreenScaling);
                         if (ImGui::Selectable(kv.second, is_selected))
-                            settings.rend.ScreenScaling = kv.first;
+                            config::ScreenScaling.set(kv.first);
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
                     }
@@ -1276,13 +1354,13 @@ static void gui_display_settings()
                 if (ImGui::ArrowButton("##Decrease Scaling", ImGuiDir_Left))
                 {
                     if (scalings_it != scalings.begin())
-                        settings.rend.ScreenScaling = (--scalings_it)->first;
+                        config::ScreenScaling.set((--scalings_it)->first);
                 }
                 ImGui::SameLine(0, scaling_spacing);
                 if (ImGui::ArrowButton("##Increase Scaling", ImGuiDir_Right))
                 {
                     if (scalings_it != (--scalings.end()))
-                        settings.rend.ScreenScaling = (++scalings_it)->first;
+                        config::ScreenScaling.set((++scalings_it)->first);
                 }
                 ImGui::SameLine(0, scaling_style.ItemInnerSpacing.x);
                 
@@ -1290,36 +1368,28 @@ static void gui_display_settings()
                 ImGui::SameLine();
                 ShowHelpMarker("Downscaling/Upscaling factor relative to native screen resolution. Higher is better but more demanding");
 
-		    	ImGui::SliderInt("Horizontal Stretching", (int *)&settings.rend.ScreenStretching, 100, 150);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Stretch the screen horizontally");
-		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Number of frames to skip between two actually rendered frames");
+		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+		    			"Stretch the screen horizontally");
+		    	OptionSlider("Frame Skipping", config::SkipFrame, 0, 6,
+		    			"Number of frames to skip between two actually rendered frames");
 		    }
 		    if (ImGui::CollapsingHeader("Render to Texture", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Copy to VRAM", &settings.rend.RenderToTextureBuffer);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Copy rendered-to textures back to VRAM. Slower but accurate");
-		    	ImGui::SliderInt("Render to Texture Upscaling", (int *)&settings.rend.RenderToTextureUpscale, 1, 8);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Upscale rendered-to textures. Should be the same as the screen or window upscale ratio, or lower for slow platforms");
+		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
+		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
+		    	OptionSlider("Render to Texture Upscaling", config::RenderToTextureUpscale, 1, 8,
+		    			"Upscale rendered-to textures. Should be the same as the screen or window upscale ratio, or lower for slow platforms");
 		    }
 		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::SliderInt("Texture Upscaling", (int *)&settings.rend.TextureUpscale, 1, 8);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
-		    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Textures larger than this dimension squared will not be upscaled");
-		    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 1, 8);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
-		    	ImGui::Checkbox("Load Custom Textures", &settings.rend.CustomTextures);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Load custom/high-res textures from data/textures/<game id>");
+		    	OptionSlider("Texture Upscaling", config::TextureUpscale, 1, 8,
+		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
+		    	OptionSlider("Upscaled Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
+		    			"Textures larger than this dimension squared will not be upscaled");
+		    	OptionSlider("Max Threads", config::MaxThreads, 1, 8,
+		    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
+		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
+		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1327,28 +1397,24 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Audio"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
-            ImGui::SameLine();
-            ShowHelpMarker("Disable the emulator sound output");
-			ImGui::Checkbox("Enable DSP", &settings.aica.DSPEnabled);
-            ImGui::SameLine();
-            ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-            ImGui::Checkbox("Limit Emulator Speed", &settings.aica.LimitFPS);
-            ImGui::SameLine();
-			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Recommended");
-#if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(_WIN32)
-			int latency = (int)roundf(settings.aica.BufferSize * 1000.f / 44100.f);
+			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
+			OptionCheckbox("Enable DSP", config::DSPEnabled,
+					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+            OptionCheckbox("Limit Emulator Speed", config::LimitFPS,
+            		"Whether to limit the emulator speed using the audio output. Recommended");
+#if !defined(__ANDROID__) && !defined(_WIN32)
+			int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
 	    	ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
-	    	settings.aica.BufferSize = (int)roundf(latency * 44100.f / 1000.f);
+	    	config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
             ImGui::SameLine();
             ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
 #endif
 
 			audiobackend_t* backend = nullptr;
-			std::string backend_name = settings.audio.backend;
+			std::string backend_name = config::AudioBackend;
 			if (backend_name != "auto")
 			{
-				backend = GetAudioBackend(settings.audio.backend);
+				backend = GetAudioBackend(config::AudioBackend);
 				if (backend != NULL)
 					backend_name = backend->slug;
 			}
@@ -1356,20 +1422,20 @@ static void gui_display_settings()
 			audiobackend_t* current_backend = backend;
 			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
 			{
-				bool is_selected = (settings.audio.backend == "auto");
+				bool is_selected = (config::AudioBackend.get() == "auto");
 				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
-					settings.audio.backend = "auto";
+					config::AudioBackend.set("auto");
 
 				for (u32 i = 0; i < GetAudioBackendCount(); i++)
 				{
 					backend = GetAudioBackend(i);
-					is_selected = (settings.audio.backend == backend->slug);
+					is_selected = (config::AudioBackend.get() == backend->slug);
 
 					if (is_selected)
 						current_backend = backend;
 
 					if (ImGui::Selectable((backend->slug + " - " + backend->name).c_str(), &is_selected))
-						settings.audio.backend = backend->slug;
+						config::AudioBackend.set(backend->slug);
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -1384,47 +1450,36 @@ static void gui_display_settings()
 				int option_count;
 				audio_option_t* options = current_backend->get_options(&option_count);
 
-				// initialize options if not already done
-				std::map<std::string, std::string>* cfg_entries = &settings.audio.options[current_backend->slug];
-				bool populate_entries = (cfg_entries->size() == 0);
-
 				for (int o = 0; o < option_count; o++)
 				{
-					std::string value;
-					if (populate_entries)
-					{
-						value = cfgLoadStr(current_backend->slug.c_str(), options->cfg_name.c_str(), "");
-						(*cfg_entries)[options->cfg_name] = value;
-					}
-					value = (*cfg_entries)[options->cfg_name];
+					std::string value = cfgLoadStr(current_backend->slug, options->cfg_name, "");
 
 					if (options->type == integer)
 					{
 						int val = stoi(value);
-						ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value);
-						(*cfg_entries)[options->cfg_name] = std::to_string(val);
+						if (ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value))
+						{
+							std::string s = std::to_string(val);
+							cfgSaveStr(current_backend->slug, options->cfg_name, s);
+						}
 					}
 					else if (options->type == checkbox)
 					{
-						bool check = (value == "1");
-						ImGui::Checkbox(options->caption.c_str(), &check);
-						std::string cur = check ? "1" : "0";
-						(*cfg_entries)[options->cfg_name] = cur;
+						bool check = value == "1";
+						if (ImGui::Checkbox(options->caption.c_str(), &check))
+							cfgSaveStr(current_backend->slug, options->cfg_name,
+									check ? "1" : "0");
 					}
 					else if (options->type == ::list)
 					{
 						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 						{
 							bool is_selected = false;
-							std::vector<std::string> list_items = options->list_callback();
-							for (std::vector<std::string>::iterator it = list_items.begin() ; it != list_items.end(); ++it)
+							for (const auto& cur : options->list_callback())
 							{
-								std::string cur = (std::string)*it;
-								is_selected = (value == cur);
+								is_selected = value == cur;
 								if (ImGui::Selectable(cur.c_str(), &is_selected))
-								{
-									(*cfg_entries)[options->cfg_name] = cur;
-								}
+									cfgSaveStr(current_backend->slug, options->cfg_name, cur);
 
 								if (is_selected)
 									ImGui::SetItemDefaultFocus();
@@ -1451,63 +1506,55 @@ static void gui_display_settings()
 		    if (ImGui::CollapsingHeader("CPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Columns(2, "cpu_modes", false);
-				ImGui::RadioButton("Dynarec", &dynarec_enabled, 1);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Use the dynamic recompiler. Recommended in most cases");
+				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
+					"Use the dynamic recompiler. Recommended in most cases");
 				ImGui::NextColumn();
-				ImGui::RadioButton("Interpreter", &dynarec_enabled, 0);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Use the interpreter. Very slow but may help in case of a dynarec problem");
+				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
+					"Use the interpreter. Very slow but may help in case of a dynarec problem");
 				ImGui::Columns(1, NULL, false);
 		    }
-		    if (ImGui::CollapsingHeader("Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
+		    if (config::DynarecEnabled && ImGui::CollapsingHeader("Dynarec Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Do not optimize integer division. Not recommended");
+		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
+		    			"Do not optimize integer division. Not recommended");
 #if HOST_CPU == CPU_ARM
-		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Enable unsafe optimizations. Will cause crash or environmental disaster");
+		    	OptionCheckbox("Unstable Optimizations", config::DynarecUnstableOpt,
+		    			"Enable unsafe optimizations. Will cause crash or environmental disaster");
 #endif
-		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Skip wait loops. Recommended");
+		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
 			if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Enable", &settings.network.Enable);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable networking for supported Naomi games");
-		    	if (settings.network.Enable)
+		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
+		    			"Enable networking for supported Naomi games");
+		    	if (config::NetworkEnable)
 		    	{
-					ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
-					ImGui::SameLine();
-					ShowHelpMarker("Create a local server for Naomi network games");
-					char server_name[256];
-					strcpy(server_name, settings.network.server.c_str());
-					ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
-					settings.network.server = server_name;
+					OptionCheckbox("Act as Server", config::ActAsServer,
+							"Create a local server for Naomi network games");
+					if (!config::ActAsServer)
+					{
+						char server_name[256];
+						strcpy(server_name, config::NetworkServer.get().c_str());
+						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+						config::NetworkServer.set(server_name);
+					}
 		    	}
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Force high-level BIOS emulation");
-				ImGui::Checkbox("Force Windows CE", &settings.dreamcast.ForceWindowsCE);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
+		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
+	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 #ifndef __ANDROID
-				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Dump the Dreamcast serial console to stdout");
+	            OptionCheckbox("Serial Console", config::SerialConsole,
+	            		"Dump the Dreamcast serial console to stdout");
 #endif
-				ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Dump all textures into data/texdump/<game id>");
+	            OptionCheckbox("Dump Textures", config::DumpTextures,
+	            		"Dump all textures into data/texdump/<game id>");
 
 	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;
@@ -1589,7 +1636,7 @@ static void gui_display_settings()
 #endif
 						);
 		    }
-	    	if (settings.pvr.IsOpenGL())
+	    	if (config::RendererType.isOpenGL())
 	    	{
 				if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -1632,13 +1679,10 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-    if (vulkan != !settings.pvr.IsOpenGL())
+    if (vulkan != !config::RendererType.isOpenGL())
         pvr_rend = !vulkan ? RenderType::OpenGL
-        		: settings.pvr.rend == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
-    renderer_changed = (int)pvr_rend;
-   	settings.dynarec.Enable = (bool)dynarec_enabled;
-
-
+        		: config::RendererType == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
+    config::RendererType = pvr_rend;
 }
 
 void gui_display_notification(const char *msg, int duration)
@@ -1656,7 +1700,7 @@ static std::string get_notification()
 	return osd_message;
 }
 
-static void gui_display_demo()
+inline static void gui_display_demo()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -1674,13 +1718,14 @@ static void gui_display_content()
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 
 	ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 
-	if (settings.dojo.Enable && settings.dojo.Receiving)
+	if (config::DojoEnable && config::Receiving)
         ImGui::Text("RECEIVE");
 	else
 	{
@@ -1696,32 +1741,32 @@ static void gui_display_content()
 
 		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
-		if (last_item_current_idx == 3 && gui_state != Replays)
+		if (last_item_current_idx == 3 && gui_state != GuiState::Replays)
 		{
 			// set offline as default action
-			settings.dojo.Enable = false;
+			config::DojoEnable = false;
 		}
 
-		if (gui_state == Replays)
-			settings.dojo.Enable = true;
+		if (gui_state == GuiState::Replays)
+			config::DojoEnable = true;
 
 		if (item_current_idx == 1)
 		{
-			settings.dojo.Enable = true;
-			settings.dojo.ActAsServer = true;
-			settings.dojo.Receiving = false;
+			config::DojoEnable = true;
+			config::DojoActAsServer = true;
+			config::Receiving = false;
 		}
 		else if (item_current_idx == 2)
 		{
-			settings.dojo.Enable = true;
-			settings.dojo.ActAsServer = false;
-			settings.dojo.Receiving = false;
+			config::DojoEnable = true;
+			config::DojoActAsServer = false;
+			config::Receiving = false;
 
-			settings.dojo.ServerIP = "";
+			config::DojoServerIP = "";
 		}
 		else if (item_current_idx == 0)
 		{
-			settings.dojo.Enable = false;
+			config::DojoEnable = false;
 		}
 
 		if (item_current_idx != last_item_current_idx)
@@ -1733,11 +1778,11 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
-    if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
+    if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
-    else if (settings.dojo.Enable && (!settings.dojo.EnableLobby || settings.dojo.Receiving))
+    else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
-    else if (!settings.dojo.Enable)
+    else if (!config::DojoEnable)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
 
     static ImGuiTextFilter filter;
@@ -1746,24 +1791,25 @@ static void gui_display_content()
         ImGui::SameLine(0, 16 * scaling);
     	filter.Draw("Filter");
     }
-    if (gui_state != SelectDisk)
+    if (gui_state != GuiState::SelectDisk)
     {
-		if (settings.dojo.Enable && settings.dojo.EnableLobby && !settings.dojo.Receiving)
+		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
 			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
-				gui_state = Lobby;
+				gui_state = GuiState::Lobby;
 		}
 
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
-		if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
+		if (config::DojoEnable)
 		{
-			gui_state = Replays;
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
+				gui_state = GuiState::Replays;
 		}
 
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
-			gui_state = Settings;
+			gui_state = GuiState::Settings;
     }
     ImGui::PopStyleVar();
 
@@ -1777,7 +1823,7 @@ static void gui_display_content()
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 			gui_start_game("");
 		}
 
@@ -1788,7 +1834,7 @@ static void gui_display_content()
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
 			{
-				if (gui_state == SelectDisk)
+				if (gui_state == GuiState::SelectDisk)
 				{
 					std::string extension = get_file_extension(game.path);
 					if (extension != "gdi" && extension != "chd"
@@ -1801,20 +1847,23 @@ static void gui_display_content()
 					ImGui::PushID(game.path.c_str());
 					if (ImGui::Selectable(game.name.c_str()))
 					{
-						if (gui_state == SelectDisk)
+						if (gui_state == GuiState::SelectDisk)
 						{
 							strcpy(settings.imgread.ImagePath, game.path.c_str());
 							DiscSwap();
-							gui_state = Closed;
+							gui_state = GuiState::Closed;
 						}
 						else
 						{
+							 std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
-							gui_state = Closed;
-							if (settings.dojo.Enable && !settings.dojo.ActAsServer)
-								settings.aica.LimitFPS = false;
-							gui_start_game(game.path);
+							gui_state = GuiState::Closed;
+							if (config::DojoEnable && !config::DojoActAsServer)
+								config::LimitFPS = false;
+							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
+							ImGui::PopID();
+							break;
 						}
 					}
 
@@ -1934,7 +1983,7 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
 
-		if (settings.dojo.GameName.empty())
+		if (config::GameName.get().empty())
 		{
 			for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
 			{
@@ -1975,8 +2024,8 @@ static void gui_display_content()
 					{
 						if (ImGui::Selectable(game_name.data()))
 						{
-							if (std::find(settings.dreamcast.ContentPath.begin(), settings.dreamcast.ContentPath.end(), get_writable_config_path("")) == settings.dreamcast.ContentPath.end())
-								settings.dreamcast.ContentPath.push_back(get_writable_config_path(""));
+							if (std::find(config::ContentPath.get().begin(), config::ContentPath.get().end(), get_writable_config_path("")) == config::ContentPath.get().end())
+								config::ContentPath.get().push_back(get_writable_config_path(""));
 							ImGui::OpenPopup("Download");
 							dojo_file.entry_name = "flycast_" + short_game_name;
 							dojo_file.start_download = true;
@@ -2023,15 +2072,15 @@ static void gui_display_content()
 
 	ImGui::EndChild();
 
-	if (settings.dojo.Enable)
+	if (config::DojoEnable)
 	{
 		char PlayerName[256] = { 0 };
-		strcpy(PlayerName, settings.dojo.PlayerName.c_str());
+		strcpy(PlayerName, config::PlayerName.get().c_str());
 		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 		ImGui::SameLine();
 		ShowHelpMarker("Name visible to other players");
-		settings.dojo.PlayerName = std::string(PlayerName, strlen(PlayerName));
+		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 	}
 	else
 	{
@@ -2039,13 +2088,13 @@ static void gui_display_content()
 		int delay_max = 10;
 		ImGui::PushItemWidth(80);
 		int delay_one = 1;
-		ImGui::InputScalar("Offline Delay", ImGuiDataType_S8, &settings.dojo.Delay, &delay_one, NULL, "%d");
+		ImGui::InputScalar("Offline Delay", ImGuiDataType_S8, &config::Delay.get(), &delay_one, NULL, "%d");
 
-		if (settings.dojo.Delay < 0)
-			settings.dojo.Delay = 10;
+		if (config::Delay < 0)
+			config::Delay = 10;
 
-		if (settings.dojo.Delay > 10)
-			settings.dojo.Delay = 0;
+		if (config::Delay > 10)
+			config::Delay = 0;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
@@ -2063,6 +2112,7 @@ static void gui_display_content()
 
     ImGui::End();
     ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
 
 	error_popup();
     contentpath_warning_popup();
@@ -2070,9 +2120,9 @@ static void gui_display_content()
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-	if (!settings.dojo.GameName.empty() && !scanner.get_game_list().empty())
+	if (!config::GameName.get().empty() && !scanner.get_game_list().empty())
 	{
-		auto filename = settings.dojo.GameName;
+		auto filename = config::GameName;
 
 		auto game_found = std::find_if(
 			scanner.get_game_list().begin(),
@@ -2108,14 +2158,14 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 
 		if (cfgOpen())
 		{
-			LoadSettings(false);
+			config::Settings::instance().load(false);
 			// Make sure the renderer type doesn't change mid-flight
-			settings.pvr.rend = RenderType::OpenGL;
-			gui_state = Main;
-			if (settings.dreamcast.ContentPath.empty())
+			config::RendererType = RenderType::OpenGL;
+			gui_state = GuiState::Main;
+			if (config::ContentPath.get().empty())
 			{
 				scanner.stop();
-				settings.dreamcast.ContentPath.push_back(selection);
+				config::ContentPath.get().push_back(selection);
 			}
 			SaveSettings();
 		}
@@ -2139,7 +2189,7 @@ static std::future<bool> networkStatus;
 static void start_network()
 {
 	networkStatus = naomiNetwork.startNetworkAsync();
-	gui_state = NetworkStart;
+	gui_state = GuiState::NetworkStart;
 }
 
 static void gui_network_start()
@@ -2160,19 +2210,19 @@ static void gui_network_start()
 	{
 		if (networkStatus.get())
 		{
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 			ImGui::Text("STARTING...");
 		}
 		else
 		{
-			gui_state = Main;
+			gui_state = GuiState::Main;
 			settings.imgread.ImagePath[0] = '\0';
 		}
 	}
 	else
 	{
 		ImGui::Text("STARTING NETWORK...");
-		if (settings.network.ActAsServer)
+		if (config::ActAsServer)
 			ImGui::Text("Press Start to start the game now.");
 	}
 	ImGui::Text("%s", get_notification().c_str());
@@ -2184,7 +2234,7 @@ static void gui_network_start()
 	{
 		naomiNetwork.terminate();
 		networkStatus.get();
-		gui_state = Main;
+		gui_state = GuiState::Main;
 		settings.imgread.ImagePath[0] = '\0';
 	}
 	ImGui::PopStyleVar();
@@ -2219,46 +2269,45 @@ static void gui_display_loadscreen()
 			{
 				start_network();
 			}
-			else if (settings.dojo.Enable || dojo.PlayMatch)
+			else if (config::DojoEnable || dojo.PlayMatch)
 			{
 				dojo.StartDojoSession();
 
 				if (dojo.PlayMatch)
 				{
-					settings.dojo.Enable = true;
-
-					gui_state = Closed;
+					config::DojoEnable = true;
+					gui_state = GuiState::Closed;
 					ImGui::Text("LOADING REPLAY...");
 				}
-				else if (settings.dojo.Receiving)
+				else if (config::Receiving)
 				{
-					gui_state = Closed;
+					gui_state = GuiState::Closed;
 					ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
 				}
 				else
 				{
-					if (settings.dojo.ActAsServer)
+					if (config::DojoActAsServer)
 					{
 						dojo.host_status = 1;
-						dojo.remaining_spectators = settings.dojo.Transmitting ? 1 : 0;
+						dojo.remaining_spectators = config::Transmitting ? 1 : 0;
 						gui_open_host_wait();
 					}
 					else
 						gui_open_guest_wait();
 				}
 			}
-			else if (!settings.dojo.Enable && !dojo.PlayMatch)
+			else if (!config::DojoEnable && !dojo.PlayMatch)
 			{
-				dojo.delay = settings.dojo.Delay;
+				dojo.delay = config::Delay;
 				if (dojo.delay > 0)
 					dojo.FillDelay(dojo.delay);
 				dojo.LoadOfflineConfig();
-				gui_state = Closed;
+				gui_state = GuiState::Closed;
 				ImGui::Text("STARTING...");
 			}
 			else
 			{
-				gui_state = Closed;
+				gui_state = GuiState::Closed;
 				ImGui::Text("STARTING...");
 			}
 		} catch (const ReicastException& ex) {
@@ -2267,7 +2316,7 @@ static void gui_display_loadscreen()
 #ifdef TEST_AUTOMATION
 			die("Game load failed");
 #endif
-			gui_state = Main;
+			gui_state = GuiState::Main;
 			settings.imgread.ImagePath[0] = '\0';
 		}
 	}
@@ -2283,7 +2332,7 @@ static void gui_display_loadscreen()
 		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 		{
 			dc_cancel_load();
-			gui_state = Main;
+			gui_state = GuiState::Main;
 		}
 	}
 	ImGui::PopStyleVar();
@@ -2298,47 +2347,47 @@ void gui_display_ui()
 {
 	switch (gui_state)
 	{
-	case Lobby:
+	case GuiState::Lobby:
 		scanner.get_mutex().lock();
 		dojo_gui.gui_display_lobby(scaling, scanner.get_game_list());
 		scanner.get_mutex().unlock();
 		break;
-	case Replays:
+	case GuiState::Replays:
 		scanner.get_mutex().lock();
 		dojo_gui.gui_display_replays(scaling, scanner.get_game_list());
 		scanner.get_mutex().unlock();
 		break;
-	case ReplayPause:
+	case GuiState::ReplayPause:
 		dojo_gui.gui_display_paused(&settings_opening, scaling);
 		break;
-	case TestGame:
+	case GuiState::TestGame:
 		dojo_gui.gui_display_test_game(&settings_opening, scaling);
 		break;
-	case HostDelay:
+	case GuiState::HostDelay:
 		dojo_gui.gui_display_host_delay(&settings_opening, scaling);
 		break;
-	case HostWait:
+	case GuiState::HostWait:
 		dojo_gui.gui_display_host_wait(&settings_opening, scaling);
 		break;
-	case GuestWait:
+	case GuiState::GuestWait:
 		dojo_gui.gui_display_guest_wait(&settings_opening, scaling);
 		break;
-	case Disconnected:
+	case GuiState::Disconnected:
 		dojo_gui.gui_display_disconnected(&settings_opening, scaling);
 		break;
-	case EndReplay:
+	case GuiState::EndReplay:
 		dojo_gui.gui_display_end_replay(&settings_opening, scaling);
 		break;
-	case EndSpectate:
+	case GuiState::EndSpectate:
 		dojo_gui.gui_display_end_spectate(&settings_opening, scaling);
 		break;
-	case Settings:
+	case GuiState::Settings:
 		gui_display_settings();
 		break;
-	case Commands:
+	case GuiState::Commands:
 		gui_display_commands();
 		break;
-	case Main:
+	case GuiState::Main:
 		//gui_display_demo();
 		{
 			std::string game_file = settings.imgread.ImagePath;
@@ -2348,25 +2397,25 @@ void gui_display_ui()
 				gui_display_content();
 		}
 		break;
-	case Closed:
+	case GuiState::Closed:
 		break;
-	case Onboarding:
+	case GuiState::Onboarding:
 		gui_display_onboarding();
 		break;
-	case VJoyEdit:
+	case GuiState::VJoyEdit:
 		break;
-	case VJoyEditCommands:
+	case GuiState::VJoyEditCommands:
 #ifdef __ANDROID__
 		gui_display_vjoy_commands(screen_width, screen_height, scaling);
 #endif
 		break;
-	case SelectDisk:
+	case GuiState::SelectDisk:
 		gui_display_content();
 		break;
-	case Loading:
+	case GuiState::Loading:
 		gui_display_loadscreen();
 		break;
-	case NetworkStart:
+	case GuiState::NetworkStart:
 		gui_network_start();
 		break;
 	default:
@@ -2374,7 +2423,7 @@ void gui_display_ui()
 		break;
 	}
 
-	if (gui_state == Closed)
+	if (gui_state == GuiState::Closed)
 		dc_resume();
 }
 
@@ -2386,7 +2435,7 @@ extern bool fast_forward_mode;
 
 static std::string getFPSNotification()
 {
-	if (settings.rend.ShowFPS)
+	if (config::ShowFPS)
 	{
 		double now = os_GetSeconds();
 		if (now - LastFPSTime >= 1.0) {
@@ -2406,13 +2455,13 @@ static std::string getFPSNotification()
 
 void gui_display_osd()
 {
-	if (gui_state == VJoyEdit)
+	if (gui_state == GuiState::VJoyEdit)
 		return;
 	std::string message = get_notification();
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || settings.rend.FloatVMUs)
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded())
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2429,7 +2478,8 @@ void gui_display_osd()
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
 			ImGui::End();
 		}
-		if (settings.rend.FloatVMUs)
+		displayCrosshairs();
+		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
 
@@ -2443,14 +2493,14 @@ void gui_display_osd()
 	}
 	else
 	{
-		if (settings.dojo.Enable && settings.dojo.EnablePlayerNameOverlay)
+		if (config::DojoEnable && config::EnablePlayerNameOverlay)
 			dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
 	}
 }
 
 void gui_open_onboarding()
 {
-	gui_state = Onboarding;
+	gui_state = GuiState::Onboarding;
 }
 
 void gui_term()
@@ -2459,9 +2509,10 @@ void gui_term()
 	{
 		inited = false;
 		term_vmus();
-		if (settings.pvr.IsOpenGL())
+		if (config::RendererType.isOpenGL())
 			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
+	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	}
 }
 
@@ -2495,6 +2546,8 @@ bool vmu_lcd_status[8];
 bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
+static ImTextureID crosshairTexId;
+
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
 	int vmu_id = bus_id * 2 + bus_port;
@@ -2522,7 +2575,7 @@ static void display_vmus()
 {
 	if (!game_started)
 		return;
-	if (!settings.pvr.IsOpenGL())
+	if (!config::RendererType.isOpenGL())
 		return;
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -2536,7 +2589,7 @@ static void display_vmus()
 			continue;
 
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
 		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
 
 	    int x = vmu_coords[i][0];
@@ -2564,6 +2617,96 @@ static void display_vmus()
     ImGui::End();
 }
 
+static const int lightgunCrosshairData[16 * 16] =
+{
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+};
+
+const u32 *getCrosshairTextureData()
+{
+	return (u32 *)lightgunCrosshairData;
+}
+
+std::pair<float, float> getCrosshairPosition(int playerNum)
+{
+	float fx = mo_x_abs[playerNum];
+	float fy = mo_y_abs[playerNum];
+	int width = screen_width;
+	int height = screen_height;
+	if (config::Rotate90)
+	{
+		float t = fy;
+		fy = width - fx;
+		fx = t;
+		std::swap(width, height);
+	}
+	if ((float)width / height >= 640.f / 480.f)
+	{
+		float scale = 480.f / height;
+		fy /= scale;
+		scale *= config::ScreenStretching / 100.f;
+		fx = fx / scale + (width - 640.f / scale) / 2.f;
+	}
+	else
+	{
+		float scale = 640.f / width;
+		fx /= scale;
+		scale *= config::ScreenStretching / 100.f;
+		fy = fy / scale + (height - 480.f / scale) / 2.f;
+	}
+	return std::make_pair(fx, fy);
+}
+
+static void displayCrosshairs()
+{
+	if (!game_started)
+		return;
+	if (!config::RendererType.isOpenGL())
+		return;
+	if (!crosshairsNeeded())
+		return;
+
+	if (crosshairTexId == ImTextureID())
+		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+
+    ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
+    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
+	for (u32 i = 0; i < config::CrosshairColor.size(); i++)
+	{
+		if (config::CrosshairColor[i] == 0)
+			continue;
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
+			continue;
+
+		ImVec2 pos;
+		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
+		pos.x -= XHAIR_WIDTH / 2.f;
+		pos.y += XHAIR_WIDTH / 2.f;
+		ImVec2 pos_b(pos.x + XHAIR_WIDTH, pos.y - XHAIR_HEIGHT);
+
+		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
+	}
+	ImGui::End();
+}
+
 static void reset_vmus()
 {
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
@@ -2572,15 +2715,20 @@ static void reset_vmus()
 
 static void term_vmus()
 {
-	if (!settings.pvr.IsOpenGL())
+	if (!config::RendererType.isOpenGL())
 		return;
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 	{
-		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+		if (vmu_lcd_tex_ids[i] != ImTextureID())
 		{
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
-			vmu_lcd_tex_ids[i] = (ImTextureID)0;
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
+			vmu_lcd_tex_ids[i] = ImTextureID();
 		}
+	}
+	if (crosshairTexId != ImTextureID())
+	{
+		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
+		crosshairTexId = ImTextureID();
 	}
 }
 

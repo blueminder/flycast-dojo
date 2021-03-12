@@ -3,7 +3,7 @@ namespace fs = ghc::filesystem;
 
 void DojoGui::gui_open_host_delay(bool* settings_opening)
 {
-	gui_state = HostDelay;
+	gui_state = GuiState::HostDelay;
 	*settings_opening = true;
 }
 
@@ -14,7 +14,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!settings_opening && settings.pvr.IsOpenGL())
+	if (!settings_opening && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -24,12 +24,12 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 
 	ImGui::Text("Waiting for opponent to connect...");
 
-	if (settings.dojo.EnableMatchCode && !settings.dojo.MatchCode.empty())
+	if (config::EnableMatchCode && !config::MatchCode.get().empty())
 	{
-		ImGui::Text("Match Code: %s", settings.dojo.MatchCode.data());
+		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
 		if (ImGui::Button("Copy Match Code"))
 		{
-			SDL_SetClipboardText(settings.dojo.MatchCode.data());
+			SDL_SetClipboardText(config::MatchCode.get().data());
 		}
 	}
 
@@ -40,7 +40,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		ImGui::CloseCurrentPopup();
 
 		// Exit to main menu
-		gui_state = Main;
+		gui_state = GuiState::Main;
 		game_started = false;
 		settings.imgread.ImagePath[0] = '\0';
 		dc_reset(true);
@@ -52,11 +52,11 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		dojo.host_status = 2;
 		dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
 
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		gui_open_host_delay(settings_opening);
 	}
 
-	if (settings.dojo.Transmitting &&
+	if (config::Transmitting &&
 		dojo.remaining_spectators == 0)
 	{
 		dojo.StartTransmitterThread();
@@ -79,7 +79,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!(*settings_opening) && settings.pvr.IsOpenGL())
+	if (!(*settings_opening) && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -89,10 +89,10 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 
 	if (!dojo.client.name_acknowledged)
 	{
-		if (settings.dojo.EnableMatchCode)
+		if (config::EnableMatchCode)
 		{
-			if (!settings.dojo.MatchCode.empty())
-				dojo.MatchCode = settings.dojo.MatchCode;
+			if (!config::MatchCode.get().empty())
+				dojo.MatchCode = config::MatchCode;
 
 			if (dojo.MatchCode.empty())
 			{
@@ -124,7 +124,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 						ImGui::CloseCurrentPopup();
 
 						// Exit to main menu
-						gui_state = Main;
+						gui_state = GuiState::Main;
 						game_started = false;
 						settings.imgread.ImagePath[0] = '\0';
 						dc_reset(true);
@@ -136,7 +136,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 			}
 
 		}
-		else if (settings.dojo.ServerIP.empty())
+		else if (config::DojoServerIP.get().empty())
 		{
    			ImGui::OpenPopup("Connect to Host Server");
    			if (ImGui::BeginPopupModal("Connect to Host Server", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -151,12 +151,12 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 
    				if (ImGui::Button("Start Session"))
    				{
-					settings.dojo.ServerIP = std::string(si, strlen(si));
-					settings.dojo.ServerPort = std::string(sp, strlen(sp));
-					cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
-					cfgSaveStr("dojo", "ServerPort", settings.dojo.ServerPort.c_str());
+					config::DojoServerIP = std::string(si, strlen(si));
+					config::DojoServerPort = std::string(sp, strlen(sp));
+					cfgSaveStr("dojo", "ServerIP", config::DojoServerIP.get().c_str());
+					cfgSaveStr("dojo", "ServerPort", config::DojoServerPort.get().c_str());
 
-					dojo.client.SetHost(settings.dojo.ServerIP, atoi(settings.dojo.ServerPort.data()));
+					dojo.client.SetHost(config::DojoServerIP, atoi(config::DojoServerPort.get().data()));
 
    					ImGui::CloseCurrentPopup();
    				}
@@ -167,20 +167,20 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 					ImGui::CloseCurrentPopup();
 
 					// Exit to main menu
-					gui_state = Main;
+					gui_state = GuiState::Main;
 					game_started = false;
 					settings.imgread.ImagePath[0] = '\0';
 					dc_reset(true);
 
-					settings.dojo.ServerIP = "";
-					cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+					config::DojoServerIP = "";
+					cfgSaveStr("dojo", "ServerIP", config::DojoServerIP.get().c_str());
 				}
 
    				ImGui::EndPopup();
    			}
 		}
 
-		if (!settings.dojo.ServerIP.empty())
+		if (!config::DojoServerIP.get().empty())
 		{
 			ImGui::Text("Connecting to host...");
 
@@ -191,13 +191,13 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 				ImGui::CloseCurrentPopup();
 
 				// Exit to main menu
-				gui_state = Main;
+				gui_state = GuiState::Main;
 				game_started = false;
 				settings.imgread.ImagePath[0] = '\0';
 				dc_reset(true);
 
-				settings.dojo.ServerIP = "";
-				cfgSaveStr("dojo", "ServerIP", settings.dojo.ServerIP.c_str());
+				config::DojoServerIP = "";
+				cfgSaveStr("dojo", "ServerIP", config::DojoServerIP.data().c_str());
 			}
 			*/
 
@@ -211,7 +211,7 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 
 	if (dojo.session_started)
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		dojo.resume();
 	}
 
@@ -230,7 +230,7 @@ void DojoGui::gui_display_disconnected(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!(*settings_opening) && settings.pvr.IsOpenGL())
+	if (!(*settings_opening) && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -258,7 +258,7 @@ void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!(*settings_opening) && settings.pvr.IsOpenGL())
+	if (!(*settings_opening) && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -283,7 +283,7 @@ void DojoGui::gui_display_end_spectate(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!(*settings_opening) && settings.pvr.IsOpenGL())
+	if (!(*settings_opening) && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -310,7 +310,7 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
-	if (!(*settings_opening) && settings.pvr.IsOpenGL())
+	if (!(*settings_opening) && config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -318,9 +318,9 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 
 	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("%s vs %s", settings.dojo.PlayerName.c_str(), settings.dojo.OpponentName.c_str());
+	ImGui::Text("%s vs %s", config::PlayerName.get().c_str(), config::OpponentName.get().c_str());
 
-	ImGui::SliderInt("", (int*)&settings.dojo.Delay, 1, 10);
+	ImGui::SliderInt("", (int*)&config::Delay.get(), 1, 10);
 	ImGui::SameLine();
 	ImGui::Text("Set Delay");
 
@@ -338,12 +338,12 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 		dojo.PlayMatch = false;
 
 		dojo.isMatchStarted = true;
-		dojo.StartSession(settings.dojo.Delay,
-			settings.dojo.PacketsPerFrame,
-			settings.dojo.NumBackFrames);
+		dojo.StartSession(config::Delay.get(),
+			config::PacketsPerFrame,
+			config::NumBackFrames);
 		dojo.resume();
 
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 	}
 
 	SaveSettings();
@@ -371,12 +371,12 @@ void DojoGui::gui_display_test_game(bool* settings_opening, float scaling)
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Settings;
+		gui_state = GuiState::Settings;
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Start Game", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = Closed;
+		gui_state = GuiState::Closed;
 		gui_start_game(settings.imgread.ImagePath);
 	}
 
@@ -418,17 +418,17 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
 		if (game_started)
-    		gui_state = Commands;
+    		gui_state = GuiState::Commands;
     	else
-    		gui_state = Main;
+    		gui_state = GuiState::Main;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
 	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 	{
-		settings.dojo.ActAsServer = true;
-		cfgSaveBool("dojo", "ActAsServer", settings.dojo.ActAsServer);
-		gui_state = Main;
+		config::ActAsServer = true;
+		cfgSaveBool("dojo", "ActAsServer", config::ActAsServer);
+		gui_state = GuiState::Main;
 	}
 
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
@@ -492,13 +492,13 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			{
 				dojo.PlayMatch = false;
 
-				settings.dojo.ActAsServer = false;
-				settings.dojo.ServerIP = beacon_ip;
-				settings.dojo.ServerPort = beacon_server_port;
+				config::ActAsServer = false;
+				config::DojoServerIP = beacon_ip;
+				config::DojoServerPort = beacon_server_port;
 
 				SaveSettings();
 
-				gui_state = Closed;
+				gui_state = GuiState::Closed;
 				gui_start_game(beacon_game_path);
 			}
 
@@ -515,10 +515,10 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 					{
 						dojo.PlayMatch = false;
 
-						settings.dojo.Receiving = true;
+						config::Receiving = true;
 						dojo.receiving = true;
 
-						settings.dojo.ActAsServer = false;
+						config::ActAsServer = false;
 						dojo.hosting = false;
 
 						dojo.RequestSpectate(beacon_ip, beacon_server_port);
@@ -569,7 +569,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	{
 		if (ImGui::Button("Pause"))
 		{
-			gui_state = ReplayPause;
+			gui_state = GuiState::ReplayPause;
 			*settings_opening = true;
 		}
 	}
@@ -577,7 +577,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	{
 		if (ImGui::Button("Play"))
 		{
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 			*settings_opening = false;
 		}
 	}
@@ -597,13 +597,13 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
 
 	if (dojo.hosting)
 	{
-		player_1 = settings.dojo.PlayerName;
-		player_2 = settings.dojo.OpponentName;
+		player_1 = config::PlayerName;
+		player_2 = config::OpponentName;
 	}
 	else
 	{
-		player_1 = settings.dojo.OpponentName;
-		player_2 = settings.dojo.PlayerName;
+		player_1 = config::OpponentName;
+		player_2 = config::PlayerName;
 	}
 
 	std::string players = player_1 + " vs " + player_2;
@@ -634,20 +634,6 @@ void DojoGui::gui_display_paused(bool* settings_opening, float scaling)
     *settings_opening = true;
 }
 
-// Helper to display a little (?) mark which shows a tooltip when hovered.
-static void ShowHelpMarker(const char* desc)
-{
-    ImGui::TextDisabled("(?)");
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
-
 void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_list)
 {
 	ImGui_Impl_NewFrame();
@@ -662,16 +648,16 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
-		cfgSaveBool("dojo", "RecordMatches", settings.dojo.RecordMatches);
+		cfgSaveBool("dojo", "RecordMatches", config::RecordMatches);
 		if (game_started)
-			gui_state = Commands;
+			gui_state = GuiState::Commands;
 		else
-			gui_state = Main;
+			gui_state = GuiState::Main;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Record All Sessions").x - ImGui::GetStyle().FramePadding.x * 4.0f - ImGui::GetStyle().ItemSpacing.x * 4);
 
-	ImGui::Checkbox("Record All Sessions", &settings.dojo.RecordMatches);
+	OptionCheckbox("Record All Sessions", config::RecordMatches);
 	ImGui::SameLine();
 	ShowHelpMarker("Record all netplay sessions to a local file");
 
@@ -729,10 +715,10 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 			dojo.ReplayFilename = replay_path;
 			dojo.PlayMatch = true;
 
-			gui_state = Closed;
+			gui_state = GuiState::Closed;
 			//dojo.StartDojoSession();
 
-			settings.dojo.Enable = true;
+			config::DojoEnable = true;
 			gui_start_game(game_path);
 		}
 		ImGui::NextColumn();
@@ -756,104 +742,104 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	if (ImGui::BeginTabItem("Netplay"))
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		ImGui::Checkbox("Enable Netplay", &settings.dojo.Enable);
+		OptionCheckbox("Enable Netplay", config::DojoEnable);
 		ImGui::SameLine();
 		ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
-		if (settings.dojo.Enable)
+		if (config::DojoEnable)
 		{
 			char PlayerName[256] = { 0 };
-			strcpy(PlayerName, settings.dojo.PlayerName.c_str());
+			strcpy(PlayerName, config::PlayerName.get().c_str());
 			ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 			ImGui::SameLine();
 			ShowHelpMarker("Name visible to other players");
-			settings.dojo.PlayerName = std::string(PlayerName, strlen(PlayerName));
+			config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
 			std::string PortDescription = "The server port to listen on";
 
 			char ServerPort[256];
-			strcpy(ServerPort, settings.dojo.ServerPort.c_str());
+			strcpy(ServerPort, config::DojoServerPort.get().c_str());
 			ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 			ImGui::SameLine();
 			ShowHelpMarker(PortDescription.c_str());
-			settings.dojo.ServerPort = ServerPort;
+			config::DojoServerPort = ServerPort;
 
-			ImGui::Checkbox("Enable Player Name Overlay", &settings.dojo.EnablePlayerNameOverlay);
+			OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
 			ImGui::SameLine();
 			ShowHelpMarker("Enable overlay showing player names during netplay matches");
 
-			if (!settings.dojo.EnableLobby)
+			if (!config::EnableLobby)
 			{
 				if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::Checkbox("Enable Internet Matchmaking", &settings.dojo.EnableMatchCode);
+					OptionCheckbox("Enable Internet Matchmaking", config::EnableMatchCode);
 					ImGui::SameLine();
 					ShowHelpMarker("Enable Internet matchmaking. Establishes direct connection via public server relay.");
 
-					if (settings.dojo.EnableMatchCode)
+					if (config::EnableMatchCode)
 					{
 						char MatchmakingServerAddress[256];
 
-						strcpy(MatchmakingServerAddress, settings.dojo.MatchmakingServerAddress.c_str());
+						strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
 						ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						settings.dojo.MatchmakingServerAddress = MatchmakingServerAddress;
+						config::MatchmakingServerAddress = MatchmakingServerAddress;
 
 						char MatchmakingServerPort[256];
 
-						strcpy(MatchmakingServerPort, settings.dojo.MatchmakingServerPort.c_str());
+						strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
 						ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						settings.dojo.MatchmakingServerPort = MatchmakingServerPort;
+						config::MatchmakingServerPort = MatchmakingServerPort;
 					}
 				}
 			}
 
-			if (!settings.dojo.EnableMatchCode)
+			if (!config::EnableMatchCode)
 			{
 
 				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::Checkbox("Enable Lobby", &settings.dojo.EnableLobby);
+					OptionCheckbox("Enable Lobby", config::EnableLobby);
 					ImGui::SameLine();
 					ShowHelpMarker("Enable discovery and matchmaking on LAN");
 
-					if (settings.dojo.EnableLobby)
+					if (config::EnableLobby)
 					{
 						char LobbyMulticastAddress[256];
 
-						strcpy(LobbyMulticastAddress, settings.dojo.LobbyMulticastAddress.c_str());
+						strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
 						ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 						ImGui::SameLine();
 						ShowHelpMarker("Multicast IP Address for Lobby to Target");
-						settings.dojo.LobbyMulticastAddress = LobbyMulticastAddress;
+						config::LobbyMulticastAddress = LobbyMulticastAddress;
 
 						char LobbyMulticastPort[256];
 
-						strcpy(LobbyMulticastPort, settings.dojo.LobbyMulticastPort.c_str());
+						strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
 						ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 						ImGui::SameLine();
 						ShowHelpMarker("Multicast Port for Lobby to Target");
-						settings.dojo.LobbyMulticastPort = LobbyMulticastPort;
+						config::LobbyMulticastPort = LobbyMulticastPort;
 					}
 				}
 			}
 
 			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::SliderInt("Packets Per Frame", (int*)&settings.dojo.PacketsPerFrame, 1, 10);
+				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame, 1, 10);
 				ImGui::SameLine();
 				ShowHelpMarker("Number of packets to send per input frame.");
 
-				ImGui::Checkbox("Enable Backfill", &settings.dojo.EnableBackfill);
+				OptionCheckbox("Enable Backfill", config::EnableBackfill);
 				ImGui::SameLine();
 				ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
 
-				if (settings.dojo.EnableBackfill)
+				if (config::EnableBackfill)
 				{
-					ImGui::SliderInt("Number of Past Input Frames", (int*)&settings.dojo.NumBackFrames, 1, 40);
+					ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames, 1, 40);
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
 
-				ImGui::Checkbox("Enable Memory Restoration", &settings.dojo.EnableMemRestore);
+				OptionCheckbox("Enable Memory Restoration", config::EnableMemRestore);
 				ImGui::SameLine();
 				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
 			}

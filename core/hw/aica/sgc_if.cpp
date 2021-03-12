@@ -24,6 +24,8 @@
 #include "aica_mem.h"
 #include "dsp.h"
 #include "oslib/audiostream.h"
+#include "hw/gdrom/gdrom_if.h"
+#include "cfg/option.h"
 
 #include <algorithm>
 #include <cmath>
@@ -531,7 +533,7 @@ struct ChannelEx
 		Step(oLeft, oRight, oDsp);
 
 		*VolMix.DSPOut += oDsp;
-		if (oLeft + oRight == 0 && !settings.aica.DSPEnabled)
+		if (oLeft + oRight == 0 && !config::DSPEnabled)
 			oLeft = oRight = oDsp >> 4;
 
 		mixl+=oLeft;
@@ -1405,15 +1407,12 @@ void AICA_Sample32()
 		//Add CDDA / DSP effect(s)
 
 		//CDDA
-		if (settings.aica.CDDAMute==0) 
-		{
-			VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
-		}
+		VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+		VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
 		/*
 		no dsp for now -- needs special handling of oDSP for ch paraller version ...
-		if (settings.aica.DSPEnabled)
+		if (config::DSPEnabled)
 		{
 			dsp_step();
 
@@ -1459,7 +1458,7 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		if (!fast_forward_mode && !settings.aica.NoSound)
+		if (!fast_forward_mode && !config::DisableSound)
 			WriteSample(mixr,mixl);
 	}
 }
@@ -1489,20 +1488,13 @@ void AICA_Sample()
 	//Add CDDA / DSP effect(s)
 
 	//CDDA
-	if (settings.aica.CDDAMute==0) 
-	{
-		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+	VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+	VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
-		DSPData->EXTS[0] = EXTS0L;
-		DSPData->EXTS[1] = EXTS0R;
-	}
-	else
-	{
-		DSPData->EXTS[0] = 0;
-		DSPData->EXTS[1] = 0;
-	}
-	if (settings.aica.DSPEnabled)
+	DSPData->EXTS[0] = EXTS0L;
+	DSPData->EXTS[1] = EXTS0R;
+
+	if (config::DSPEnabled)
 	{
 		dsp_step();
 
@@ -1510,7 +1502,7 @@ void AICA_Sample()
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
-	if (fast_forward_mode || settings.aica.NoSound)
+	if (fast_forward_mode || config::DisableSound)
 		return;
 
 	//Mono !

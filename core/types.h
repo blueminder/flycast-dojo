@@ -137,61 +137,8 @@ enum HollyInterruptID
 };
 
 
-
-struct vram_block
-{
-	u32 start;
-	u32 end;
-	u32 len;
-	u32 type;
-
-	void* userdata;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//******************************************************
-//*********************** PowerVR **********************
-//******************************************************
-
-void libCore_vramlock_Unlock_block  (vram_block* block);
-vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
-
-
-
-//******************************************************
-//************************ GDRom ***********************
-//******************************************************
-enum DiscType
-{
-	CdDA=0x00,
-	CdRom=0x10,
-	CdRom_XA=0x20,
-	CdRom_Extra=0x30,
-	CdRom_CDI=0x40,
-	GdRom=0x80,
-
-	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
-	Open=0x2,			//tray is open :)
-	Busy=0x3			//busy -> needs to be automatically done by gdhost
-};
-
-enum DiskArea
-{
-	SingleDensity,
-	DoubleDensity
-};
-
-//******************************************************
-//************************ AICA ************************
-//******************************************************
-void libARM_InterruptChange(u32 bits,u32 L);
-void libCore_CDDA_Sector(s16* sector);
-
-
-//includes from CRT
-#include <cstdlib>
-#include <cstdio>
+#include "nowide/cstdlib.hpp"
+#include "nowide/cstdio.hpp"
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
@@ -357,6 +304,25 @@ enum class RenderType {
 	Vulkan_OIT = 5
 };
 
+enum class KeyboardLayout {
+	JP = 1,
+	US,
+	UK,
+	GE,
+	FR,
+	IT,
+	SP,
+	SW,
+	CH,
+	NL,
+	PT,
+	LATAM,
+	FR_CA,
+	RU,
+	CN,
+	KO
+};
+
 struct settings_t
 {
 	struct {
@@ -372,96 +338,15 @@ struct settings_t
 		u32 bbsram_size;
 	} platform;
 
-	struct {
-		bool UseReios;
-	} bios;
-
 	struct
 	{
-		bool UseMipmaps;
-		bool WideScreen;
-		bool ShowFPS;
-		bool RenderToTextureBuffer;
-		int RenderToTextureUpscale;
-		bool TranslucentPolygonDepthMask;
-		bool ModifierVolumes;
-		bool Clipping;
-		int TextureUpscale;
-		int MaxFilteredTextureSize;
-		f32 ExtraDepthScale;
-		bool CustomTextures;
-		bool DumpTextures;
-		int ScreenScaling;		// in percent. 50 means half the native resolution
-		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
-		bool Fog;
-		bool FloatVMUs;
-		bool Rotate90;			// Rotate the screen 90 deg CC
-		bool PerStripSorting;
-		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
-		bool WidescreenGameHacks;
-	} rend;
-
-	struct
-	{
-		bool Enable;
-		bool idleskip;
-		bool unstable_opt;
-		bool safemode;
 		bool disable_nvmem;
-		bool disable_vmem32;
 	} dynarec;
 
 	struct
 	{
-		u32 run_counts;
-	} profile;
-
-	struct
-	{
-		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
-		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
-		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-		std::vector<std::string> ContentPath;
-		bool FullMMU;
-		bool ForceWindowsCE;
-		bool HideLegacyNaomiRoms;
-	} dreamcast;
-
-	struct
-	{
-		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		bool LimitFPS;
-		u32 CDDAMute;
-		bool DSPEnabled;
 		bool NoBatch;
-		bool NoSound;
 	} aica;
-
-	struct{
-		std::string backend;
-
-		// slug<<key, value>>
-		std::map<std::string, std::map<std::string, std::string>> options;
-	} audio;
-
-
-#if USE_OMX
-	struct
-	{
-		u32 Audio_Latency;
-		bool Audio_HDMI;
-	} omx;
-#endif
-
-#if SUPPORT_DISPMANX
-	struct
-	{
-		u32 Width;
-		u32 Height;
-		bool Keep_Aspect;
-	} dispmanx;
-#endif
 
 	struct
 	{
@@ -469,75 +354,12 @@ struct settings_t
 		char ImagePath[512];
 	} imgread;
 
-	struct
-	{
-		u32 ta_skip;
-		RenderType rend;
-
-		u32 MaxThreads;
-		bool SynchronousRender;
-
-		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
-	} pvr;
-
 	struct {
-		bool SerialConsole;
-		bool SerialPTY;
-	} debug;
-
-	struct {
-		bool OpenGlChecks;
-	} validate;
-
-	struct {
-		u32 MouseSensitivity;
 		JVS JammaSetup;
-		int maple_devices[4];
-		int maple_expansion_devices[4][2];
-		int VirtualGamepadVibration;
+		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 	} input;
 
-	struct {
-		bool Enable;
-		bool ActAsServer;
-		std::string dns;
-		std::string server;
-	} network;
-
-	struct {
-		bool Enable;
-		bool ActAsServer;
-		bool Spectating;
-		bool Transmitting;
-		bool Receiving;
-		bool RecordMatches;
-		bool PlayMatch;
-		std::string ReplayFilename;
-		std::string ServerIP;
-		std::string ServerPort;
-		int Delay;
-		int Debug;
-		int PacketsPerFrame;
-		bool EnableBackfill;
-		int NumBackFrames;
-		bool EnableLobby;
-		std::string PlayerName;
-		std::string OpponentName;
-		bool TestGame;
-		std::string SpectatorIP;
-		std::string SpectatorPort;
-		std::string LobbyMulticastAddress;
-		std::string LobbyMulticastPort;
-		bool EnableMatchCode;
-		std::string MatchmakingServerAddress;
-		std::string MatchmakingServerPort;
-		std::string MatchCode;
-		std::string ProtoCall;
-		std::string GameName;
-		bool EnableMemRestore;
-		bool EnableOfflineReplay;
-		bool EnablePlayerNameOverlay;
-	} dojo;
+	bool gameStarted;
 };
 
 extern settings_t settings;
@@ -563,22 +385,6 @@ void libPvr_Reset(bool Manual);
 void libPvr_Term();
 
 void* libPvr_GetRenderTarget();
-
-//GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool hard);
-void libGDR_Term();
-
-void libCore_gdrom_disc_change();
-
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
-u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
-bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -668,4 +474,8 @@ enum serialize_version_enum {
 	V10 = 805,
 	V11 = 806,
 	V12 = 807,
+	V13 = 808,
+	V14 = 809,
+	V15 = 810,
+	VCUR_FLYCAST = V15,
 } ;

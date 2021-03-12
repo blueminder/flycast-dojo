@@ -15,13 +15,13 @@ void UDPClient::ConnectMMServer()
 {
 
 	struct hostent* mm_host;
-	mm_host = gethostbyname(settings.dojo.MatchmakingServerAddress.data());
+	mm_host = gethostbyname(config::MatchmakingServerAddress.get().data());
 
 	sockaddr_in mms_addr;
 	mms_addr.sin_family = AF_INET;
-	mms_addr.sin_port = htons((u16)std::stoul(settings.dojo.MatchmakingServerPort));
+	mms_addr.sin_port = htons((u16)std::stoul(config::MatchmakingServerPort));
 	memcpy(&mms_addr.sin_addr, mm_host->h_addr_list[0], mm_host->h_length);
-	//inet_pton(AF_INET, settings.dojo.MatchmakingServerAddress.data(), &mms_addr.sin_addr);
+	//inet_pton(AF_INET, config::MatchmakingServerAddress.data(), &mms_addr.sin_addr);
 
 	std::string mm_msg;
 	if (dojo.hosting)
@@ -160,7 +160,7 @@ void UDPClient::SendMsg(std::string msg, sockaddr_in target)
 
 void UDPClient::SendSpectate()
 {
-	SendMsg("SPECTATE " + settings.dojo.SpectatorPort, host_addr);
+	SendMsg("SPECTATE " + config::SpectatorPort.get(), host_addr);
 }
 
 void UDPClient::SendSpectateOK(sockaddr_in target_addr)
@@ -174,7 +174,7 @@ void UDPClient::StartSession()
 	start_ss << "START " << dojo.delay
 		<< " " << dojo.packets_per_frame
 		<< " " << dojo.num_back_frames
-		<< " " << settings.dojo.PlayerName;
+		<< " " << config::PlayerName.get();
 
 	std::string to_send_start = start_ss.str();
 
@@ -195,7 +195,7 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
-	SendMsg("NAME " + settings.dojo.PlayerName, host_addr);
+	SendMsg("NAME " + config::PlayerName.get(), host_addr);
 }
 
 void UDPClient::SendNameOK()
@@ -252,7 +252,7 @@ bool UDPClient::CreateLocalSocket(int port)
 
 bool UDPClient::Init(bool hosting)
 {
-	if (!settings.dojo.Enable)
+	if (!config::DojoEnable)
 		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -265,18 +265,18 @@ bool UDPClient::Init(bool hosting)
 
 	if (hosting)
 	{
-		return CreateLocalSocket(stoi(settings.dojo.ServerPort));
+		return CreateLocalSocket(stoi(config::DojoServerPort));
 	}
 	else
 	{
-		if (settings.dojo.EnableMatchCode)
+		if (config::EnableMatchCode)
 		{
-			settings.dojo.ServerIP = "";
+			config::DojoServerIP = "";
 		}
 		else
 		{
-			while (settings.dojo.ServerIP.empty());
-			SetHost(settings.dojo.ServerIP, atoi(settings.dojo.ServerPort.data()));
+			while (config::DojoServerIP.get().empty());
+			SetHost(config::DojoServerIP.get(), atoi(config::DojoServerPort.get().data()));
 		}
 		opponent_addr = host_addr;
 		return CreateLocalSocket(0);
@@ -300,9 +300,9 @@ void UDPClient::ClientLoop()
 					sendto(local_socket, (const char*)to_send, dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				}
 
-				if (settings.dojo.Debug == DEBUG_SEND ||
-					settings.dojo.Debug == DEBUG_SEND_RECV ||
-					settings.dojo.Debug == DEBUG_ALL)
+				if (config::Debug == DEBUG_SEND ||
+					config::Debug == DEBUG_SEND_RECV ||
+					config::Debug == DEBUG_ALL)
 				{
 					dojo.PrintFrameData("Sent", (u8*)to_send);
 				}
@@ -330,27 +330,27 @@ void UDPClient::ClientLoop()
 		{
 			if (memcmp("CODE", buffer, 4) == 0)
 			{
-				settings.dojo.MatchCode = std::string(buffer + 5, strlen(buffer + 5));
+				config::MatchCode = std::string(buffer + 5, strlen(buffer + 5));
 			}
 
 			if (memcmp("OPPADDR", buffer, 7) == 0)
 			{
-				if (settings.dojo.EnableMatchCode)
+				if (config::EnableMatchCode)
 				{
 					std::string data = std::string(buffer + 8, strlen(buffer + 5));
 					std::vector<std::string> opp = stringfix::split(":", data);
 
-					if (!settings.dojo.ActAsServer)
+					if (!config::DojoActAsServer)
 					{
-						settings.dojo.ServerIP = opp[0];
-						//settings.dojo.ServerPort = opp[1];
+						config::DojoServerIP = opp[0];
+						//config::DojoServerPort = opp[1];
 					}
 
 					opponent_addr.sin_family = AF_INET;
 					opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
 					inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
 
-					if (!settings.dojo.ActAsServer)
+					if (!config::DojoActAsServer)
 					{
 						host_addr.sin_port = htons((u16)std::stol(opp[1]));
 						inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
@@ -365,8 +365,8 @@ void UDPClient::ClientLoop()
 				if (dojo.remaining_spectators > 0)
 				{
 					int port = atoi(buffer + 9);
-					settings.dojo.SpectatorIP = std::string(inet_ntoa(sender.sin_addr));
-					settings.dojo.SpectatorPort = std::to_string(port);
+					config::SpectatorIP = std::string(inet_ntoa(sender.sin_addr));
+					config::SpectatorPort = std::to_string(port);
 					SendSpectateOK(sender);
 					dojo.remaining_spectators--;
 				}
@@ -374,7 +374,7 @@ void UDPClient::ClientLoop()
 
 			if (memcmp("NAME", buffer, 4) == 0)
 			{
-				settings.dojo.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+				config::OpponentName = std::string(buffer + 5, strlen(buffer + 5));
 
 				opponent_addr = sender;
 
@@ -452,7 +452,7 @@ void UDPClient::ClientLoop()
 				int nbf = atoi(tokens[2].data());
 				std::string op = tokens[3];
 
-				settings.dojo.OpponentName = op;
+				config::OpponentName = op;
 
 				if (!dojo.session_started)
 				{
@@ -493,7 +493,7 @@ void UDPClient::ClientLoop()
 		}
 	}
 
-	if (!settings.dojo.Receiving)
+	if (!config::Receiving)
 		SendDisconnect();
 }
 
@@ -503,9 +503,9 @@ void UDPClient::ClientThread()
 
 	// if match code enabled
 	// connect to matchmaking server
-	if (settings.dojo.EnableMatchCode)
+	if (config::EnableMatchCode)
 	{
-		if (!settings.dojo.ActAsServer)
+		if (!config::DojoActAsServer)
 			while (dojo.MatchCode.empty());
 		ConnectMMServer();
 	}

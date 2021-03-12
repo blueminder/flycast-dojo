@@ -18,6 +18,7 @@
  */
 #pragma once
 #include "types.h"
+#include "cfg/option.h"
 
 void gui_init();
 void gui_open_settings();
@@ -33,11 +34,12 @@ void gui_open_guest_wait();
 void gui_open_disconnected();
 
 extern int screen_dpi;
+extern float scaling;
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
 extern bool vmu_lcd_changed[8];
 
-typedef enum {
+enum class GuiState {
 	Closed,
 	Commands,
 	Settings,
@@ -58,19 +60,37 @@ typedef enum {
 	Disconnected,
 	EndReplay,
 	EndSpectate
-} GuiState;
+};
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();
 
 static inline bool gui_is_open()
 {
-	return gui_state != Closed && gui_state != VJoyEdit;
+	return gui_state != GuiState::Closed && gui_state != GuiState::VJoyEdit;
 }
 static inline bool gui_is_content_browser()
 {
-	return gui_state == Main;
+	return gui_state == GuiState::Main;
 }
 float gui_get_scaling();
 
 extern bool game_started;
 extern void gui_start_game(const std::string& path);
+
+#define XHAIR_WIDTH (40 * scaling)
+#define XHAIR_HEIGHT (40 * scaling)
+static inline bool crosshairsNeeded()
+{
+	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
+			&& config::CrosshairColor[3] == 0 && config::CrosshairColor[3] == 0)
+		return false;
+	if (settings.platform.system != DC_PLATFORM_DREAMCAST
+			&& settings.input.JammaSetup != JVS::LightGun
+			&& settings.input.JammaSetup != JVS::LightGunAsAnalog
+			&& settings.input.JammaSetup != JVS::Mazan)
+		// not a lightgun game
+		return false;
+	return true;
+}
+const u32 *getCrosshairTextureData();
+std::pair<float, float> getCrosshairPosition(int playerNum);

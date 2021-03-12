@@ -35,6 +35,14 @@
 class BaseDrawer
 {
 public:
+	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
+
+protected:
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
+	void SetBaseScissor();
+	void SetProvokingVertices();
+
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
 	{
 		if (scissor != currentScissor)
@@ -43,13 +51,6 @@ public:
 			currentScissor = scissor;
 		}
 	}
-	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
-
-protected:
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
-	void SetBaseScissor();
-	void SetProvokingVertices();
 
 	u32 align(vk::DeviceSize offset, u32 alignment)
 	{
@@ -76,7 +77,7 @@ protected:
 		u8* fog_density = (u8*)&FOG_DENSITY;
 		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 		s32 fog_den_exp = (s8)fog_density[0];
-		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * settings.rend.ExtraDepthScale;
+		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * config::ExtraDepthScale;
 
 		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -113,9 +114,9 @@ protected:
 	{
 		GetCurrentDescSet().Reset();
 		imageIndex = (imageIndex + 1) % GetSwapChainSize();
-		if (perStripSorting != settings.rend.PerStripSorting)
+		if (perStripSorting != config::PerStripSorting)
 		{
-			perStripSorting = settings.rend.PerStripSorting;
+			perStripSorting = config::PerStripSorting;
 			pipelineManager->Reset();
 		}
 		renderPass = 0;
@@ -193,14 +194,13 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	virtual void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.width, viewport.height));
+		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
 		NewImage();
 
 		return true;
@@ -213,14 +213,16 @@ protected:
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
 
-	vk::UniqueRenderPass renderPass;
+	vk::UniqueRenderPass renderPassLoad;
+	vk::UniqueRenderPass renderPassClear;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::Extent2D viewport;
 	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
-	int transitionsNeeded = 0;
+	std::vector<bool> transitionNeeded;
+	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
 };
 

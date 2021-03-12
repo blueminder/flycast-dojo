@@ -4,6 +4,7 @@
 #include "hw/pvr/spg.h"
 #include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "cfg/option.h"
 
 #include <zlib.h>
 #include "dojo/DojoSession.hpp"
@@ -23,14 +24,15 @@ const char* maple_ascii_stick_name = "ASCII STICK";
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
 //fill in the info
-void maple_device::Setup(u32 prt)
+void maple_device::Setup(u32 port, int playerNum)
 {
-	maple_port = prt;
-	bus_port = maple_GetPort(prt);
-	bus_id = maple_GetBusId(prt);
+	maple_port = port;
+	bus_port = maple_GetPort(port);
+	bus_id = maple_GetBusId(port);
 	logical_port[0] = 'A' + bus_id;
 	logical_port[1] = bus_port == 5 ? 'x' : '1' + bus_port;
 	logical_port[2] = 0;
+	player_num = playerNum == -1 ? bus_id : playerNum;
 }
 maple_device::~maple_device()
 {
@@ -136,7 +138,7 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (settings.dojo.Enable)
+				if (config::DojoEnable)
 				{
 
 					if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -345,15 +347,17 @@ struct maple_sega_vmu: maple_base
 		return (rv == Z_OK && dec_sz == sizeof(flash_data));
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size) override
+	virtual bool serialize(void **data, unsigned int *total_size) override
 	{
+		maple_base::serialize(data, total_size);
 		REICAST_SA(flash_data,128*1024);
 		REICAST_SA(lcd_data,192);
 		REICAST_SA(lcd_data_decoded,48*32);
 		return true ;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
+		maple_base::unserialize(data, total_size, version);
 		REICAST_USA(flash_data,128*1024);
 		REICAST_USA(lcd_data,192);
 		REICAST_USA(lcd_data_decoded,48*32);
@@ -370,17 +374,17 @@ struct maple_sega_vmu: maple_base
 		if (!file_exists(apath))
 			apath = get_writable_data_path(tempy);
 
-		file = fopen(apath.c_str(), "rb+");
+		file = nowide::fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
 			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = fopen(apath.c_str(), "wb");
+			file = nowide::fopen(apath.c_str(), "wb");
 			if (file) {
 				if (!init_emptyvmu())
 					WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 
-				fwrite(flash_data, sizeof(flash_data), 1, file);
-				fseek(file, 0, SEEK_SET);
+				std::fwrite(flash_data, sizeof(flash_data), 1, file);
+				std::fseek(file, 0, SEEK_SET);
 			}
 			else
 			{
@@ -389,7 +393,7 @@ struct maple_sega_vmu: maple_base
 		}
 
 		if (file != nullptr)
-			fread(flash_data, 1, sizeof(flash_data), file);
+			std::fread(flash_data, 1, sizeof(flash_data), file);
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
@@ -402,8 +406,8 @@ struct maple_sega_vmu: maple_base
 			{
 				if (file != nullptr)
 				{
-					fwrite(flash_data, sizeof(flash_data), 1, file);
-					fseek(file, 0, SEEK_SET);
+					std::fwrite(flash_data, sizeof(flash_data), 1, file);
+					std::fseek(file, 0, SEEK_SET);
 				}
 			}
 			else
@@ -415,7 +419,7 @@ struct maple_sega_vmu: maple_base
 	}
 	virtual ~maple_sega_vmu()
 	{
-		if (file) fclose(file);
+		if (file) std::fclose(file);
 	}
 	virtual u32 dma(u32 cmd) override
 	{
@@ -624,9 +628,9 @@ struct maple_sega_vmu: maple_base
 
 						if (file)
 						{
-							fseek(file,write_adr,SEEK_SET);
-							fwrite(&flash_data[write_adr],1,write_len,file);
-							fflush(file);
+							std::fseek(file,write_adr,SEEK_SET);
+							std::fwrite(&flash_data[write_adr],1,write_len,file);
+							std::fflush(file);
 						}
 						else
 						{
@@ -658,8 +662,8 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
-						return  MDRS_DeviceReply;//just ko
+
+						return  MDRS_DeviceReply;
 					}
 
 					case MFID_3_Clock:
@@ -736,18 +740,20 @@ struct maple_microphone: maple_base
 		return MDT_Microphone;
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size) override
+	virtual bool serialize(void **data, unsigned int *total_size) override
 	{
+		maple_base::serialize(data, total_size);
 		REICAST_S(gain);
 		REICAST_S(sampling);
 		REICAST_S(eight_khz);
 		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
 		return true;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
 		if (sampling)
 			StopAudioRecording();
+		maple_base::unserialize(data, total_size, version);
 		REICAST_US(gain);
 		REICAST_US(sampling);
 		REICAST_US(eight_khz);
@@ -908,15 +914,17 @@ struct maple_sega_purupuru : maple_base
 		return MDT_PurupuruPack;
 	}
 
-   virtual bool maple_serialize(void **data, unsigned int *total_size) override
+   virtual bool serialize(void **data, unsigned int *total_size) override
    {
+	  maple_base::serialize(data, total_size);
       REICAST_S(AST);
       REICAST_S(AST_ms);
       REICAST_S(VIBSET);
       return true ;
    }
-   virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+   virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
    {
+	  maple_base::unserialize(data, total_size, version);
       REICAST_US(AST);
       REICAST_US(AST_ms);
       REICAST_US(VIBSET);
@@ -1062,7 +1070,22 @@ struct maple_keyboard : maple_base
 
 			//struct data
 			//3*4
-			w32(0x80000502);	// US, 104 keys
+			w8((u8)settings.input.keyboardLangId);
+			switch (settings.input.keyboardLangId)
+			{
+			case KeyboardLayout::JP:
+				w8(2);	// 92 keys
+				break;
+			case KeyboardLayout::US:
+				w8(5);	// 104 keys
+				break;
+			default:
+				w8(6);	// 105 keys
+				break;
+			}
+			w8(0);
+			w8(0x80);	// keyboard-controlled LEDs
+
 			w32(0);
 			w32(0);
 			//1	area code
@@ -1116,19 +1139,19 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons = 0xFFFFFFFF;
+u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta;
-f32 mo_y_delta;
-f32 mo_wheel_delta;
+f32 mo_x_delta[4];
+f32 mo_y_delta[4];
+f32 mo_wheel_delta[4];
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs;
-s32 mo_y_abs;
+s32 mo_x_abs[4];
+s32 mo_y_abs[4];
 // previous mouse coordinates for relative motion
-s32 mo_x_prev = -1;
-s32 mo_y_prev = -1;
+s32 mo_x_prev[4] = { -1, -1, -1, -1 };
+s32 mo_y_prev[4] = { -1, -1, -1, -1 };
 // physical mouse coordinates (relative to window/screen)
 s32 mo_x_phy;
 s32 mo_y_phy;
@@ -1140,15 +1163,9 @@ struct maple_mouse : maple_base
 		return MDT_Mouse;
 	}
 
-	static u16 mo_cvt(f32 delta)
+	static u16 mo_cvt(int delta)
 	{
-		delta += 0x200;
-		if (delta <= 0)
-			delta = 0;
-		else if (delta > 0x3FF)
-			delta = 0x3FF;
-
-		return (u16)lroundf(delta);
+		return (u16)std::min(0x3FF, std::max(0, delta + 0x200));
 	}
 
 	virtual u32 dma(u32 cmd) override
@@ -1185,30 +1202,32 @@ struct maple_mouse : maple_base
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
-			w32(MFID_9_Mouse);
-			//struct data
-			//int32 buttons       ; digital buttons bitfield (little endian)
-			w32(mo_buttons);
-			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_x_delta));
-			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_y_delta));
-			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_wheel_delta));
-			//int16 axis4         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis5         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis6         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis7         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis8         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
+			{
+				u32 buttons;
+				int x, y, wheel;
+				config->GetMouseInput(buttons, x, y, wheel);
 
-			mo_x_delta=0;
-			mo_y_delta=0;
-			mo_wheel_delta = 0;
+				w32(MFID_9_Mouse);
+				//struct data
+				//int32 buttons       ; digital buttons bitfield (little endian)
+				w32(buttons);
+				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
+				w16(mo_cvt(x));
+				//int16 axis2         ; vertical movement (0-$3FF) (little endian)
+				w16(mo_cvt(y));
+				//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
+				w16(mo_cvt(wheel));
+				//int16 axis4         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis5         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis6         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis7         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis8         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+			}
 
 			return MDRS_DataTransfer;
 
@@ -1310,11 +1329,13 @@ struct maple_lightgun : maple_base
 	{
 		PlainJoystickState pjs;
 		config->GetInput(&pjs);
+		int x, y;
+		config->GetAbsCoordinates(x, y);
 
 		if ((pjs.kcode & DC_BTN_RELOAD) == 0)
 			read_lightgun_position(-1, -1);
 		else
-			read_lightgun_position(mo_x_abs, mo_y_abs);
+			read_lightgun_position(x, y);
 		return true;
 	}
 };
@@ -1385,4 +1406,61 @@ maple_device* maple_Create(MapleDeviceType type)
 	}
 
 	return rv;
+}
+
+void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
+{
+	if (mouseId == 0)
+	{
+		mo_x_phy = x;
+		mo_y_phy = y;
+	}
+
+	if (config::Rotate90)
+	{
+		int t = y;
+		y = x;
+		x = height - t;
+		std::swap(width, height);
+	}
+	float fx, fy;
+	if ((float)width / height >= 640.f / 480.f)
+	{
+		float scale = 480.f / height;
+		fy = y * scale;
+		scale /= config::ScreenStretching / 100.f;
+		fx = (x - (width - 640.f / scale) / 2.f) * scale;
+	}
+	else
+	{
+		float scale = 640.f / width;
+		fx = x * scale;
+		scale /= config::ScreenStretching / 100.f;
+		fy = (y - (height - 480.f / scale) / 2.f) * scale;
+	}
+	mo_x_abs[mouseId] = (int)std::round(fx);
+	mo_y_abs[mouseId] = (int)std::round(fy);
+
+	if (mo_x_prev[mouseId] != -1)
+	{
+		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
+		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
+	}
+	mo_x_prev[mouseId] = x;
+	mo_y_prev[mouseId] = y;
+}
+
+void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
+{
+	if (config::Rotate90)
+	{
+		std::swap(xrel, yrel);
+		xrel = -xrel;
+	}
+	float dx = (float)xrel * config::MouseSensitivity / 100.f;
+	float dy = (float)yrel * config::MouseSensitivity / 100.f;
+	mo_x_delta[mouseId] += dx;
+	mo_y_delta[mouseId] += dy;
+	mo_x_abs[mouseId] += (int)std::round(dx);
+	mo_y_abs[mouseId] += (int)std::round(dy);
 }

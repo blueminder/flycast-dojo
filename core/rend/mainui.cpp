@@ -23,27 +23,33 @@
 #include "gui.h"
 #include "oslib/oslib.h"
 #include "wsi/context.h"
+#include "cfg/option.h"
 
 bool mainui_enabled;
-int renderer_changed = -1;	// Signals the renderer thread to switch renderer
 u32 MainFrameCount;
+static bool forceReinit;
+
+void UpdateInputState();
 
 bool mainui_rend_frame()
 {
 	os_DoEvents();
 
-	if (gui_is_open() || gui_state == VJoyEdit)
+	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
 	{
 		gui_display_ui();
 		// TODO refactor android vjoy out of renderer
-		if (gui_state == VJoyEdit && renderer != NULL)
+		if (gui_state == GuiState::VJoyEdit && renderer != NULL)
 			renderer->DrawOSD(true);
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 	else
 	{
 		if (!rend_single_frame(mainui_enabled))
+		{
+			UpdateInputState();
 			return false;
+		}
 	}
 	MainFrameCount++;
 
@@ -63,14 +69,13 @@ void mainui_term()
 void mainui_loop()
 {
 	mainui_enabled = true;
-	renderer_changed = (int)settings.pvr.rend;
 	mainui_init();
 
 	while (mainui_enabled)
 	{
 		if (mainui_rend_frame())
 		{
-			if (settings.pvr.IsOpenGL())
+			if (config::RendererType.isOpenGL())
 				theGLContext.Swap();
 #ifdef USE_VULKAN
 			else
@@ -78,21 +83,16 @@ void mainui_loop()
 #endif
 		}
 
-		if (renderer_changed != (int)settings.pvr.rend)
+		if (config::RendererType.pendingChange() || forceReinit)
 		{
+			bool openGl = config::RendererType.isOpenGL();
 			mainui_term();
-			if (renderer_changed == -1
-					|| settings.pvr.IsOpenGL() != ((RenderType)renderer_changed == RenderType::OpenGL || (RenderType)renderer_changed == RenderType::OpenGL_OIT))
-			{
+			config::RendererType.commit();
+			if (openGl != config::RendererType.isOpenGL() || forceReinit)
 				// Switch between vulkan and opengl (or full reinit)
-				SwitchRenderApi(renderer_changed == -1 ? settings.pvr.rend : (RenderType)renderer_changed);
-			}
-			else
-			{
-				settings.pvr.rend = (RenderType)renderer_changed;
-			}
-			renderer_changed = (int)settings.pvr.rend;
+				SwitchRenderApi();
 			mainui_init();
+			forceReinit = false;
 		}
 	}
 
@@ -106,5 +106,5 @@ void mainui_stop()
 
 void mainui_reinit()
 {
-	renderer_changed = -1;
+	forceReinit = true;
 }

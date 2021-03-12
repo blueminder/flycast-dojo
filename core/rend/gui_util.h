@@ -22,6 +22,7 @@
 
 #include "types.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "vulkan/imgui_impl_vulkan.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "vulkan/vulkan_context.h"
@@ -34,23 +35,28 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_background = false)
 {
 #ifdef USE_VULKAN
-	if (!settings.pvr.IsOpenGL())
+	if (!config::RendererType.isOpenGL())
 	{
 		VulkanContext *context = VulkanContext::Instance();
-		bool rendering = context->IsRendering();
-		const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
-		if (!rendering)
-		{
-			context->NewFrame();
-			vmuCmdBuffers = context->PrepareVMUs();
-			context->BeginRenderPass();
-			context->PresentLastFrame();
-			context->DrawVMUs(gui_get_scaling());
+		if (!context->IsValid())
+			return;
+		try {
+			bool rendering = context->IsRendering();
+			const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
+			if (!rendering)
+			{
+				context->NewFrame();
+				vmuCmdBuffers = context->PrepareOverlay(true, false);
+				context->BeginRenderPass();
+				context->PresentLastFrame();
+				context->DrawOverlay(gui_get_scaling(), true, false);
+			}
+			// Record Imgui Draw Data and draw funcs into command buffer
+			ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
+			if (!rendering)
+				context->EndFrame(vmuCmdBuffers);
+		} catch (const InvalidVulkanContext& err) {
 		}
-		// Record Imgui Draw Data and draw funcs into command buffer
-		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
-		if (!rendering)
-			context->EndFrame(vmuCmdBuffers);
 	}
 	else
 #endif
@@ -60,3 +66,16 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 }
 
 void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button);
+
+IMGUI_API const ImWchar*    GetGlyphRangesChineseSimplifiedOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 7800 CJK Unified Ideographs from General Standard Chinese Characters
+IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 4700 CJK Unified Ideographs from Hong Kong's List of Graphemes of Commonly-Used Chinese Characters
+
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+void ShowHelpMarker(const char* desc);
+template<bool PerGameOption>
+bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help = nullptr);
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr);
+template<typename T>
+bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
+void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
+			const char *help = nullptr);

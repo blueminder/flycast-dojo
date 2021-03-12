@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 
 char* trim_ws(char* str)
 {
@@ -142,7 +143,7 @@ bool ParseCommandLine(int argc,char* argv[])
 
 			if (memcmp(*arg, "flycast-dojo://", strlen("flycast-dojo://")) == 0)
 			{
-				settings.dojo.ProtoCall = *arg;
+				//config::DojoProtoCall = *arg;
 			}
 			else if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0

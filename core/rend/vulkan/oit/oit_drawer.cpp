@@ -104,7 +104,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 template<bool Translucent>
 void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -354,6 +354,14 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+
+		if (initialPass && !pvrrc.isRTT && clearNeeded[GetCurrentImage()])
+		{
+			clearNeeded[GetCurrentImage()] = false;
+			SetScissor(cmdBuffer, viewport);
+			cmdBuffer.clearAttachments(vk::ClearAttachment(vk::ImageAspectFlagBits::eColor, 0, clear_colors[0]),
+					vk::ClearRect(viewport, 0, 1));
+		}
 		SetScissor(cmdBuffer, baseScissor);
 
 		if (!oitBuffers->isFirstFrameAfterInit())
@@ -448,9 +456,9 @@ void OITDrawer::MakeBuffers(int width, int height)
 
 void OITScreenDrawer::MakeFramebuffers()
 {
-	if (currentScreenScaling == settings.rend.ScreenScaling)
+	if (currentScreenScaling == config::ScreenScaling)
 		return;
-	currentScreenScaling = settings.rend.ScreenScaling;
+	currentScreenScaling = config::ScreenScaling;
 	viewport.offset.x = 0;
 	viewport.offset.y = 0;
 	viewport.extent = GetContext()->GetViewPort();
@@ -460,6 +468,8 @@ void OITScreenDrawer::MakeFramebuffers()
 	MakeBuffers(viewport.extent.width, viewport.extent.height);
 	framebuffers.clear();
 	finalColorAttachments.clear();
+	transitionNeeded.clear();
+	clearNeeded.clear();
 	while (finalColorAttachments.size() < GetContext()->GetSwapChainSize())
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
@@ -474,7 +484,8 @@ void OITScreenDrawer::MakeFramebuffers()
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
-		transitionsNeeded++;
+		transitionNeeded.push_back(true);
+		clearNeeded.push_back(true);
 	}
 }
 
@@ -498,12 +509,12 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		upscaledWidth *= settings.rend.RenderToTextureUpscale;
-		upscaledHeight *= settings.rend.RenderToTextureUpscale;
-		widthPow2 *= settings.rend.RenderToTextureUpscale;
-		heightPow2 *= settings.rend.RenderToTextureUpscale;
+		upscaledWidth *= config::RenderToTextureUpscale;
+		upscaledHeight *= config::RenderToTextureUpscale;
+		widthPow2 *= config::RenderToTextureUpscale;
+		heightPow2 *= config::RenderToTextureUpscale;
 	}
 
 	rttPipelineManager->CheckSettingsChange();
@@ -518,7 +529,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
 
-	if (!settings.rend.RenderToTextureBuffer)
+	if (!config::RenderToTextureBuffer)
 	{
 		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
 		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
@@ -622,7 +633,7 @@ void OITTextureDrawer::EndFrame()
 		// Happens for Virtua Tennis
 		clippedWidth = stride / 2;
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight,
 				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
@@ -647,7 +658,7 @@ void OITTextureDrawer::EndFrame()
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
 		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
@@ -664,8 +675,7 @@ void OITTextureDrawer::EndFrame()
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		if (texture->lock_block == NULL)
-			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
 	}
 	OITDrawer::EndFrame();
 }
@@ -676,11 +686,10 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	if (transitionsNeeded)
+	if (transitionNeeded[GetCurrentImage()])
 	{
-		for (size_t i = finalColorAttachments.size() - transitionsNeeded; i < finalColorAttachments.size(); i++)
-			setImageLayout(commandBuffer, finalColorAttachments[i]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
-		transitionsNeeded = 0;
+		setImageLayout(commandBuffer, finalColorAttachments[GetCurrentImage()]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionNeeded[GetCurrentImage()] = false;
 	}
 	matrices.CalcMatrices(&pvrrc);
 

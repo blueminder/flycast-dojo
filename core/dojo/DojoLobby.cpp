@@ -4,11 +4,11 @@ void DojoLobby::BeaconThread()
 {
 	try
 	{
-		dojo.presence.multicast_port = std::stoul(settings.dojo.LobbyMulticastPort);
+		dojo.presence.multicast_port = std::stoul(config::LobbyMulticastPort);
 
 		asio::io_context io_context;
 		Beacon b(io_context,
-			asio::ip::make_address(settings.dojo.LobbyMulticastAddress));
+			asio::ip::make_address(config::LobbyMulticastAddress));
 		io_context.run();
 	}
 	catch (...) {}
@@ -18,12 +18,12 @@ void DojoLobby::ListenerThread()
 {
 	try
 	{
-		dojo.presence.multicast_port = std::stoul(settings.dojo.LobbyMulticastPort);
+		dojo.presence.multicast_port = std::stoul(config::LobbyMulticastPort);
 
 		asio::io_context io_context;
 		Listener l(io_context,
 			asio::ip::make_address("0.0.0.0"),
-			asio::ip::make_address(settings.dojo.LobbyMulticastAddress));
+			asio::ip::make_address(config::LobbyMulticastAddress));
 
 		dojo.lobby_active = true;
 
@@ -64,10 +64,10 @@ std::string DojoLobby::ConstructMsg()
 	}
 
 	std::stringstream message_ss("");
-	message_ss << "2001_" << settings.dojo.ServerPort << "__" << status << "__" << current_game << "__" << settings.dojo.PlayerName;
+	message_ss << "2001_" << config::DojoServerPort.get() << "__" << status << "__" << current_game << "__" << config::PlayerName.get();
 	if (dojo.host_status == 2 || dojo.host_status == 3)
 	{
-		message_ss << " vs " << settings.dojo.OpponentName << "__";
+		message_ss << " vs " << config::OpponentName.get() << "__";
 	}
 	else
 	{

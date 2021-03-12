@@ -14,6 +14,8 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
+#include "hw/bba/bba.h"
+#include "cfg/option.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -109,20 +111,20 @@ void FixUpFlash()
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
 
 		// overwrite factory flash settings
-		if (settings.dreamcast.region <= 2)
+		if (config::Region <= 2)
 		{
-			sys_nvmem->data[0x1a002] = '0' + settings.dreamcast.region;
-			sys_nvmem->data[0x1a0a2] = '0' + settings.dreamcast.region;
+			sys_nvmem->data[0x1a002] = '0' + config::Region;
+			sys_nvmem->data[0x1a0a2] = '0' + config::Region;
 		}
-		if (settings.dreamcast.language <= 5)
+		if (config::Language <= 5)
 		{
-			sys_nvmem->data[0x1a003] = '0' + settings.dreamcast.language;
-			sys_nvmem->data[0x1a0a3] = '0' + settings.dreamcast.language;
+			sys_nvmem->data[0x1a003] = '0' + config::Language;
+			sys_nvmem->data[0x1a0a3] = '0' + config::Language;
 		}
-		if (settings.dreamcast.broadcast <= 3)
+		if (config::Broadcast <= 3)
 		{
-			sys_nvmem->data[0x1a004] = '0' + settings.dreamcast.broadcast;
-			sys_nvmem->data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+			sys_nvmem->data[0x1a004] = '0' + config::Broadcast;
+			sys_nvmem->data[0x1a0a4] = '0' + config::Broadcast;
 		}
 
 		// overwrite user settings
@@ -142,8 +144,8 @@ void FixUpFlash()
 		u32 now = GetRTC_now();
 		syscfg.time_lo = now & 0xffff;
 		syscfg.time_hi = now >> 16;
-		if (settings.dreamcast.language <= 5)
-			syscfg.lang = settings.dreamcast.language;
+		if (config::Language <= 5)
+			syscfg.lang = config::Language;
 
 		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
 			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
@@ -167,7 +169,7 @@ void FixUpFlash()
 static bool nvmem_load()
 {
 	bool rc;
-	if (settings.dojo.Enable)
+	if (config::DojoEnable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin.net", "nvram");
@@ -210,7 +212,7 @@ bool LoadRomFiles()
 void SaveRomFiles()
 {
 	// make no changes to netplay memory
-	if (!settings.dojo.Enable)
+	if (!config::DojoEnable)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
@@ -224,7 +226,7 @@ void SaveRomFiles()
 bool LoadHle()
 {
 	if (!nvmem_load())
-		WARN_LOG(FLASHROM, "No nvmem loaded\n");
+		WARN_LOG(FLASHROM, "No nvmem loaded");
 
 	reios_reset(sys_rom->data);
 
@@ -329,12 +331,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 			return (T)libExtDevice_ReadMem_A0_006(addr, sz);
-		else
-#if defined(ENABLE_MODEM)
+		else if (!config::EmulateBBA)
 			return (T)ModemReadMem_A0_006(addr, sz);
-#else
+		else
 			return (T)0;
-#endif
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -362,11 +362,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
+		else if (config::EmulateBBA)
+			return (T)bba_ReadMem(addr, sz);
 		else
-		{
-			INFO_LOG(MEMORY, "Read from BBA not implemented, addr=%x", addr);
-			return 0;
-		}
+			return (T)0;
 	}
 	INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;
@@ -423,10 +422,8 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 			libExtDevice_WriteMem_A0_006(addr, data, sz);
-#if defined(ENABLE_MODEM)
-		else
+		else if (!config::EmulateBBA)
 			ModemWriteMem_A0_006(addr, data, sz);
-#endif
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -453,8 +450,8 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			libExtDevice_WriteMem_A0_010(addr, data, sz);
-		else
-			INFO_LOG(COMMON, "Write to BBA not implemented, addr=%x, data=%x, size=%d", addr, data, sz);
+		else if (config::EmulateBBA)
+			bba_WriteMem(addr, data, sz);
 	}
 	else
 		INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);

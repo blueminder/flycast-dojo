@@ -174,7 +174,7 @@ void vramlock_list_add(vram_block* block)
  
 std::mutex vramlist_lock;
 
-vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
+void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
  
@@ -195,17 +195,21 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->end=end_offset64;
 	block->start=start_offset64;
 	block->len=end_offset64-start_offset64+1;
-	block->userdata=userdata;
+	block->userdata = texture;
 	block->type=64;
 
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
 
-		// This also protects vram if needed
-		vramlock_list_add(block);
+		if (texture->lock_block == nullptr)
+		{
+			// This also protects vram if needed
+			vramlock_list_add(block);
+			texture->lock_block = block;
+		}
+		else
+			free(block);
 	}
-
-	return block;
 }
 
 bool VramLockedWriteOffset(size_t offset)
@@ -217,7 +221,7 @@ bool VramLockedWriteOffset(size_t offset)
 	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<std::mutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lockguard(vramlist_lock);
 
 		for (auto& lock : list)
 		{
@@ -270,7 +274,7 @@ static inline int getThreadCount()
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	return std::min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)config::MaxThreads);
 }
 
 template<typename Func>
@@ -414,7 +418,7 @@ bool BaseTextureCacheData::Delete()
 		lock_block = nullptr;
 	}
 
-	delete[] custom_image_data;
+	free(custom_image_data);
 
 	return true;
 }
@@ -563,7 +567,7 @@ void BaseTextureCacheData::Update()
 			return;
 		}
 	}
-	if (settings.rend.CustomTextures)
+	if (config::CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
 
 	void *temp_tex_buffer = NULL;
@@ -575,9 +579,9 @@ void BaseTextureCacheData::Update()
 	PixelBuffer<u8> pb8;
 
 	// Figure out if we really need to use a 32-bit pixel buffer
-	bool textureUpscaling = settings.rend.TextureUpscale > 1
+	bool textureUpscaling = config::TextureUpscale > 1
 			// Don't process textures that are too big
-			&& (int)(w * h) <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			&& (int)(w * h) <= config::MaxFilteredTextureSize * config::MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
@@ -588,7 +592,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && !settings.rend.DumpTextures;
+	bool mipmapped = IsMipmapped() && !config::DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
@@ -636,15 +640,15 @@ void BaseTextureCacheData::Update()
 			if (textureUpscaling)
 			{
 				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+				tmp_buf.init(w * config::TextureUpscale, h * config::TextureUpscale);
 
 				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
 					// Alpha channel formats. Palettes with alpha are already handled
 					has_alpha = true;
-				UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
 				pb32.steal_data(tmp_buf);
-				upscaled_w *= settings.rend.TextureUpscale;
-				upscaled_h *= settings.rend.TextureUpscale;
+				upscaled_w *= config::TextureUpscale;
+				upscaled_h *= config::TextureUpscale;
 			}
 		}
 		temp_tex_buffer = pb32.data();
@@ -716,11 +720,10 @@ void BaseTextureCacheData::Update()
 	h = original_h;
 
 	//lock the texture to detect changes in it
-	if (lock_block == nullptr)
-		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+	libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
-	if (settings.rend.DumpTextures)
+	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
+	if (config::DumpTextures)
 	{
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
@@ -735,7 +738,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	{
 		tex_type = TextureType::_8888;
 		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
-		delete [] custom_image_data;
+		free(custom_image_data);
 		custom_image_data = NULL;
 	}
 }

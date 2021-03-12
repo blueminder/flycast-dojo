@@ -12,6 +12,7 @@
 
 void emu_dc_exit();
 void emu_dc_term();
+void emu_gui_open_settings();
 bool emu_renderer_enabled();
 int emu_single_frame(int w, int h);
 void emu_gles_init(int width, int height);
@@ -22,6 +23,6 @@ void emu_mouse_buttons(int button, bool pressed);
 void emu_set_mouse_position(int x, int y, int width, int height);
 
 bool emu_frame_pending();
-extern unsigned int mo_buttons;
-extern float mo_wheel_delta;
+extern unsigned int *pmo_buttons;
+extern float *pmo_wheel_delta;
 #endif
