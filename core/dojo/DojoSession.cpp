@@ -479,8 +479,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			if (!hosting && frame_timeout > delay)
 				client.request_repeat = true;
 
-			// give ~10 seconds for connection to continue
-			if (!config::Receiving && frame_timeout > 1200)
+			// give ~40 seconds for connection to continue
+			if (!config::Receiving && frame_timeout > 2400)
 				disconnect_toggle = true;
 
 			// give ~30 seconds for spectating connection to continue
