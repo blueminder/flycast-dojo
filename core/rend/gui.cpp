@@ -1858,8 +1858,6 @@ static void gui_display_content()
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
 							gui_state = GuiState::Closed;
-							if (config::DojoEnable && !config::DojoActAsServer)
-								config::LimitFPS = false;
 							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
 							ImGui::PopID();

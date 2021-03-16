@@ -824,7 +824,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame, 1, 10);
+				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
 				ImGui::SameLine();
 				ShowHelpMarker("Number of packets to send per input frame.");
 
@@ -834,7 +834,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 				if (config::EnableBackfill)
 				{
-					ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames, 1, 40);
+					ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames.get(), 1, 40);
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
