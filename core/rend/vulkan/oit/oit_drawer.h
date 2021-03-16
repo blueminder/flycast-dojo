@@ -57,7 +57,7 @@ protected:
 		else
 			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
 			{
-				descriptorSets.push_back(OITDescriptorSets());
+				descriptorSets.emplace_back();
 				descriptorSets.back().Init(samplerManager,
 						pipelineManager->GetPipelineLayout(),
 						pipelineManager->GetPerFrameDSLayout(),
@@ -121,10 +121,10 @@ protected:
 	std::vector<bool> clearNeeded;
 
 private:
-	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
+	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 			const PolyParam& poly, u32 first, u32 count);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-			const List<PolyParam>& polys, u32 first, u32 count);
+			const List<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
 	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
@@ -177,8 +177,8 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual void EndFrame() override
+	vk::CommandBuffer NewFrame() override;
+	void EndFrame() override
 	{
 		currentCommandBuffer.endRenderPass();
 		currentCommandBuffer.end();
@@ -200,8 +200,8 @@ public:
 	}
 
 protected:
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
 	void MakeFramebuffers();
@@ -235,12 +235,12 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual void EndFrame() override;
+	void EndFrame() override;
 
 protected:
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
+	vk::CommandBuffer NewFrame() override;
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
 	u32 textureAddr = 0;

@@ -57,7 +57,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			else
 				select_current_directory = home;
 		}
-#elif HOST_OS == OS_LINUX || defined(__APPLE__)
+#elif defined(__unix__) || defined(__APPLE__)
 		const char *home = nowide::getenv("HOME");
 		if (home != NULL)
 			select_current_directory = home;
@@ -134,7 +134,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				if (dir == NULL)
 				{
 					error_message = "Cannot read " + select_current_directory;
-					select_subfolders.push_back("..");
+					select_subfolders.emplace_back("..");
 				}
 				else
 				{
@@ -183,7 +183,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 					flycast::closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
-						select_subfolders.push_back("..");
+						select_subfolders.emplace_back("..");
 #endif
 				}
 			}

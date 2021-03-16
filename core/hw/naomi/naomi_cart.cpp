@@ -62,7 +62,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	std::string arch_name(filename);
 	std::string path = get_readonly_data_path(arch_name + ".zip");
-	if (!file_exists(path.c_str()))
+	if (!file_exists(path))
 		path = get_readonly_data_path(arch_name + ".7z");
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
@@ -443,7 +443,7 @@ void naomi_cart_LoadRom(const char* file)
 			u32 addr, sz;
 			if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
 			{
-				files.push_back(filename);
+				files.emplace_back(filename);
 				fstart.push_back(addr);
 				fsize.push_back(sz);
 				romSize = std::max(romSize, (addr + sz));
@@ -465,7 +465,7 @@ void naomi_cart_LoadRom(const char* file)
 		std::fseek(fp, 0, SEEK_END);
 		u32 file_size = (u32)std::ftell(fp);
 		std::fclose(fp);
-		files.push_back(file);
+		files.emplace_back(file);
 		fstart.push_back(0);
 		fsize.push_back(file_size);
 		romSize = file_size;

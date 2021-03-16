@@ -27,7 +27,7 @@ namespace config {
 
 class BaseOption {
 public:
-	virtual ~BaseOption() {}
+	virtual ~BaseOption() = default;
 	virtual void save() const = 0;
 	virtual void load() = 0;
 	virtual void reset() = 0;
@@ -110,12 +110,12 @@ public:
 		settings.options.push_back(this);
 	}
 
-	virtual void reset() override {
+	void reset() override {
 		set(defaultValue);
 		overridden = false;
 	}
 
-	virtual void load() override {
+	void load() override {
 		if (PerGameOption && settings.hasPerGameConfig())
 			set(doLoad(settings.getGameId(), section + "." + name));
 		else
@@ -126,7 +126,7 @@ public:
 		}
 	}
 
-	virtual void save() const override
+	void save() const override
 	{
 		if (overridden) {
 			if (value == overriddenDefault)
@@ -320,14 +320,14 @@ public:
 	}
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
-	virtual void load() override {
+	void load() override {
 		RenderType current = value;
 		Option<RenderType>::load();
 		newValue = value;
 		value = current;
 	}
 
-	virtual void reset() override {
+	void reset() override {
 		RenderType current = value;
 		Option<RenderType>::reset();
 		newValue = value;
@@ -390,6 +390,15 @@ extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<bool> EmulateBBA;
 
+#ifdef SUPPORT_DISPMANX
+extern Option<bool> DispmanxMaintainAspect;
+#endif
+
+#ifdef USE_OMX
+extern Option<int> OmxAudioLatency;
+extern Option<bool> OmxAudioHdmi;
+#endif
+
 // Dojo
 
 extern Option<bool> DojoEnable;
@@ -422,15 +431,6 @@ extern OptionString GameName;
 extern Option<bool> EnableMemRestore;
 extern OptionString DojoProtoCall;
 extern Option<bool> EnablePlayerNameOverlay;
-
-#ifdef SUPPORT_DISPMANX
-extern Option<bool> DispmanxMaintainAspect;
-#endif
-
-#ifdef USE_OMX
-extern Option<int> OmxAudioLatency;
-extern Option<bool> OmxAudioHdmi;
-#endif
 
 // Maple
 

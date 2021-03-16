@@ -24,7 +24,7 @@
 u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
-#elif HOST_OS == OS_LINUX
+#elif defined(__unix__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));
@@ -405,7 +405,6 @@ static void recSh4_Reset(bool hard)
 {
 	Sh4_int_Reset(hard);
 	recSh4_ClearCache();
-	bm_Reset();
 }
 
 static void recSh4_Init()
@@ -464,18 +463,18 @@ static bool recSh4_IsCpuRunning()
 	return Sh4_int_IsCpuRunning();
 }
 
-void Get_Sh4Recompiler(sh4_if* rv)
+void Get_Sh4Recompiler(sh4_if* cpu)
 {
-	rv->Run = recSh4_Run;
-	rv->Stop = recSh4_Stop;
-	rv->Start = recSh4_Start;
-	rv->Step = recSh4_Step;
-	rv->Skip = recSh4_Skip;
-	rv->Reset = recSh4_Reset;
-	rv->Init = recSh4_Init;
-	rv->Term = recSh4_Term;
-	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	rv->ResetCache = recSh4_ClearCache;
+	cpu->Run = recSh4_Run;
+	cpu->Stop = recSh4_Stop;
+	cpu->Start = recSh4_Start;
+	cpu->Step = recSh4_Step;
+	cpu->Skip = recSh4_Skip;
+	cpu->Reset = recSh4_Reset;
+	cpu->Init = recSh4_Init;
+	cpu->Term = recSh4_Term;
+	cpu->IsCpuRunning = recSh4_IsCpuRunning;
+	cpu->ResetCache = recSh4_ClearCache;
 }
 
 #endif  // FEAT_SHREC != DYNAREC_NONE

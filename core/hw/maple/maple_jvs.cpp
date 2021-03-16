@@ -285,7 +285,7 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
 };
 
@@ -327,7 +327,7 @@ public:
 		output_count = 8;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
 
 };
 
@@ -345,7 +345,7 @@ public:
 		output_count = 22;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07"; }
 
 };
 
@@ -379,7 +379,7 @@ public:
 	{
 	}
 protected:
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_837_13844::read_digital_in(v);
 
@@ -404,7 +404,7 @@ protected:
 			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
-	virtual void write_digital_out(int count, u8 *data) override {
+	void write_digital_out(int count, u8 *data) override {
 		if (count != 3)
 			return;
 
@@ -454,7 +454,7 @@ public:
 		light_gun_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
+	const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
 };
 
 // Mazan
@@ -473,9 +473,9 @@ public:
 		encoder_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
+	const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
 		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
@@ -501,7 +501,7 @@ public:
 		encoder_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
+	const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
 };
 
 // World Kicks
@@ -518,9 +518,9 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_io_board::read_digital_in(v);
 				// main button
@@ -547,7 +547,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:
@@ -597,9 +597,9 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_io_board::read_digital_in(v);
 		for (u32 player = 0; player < player_count; player++)
@@ -627,7 +627,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:

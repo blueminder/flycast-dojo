@@ -167,7 +167,7 @@ private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
-	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
+	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
 
@@ -194,7 +194,7 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
@@ -207,8 +207,8 @@ public:
 	}
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual size_t GetSwapChainSize() override { return 2; }
+	vk::CommandBuffer BeginRenderPass() override;
+	size_t GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
@@ -230,10 +230,10 @@ class TextureDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
+	vk::CommandBuffer BeginRenderPass() override;
 
 private:
 	u32 width = 0;

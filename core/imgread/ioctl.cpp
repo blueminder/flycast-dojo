@@ -3,7 +3,7 @@
 #ifdef _WIN32
 #include "common.h"
 
-#include <stddef.h>
+#include <cstddef>
 #include <windows.h>
 
 #include <ntddscsi.h>
@@ -86,7 +86,7 @@ struct spti_s
 	BYTE  senseBuf[0x12];
 } ;
 
-ULONG msf2fad( UCHAR Addr[4] )
+ULONG msf2fad(const UCHAR Addr[4])
 {
 	ULONG Sectors = ( Addr[0] * (CD_BLOCKS_PER_SECOND*60) ) + ( Addr[1]*CD_BLOCKS_PER_SECOND) + Addr[2];
 	return Sectors;
@@ -185,7 +185,7 @@ struct PhysicalTrack:TrackFile
 	PhysicalDrive* disc;
 	PhysicalTrack(PhysicalDrive* disc) { this->disc=disc; }
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type);
+	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override;
 };
 
 struct PhysicalDrive:Disc

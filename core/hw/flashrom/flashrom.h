@@ -146,13 +146,13 @@ struct SRamChip : MemChip
 		}
 	}
 
-	virtual bool Serialize(void **data, unsigned int *total_size) override
+	bool Serialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 
-	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	bool Unserialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
@@ -255,7 +255,7 @@ struct DCFlashChip : MemChip
 	};
 
 	FlashState state;
-	virtual void Reset() override
+	void Reset() override
 	{
 		//reset the flash chip state
 		state = FS_Normal;
@@ -627,7 +627,7 @@ private:
 		return num_physical_blocks(size) - num_bitmap_blocks(size) - 1;
 	}
 
-	inline int is_allocated(u8 *bitmap, u32 phys_id)
+	inline int is_allocated(const u8 *bitmap, u32 phys_id)
 	{
 		int index = (phys_id - 1) % FLASH_BITMAP_BLOCKS;
 		return (bitmap[index / 8] & (0x80 >> (index % 8))) == 0x0;
@@ -750,14 +750,14 @@ private:
 		return result;
 	}
 
-	virtual bool Serialize(void **data, unsigned int *total_size) override
+	bool Serialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_S(state);
 		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 
-	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	bool Unserialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_US(state);
 		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);

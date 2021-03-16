@@ -46,7 +46,7 @@
 #include "dojo/DojoFile.hpp"
 
 extern void UpdateInputState();
-bool game_started;
+static bool game_started;
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -692,7 +692,7 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PopStyleVar(2);
 }
 
-static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
+static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
@@ -1621,7 +1621,7 @@ static void gui_display_settings()
 		    	ImGui::Text("Operating System: %s",
 #ifdef __ANDROID__
 					"Android"
-#elif HOST_OS == OS_LINUX
+#elif defined(__unix__)
 					"Linux"
 #elif defined(__APPLE__)
 #ifdef TARGET_IPHONE

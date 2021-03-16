@@ -15,7 +15,7 @@
 #include "hw/sh4/sh4_sched.h"
 
 
-#if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
+#if defined(__unix__) && defined(DYNA_OPROF)
 #include <opagent.h>
 op_agent_t          oprofHandle;
 #endif
@@ -234,7 +234,6 @@ void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 
 void bm_Reset()
 {
-	bm_ResetCache();
 	bm_CleanupDeletedBlocks();
 	protected_blocks = 0;
 	unprotected_blocks = 0;
@@ -507,12 +506,12 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 	}
 }
 
-void RuntimeBlockInfo::AddRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
 { 
 	pre_refs.push_back(other); 
 }
 
-void RuntimeBlockInfo::RemRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
 {
 	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())
@@ -651,7 +650,7 @@ void print_blocks()
 	if (print_stats)
 	{
 		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
-		print_stats=0;
+		print_stats=false;
 
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}

@@ -498,7 +498,7 @@ static int get_game_platform(const char *path)
 		return DC_PLATFORM_DREAMCAST;
 
 	std::string extension = get_file_extension(path);
-	if (extension == "")
+	if (extension.empty())
 		return DC_PLATFORM_DREAMCAST;	// unknown
 	if (extension == "zip" || extension == "7z")
 		return naomi_cart_GetPlatform(path);
@@ -691,16 +691,10 @@ void dc_exit()
 		gui_state != GuiState::Settings &&
 		gui_state != GuiState::Onboarding &&
 		!dojo.PlayMatch)
-	{
 		dojo.disconnect_toggle = true;
-	}
 	else
-	{
 		dc_stop();
 		mainui_stop();
-	}
-}
-
 void LoadGameSpecificSettings()
 {
 	char *reios_id;
