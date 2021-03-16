@@ -691,10 +691,16 @@ void dc_exit()
 		gui_state != GuiState::Settings &&
 		gui_state != GuiState::Onboarding &&
 		!dojo.PlayMatch)
+	{
 		dojo.disconnect_toggle = true;
+	}
 	else
+	{
 		dc_stop();
 		mainui_stop();
+	}
+}
+
 void LoadGameSpecificSettings()
 {
 	char *reios_id;

@@ -46,7 +46,7 @@
 #include "dojo/DojoFile.hpp"
 
 extern void UpdateInputState();
-static bool game_started;
+bool game_started;
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -1800,12 +1800,9 @@ static void gui_display_content()
 				gui_state = GuiState::Lobby;
 		}
 
-		if (config::DojoEnable)
-		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
-			if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
-				gui_state = GuiState::Replays;
-		}
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
+		if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
+			gui_state = GuiState::Replays;
 
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
