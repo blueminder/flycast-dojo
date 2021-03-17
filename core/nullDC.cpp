@@ -593,6 +593,13 @@ static void dc_start_game(const char* path)
 	fast_forward_mode = false;
 	EventManager::event(Event::Start);
 	settings.gameStarted = true;
+
+	if (config::DojoEnable)
+	{
+		std::string net_save_path = get_savestate_file_path(false);
+		net_save_path.append(".net");
+		dc_loadstate(net_save_path);
+	}
 }
 
 bool dc_is_running()
@@ -783,6 +790,11 @@ static std::string get_savestate_file_path(bool writable)
 
 void dc_savestate()
 {
+	dc_savestate(get_savestate_file_path(true));
+}
+
+void dc_savestate(std::string filename)
+{
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 
@@ -813,7 +825,6 @@ void dc_savestate()
     	return;
 	}
 
-	std::string filename = get_savestate_file_path(true);
 #if 0
 	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
 
@@ -854,12 +865,16 @@ void dc_savestate()
 
 void dc_loadstate()
 {
+	dc_loadstate(get_savestate_file_path(false));
+}
+
+void dc_loadstate(std::string filename)
+{
 	u32 total_size = 0;
 	FILE *f = nullptr;
 
 	dc_stop();
 
-	std::string filename = get_savestate_file_path(false);
 	RZipFile zipFile;
 	if (zipFile.Open(filename, false))
 	{
