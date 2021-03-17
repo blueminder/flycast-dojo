@@ -594,7 +594,7 @@ static void dc_start_game(const char* path)
 	EventManager::event(Event::Start);
 	settings.gameStarted = true;
 
-	if (config::DojoEnable)
+	if (config::DojoEnable || dojo.PlayMatch)
 	{
 		std::string net_save_path = get_savestate_file_path(false);
 		net_save_path.append(".net");
