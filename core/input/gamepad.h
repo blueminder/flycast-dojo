@@ -48,6 +48,7 @@ enum DreamcastKey
 	EMU_BTN_ANA_LEFT		= 1 << 23,
 	EMU_BTN_ANA_RIGHT		= 1 << 24,
 	EMU_BTN_ESCAPE			= 1 << 25,
+	EMU_BTN_JUMP_STATE		= 1 << 26,
 
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,

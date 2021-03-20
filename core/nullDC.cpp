@@ -377,6 +377,7 @@ void dc_reset(bool hard)
 }
 
 static bool reset_requested;
+static bool jump_state_requested;
 
 int reicast_init(int argc, char* argv[])
 {
@@ -633,6 +634,12 @@ void* dc_run(void*)
    			dc_reset(false);
 	} while (reset_requested);
 
+	do {
+		jump_state_requested = false;
+		sh4_cpu.Run();
+		jump_state();
+	} while (jump_state_requested);
+
     TermAudio();
 
     return NULL;
@@ -765,7 +772,7 @@ static void cleanup_serialize(void *data)
 		free(data) ;
 }
 
-static std::string get_savestate_file_path(bool writable)
+std::string get_savestate_file_path(bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -861,6 +868,27 @@ void dc_savestate(std::string filename)
 	cleanup_serialize(data) ;
 	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
 	gui_display_notification("State saved", 1000);
+}
+
+void invoke_jump_state()
+{
+	jump_state_requested = true;
+	sh4_cpu.Stop();
+}
+
+void jump_state()
+{
+	if (config::DojoEnable)
+	{
+		std::string net_save_path = get_savestate_file_path(false);
+		net_save_path.append(".net");
+		dc_loadstate(net_save_path);
+	}
+	else
+	{
+		dc_loadstate();
+	}
+	dc_resume();
 }
 
 void dc_loadstate()

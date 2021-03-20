@@ -48,6 +48,7 @@ button_list[] =
 	{ EMU_BTN_ESCAPE, "emulator", "btn_escape" },
 	{ EMU_BTN_MENU, "emulator", "btn_menu" },
 	{ EMU_BTN_FFORWARD, "emulator", "btn_fforward" },
+	{ EMU_BTN_JUMP_STATE, "emulator", "btn_jump_state" },
 	{ EMU_BTN_TRIGGER_LEFT, "compat", "btn_trigger_left" },
 	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" },
 	{ EMU_BTN_ANA_UP, "compat", "btn_analog_up" },
