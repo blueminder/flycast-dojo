@@ -27,6 +27,7 @@
 #include "dojo/AsyncTcpServer.hpp"
 
 #include "dojo/deps/StringFix/StringFix.h"
+#include "dojo/deps/filesystem.hpp"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -204,6 +205,7 @@ public:
 
 	u16 ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port);
 
+	std::string net_save_path;
 	bool jump_state_requested;
 };
 
