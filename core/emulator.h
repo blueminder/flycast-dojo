@@ -51,7 +51,7 @@ bool dc_is_running();
 extern std::string get_savestate_file_path(bool writable);
 
 void jump_state();
-extern void invoke_jump_state();
+extern void invoke_jump_state(bool dojo_invoke);
 
 enum class Event {
 	Start,

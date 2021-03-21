@@ -127,7 +127,8 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				if (pressed && !loading_state)
 				{
 					loading_state = true;
-					invoke_jump_state();
+					bool dojo_invoke = config::DojoEnable.get();
+					invoke_jump_state(dojo_invoke);
 					loading_state = false;
 				}
 				break;

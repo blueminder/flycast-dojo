@@ -870,10 +870,15 @@ void dc_savestate(std::string filename)
 	gui_display_notification("State saved", 1000);
 }
 
-void invoke_jump_state()
+void invoke_jump_state(bool dojo_invoke)
 {
-	jump_state_requested = true;
-	sh4_cpu.Stop();
+	if (dojo_invoke)
+		dojo.jump_state_requested = true;
+	else
+	{
+		jump_state_requested = true;
+		sh4_cpu.Stop();
+	}
 }
 
 void jump_state()

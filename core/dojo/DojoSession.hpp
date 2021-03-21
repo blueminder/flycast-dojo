@@ -203,6 +203,8 @@ public:
 	std::string MatchCode;
 
 	u16 ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port);
+
+	bool jump_state_requested;
 };
 
 extern DojoSession dojo;
