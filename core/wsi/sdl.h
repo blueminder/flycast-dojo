@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "types.h"
 #ifndef GLES
 #include <GL4/gl3w.h>
@@ -40,7 +40,6 @@ public:
 	bool Init();
 	void Term();
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 	void SetWindow(SDL_Window *window) { this->window = window; }
 
 private:

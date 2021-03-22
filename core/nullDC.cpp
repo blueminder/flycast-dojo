@@ -40,8 +40,6 @@
 #include "dojo/deps/filesystem.hpp"
 #include "archive/rzip.h"
 
-extern bool fast_forward_mode;
-
 settings_t settings;
 
 cThread emu_thread(&dc_run, NULL);
@@ -591,7 +589,7 @@ static void dc_start_game(const char* path)
 		gui_display_notification("Widescreen cheat activated", 1000);
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
 	}
-	fast_forward_mode = false;
+	settings.input.fastForwardMode = false;
 	EventManager::event(Event::Start);
 	settings.gameStarted = true;
 
@@ -761,6 +759,23 @@ void dc_resume()
 {
 	SetMemoryHandlers();
 	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
+	int hres;
+	int vres = config::RenderResolution;
+	if (config::Widescreen && !config::Rotate90)
+	{
+		hres = config::RenderResolution * 16 / 9;
+	}
+	else if (config::Rotate90)
+	{
+		vres = vres * config::ScreenStretching / 100;
+		hres = config::RenderResolution * 4 / 3;
+	}
+	else
+	{
+		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
+	}
+	renderer->Resize(hres, vres);
+
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();
