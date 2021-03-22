@@ -69,6 +69,7 @@ void DojoSession::Init()
 
 	MatchCode = "";
 	SkipFrame = 746;
+
 	if (!net_inputs[0].empty())
 	{
 		net_inputs[0].clear();
@@ -415,7 +416,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 		if (!spectating && !dojo.PlayMatch)
 		{
-			if (FrameNumber == SkipFrame &&
+			if (settings.platform.system == DC_PLATFORM_NAOMI &&
+				FrameNumber == SkipFrame &&
 				!ghc::filesystem::exists(net_save_path))
 			{
 				dc_savestate(net_save_path);
@@ -424,8 +426,13 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 				CaptureAndSendLocalFrame(pjs);
-			else
-				CaptureAndSendLocalFrame(buttons);
+			else if (settings.platform.system == DC_PLATFORM_NAOMI)
+			{
+				if (FrameNumber > SkipFrame)
+					CaptureAndSendLocalFrame(buttons);
+				else
+					CaptureAndSendLocalFrame((u16)0);
+			}
 		}
 	}
 
