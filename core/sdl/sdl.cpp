@@ -66,7 +66,7 @@ static void captureMouse(bool capture)
 	if (!capture)
 	{
 		SDL_SetRelativeMouseMode(SDL_FALSE);
-		SDL_SetWindowTitle(window, "Flycast");
+		SDL_SetWindowTitle(window, "Flycast Dojo");
 		mouseCaptured = false;
 	}
 	else if (SDL_SetRelativeMouseMode(SDL_TRUE) == 0)
@@ -83,7 +83,7 @@ static void emuEventCallback(Event event)
 	case Event::Pause:
 		gameRunning = false;
 		SDL_SetRelativeMouseMode(SDL_FALSE);
-		SDL_SetWindowTitle(window, "Flycast");
+		SDL_SetWindowTitle(window, "Flycast Dojo");
 		break;
 	case Event::Resume:
 		gameRunning = true;

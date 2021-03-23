@@ -593,7 +593,11 @@ static void dc_start_game(const char* path)
 	EventManager::event(Event::Start);
 	settings.gameStarted = true;
 
-	if (config::DojoEnable || dojo.PlayMatch)
+	// replays start from boot
+	// vs starts from state.net if it exists locally
+
+	//if (config::DojoEnable || dojo.PlayMatch)
+	if (config::DojoEnable)
 	{
 		std::string net_save_path = get_savestate_file_path(false);
 		net_save_path.append(".net");

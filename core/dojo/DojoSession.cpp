@@ -269,13 +269,38 @@ void DojoSession::FillDelay(int fill_delay)
 			net_input_keys[j].insert(new_index);
 
 			if (config::RecordMatches && !dojo.PlayMatch)
-				AppendToReplayFile(new_frame);
+			{
+				if (FrameNumber >= SkipFrame ||
+					settings.platform.system != DC_PLATFORM_NAOMI)
+				{
+					AppendToReplayFile(new_frame);
+				}
+			}
 
 			if (transmitter_started)
 				dojo.transmission_frames.push_back(new_frame);
 		}
 	}
 
+}
+
+void DojoSession::FillSkippedFrames(u32 end_frame)
+{
+	u32 start_frame = net_inputs[0].size() - 1;
+
+	for (int j = 0; j < MaxPlayers; j++)
+	{
+		for (int i = start_frame; i < end_frame; i++)
+		{
+			std::string new_frame = CreateFrame(i, j, delay, 0);
+			int new_index = GetEffectiveFrameNumber((u8*)new_frame.data());
+			net_inputs[j][new_index] = new_frame;
+			net_input_keys[j].insert(new_index);
+
+			if (transmitter_started)
+				dojo.transmission_frames.push_back(new_frame);
+		}
+	}
 }
 
 void DojoSession::StartTransmitterThread()
@@ -428,7 +453,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 				CaptureAndSendLocalFrame(pjs);
 			else if (settings.platform.system == DC_PLATFORM_NAOMI)
 			{
-				if (FrameNumber > SkipFrame)
+				if (FrameNumber >= SkipFrame)
 					CaptureAndSendLocalFrame(buttons);
 				else
 					CaptureAndSendLocalFrame((u16)0);
@@ -516,7 +541,13 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	std::string to_apply(this_frame);
 
 	if (config::RecordMatches && !dojo.PlayMatch)
-		AppendToReplayFile(this_frame);
+	{
+		if (GetEffectiveFrameNumber((u8*)this_frame.data()) >= SkipFrame ||
+			settings.platform.system != DC_PLATFORM_NAOMI)
+		{
+			AppendToReplayFile(this_frame);
+		}
+	}
 
 	if (transmitter_started)
 		dojo.transmission_frames.push_back(this_frame);
@@ -633,6 +664,15 @@ void DojoSession::LoadReplayFile(std::string path)
 
 		int player_num = GetPlayer((u8*)buffer);
 		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
+
+		if (count == FRAME_SIZE &&
+			settings.platform.system == DC_PLATFORM_NAOMI &&
+			frame_num == SkipFrame &&
+			ghc::filesystem::exists(net_save_path))
+		{
+			FillSkippedFrames(SkipFrame);
+			last_consecutive_common_frame = SkipFrame - 1;
+		}
 
 		if (net_inputs[player_num].count(frame_num) == 0)
 		{

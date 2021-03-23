@@ -207,6 +207,8 @@ public:
 
 	std::string net_save_path;
 	bool jump_state_requested;
+
+	void FillSkippedFrames(u32 end_frame);
 };
 
 extern DojoSession dojo;
