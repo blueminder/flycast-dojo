@@ -593,16 +593,20 @@ static void dc_start_game(const char* path)
 	EventManager::event(Event::Start);
 	settings.gameStarted = true;
 
+	/*
+
 	// replays start from boot
 	// vs starts from state.net if it exists locally
 
-	//if (config::DojoEnable || dojo.PlayMatch)
-	if (config::DojoEnable)
+	if (config::DojoEnable || dojo.PlayMatch)
 	{
 		std::string net_save_path = get_savestate_file_path(false);
 		net_save_path.append(".net");
-		dc_loadstate(net_save_path);
+		if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
+			dc_loadstate(net_save_path);
 	}
+
+	*/
 }
 
 bool dc_is_running()

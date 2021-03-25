@@ -418,6 +418,17 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
+
+	if (FrameNumber == 3)
+	{
+		std::string net_save_path = get_savestate_file_path(false);
+		net_save_path.append(".net");
+		if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
+		{
+			jump_state_requested = true;
+		}
+	}
+
 	if (config::Receiving &&
 		receiver_ended &&
 		disconnect_toggle)

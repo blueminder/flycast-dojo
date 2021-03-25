@@ -206,6 +206,7 @@ public:
 	u16 ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port);
 
 	std::string net_save_path;
+	bool net_save_present;
 	bool jump_state_requested;
 
 	void FillSkippedFrames(u32 end_frame);

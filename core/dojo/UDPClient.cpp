@@ -174,7 +174,8 @@ void UDPClient::StartSession()
 	start_ss << "START " << dojo.delay
 		<< " " << dojo.packets_per_frame
 		<< " " << dojo.num_back_frames
-		<< " " << config::PlayerName.get();
+		<< " " << config::PlayerName.get()
+		<< " " << ghc::filesystem::exists(dojo.net_save_path) ? 1 : 0;
 
 	std::string to_send_start = start_ss.str();
 
@@ -195,7 +196,8 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
-	SendMsg("NAME " + config::PlayerName.get(), host_addr);
+	int net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
+	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(net_save_exists), host_addr);
 }
 
 void UDPClient::SendNameOK()
@@ -376,6 +378,18 @@ void UDPClient::ClientLoop()
 			{
 				config::OpponentName = std::string(buffer + 5, strlen(buffer + 5));
 
+				std::string buffer_str(buffer + 5, strlen(buffer + 5));
+				auto tokens = stringfix::split(" ", buffer_str);
+
+				config::OpponentName = tokens[0];
+				dojo.net_save_present = (bool)atoi(tokens[1].data());
+
+				std::string net_save_path = get_savestate_file_path(false);
+				net_save_path.append(".net");
+
+				if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
+					dojo.jump_state_requested = true;
+
 				opponent_addr = sender;
 
 				// prepare for delay selection
@@ -451,6 +465,7 @@ void UDPClient::ClientLoop()
 				int ppf = atoi(tokens[1].data());
 				int nbf = atoi(tokens[2].data());
 				std::string op = tokens[3];
+				dojo.net_save_present = (bool)atoi(tokens[4].data());
 
 				config::OpponentName = op;
 
