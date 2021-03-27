@@ -52,6 +52,8 @@ public:
 	std::string current_checksum;
 	bool current_json_match = true;
 	bool current_json_found = false;
+
+	bool hide_playback_menu = false;
 };
 
 extern DojoGui dojo_gui;

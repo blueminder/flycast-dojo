@@ -550,6 +550,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
 {
+	if (hide_playback_menu)
+		return;
+
 	unsigned int total = dojo.net_inputs[0].size();
 	int position = dojo.FrameNumber.load();
 
@@ -557,8 +560,8 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	ImGui::NewFrame();
 
 	ImGui::SetNextWindowBgAlpha(0.6f);
-	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 195, screen_height - 45));
-	ImGui::SetNextWindowSize(ImVec2(390, 40));
+	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 220, screen_height - 45));
+	ImGui::SetNextWindowSize(ImVec2(440, 40));
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
 
@@ -586,6 +589,12 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 			gui_state = GuiState::Closed;
 			*settings_opening = false;
 		}
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Hide"))
+	{
+		hide_playback_menu = true;
 	}
 
 	ImGui::End();
