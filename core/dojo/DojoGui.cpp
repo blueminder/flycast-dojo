@@ -1,4 +1,5 @@
 #include "DojoGui.hpp"
+#include <oslib/audiostream.h>
 namespace fs = ghc::filesystem;
 
 void DojoGui::gui_open_host_delay(bool* settings_opening)
@@ -569,6 +570,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	{
 		if (ImGui::Button("Pause"))
 		{
+			TermAudio();
 			gui_state = GuiState::ReplayPause;
 			*settings_opening = true;
 		}
@@ -577,6 +579,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 	{
 		if (ImGui::Button("Play"))
 		{
+			InitAudio();
 			gui_state = GuiState::Closed;
 			*settings_opening = false;
 		}
