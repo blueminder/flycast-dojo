@@ -254,7 +254,7 @@ void DojoGui::gui_display_disconnected(bool* settings_opening, float scaling)
 void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
 
 {
-	dc_stop();
+	//dc_stop();
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
@@ -274,6 +274,8 @@ void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
     *settings_opening = false;
+
+	dc_term_game();
 }
 
 void DojoGui::gui_display_end_spectate(bool* settings_opening, float scaling)
@@ -548,6 +550,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
 {
+	unsigned int total = dojo.net_inputs[0].size();
+	int position = dojo.FrameNumber.load();
+
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
@@ -557,9 +562,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
 
-	unsigned int total = dojo.net_inputs[0].size();
 
-	int position = dojo.FrameNumber.load();
 	ImGui::SliderInt("", &position, 0, total);
 	ImGui::SameLine();
 	ImGui::Text("%u", total);
