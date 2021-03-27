@@ -629,7 +629,6 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
 
 void DojoGui::gui_display_paused(bool* settings_opening, float scaling)
 {
-	dc_stop();
 	show_playback_menu(settings_opening, scaling, true);
     *settings_opening = true;
 }
