@@ -651,11 +651,12 @@ void* dc_run(void*)
 		} while (reset_requested);
 	}
 
-	do {
+	while (jump_state_requested)
+	{
 		jump_state_requested = false;
-		sh4_cpu.Run();
 		jump_state();
-	} while (jump_state_requested);
+		sh4_cpu.Run();
+	}
 
     TermAudio();
 
