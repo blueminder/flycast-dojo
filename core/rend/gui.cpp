@@ -1769,6 +1769,8 @@ static void gui_display_content()
 		{
 			// set offline as default action
 			config::DojoEnable = false;
+			// set default offline delay to 0
+			config::Delay = 0;
 		}
 
 		if (gui_state == GuiState::Replays)
