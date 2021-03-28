@@ -526,6 +526,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			transmitter_ended = true;
 
 		gui_state = GuiState::EndReplay;
+		config::AutoSkipFrame = 1;
+		dc_stop();
 	}
 /*
 	if (config::Receiving &&

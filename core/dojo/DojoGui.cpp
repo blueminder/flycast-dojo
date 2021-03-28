@@ -252,10 +252,7 @@ void DojoGui::gui_display_disconnected(bool* settings_opening, float scaling)
 }
 
 void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
-
 {
-	//dc_stop();
-
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
 
@@ -274,8 +271,6 @@ void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
     *settings_opening = false;
-
-	dc_term_game();
 }
 
 void DojoGui::gui_display_end_spectate(bool* settings_opening, float scaling)
@@ -580,6 +575,12 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 			gui_state = GuiState::ReplayPause;
 			*settings_opening = true;
 		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Hide"))
+		{
+			hide_playback_menu = true;
+		}
 	}
 	else
 	{
@@ -589,12 +590,6 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 			gui_state = GuiState::Closed;
 			*settings_opening = false;
 		}
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("Hide"))
-	{
-		hide_playback_menu = true;
 	}
 
 	ImGui::End();
