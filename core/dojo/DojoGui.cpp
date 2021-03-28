@@ -692,7 +692,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		std::string token;
 		while ((pos = s.find(delimiter)) != std::string::npos) {
 		    token = s.substr(0, pos);
-		    std::cout << token << std::endl;
+		    //std::cout << token << std::endl;
 			replay_entry.push_back(token);
 		    s.erase(0, pos + delimiter.length());
 		}
@@ -852,10 +852,13 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ImGui::SameLine();
 				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
 
-				OptionCheckbox("Ignore netplay savestates", config::IgnoreNetSave);
+				OptionCheckbox("Ignore Netplay Savestates", config::IgnoreNetSave);
 				ImGui::SameLine();
 				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
 
+				OptionCheckbox("Allow custom VMUs (experimental)", config::NetCustomVmu);
+				ImGui::SameLine();
+				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. Deletes and regenerates Dreamcast VMUs for netplay by default.");
 			}
 		}
 		ImGui::PopStyleVar();

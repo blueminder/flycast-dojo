@@ -711,8 +711,7 @@ void DojoSession::LoadReplayFile(std::string path)
 		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
 
 		if (count == FRAME_SIZE &&
-			frame_num == SkipFrame &&
-			ghc::filesystem::exists(net_save_path))
+			frame_num == SkipFrame)
 		{
 			FillSkippedFrames(SkipFrame);
 			last_consecutive_common_frame = SkipFrame - 1;

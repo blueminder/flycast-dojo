@@ -439,6 +439,7 @@ extern Option<bool> EnableMemRestore;
 extern OptionString DojoProtoCall;
 extern Option<bool> EnablePlayerNameOverlay;
 extern Option<bool> IgnoreNetSave;
+extern Option<bool> NetCustomVmu;
 
 // Maple
 

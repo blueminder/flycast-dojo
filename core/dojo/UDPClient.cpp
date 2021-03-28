@@ -170,6 +170,9 @@ void UDPClient::SendSpectateOK(sockaddr_in target_addr)
 
 void UDPClient::StartSession()
 {
+	if (config::IgnoreNetSave)
+		remove(dojo.net_save_path.data());
+
 	std::stringstream start_ss("");
 	start_ss << "START " << dojo.delay
 		<< " " << dojo.packets_per_frame

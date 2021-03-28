@@ -184,12 +184,12 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 				ghc::filesystem::perm_options::replace);
 
 			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename.data());
-			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", eeprom_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy\n", eeprom_filename.data());
 		}
 		else
 		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", eeprom_filename.data());
-			fprintf(stdout, "DOJO: %s unchanged", eeprom_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged\n", eeprom_filename.data());
 		}
 	}
 
@@ -210,12 +210,12 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 				ghc::filesystem::perm_options::replace);
 
 			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename.data());
-			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", nvmem_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy\n", nvmem_filename.data());
 		}
 		else
 		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem_filename.data());
-			fprintf(stdout, "DOJO: %s unchanged", nvmem_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged\n", nvmem_filename.data());
 		}
 	}
 
@@ -237,12 +237,12 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 				ghc::filesystem::perm_options::replace);
 
 			INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename.data());
-			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy", nvmem2_filename.data());
+			fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy\n", nvmem2_filename.data());
 		}
 		else
 		{
 			INFO_LOG(NETWORK, "DOJO: %s unchanged", nvmem2_filename.data());
-			fprintf(stdout, "DOJO: %s unchanged", nvmem2_filename.data());
+			fprintf(stdout, "DOJO: %s unchanged\n", nvmem2_filename.data());
 		}
 	}
 
