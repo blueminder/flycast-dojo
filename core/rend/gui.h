@@ -82,7 +82,7 @@ extern void gui_start_game(const std::string& path);
 static inline bool crosshairsNeeded()
 {
 	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
-			&& config::CrosshairColor[3] == 0 && config::CrosshairColor[3] == 0)
+			&& config::CrosshairColor[2] == 0 && config::CrosshairColor[3] == 0)
 		return false;
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST
 			&& settings.input.JammaSetup != JVS::LightGun

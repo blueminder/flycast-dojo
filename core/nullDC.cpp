@@ -810,8 +810,7 @@ void dc_step()
 
 static void cleanup_serialize(void *data)
 {
-	if ( data != NULL )
-		free(data) ;
+	free(data);
 }
 
 std::string get_savestate_file_path(bool writable)
