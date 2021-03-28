@@ -1079,8 +1079,11 @@ static void gui_display_settings()
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
+			/*
+			 * temporarily disabled to not conflict with netplay savestates
 			OptionCheckbox("Auto load/save state", config::AutoSavestate,
 					"Automatically save the state of the game when stopping and load it at start up.");
+			*/
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
