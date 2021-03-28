@@ -196,6 +196,9 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
+	if (config::IgnoreNetSave)
+		remove(dojo.net_save_path.data());
+
 	int net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
 	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(net_save_exists), host_addr);
 }

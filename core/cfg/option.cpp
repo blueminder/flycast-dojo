@@ -141,6 +141,7 @@ OptionString GameName("GameName", "", "dojo");
 Option<bool> EnableMemRestore("EnableMemRestore", true, "dojo");
 OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
 Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
+Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
