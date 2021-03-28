@@ -69,6 +69,7 @@ void DojoSession::Init()
 
 	MatchCode = "";
 	SkipFrame = 746;
+	DcStartVmuConfirmFrame = 200;
 
 	if (!net_inputs[0].empty())
 	{
@@ -452,22 +453,53 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 		if (!spectating && !dojo.PlayMatch)
 		{
-			if (settings.platform.system == DC_PLATFORM_NAOMI &&
-				FrameNumber == SkipFrame &&
-				!ghc::filesystem::exists(net_save_path))
+			// if netplay savestate does not exist for both players
+			// prevent input up to skipped frame, and save common state on both sides
+			if (!ghc::filesystem::exists(net_save_path) || !dojo.net_save_present)
 			{
-				dc_savestate(net_save_path);
+				if (FrameNumber < SkipFrame)
+				{
+					if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+						settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+					{
+						PlainJoystickState blank_pjs;
+						CaptureAndSendLocalFrame(&blank_pjs);
+					}
+					else if (settings.platform.system == DC_PLATFORM_NAOMI)
+					{
+						CaptureAndSendLocalFrame((u16)0);
+					}
+				}
+
+				// confirm vmu save with start press automatically on set frame
+				if (settings.platform.system == DC_PLATFORM_DREAMCAST &&
+					FrameNumber == DcStartVmuConfirmFrame)
+				{
+					PlainJoystickState start_pjs;
+					start_pjs.kcode = (start_pjs.kcode << 3) - 1;
+					CaptureAndSendLocalFrame(&start_pjs);
+				}
+
+				if (FrameNumber == SkipFrame)
+				{
+					dc_savestate(net_save_path);
+				}
 			}
 
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
-				settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-				CaptureAndSendLocalFrame(pjs);
-			else if (settings.platform.system == DC_PLATFORM_NAOMI)
+			// accept all inputs after skipped frame on first load
+			// or after common save state is loaded
+			if (FrameNumber >= SkipFrame ||
+				(ghc::filesystem::exists(net_save_path) && dojo.net_save_present))
 			{
-				if (FrameNumber >= SkipFrame)
+				if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+					settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+				{
+					CaptureAndSendLocalFrame(pjs);
+				}
+				else if (settings.platform.system == DC_PLATFORM_NAOMI)
+				{
 					CaptureAndSendLocalFrame(buttons);
-				else
-					CaptureAndSendLocalFrame((u16)0);
+				}
 			}
 		}
 	}
@@ -677,7 +709,6 @@ void DojoSession::LoadReplayFile(std::string path)
 		u32 frame_num = GetEffectiveFrameNumber((u8*)buffer);
 
 		if (count == FRAME_SIZE &&
-			settings.platform.system == DC_PLATFORM_NAOMI &&
 			frame_num == SkipFrame &&
 			ghc::filesystem::exists(net_save_path))
 		{

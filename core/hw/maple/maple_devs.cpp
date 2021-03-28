@@ -367,9 +367,14 @@ struct maple_sega_vmu: maple_base
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
 		char tempy[512];
-		sprintf(tempy, "vmu_save_%s.bin", logical_port);
+		if (config::DojoEnable)
+			sprintf(tempy, "vmu_save_%s.bin.net", logical_port);
+		else
+			sprintf(tempy, "vmu_save_%s.bin", logical_port);
 		// VMU saves used to be stored in .reicast, not in .reicast/data
 		std::string apath = get_writable_config_path(tempy);
+		if (config::DojoEnable)
+			remove(apath.data());
 		if (!file_exists(apath))
 			apath = get_writable_data_path(tempy);
 

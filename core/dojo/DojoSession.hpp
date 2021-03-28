@@ -110,6 +110,7 @@ public:
 	std::string CurrentFrameData[4];
 
 	u32 SkipFrame;
+	u32 DcStartVmuConfirmFrame;
 
 	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickState* pjs);
 	u16 TranslateFrameDataToInput(u8 data[FRAME_SIZE], u16 buttons);
