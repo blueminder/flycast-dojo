@@ -598,9 +598,6 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 
 void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bool paused)
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
 	std::string player_1;
 	std::string player_2;
 
@@ -615,21 +612,45 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
 		player_2 = config::PlayerName;
 	}
 
-	std::string players = player_1 + " vs " + player_2;
-	float font_size = ImGui::GetFontSize() * players.size() / 2;
+	float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
+	float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
 
-	ImGui::SetNextWindowBgAlpha(0.6f);
-	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - (font_size / 2), 0));
-	ImGui::SetNextWindowSize(ImVec2(font_size + 10, 35));
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowBgAlpha(0.5f);
+	ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
+	ImGui::SetNextWindowSize(ImVec2(font_size_1 + 10, 35));
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
 
 	ImGui::SameLine(
         ImGui::GetWindowSize().x / 2 -
-        font_size + (font_size / 2)
+        font_size_1 + (font_size_1 / 2) + 5
     );
 
-    ImGui::Text(players.c_str());
+    ImGui::Text(player_1.c_str());
+
+	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowBgAlpha(0.5f);
+	ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0) );
+	ImGui::SetNextWindowSize(ImVec2(font_size_2 + 10, 35));
+
+	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
+
+	ImGui::SameLine(
+        ImGui::GetWindowSize().x / 2 -
+        font_size_2 + (font_size_2 / 2) + 5
+    );
+
+    ImGui::Text(player_2.c_str());
 
 	ImGui::End();
 	ImGui::Render();

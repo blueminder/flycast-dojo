@@ -235,6 +235,9 @@ void DojoSession::resume()
 
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		SkipFrame = DcStartVmuConfirmFrame + 10;
+
 	if (config::RecordMatches && !dojo.PlayMatch)
 		CreateReplayFile();
 
@@ -282,7 +285,6 @@ void DojoSession::FillDelay(int fill_delay)
 				dojo.transmission_frames.push_back(new_frame);
 		}
 	}
-
 }
 
 void DojoSession::FillSkippedFrames(u32 end_frame)
