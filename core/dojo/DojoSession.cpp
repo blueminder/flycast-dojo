@@ -69,7 +69,7 @@ void DojoSession::Init()
 
 	MatchCode = "";
 	SkipFrame = 746;
-	DcStartVmuConfirmFrame = 200;
+	DcSkipFrame = 180;
 
 	if (!net_inputs[0].empty())
 	{
@@ -236,7 +236,7 @@ void DojoSession::resume()
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		SkipFrame = DcStartVmuConfirmFrame + 10;
+		SkipFrame = DcSkipFrame;
 
 	if (config::RecordMatches && !dojo.PlayMatch)
 		CreateReplayFile();
@@ -471,15 +471,6 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 					{
 						CaptureAndSendLocalFrame((u16)0);
 					}
-				}
-
-				// confirm vmu save with start press automatically on set frame
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST &&
-					FrameNumber == DcStartVmuConfirmFrame)
-				{
-					PlainJoystickState start_pjs;
-					start_pjs.kcode = (start_pjs.kcode << 3) - 1;
-					CaptureAndSendLocalFrame(&start_pjs);
 				}
 
 				if (FrameNumber == SkipFrame)
