@@ -545,7 +545,11 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
 {
 	if (hide_playback_menu)
+	{
+		if (config::EnablePlayerNameOverlay)
+			show_player_name_overlay(settings_opening, scaling, true);
 		return;
+	}
 
 	unsigned int total = dojo.net_inputs[0].size();
 	int position = dojo.FrameNumber.load();
