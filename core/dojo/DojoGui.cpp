@@ -875,7 +875,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 				OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
 				ImGui::SameLine();
-				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay by default.");
+				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay when disabled.");
 			}
 
 			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
