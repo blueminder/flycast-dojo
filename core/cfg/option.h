@@ -287,7 +287,6 @@ public:
 
 extern Option<bool> DynarecEnabled;
 extern Option<bool> DynarecIdleSkip;
-extern Option<bool> DynarecUnstableOpt;
 extern Option<bool> DynarecSafeMode;
 extern Option<bool> DisableVmem32;
 
@@ -335,10 +334,8 @@ public:
 	}
 
 	void reset() override {
-		RenderType current = value;
-		Option<RenderType>::reset();
-		newValue = value;
-		value = current;
+		// don't reset the value to avoid vk -> gl -> vk quick switching
+		overridden = false;
 	}
 
 	bool pendingChange() {

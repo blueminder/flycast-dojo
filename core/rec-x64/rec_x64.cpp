@@ -63,6 +63,7 @@ namespace MemOp {
 namespace MemType {
 	enum {
 		Fast,
+		StoreQueue,
 		Slow,
 		Count
 	};
@@ -767,7 +768,17 @@ public:
 
 				//found !
 				const u8 *start = getCurr();
-				call(MemHandlers[MemType::Slow][size][op]);
+				u32 memAddress = _nvmem_4gb_space() ?
+#ifdef _WIN32
+						context.rcx
+#else
+						context.rdi
+#endif
+						: context.r9;
+				if (op == MemOp::W && size >= MemSize::S32 && (memAddress >> 26) == 0x38)
+					call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
+				else
+					call(MemHandlers[MemType::Slow][size][op]);
 				verify(getCurr() - start == 5);
 
 				ready();
@@ -778,9 +789,9 @@ public:
 				if (!_nvmem_4gb_space())
 					//restore the addr from r9 to arg0 (rcx or rdi) so it's valid again
 #ifdef _WIN32
-					context.rcx = context.r9;
+					context.rcx = memAddress;
 #else
-					context.rdi = context.r9;
+					context.rdi = memAddress;
 #endif
 
 				return true;
@@ -1100,7 +1111,7 @@ private:
 		verify(ReadMem8 != nullptr);
 
 		MemHandlerStart = getCurr();
-		for (int type = 0; type < MemOp::Count; type++)
+		for (int type = 0; type < MemType::Count; type++)
 		{
 			for (int size = 0; size < MemSize::Count; size++)
 			{
@@ -1150,6 +1161,41 @@ private:
 								mov(qword[rax + call_regs64[0]], call_regs64[1]);
 							break;
 						}
+					}
+					else if (type == MemType::StoreQueue)
+					{
+						if (op != MemOp::W || size < MemSize::S32)
+							continue;
+						Xbyak::Label no_sqw;
+
+						mov(r9d, call_regs[0]);
+						shr(r9d, 26);
+						cmp(r9d, 0x38);
+						jne(no_sqw);
+						mov(rax, (uintptr_t)p_sh4rcb->sq_buffer);
+						and_(call_regs[0], 0x3F);
+
+						if (size == MemSize::S32)
+							mov(dword[rax + call_regs64[0]], call_regs[1]);
+						else
+							mov(qword[rax + call_regs64[0]], call_regs64[1]);
+						ret();
+						L(no_sqw);
+						if (size == MemSize::S32)
+						{
+							if (mmu_enabled())
+								jmp((const void *)WriteMemNoEx<u32>);
+							else
+								jmp((const void *)WriteMem32);	// tail call
+						}
+						else
+						{
+							if (mmu_enabled())
+								jmp((const void *)WriteMemNoEx<u64>);
+							else
+								jmp((const void *)WriteMem64);	// tail call
+						}
+						continue;
 					}
 					else
 					{
