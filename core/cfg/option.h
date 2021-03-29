@@ -440,6 +440,7 @@ extern OptionString DojoProtoCall;
 extern Option<bool> EnablePlayerNameOverlay;
 extern Option<bool> IgnoreNetSave;
 extern Option<bool> NetCustomVmu;
+extern Option<bool> ShowPlaybackControls;
 
 // Maple
 

@@ -544,7 +544,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
 {
-	if (hide_playback_menu)
+	if (!config::ShowPlaybackControls)
 	{
 		if (config::EnablePlayerNameOverlay)
 			show_player_name_overlay(settings_opening, scaling, true);
@@ -582,7 +582,7 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 		ImGui::SameLine();
 		if (ImGui::Button("Hide"))
 		{
-			hide_playback_menu = true;
+			config::ShowPlaybackControls = false;
 		}
 	}
 	else
@@ -772,21 +772,34 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
 void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 {
-	if (ImGui::BeginTabItem("Netplay"))
+	if (ImGui::BeginTabItem("Dojo"))
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		OptionCheckbox("Enable Netplay", config::DojoEnable);
-		ImGui::SameLine();
-		ShowHelpMarker("Enable peer-to-peer netplay for games with a local multiplayer mode");
-		if (config::DojoEnable)
-		{
-			char PlayerName[256] = { 0 };
-			strcpy(PlayerName, config::PlayerName.get().c_str());
-			ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("Name visible to other players");
-			config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
+		char PlayerName[256] = { 0 };
+		strcpy(PlayerName, config::PlayerName.get().c_str());
+		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Name visible to other players");
+		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
+
+		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
+		ImGui::SameLine();
+		ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
+
+		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
+			ImGui::SameLine();
+			ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
+
+			OptionCheckbox("Record All Sessions", config::RecordMatches);
+			ImGui::SameLine();
+			ShowHelpMarker("Record all gameplay sessions to a local file");
+		}
+
+		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			std::string PortDescription = "The server port to listen on";
 
 			char ServerPort[256];
@@ -796,19 +809,15 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ShowHelpMarker(PortDescription.c_str());
 			config::DojoServerPort = ServerPort;
 
-			OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
-			ImGui::SameLine();
-			ShowHelpMarker("Enable overlay showing player names during netplay matches");
-
 			if (!config::EnableLobby)
 			{
-				if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					OptionCheckbox("Enable Internet Matchmaking", config::EnableMatchCode);
-					ImGui::SameLine();
-					ShowHelpMarker("Enable Internet matchmaking. Establishes direct connection via public server relay.");
+				OptionCheckbox("Enable Internet Matchmaking", config::EnableMatchCode);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable Internet matchmaking. Establishes direct connection via public server relay.");
 
-					if (config::EnableMatchCode)
+				if (config::EnableMatchCode)
+				{
+					if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
 					{
 						char MatchmakingServerAddress[256];
 
@@ -827,14 +836,13 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			if (!config::EnableMatchCode)
 			{
+				OptionCheckbox("Enable Lobby", config::EnableLobby);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable discovery and matchmaking on LAN");
 
-				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
+				if (config::EnableLobby)
 				{
-					OptionCheckbox("Enable Lobby", config::EnableLobby);
-					ImGui::SameLine();
-					ShowHelpMarker("Enable discovery and matchmaking on LAN");
-
-					if (config::EnableLobby)
+					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 					{
 						char LobbyMulticastAddress[256];
 
@@ -855,6 +863,21 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
+			if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
+			{
+				OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
+				ImGui::SameLine();
+				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
+
+				OptionCheckbox("Ignore Netplay Savestates", config::IgnoreNetSave);
+				ImGui::SameLine();
+				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
+
+				OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
+				ImGui::SameLine();
+				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay by default.");
+			}
+
 			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
@@ -871,20 +894,9 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Number of past inputs to send per frame.");
 				}
-
-				OptionCheckbox("Enable Memory Restoration", config::EnableMemRestore);
-				ImGui::SameLine();
-				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
-
-				OptionCheckbox("Ignore Netplay Savestates", config::IgnoreNetSave);
-				ImGui::SameLine();
-				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
-
-				OptionCheckbox("Allow custom VMUs (experimental)", config::NetCustomVmu);
-				ImGui::SameLine();
-				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. Deletes and regenerates Dreamcast VMUs for netplay by default.");
 			}
 		}
+
 		ImGui::PopStyleVar();
 		ImGui::EndTabItem();
 	}
