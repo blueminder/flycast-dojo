@@ -235,9 +235,6 @@ void DojoSession::resume()
 
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		SkipFrame = DcSkipFrame;
-
 	if (config::RecordMatches && !dojo.PlayMatch)
 		CreateReplayFile();
 
@@ -324,6 +321,9 @@ int DojoSession::StartDojoSession()
 {
 	net_save_path = get_savestate_file_path(false);
 	net_save_path.append(".net");
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		SkipFrame = DcSkipFrame;
 
 	if (receiving)
 		config::Receiving = true;
