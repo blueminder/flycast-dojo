@@ -777,13 +777,16 @@ void DojoSession::transmitter_thread()
 		asio::connect(socket, endpoints);
 
 		transmitter_started = true;
+		std::string current_frame;
+		volatile bool transmission_in_progress;
 
 		for (;;)
 		{
-			bool transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
+			transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
+
 			if (transmission_in_progress)
 			{
-				std::string current_frame = transmission_frames.front();
+				current_frame = transmission_frames.front();
 
 				asio::write(socket, asio::buffer(current_frame.data(), FRAME_SIZE));
 				std::cout << PrintFrameData("SENT", (u8*)current_frame.data()) << std::endl;
@@ -796,10 +799,8 @@ void DojoSession::transmitter_thread()
 			{
 				asio::write(socket, asio::buffer("000000000000", FRAME_SIZE));
 				std::cout << "Transmission Ended" << std::endl;
+				break;
 			}
-
-
-			std::cout << "Transmission Thread Running" << std::endl;
 		}
 	}
 	catch (std::exception& e)
