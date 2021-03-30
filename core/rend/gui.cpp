@@ -1745,57 +1745,63 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 
-	if (config::DojoEnable && config::Receiving)
-        ImGui::Text("RECEIVE");
-	else
+	static ImGuiComboFlags flags = 0;
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE" };
+	static int item_current_idx = 0;
+	static int last_item_current_idx = 3;
+
+	// Here our selection data is an index.
+	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+
+	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+
+	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+
+	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
-		static ImGuiComboFlags flags = 0;
-		const char* items[] = { "OFFLINE", "HOST", "JOIN" };
-		static int item_current_idx = 0;
-		static int last_item_current_idx = 3;
+		// set offline as default action
+		config::DojoEnable = false;
+		// set default offline delay to 0
+		config::Delay = 0;
+	}
 
-		// Here our selection data is an index.
-		const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+	if (gui_state == GuiState::Replays)
+		config::DojoEnable = true;
 
-		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+	if (item_current_idx == 1)
+	{
+		config::DojoEnable = true;
+		config::DojoActAsServer = true;
+		config::Receiving = false;
+	}
+	else if (item_current_idx == 2)
+	{
+		config::DojoEnable = true;
+		config::DojoActAsServer = false;
+		config::Receiving = false;
 
-		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+		config::DojoServerIP = "";
+	}
+	else if (item_current_idx == 3)
+	{
+		config::DojoEnable = true;
+		config::DojoActAsServer = true;
+		config::Receiving = true;
+		config::Transmitting = false;
+		config::EnablePlayerNameOverlay = false;
 
-		if (last_item_current_idx == 3 && gui_state != GuiState::Replays)
-		{
-			// set offline as default action
-			config::DojoEnable = false;
-			// set default offline delay to 0
-			config::Delay = 0;
-		}
+		config::DojoServerIP = "";
+	}
 
-		if (gui_state == GuiState::Replays)
-			config::DojoEnable = true;
+	else if (item_current_idx == 0)
+	{
+		config::DojoEnable = false;
+	}
 
-		if (item_current_idx == 1)
-		{
-			config::DojoEnable = true;
-			config::DojoActAsServer = true;
-			config::Receiving = false;
-		}
-		else if (item_current_idx == 2)
-		{
-			config::DojoEnable = true;
-			config::DojoActAsServer = false;
-			config::Receiving = false;
-
-			config::DojoServerIP = "";
-		}
-		else if (item_current_idx == 0)
-		{
-			config::DojoEnable = false;
-		}
-
-		if (item_current_idx != last_item_current_idx)
-		{
-			SaveSettings();
-			last_item_current_idx = item_current_idx;
-		}
+	if (item_current_idx != last_item_current_idx)
+	{
+		SaveSettings();
+		last_item_current_idx = item_current_idx;
 	}
 
 	ImGui::SameLine();
@@ -2089,17 +2095,7 @@ static void gui_display_content()
 
 	ImGui::EndChild();
 
-	if (config::DojoEnable)
-	{
-		char PlayerName[256] = { 0 };
-		strcpy(PlayerName, config::PlayerName.get().c_str());
-		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
-		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-		ImGui::SameLine();
-		ShowHelpMarker("Name visible to other players");
-		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
-	}
-	else
+	if (!config::DojoEnable)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
@@ -2112,6 +2108,20 @@ static void gui_display_content()
 
 		if (config::Delay > 10)
 			config::Delay = 0;
+	}
+	else if (config::DojoEnable && !config::Receiving)
+	{
+		char PlayerName[256] = { 0 };
+		strcpy(PlayerName, config::PlayerName.get().c_str());
+		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Name visible to other players");
+		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
+	}
+	else
+	{
+		ImGui::Text(" ");
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);

@@ -836,9 +836,9 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			if (!config::EnableMatchCode)
 			{
-				OptionCheckbox("Enable Lobby", config::EnableLobby);
+				OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
 				ImGui::SameLine();
-				ShowHelpMarker("Enable discovery and matchmaking on LAN");
+				ShowHelpMarker("Enable discovery and matchmaking over LAN");
 
 				if (config::EnableLobby)
 				{
@@ -865,7 +865,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			OptionCheckbox("Enable TCP Transmission", config::Transmitting);
 			ImGui::SameLine();
-			ShowHelpMarker("Transmit Netplay Sessions & Replays as TCP Feed to Target Spectator");
+			ShowHelpMarker("Transmit netplay sessions & replays as TCP feed to target spectator");
 
 			if (config::Transmitting)
 			{
