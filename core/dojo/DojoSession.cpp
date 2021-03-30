@@ -783,9 +783,12 @@ void DojoSession::transmitter_thread()
 			bool transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
 			if (transmission_in_progress)
 			{
+				std::cout << "Frame Sent" << transmission_frames.front() << std::endl;
 				asio::write(socket, asio::buffer(transmission_frames.front().data(), FRAME_SIZE));
 				transmission_frames.pop_front();
 			}
+
+			std::cout << "Transmission Thread Running" << std::endl;
 
 			if (transmitter_ended ||
 				(disconnect_toggle && !transmission_in_progress))

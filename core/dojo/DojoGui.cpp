@@ -863,6 +863,32 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
+			OptionCheckbox("Enable TCP Transmission", config::Transmitting);
+			ImGui::SameLine();
+			ShowHelpMarker("Transmit Netplay Sessions & Replays as TCP Feed to Target Spectator");
+
+			if (config::Transmitting)
+			{
+				if (ImGui::CollapsingHeader("TCP Transmission", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					char SpectatorIP[256];
+
+					strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
+					ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Target Spectator IP Address");
+					config::SpectatorIP = SpectatorIP;
+
+					char SpectatorPort[256];
+
+					strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+					ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Target Spectator Port");
+					config::SpectatorPort = SpectatorPort;
+				}
+			}
+
 			if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
 			{
 				OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
