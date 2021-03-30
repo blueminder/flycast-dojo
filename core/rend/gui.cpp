@@ -1788,7 +1788,6 @@ static void gui_display_content()
 		config::DojoActAsServer = true;
 		config::Receiving = true;
 		config::Transmitting = false;
-		config::EnablePlayerNameOverlay = false;
 
 		config::DojoServerIP = "";
 	}

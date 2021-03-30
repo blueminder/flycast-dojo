@@ -38,12 +38,13 @@ void receiver_session::do_read()
 					else
 					{
 						dojo.AddNetFrame(frame.data());
-						dojo.PrintFrameData("ADDED", (u8*)frame.data());
+						std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
+						std::cout << added_frame_data << std::endl;
 						dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
 
 						// buffer stream
-						if (dojo.net_inputs[1].size() == 1200 &&
+						if (dojo.net_inputs[1].size() == 600 &&
 							dojo.FrameNumber < dojo.last_consecutive_common_frame)
 							dojo.resume();
 					}

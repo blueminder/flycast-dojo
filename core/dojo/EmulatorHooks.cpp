@@ -328,7 +328,7 @@ void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 }
 
 
-void DojoSession::PrintFrameData(const char * prefix, u8 * data)
+std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 {
 	int player = GetPlayer(data);
 	int delay = GetDelay(data);
@@ -344,9 +344,18 @@ void DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 	std::bitset<16> input_bitset(input);
 
-	INFO_LOG(NETWORK, "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u %u %u",
-		prefix, effective_frame, frame, delay, player, input_bitset.to_string().c_str(), 
-		triggerr, triggerl, analogx, analogy);
+	auto format = "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u %u %u";
+	auto size = std::snprintf(nullptr, 0, format, prefix, effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	INFO_LOG(NETWORK, format, prefix, effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	std::string output(size + 1, '\0');
+	std::sprintf(&output[0], format, prefix, effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	return output;
 }
 
 std::string DojoSession::GetRomNamePrefix()
