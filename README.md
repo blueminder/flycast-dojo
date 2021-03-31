@@ -8,6 +8,8 @@ General information about Flycast configuration and supported features can be fo
 
 # Contents
 - [Video Guides](#video-guides)
+  * [Fightcade Quick Start](#fightcade-quick-start)
+  * [LAN Lobby Quick Start](#lan-lobby-quick-start)
 - [Getting Started](#getting-started)
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
@@ -36,10 +38,10 @@ General information about Flycast configuration and supported features can be fo
 - [Roadmap](#roadmap)
 
 # Video Guides
- * [Fightcade Quick Start](https://www.youtube.com/watch?v=47oJOUoGYmI)
+ ## Fightcade Quick Start
 [![Fightcade Quick Start](http://img.youtube.com/vi/47oJOUoGYmI/0.jpg)](https://www.youtube.com/watch?v=47oJOUoGYmI)
 
- * [LAN Lobby Quick Start](https://www.youtube.com/watch?v=47oJOUoGYmI)
+## LAN Lobby Quick Start
 [![LAN Lobby Quick Start](http://img.youtube.com/vi/VcalBJpbjxA/0.jpg)](https://www.youtube.com/watch?v=VcalBJpbjxA)
 
 # Getting Started
