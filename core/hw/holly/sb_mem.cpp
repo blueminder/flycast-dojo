@@ -198,15 +198,33 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+	if (config::DojoEnable.get())
 	{
-		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
-			bios_loaded = true;
-		else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-			return false;
-	}
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		{
+			// ignore official dc bios for netplay
+			// keeps boot times consistent between players
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+				return false;
+			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+				bios_loaded = true;
+		}
 
-	return true;
+		return true;
+	}
+	else
+	{
+		// default flycast logic
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		{
+			if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+				bios_loaded = true;
+			else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+				return false;
+		}
+
+		return true;
+	}
 }
 
 void SaveRomFiles()
