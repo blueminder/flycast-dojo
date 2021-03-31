@@ -28,6 +28,9 @@ General information about Flycast configuration and supported features can be fo
     + [Delay Calculation](#manual-delay-calculation)
     + [Launch Game](#launch-game)
 - [Replays](#replays)
+- [Savestates](#savestates)
+    + [Auto Generated Savestates](#auto-generated-savestates)
+    + [Custom Savestates](#custom-savestates)
 - [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
 - [Command Line](#command-line)
   * [Netplay](#netplay)
@@ -70,13 +73,13 @@ The following is a sample mapping for XInput (XBOX 360) Controllers created by *
 # Starting a Netplay Session
 
 ## Netplay Settings
-You can find the Netplay settings under the "Netplay" section of the emulator's settings:
+You can find the Netplay settings under the **Dojo** section of the emulator's settings:
 
-![Netplay Options](netplay1.png)
+![Dojo Options](dojo_settings.png)
 
-Match Codes are enabled by default, pointing to the default matchmaking relay. To use the LAN Lobby or Manual Operation (i.e., Command Line or External Lobbies) just disable the checkbox from "Enable Internet Matchmaking", or pass `dojo:EnableMatchCode=no` to the command line options.
+Match Codes are enabled by default, pointing to the default matchmaking relay. To use the LAN Lobby or Manual Operation (i.e., Command Line or External Lobbies) just disable the checkbox from **Enable Internet Matchmaking**, or pass `dojo:EnableMatchCode=no` to the command line options.
 
-![Netplay Options - Match Codes Disabled](netplay2.png)
+![Dojo Options - Match Codes Disabled](dojo_settings_sans_match.png)
 
 ## Match Code Quick Start
 Using Match Codes, Flycast Dojo can start a P2P game session behind firewalls, so that you can play against others without the need of Radmin or Fightcade. No need to sign up for any accounts or download additional software than Flycast Dojo itself. You should be able to play any games supported by Flycast, so long as you and your opponent have the same ROM.
@@ -152,8 +155,6 @@ As of right now, spectating is limited to one person at a time. This should be h
 
 ![Lobby Spectating](spectate1.png)
 
-
-
 # Manual Operation
 
 ## Set Server IP & Port
@@ -180,6 +181,21 @@ On the Flycast main screen, you may now select your game of choice. You may also
 
 If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else's game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `eeprom.net`/`nvmem.net` files found in your `data/` subdirectory.
 
+## Manual Spectating
+
+### Transmitting
+To transmit your current game session or replays, go into the **Dojo** settings tab and press the checkbox by **Enable TCP Transmission**. You can edit your target spectator IP Address and Port.
+
+![TCP Transmission Settings](enable_tcp_transmission.png)
+
+If you wish to enable transmitting when launching via the Command Line, just add ```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000``` to your command.
+
+### Receiving
+To manually launch a spectating session as a receiver, just select the **RECEIVE** option in the top-left menu and select the game of your choice. Flycast Dojo will stay idle until it begins receiving a transmission to the spectating port. By default, this is on port **7000**.
+![Receive](receive_option.png)
+
+To launch as a receiver via the Command Line and set your listening port, add ```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000``` to your command.
+
 # Replays
 
 To see a listing of your recorded replay sessions to play back, click on the "Replays" button on the Flycast main screen.
@@ -189,6 +205,17 @@ To record your netplay sessions, just check the box that says "Record All Sessio
 To play the replay file, just click on the corresponding entry, and the replay data will played back in its corresponding game.
 
 ![Replay](replay1.png)
+
+# Savestates
+During a netplay match, you can "jump" to a starting savestate by pressing the **Backspace** button by default. This may be edited in the Control mapping section of the Settings.
+
+## Auto Generated Savestates
+To help mitigate desyncs and to easily restart game sessions, if one isn't detected, Flycast Dojo automatically generates a savestate shortly after the boot sequence to provide a starting point to rewind a session. If it is detected that you and your opponent have a savestate, the match will start right after the boot sequence to save time.
+
+If you ever encounter any isues, you can delete the savestate located in `data/[ROM Name].state.net` to have the emulator start from the boot sequence and generate a savestate in your next match.
+
+## Custom Savestates
+To use custom savestates, you must rename your game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files, or else you will be looking at different game states entirely.
 
 # MD5 Checksum Calculation & Validation
 In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
@@ -256,5 +283,5 @@ _append to server arguments_
 - [x] Offline Game Recording
 - [x] Offline Game Delay (Practice)
 - [ ] Native Linux Support
-    - Currently runs via Wine
+- [ ] Native Mac OS Support
 - [ ] Lua Scripting
