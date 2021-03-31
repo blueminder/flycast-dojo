@@ -2,11 +2,12 @@
 
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
 
-**Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games either over a direct IP connection, or a virtual LAN like ZeroTier or Radmin.
+**Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games either over a direct IP connection, an internet matchmaking server, or a virtual LAN like ZeroTier or Radmin.
 
 General information about Flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
 
 # Contents
+- [Video Guides](#video-guides)
 - [Getting Started](#getting-started)
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
@@ -14,27 +15,32 @@ General information about Flycast configuration and supported features can be fo
     + [As Host](#as-host)
       - [Set Delay](#set-delay)
     + [As Guest](#as-guest)
-    + [Troubleshooting](#troubleshooting)
+    + [Troubleshooting](#match-code-troubleshooting)
   * [Lobby Quick Start](#lobby-quick-start)
     + [As Guest](#as-guest-1)
     + [As Host](#as-host-1)
       - [Set Delay](#set-delay-1)
     + [As Spectator](#as-spectator)
-- [Replays](#replays)
   * [Manual Operation](#manual-operation)
     + [Set Server IP & Port](#set-server-ip--port)
     + [Delay Calculation](#manual-delay-calculation)
     + [Launch Game](#launch-game)
+- [Replays](#replays)
 - [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
 - [Command Line](#command-line)
-  * [Server](#server)
-  * [Client](#client)
-  * [TCP Match Transmission (Spectating)](#tcp-match-transmission-spectating)
-  * [TCP Match Receiving (Spectating)](#tcp-match-receiving-spectating)
+  * [Netplay](#netplay)
+  * [Spectating](#spectating)
   * [Test Game Screen](#test-game-screen)
-- [Other Guides](#other-guides)
+- [Game-specific Guides](#game-specific-guides)
 - [Video Demos](#video-demos)
 - [Roadmap](#roadmap)
+
+# Video Guides
+ * [Fightcade Quick Start](https://www.youtube.com/watch?v=47oJOUoGYmI)
+[![Fightcade Quick Start](http://img.youtube.com/vi/47oJOUoGYmI/0.jpg)](https://www.youtube.com/watch?v=47oJOUoGYmI)
+
+ * [LAN Lobby Quick Start](https://www.youtube.com/watch?v=47oJOUoGYmI)
+[![LAN Lobby Quick Start](http://img.youtube.com/vi/VcalBJpbjxA/0.jpg)](https://www.youtube.com/watch?v=VcalBJpbjxA)
 
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.226** romset.
@@ -98,7 +104,7 @@ Once you are done, you can press __Start Session__.
 
 ![Host Match Code Screen](match-code-3.png)
 
-### Troubleshooting
+### Match Code Troubleshooting
 
 If you notice disconnects at some regular interval (e.g. every 6 minutes, 10, minutes, 15 minutes), it may be possible that your router is closing the UDP route that was established by the matchmaking service by having a low UDP Timeout. This is similar to what can happen with VoIP calls on restrictive routers.
 
@@ -144,23 +150,16 @@ As of right now, spectating is limited to one person at a time. This should be h
 
 ![Lobby Spectating](spectate1.png)
 
-# Replays
-To see a listing of your recorded replay sessions to play back, click on the "Replays" button on the Flycast main screen.
 
-To record your netplay sessions, just check the box that says "Record All Sessions". This will create a new replay file for each netplay session you run and will be saved in the `replays/` subdirectory.
 
-To play the replay file, just click on the corresponding entry, and the replay data will played back in its corresponding game.
+# Manual Operation
 
-![Replay](replay1.png)
-
-## Manual Operation
-
-### Set Server IP & Port
+## Set Server IP & Port
 If you are hosting and do not wish to use the lobby system, you can enter your server details manually in the "Netplay" settings. Once you have specified your session details, make sure that your opponent enters your IP address and port specified.
 
 If you are a guest, make sure that "Act As Server" is not checked and that you have entered the matching IP address and port of your opponent in the "Server" column.
 
-### Manual Delay Calculation
+## Manual Delay Calculation
 To calculate delay, we would use the following formula:
 
 `Ceiling( Ping / 2 * FrameDuration (16 ms) ) = Delay #`
@@ -174,10 +173,20 @@ For instance, if my opponent’s average ping is 42 ms, I would divide it by 32 
 = 2
 ```
 
-### Launch Game
+## Launch Game
 On the Flycast main screen, you may now select your game of choice. You may also filter your list of games by typing in the text box on the top of the screen.
 
 If you are hosting, you must start the game first, then have your opponent join afterward. If you are joining someone else's game, you must wait for them to start first. Be sure that you and your opponent have the same files before starting your session. These would include your ROM files, as well at your `eeprom.net`/`nvmem.net` files found in your `data/` subdirectory.
+
+# Replays
+
+To see a listing of your recorded replay sessions to play back, click on the "Replays" button on the Flycast main screen.
+
+To record your netplay sessions, just check the box that says "Record All Sessions". This will create a new replay file for each netplay session you run and will be saved in the `replays/` subdirectory.
+
+To play the replay file, just click on the corresponding entry, and the replay data will played back in its corresponding game.
+
+![Replay](replay1.png)
 
 # MD5 Checksum Calculation & Validation
 In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
@@ -201,24 +210,27 @@ If your ROM is found in this file, the MD5 Checksum window will say *"Validation
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
-## Server (Without Match Codes)
+## Netplay
+ * Server (Without Match Codes)
 ```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
-## Client (Without Match Codes)
+*  Client (Without Match Codes)
 ```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
 
-## TCP Match Transmission (Spectating)
+## Spectating
+ * TCP Match Transmission (Spectating)
 _append to server arguments_
 ```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000```
 
-## TCP Match Receiving (Spectating)
+ * TCP Match Receiving
 ```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000```
 
 ## Test Game Screen
 ```-config dojo:TestGame=yes```
 
-# Other Guides
-[The Rumble Fish 2 Wiki - Netplay](https://wiki.gbl.gg/w/The_Rumble_Fish_2/Netplay)
+# Game-specific Guides
+ * [The Rumble Fish 2 Wiki - Netplay](https://wiki.gbl.gg/w/The_Rumble_Fish_2/Netplay)
+ * [Akatsuki Blitzkampf Wiki - Netplay](https://wiki.gbl.gg/w/Akatsuki_Blitzkampf/Netplay)
 
 # Video Demos
 ## Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS
@@ -239,9 +251,8 @@ _append to server arguments_
 - [x] Session Replays
 - [x] LAN Lobbies
 - [x] TCP Spectating
+- [x] Offline Game Recording
+- [x] Offline Game Delay (Practice)
 - [ ] Native Linux Support
     - Currently runs via Wine
-    - Native build currently works sans spectating
-- [ ] Offline Game Recording
-- [ ] Offline Game Delay (Practice)
 - [ ] Lua Scripting
