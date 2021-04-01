@@ -2521,8 +2521,12 @@ void gui_display_osd()
 	}
 	else
 	{
-		if (config::DojoEnable && config::EnablePlayerNameOverlay)
+		if (config::DojoEnable &&
+			config::EnablePlayerNameOverlay &&
+			!config::Receiving)
+		{
 			dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
+		}
 	}
 }
 
