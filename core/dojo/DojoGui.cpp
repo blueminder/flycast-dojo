@@ -61,7 +61,8 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		dojo.remaining_spectators == 0)
 	{
 		dojo.StartTransmitterThread();
-		ImGui::Text("This match will be spectated.");
+		if (config::EnableLobby)
+			ImGui::Text("This match will be spectated.");
 	}
 
 	ImGui::End();
@@ -863,13 +864,26 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
-			OptionCheckbox("Enable TCP Transmission", config::Transmitting);
-			ImGui::SameLine();
-			ShowHelpMarker("Transmit netplay sessions & replays as TCP feed to target spectator");
-
-			if (config::Transmitting)
+			if (ImGui::CollapsingHeader("Spectating", ImGuiTreeNodeFlags_None))
 			{
-				if (ImGui::CollapsingHeader("TCP Transmission", ImGuiTreeNodeFlags_DefaultOpen))
+				int one = 1;
+				ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+				ImGui::SameLine();
+				ShowHelpMarker("# of frames to cache before playing received match stream");
+
+				char SpectatorPort[256];
+
+				strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+				ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Port to send or receive session streams");
+				config::SpectatorPort = SpectatorPort;
+
+				OptionCheckbox("Enable TCP Transmission", config::Transmitting);
+				ImGui::SameLine();
+				ShowHelpMarker("Transmit netplay sessions & replays as TCP stream to target spectator");
+
+				if (config::Transmitting)
 				{
 					char SpectatorIP[256];
 
@@ -878,14 +892,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Target Spectator IP Address");
 					config::SpectatorIP = SpectatorIP;
-
-					char SpectatorPort[256];
-
-					strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
-					ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("Target Spectator Port");
-					config::SpectatorPort = SpectatorPort;
 				}
 			}
 

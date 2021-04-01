@@ -44,7 +44,7 @@ void receiver_session::do_read()
 						dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
 
 						// buffer stream
-						if (dojo.net_inputs[1].size() == 600 &&
+						if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
 							dojo.FrameNumber < dojo.last_consecutive_common_frame)
 							dojo.resume();
 					}

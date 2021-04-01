@@ -438,6 +438,7 @@ extern Option<bool> EnablePlayerNameOverlay;
 extern Option<bool> IgnoreNetSave;
 extern Option<bool> NetCustomVmu;
 extern Option<bool> ShowPlaybackControls;
+extern Option<int> RxFrameBuffer;
 
 // Maple
 

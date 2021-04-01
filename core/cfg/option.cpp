@@ -143,6 +143,7 @@ Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
 Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
 Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
+Option<int> RxFrameBuffer("RxFrameBuffer", 1800, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
