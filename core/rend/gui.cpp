@@ -1780,6 +1780,8 @@ static void gui_display_content()
 		config::DojoActAsServer = false;
 		config::Receiving = false;
 
+		if (config::EnableMatchCode)
+			config::MatchCode = "";
 		config::DojoServerIP = "";
 	}
 	else if (item_current_idx == 3)
