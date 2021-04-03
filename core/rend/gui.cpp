@@ -2310,6 +2310,10 @@ static void gui_display_loadscreen()
 				}
 				else if (config::Receiving)
 				{
+					std::string net_save_path = get_savestate_file_path(false);
+					net_save_path.append(".net");
+					remove(net_save_path.data());
+
 					gui_state = GuiState::Closed;
 					ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
 				}
