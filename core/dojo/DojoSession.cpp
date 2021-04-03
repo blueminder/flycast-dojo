@@ -780,6 +780,14 @@ void DojoSession::transmitter_thread()
 		std::string current_frame;
 		volatile bool transmission_in_progress;
 
+		std::string header_data = get_game_name() + "," +
+			config::PlayerName.get() + "," +
+			config::OpponentName.get() + ",";
+
+		header_data.append(256 - header_data.length(), 0);
+
+		asio::write(socket, asio::buffer(header_data.data(), HEADER_SIZE));
+
 		for (;;)
 		{
 			transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;

@@ -9,10 +9,45 @@ receiver_session::receiver_session(tcp::socket socket)
 
 void receiver_session::start()
 {
-	do_read();
+	dojo.receiver_header_read = false;
+	do_read_header();
 }
 
-void receiver_session::do_read()
+void receiver_session::do_read_header()
+{
+	auto self(shared_from_this());
+
+	socket_.async_read_some(asio::buffer(data_, HEADER_SIZE),
+		[this, self](std::error_code ec, std::size_t length)
+		{
+			if (!ec)
+			{
+				if (length == 0)
+				{
+					INFO_LOG(NETWORK, "Client disconnected");
+					socket_.close();
+				}
+
+				if (length == HEADER_SIZE && !dojo.receiver_header_read)
+				{
+					std::vector<std::string> hdr = stringfix::split(",", data_);
+					dojo.game_name = hdr[0];
+					config::PlayerName = hdr[1];
+					config::OpponentName = hdr[2];
+
+					dojo.receiver_header_read = true;
+
+					do_read_frame();
+				}
+
+				if (!dojo.receiver_header_read)
+					do_read_header();
+
+			}
+		});
+}
+
+void receiver_session::do_read_frame()
 {
 	auto self(shared_from_this());
 
@@ -50,7 +85,7 @@ void receiver_session::do_read()
 					}
 				}
 
-				do_read();
+				do_read_frame();
 
 			}
 		});
@@ -65,7 +100,7 @@ void receiver_session::do_write(std::size_t length)
 			if (!ec)
 			{
 				INFO_LOG(NETWORK, "Message Sent: %s", data_);
-				do_read();
+				do_read_frame();
 			}
 		});
 }

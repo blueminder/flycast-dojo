@@ -813,6 +813,26 @@ static void cleanup_serialize(void *data)
 	free(data);
 }
 
+std::string get_game_name()
+{
+	std::string state_file = settings.imgread.ImagePath;
+	size_t lastindex = state_file.find_last_of('/');
+#ifdef _WIN32
+	size_t lastindex2 = state_file.find_last_of('\\');
+	if (lastindex == std::string::npos)
+		lastindex = lastindex2;
+	else if (lastindex2 != std::string::npos)
+		lastindex = std::max(lastindex, lastindex2);
+#endif
+	if (lastindex != std::string::npos)
+		state_file = state_file.substr(lastindex + 1);
+	lastindex = state_file.find_last_of('.');
+	if (lastindex != std::string::npos)
+		state_file = state_file.substr(0, lastindex);
+
+	return state_file;
+}
+
 std::string get_savestate_file_path(bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;

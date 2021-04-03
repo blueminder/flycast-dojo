@@ -16,7 +16,8 @@ public:
 	void start();
 
 private:
-	void do_read();
+	void do_read_header();
+	void do_read_frame();
 	void do_write(std::size_t length);
 
 	tcp::socket socket_;

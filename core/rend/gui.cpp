@@ -2524,10 +2524,13 @@ void gui_display_osd()
 	else
 	{
 		if (config::DojoEnable &&
-			config::EnablePlayerNameOverlay &&
-			!config::Receiving)
+			config::EnablePlayerNameOverlay)
 		{
-			dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
+			if (!config::Receiving ||
+				(config::Receiving && dojo.receiver_header_read))
+			{
+				dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
+			}
 		}
 	}
 }

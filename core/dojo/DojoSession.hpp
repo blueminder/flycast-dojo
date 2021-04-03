@@ -31,6 +31,7 @@
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
+#define HEADER_SIZE 256
 
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
@@ -211,6 +212,9 @@ public:
 	bool jump_state_requested;
 
 	void FillSkippedFrames(u32 end_frame);
+
+	std::string game_name;
+	bool receiver_header_read;
 };
 
 extern DojoSession dojo;
