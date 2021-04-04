@@ -16,6 +16,7 @@
 #include "reios/reios.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
+#include "dojo/DojoSession.hpp"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -198,7 +199,7 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (config::DojoEnable.get())
+	if (config::DojoEnable || dojo.PlayMatch)
 	{
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 		{
