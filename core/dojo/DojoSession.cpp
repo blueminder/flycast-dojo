@@ -296,9 +296,6 @@ void DojoSession::FillSkippedFrames(u32 end_frame)
 			int new_index = GetEffectiveFrameNumber((u8*)new_frame.data());
 			net_inputs[j][new_index] = new_frame;
 			net_input_keys[j].insert(new_index);
-
-			if (transmitter_started)
-				dojo.transmission_frames.push_back(new_frame);
 		}
 	}
 }
@@ -787,6 +784,7 @@ void DojoSession::transmitter_thread()
 		header_data.append(256 - header_data.length(), 0);
 
 		asio::write(socket, asio::buffer(header_data.data(), HEADER_SIZE));
+		std::cout << "Transmission Started" << std::endl;
 
 		for (;;)
 		{
@@ -797,7 +795,7 @@ void DojoSession::transmitter_thread()
 				current_frame = transmission_frames.front();
 
 				asio::write(socket, asio::buffer(current_frame.data(), FRAME_SIZE));
-				std::cout << PrintFrameData("SENT", (u8*)current_frame.data()) << std::endl;
+				//std::cout << PrintFrameData("SENT", (u8*)current_frame.data()) << std::endl;
 
 				transmission_frames.pop_front();
 			}
