@@ -247,7 +247,11 @@ void gui_init()
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
-	gui_state = config::TestGame ? GuiState::TestGame : GuiState::Main;
+	if (config::TestGame)
+		gui_state = GuiState::TestGame;
+	else
+		gui_state = GuiState::Main;
+
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
     EventManager::listen(Event::Terminate, emuEventCallback);
@@ -2147,6 +2151,35 @@ static void gui_display_content()
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
+	if (config::LaunchReplay && config::GameName.get().empty() && !scanner.get_game_list().empty())
+	{
+		std::string s = config::ReplayFilename.get();
+		dojo.ReplayFilename = s;
+
+		std::string delimiter = "__";
+		std::vector<std::string> replay_entry;
+
+		size_t pos = 0;
+		std::string token;
+		while ((pos = s.find(delimiter)) != std::string::npos) {
+		    token = s.substr(0, pos);
+		    //std::cout << token << std::endl;
+			replay_entry.push_back(token);
+		    s.erase(0, pos + delimiter.length());
+		}
+
+	#ifdef _WIN32
+		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
+	#else
+		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
+	#endif
+
+		config::PlayerName = replay_entry[2];
+		config::OpponentName = replay_entry[3];
+
+		config::GameName = game_name;
+	}
+
 	if (!config::GameName.get().empty() && !scanner.get_game_list().empty())
 	{
 		auto filename = config::GameName;
@@ -2159,8 +2192,20 @@ static void gui_display_content()
 			}
 		);
 
-		if (!(game_found->path.empty()))
-			gui_start_game(game_found->path);
+		std::string found_path = game_found->path;
+
+		if(!found_path.empty())
+		{
+			strcpy(settings.imgread.ImagePath, found_path.data());
+			if (config::LaunchReplay)
+			{
+				config::DojoEnable = true;
+				dojo.ReplayFilename = config::ReplayFilename.get();
+				dojo.PlayMatch = true;
+			}
+
+			gui_start_game(settings.imgread.ImagePath);
+		}
 	}
 }
 

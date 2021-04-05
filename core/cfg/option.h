@@ -439,6 +439,7 @@ extern Option<bool> IgnoreNetSave;
 extern Option<bool> NetCustomVmu;
 extern Option<bool> ShowPlaybackControls;
 extern Option<int> RxFrameBuffer;
+extern Option<bool> LaunchReplay;
 
 // Maple
 

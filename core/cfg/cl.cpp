@@ -145,6 +145,11 @@ bool ParseCommandLine(int argc,char* argv[])
 			{
 				//config::DojoProtoCall = *arg;
 			}
+			else if (extension && stricmp(extension, ".flyreplay") == 0)
+			{
+				cfgSetVirtual("dojo", "ReplayFilename", *arg);
+				cfgSetVirtual("dojo", "LaunchReplay", "yes");
+			}
 			else if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
 					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
