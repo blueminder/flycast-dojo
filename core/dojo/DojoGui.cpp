@@ -492,8 +492,11 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	unsigned int total = dojo.net_inputs[0].size();
 	int position = dojo.FrameNumber.load();
 
-	//ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
+	if (!paused)
+	{
+		ImGui_Impl_NewFrame();
+		ImGui::NewFrame();
+	}
 
 	ImGui::SetNextWindowBgAlpha(0.6f);
 	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 220, screen_height - 45));
@@ -532,8 +535,12 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 
 	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+
+	if (!paused)
+	{
+		ImGui::Render();
+		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+	}
 }
 
 void DojoGui::show_player_name_overlay(float scaling, bool paused)

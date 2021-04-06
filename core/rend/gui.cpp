@@ -250,7 +250,7 @@ void gui_init()
     EventManager::listen(Event::Terminate, emuEventCallback);
 }
 
-static void ImGui_Impl_NewFrame()
+void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();

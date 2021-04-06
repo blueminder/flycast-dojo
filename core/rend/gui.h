@@ -97,3 +97,5 @@ static inline bool crosshairsNeeded()
 }
 const u32 *getCrosshairTextureData();
 std::pair<float, float> getCrosshairPosition(int playerNum);
+
+extern void ImGui_Impl_NewFrame();
