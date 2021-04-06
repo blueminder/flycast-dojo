@@ -199,7 +199,7 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (config::DojoEnable || dojo.PlayMatch)
+	if (config::DojoEnable || dojo.PlayMatch || config::RecordMatches)
 	{
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 		{
