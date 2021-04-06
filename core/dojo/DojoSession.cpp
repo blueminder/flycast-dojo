@@ -330,7 +330,8 @@ int DojoSession::StartDojoSession()
 
 	if (dojo.PlayMatch)
 	{
-		StartTransmitterThread();
+		if (config::TransmitReplays)
+			StartTransmitterThread();
 		FillDelay(1);
 		LoadReplayFile(dojo.ReplayFilename);
 		//resume();
@@ -686,6 +687,12 @@ void DojoSession::AppendToReplayFile(std::string frame)
 
 void DojoSession::LoadReplayFile(std::string path)
 {
+	std::string ppath = path;
+	stringfix::replace(ppath, "__", ":");
+	std::vector<std::string> name_info = stringfix::split(":", ppath);
+	config::PlayerName = name_info[3];
+	config::OpponentName = name_info[4];
+
 	// add string in increments of FRAME_SIZE to net_inputs
 	std::ifstream fin(path, 
 		std::ios::in | std::ios::binary);

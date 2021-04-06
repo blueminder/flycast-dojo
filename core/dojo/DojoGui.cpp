@@ -492,6 +492,9 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	unsigned int total = dojo.net_inputs[0].size();
 	int position = dojo.FrameNumber.load();
 
+	//ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
 	ImGui::SetNextWindowBgAlpha(0.6f);
 	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 220, screen_height - 45));
 	ImGui::SetNextWindowSize(ImVec2(440, 40));
@@ -529,14 +532,16 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 
 	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
-void DojoGui::show_player_name_overlay( float scaling, bool paused)
+void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
 	std::string player_1;
 	std::string player_2;
 
-	if (dojo.hosting)
+	if (dojo.hosting || dojo.PlayMatch)
 	{
 		player_1 = config::PlayerName;
 		player_2 = config::OpponentName;
@@ -549,6 +554,9 @@ void DojoGui::show_player_name_overlay( float scaling, bool paused)
 
 	float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
 	float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
+
+	//ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
 
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
@@ -564,6 +572,12 @@ void DojoGui::show_player_name_overlay( float scaling, bool paused)
     ImGui::Text(player_1.c_str());
 
 	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+
+
+	//ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
 
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0) );
@@ -579,6 +593,8 @@ void DojoGui::show_player_name_overlay( float scaling, bool paused)
     ImGui::Text(player_2.c_str());
 
 	ImGui::End();
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
 void DojoGui::gui_display_paused(float scaling)
@@ -793,7 +809,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 				OptionCheckbox("Enable TCP Transmission", config::Transmitting);
 				ImGui::SameLine();
-				ShowHelpMarker("Transmit netplay sessions & replays as TCP stream to target spectator");
+				ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
 
 				if (config::Transmitting)
 				{
@@ -804,6 +820,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Target Spectator IP Address");
 					config::SpectatorIP = SpectatorIP;
+
+					OptionCheckbox("Transmit Replays", config::TransmitReplays);
+					ImGui::SameLine();
+					ShowHelpMarker("Transmit replays to target spectator");
 				}
 			}
 
