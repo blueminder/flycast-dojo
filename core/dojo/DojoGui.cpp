@@ -11,9 +11,6 @@ void DojoGui::gui_display_host_wait(float scaling)
 {
 	//dc_stop();
 
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
-
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
@@ -69,9 +66,6 @@ void DojoGui::gui_display_guest_wait(float scaling)
 	//dc_stop();
 
 	dojo.pause();
-
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -204,9 +198,6 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 void DojoGui::gui_display_disconnected( float scaling)
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
-
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
@@ -224,9 +215,6 @@ void DojoGui::gui_display_disconnected( float scaling)
 
 void DojoGui::gui_display_end_replay( float scaling)
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
-
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
@@ -241,9 +229,6 @@ void DojoGui::gui_display_end_spectate( float scaling)
 
 {
 	dc_stop();
-
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -261,9 +246,6 @@ void DojoGui::gui_display_host_delay( float scaling)
 	//dc_stop();
 
 	dojo.pause();
-
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(360 * scaling, 0));
