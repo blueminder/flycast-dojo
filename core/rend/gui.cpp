@@ -79,11 +79,11 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
-		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
+		if (!config::DojoEnable && config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
 			dc_loadstate();
 		break;
 	case Event::Terminate:
-		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
+		if (!config::DojoEnable && config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
 			dc_savestate();
 		break;
 	default:
@@ -1072,11 +1072,8 @@ static void gui_display_settings()
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
-			/*
-			 * temporarily disabled to not conflict with netplay savestates
 			OptionCheckbox("Auto load/save state", config::AutoSavestate,
 					"Automatically save the state of the game when stopping and load it at start up.");
-			*/
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
