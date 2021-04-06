@@ -442,29 +442,32 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Columns(2, "buttons", false);
-	if (settings.imgread.ImagePath[0] == '\0')
+	if (!config::DojoEnable)
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
-	{
-		gui_state = GuiState::Closed;
-		dc_loadstate();
-	}
-	ImGui::NextColumn();
-	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
-	{
-		gui_state = GuiState::Closed;
-		dc_savestate();
-	}
-	if (settings.imgread.ImagePath[0] == '\0')
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
+		if (settings.imgread.ImagePath[0] == '\0')
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate();
+		}
+		ImGui::NextColumn();
+		if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
+		{
+			gui_state = GuiState::Closed;
+			dc_savestate();
+		}
+		if (settings.imgread.ImagePath[0] == '\0')
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
 
-	ImGui::NextColumn();
+		ImGui::NextColumn();
+	}
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -476,23 +479,26 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
-	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
+	if (!config::DojoEnable)
 	{
-		if (libGDR_GetDiscType() == Open)
+		const char* disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
+		if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
 		{
-			gui_state = GuiState::SelectDisk;
+			if (libGDR_GetDiscType() == Open)
+			{
+				gui_state = GuiState::SelectDisk;
+			}
+			else
+			{
+				DiscOpenLid();
+				gui_state = GuiState::Closed;
+			}
 		}
-		else
+		ImGui::NextColumn();
+		if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
 		{
-			DiscOpenLid();
-			gui_state = GuiState::Closed;
+			gui_state = GuiState::Cheats;
 		}
-	}
-	ImGui::NextColumn();
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
-	{
-		gui_state = GuiState::Cheats;
 	}
 	ImGui::Columns(1, nullptr, false);
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
