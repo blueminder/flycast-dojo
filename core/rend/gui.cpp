@@ -357,13 +357,11 @@ void gui_plot_render_time(int width, int height)
 void gui_open_host_wait()
 {
 	gui_state = GuiState::HostWait;
-	settings_opening = true;
 }
 
 void gui_open_guest_wait()
 {
 	gui_state = GuiState::GuestWait;
-	settings_opening = true;
 
 	//if (dojo.isMatchReady)
 	if (dojo.session_started)
@@ -375,7 +373,6 @@ void gui_open_guest_wait()
 void gui_open_disconnected()
 {
 	gui_state = GuiState::Disconnected;
-	settings_opening = true;
 }
 
 void gui_open_settings()
@@ -1723,8 +1720,6 @@ static void gui_display_content()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
-	ImGui::Indent(10 * scaling);
-
 	static ImGuiComboFlags flags = 0;
 	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE" };
 	static int item_current_idx = 0;
@@ -1787,29 +1782,28 @@ static void gui_display_content()
 	ImGui::SameLine();
 
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 4);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4);
     else if (!config::DojoEnable)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
-    ImGui::Unindent(10 * scaling);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4);
 
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
     {
-        ImGui::SameLine(0, 16 * scaling);
+        ImGui::SameLine(0, 6 * scaling);
     	filter.Draw("Filter");
     }
     if (gui_state != GuiState::SelectDisk)
     {
 		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 			if (ImGui::Button("Lobby"))
 				gui_state = GuiState::Lobby;
 		}
 
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
 
@@ -2411,28 +2405,28 @@ void gui_display_ui()
 		scanner.get_mutex().unlock();
 		break;
 	case GuiState::ReplayPause:
-		dojo_gui.gui_display_paused(&settings_opening, scaling);
+		dojo_gui.gui_display_paused(scaling);
 		break;
 	case GuiState::TestGame:
-		dojo_gui.gui_display_test_game(&settings_opening, scaling);
+		dojo_gui.gui_display_test_game(scaling);
 		break;
 	case GuiState::HostDelay:
-		dojo_gui.gui_display_host_delay(&settings_opening, scaling);
+		dojo_gui.gui_display_host_delay(scaling);
 		break;
 	case GuiState::HostWait:
-		dojo_gui.gui_display_host_wait(&settings_opening, scaling);
+		dojo_gui.gui_display_host_wait(scaling);
 		break;
 	case GuiState::GuestWait:
-		dojo_gui.gui_display_guest_wait(&settings_opening, scaling);
+		dojo_gui.gui_display_guest_wait(scaling);
 		break;
 	case GuiState::Disconnected:
-		dojo_gui.gui_display_disconnected(&settings_opening, scaling);
+		dojo_gui.gui_display_disconnected(scaling);
 		break;
 	case GuiState::EndReplay:
-		dojo_gui.gui_display_end_replay(&settings_opening, scaling);
+		dojo_gui.gui_display_end_replay(scaling);
 		break;
 	case GuiState::EndSpectate:
-		dojo_gui.gui_display_end_spectate(&settings_opening, scaling);
+		dojo_gui.gui_display_end_spectate(scaling);
 		break;
 	case GuiState::Settings:
 		gui_display_settings();
@@ -2539,7 +2533,7 @@ void gui_display_osd()
 
 	if (dojo.PlayMatch)
 	{
-		dojo_gui.show_playback_menu(&settings_opening, scaling, false);
+		dojo_gui.show_playback_menu(scaling, false);
 	}
 	else
 	{
@@ -2549,7 +2543,7 @@ void gui_display_osd()
 			if (!config::Receiving ||
 				(config::Receiving && dojo.receiver_header_read))
 			{
-				dojo_gui.show_player_name_overlay(&settings_opening, scaling, false);
+				dojo_gui.show_player_name_overlay(scaling, false);
 			}
 		}
 	}

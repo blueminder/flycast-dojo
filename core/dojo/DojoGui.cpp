@@ -2,20 +2,16 @@
 #include <oslib/audiostream.h>
 namespace fs = ghc::filesystem;
 
-void DojoGui::gui_open_host_delay(bool* settings_opening)
+void DojoGui::gui_open_host_delay()
 {
 	gui_state = GuiState::HostDelay;
-	*settings_opening = true;
 }
 
-void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
+void DojoGui::gui_display_host_wait(float scaling)
 {
 	//dc_stop();
 
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!settings_opening && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -54,7 +50,7 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 		dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
 
 		gui_state = GuiState::Closed;
-		gui_open_host_delay(settings_opening);
+		gui_open_host_delay();
 	}
 
 	if (config::Transmitting &&
@@ -66,22 +62,15 @@ void DojoGui::gui_display_host_wait(bool* settings_opening, float scaling)
 	}
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
-    *settings_opening = false;
 }
 
-void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
+void DojoGui::gui_display_guest_wait(float scaling)
 {
 	//dc_stop();
 
 	dojo.pause();
 
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!(*settings_opening) && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -211,18 +200,11 @@ void DojoGui::gui_display_guest_wait(bool* settings_opening, float scaling)
 	}
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
-    *settings_opening = false;
 }
 
-void DojoGui::gui_display_disconnected(bool* settings_opening, float scaling)
+void DojoGui::gui_display_disconnected( float scaling)
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!(*settings_opening) && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -237,19 +219,12 @@ void DojoGui::gui_display_disconnected(bool* settings_opening, float scaling)
 
 	ImGui::End();
 
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
-    *settings_opening = false;
-
 	config::AutoSkipFrame = 1;
 }
 
-void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
+void DojoGui::gui_display_end_replay( float scaling)
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!(*settings_opening) && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -260,21 +235,14 @@ void DojoGui::gui_display_end_replay(bool* settings_opening, float scaling)
 	ImGui::Text("End of replay.");
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
-    *settings_opening = false;
 }
 
-void DojoGui::gui_display_end_spectate(bool* settings_opening, float scaling)
+void DojoGui::gui_display_end_spectate( float scaling)
 
 {
 	dc_stop();
 
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!(*settings_opening) && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -285,23 +253,16 @@ void DojoGui::gui_display_end_spectate(bool* settings_opening, float scaling)
 	ImGui::Text("End of spectated match.");
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
-    *settings_opening = false;
 }
 
-void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
+void DojoGui::gui_display_host_delay( float scaling)
 
 {
 	//dc_stop();
 
 	dojo.pause();
 
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	if (!(*settings_opening) && config::RendererType.isOpenGL())
+	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -340,19 +301,12 @@ void DojoGui::gui_display_host_delay(bool* settings_opening, float scaling)
 	SaveSettings();
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), *settings_opening);
-    *settings_opening = false;
 }
 
-void DojoGui::gui_display_test_game(bool* settings_opening, float scaling)
+void DojoGui::gui_display_test_game( float scaling)
 
 {
 	dc_stop();
-
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -372,10 +326,6 @@ void DojoGui::gui_display_test_game(bool* settings_opening, float scaling)
 	}
 
 	ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
-    *settings_opening = false;
 }
 
 std::vector<std::string> split(const std::string& text, char delimiter) {
@@ -395,9 +345,6 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
 		t4.detach();
 	}
-
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
@@ -531,25 +478,19 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
     ImGui::End();
     ImGui::PopStyleVar();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
-void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool paused)
+void DojoGui::show_playback_menu(float scaling, bool paused)
 {
 	if (!config::ShowPlaybackControls)
 	{
 		if (config::EnablePlayerNameOverlay)
-			show_player_name_overlay(settings_opening, scaling, true);
+			show_player_name_overlay(scaling, true);
 		return;
 	}
 
 	unsigned int total = dojo.net_inputs[0].size();
 	int position = dojo.FrameNumber.load();
-
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
 
 	ImGui::SetNextWindowBgAlpha(0.6f);
 	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 220, screen_height - 45));
@@ -570,7 +511,6 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 		{
 			TermAudio();
 			gui_state = GuiState::ReplayPause;
-			*settings_opening = true;
 		}
 
 		ImGui::SameLine();
@@ -585,16 +525,13 @@ void DojoGui::show_playback_menu(bool* settings_opening, float scaling, bool pau
 		{
 			InitAudio();
 			gui_state = GuiState::Closed;
-			*settings_opening = false;
 		}
 	}
 
 	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
-void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bool paused)
+void DojoGui::show_player_name_overlay( float scaling, bool paused)
 {
 	std::string player_1;
 	std::string player_2;
@@ -613,9 +550,6 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
 	float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
 	float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
 
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
 	ImGui::SetNextWindowSize(ImVec2(font_size_1 + 10, 35));
@@ -630,12 +564,6 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
     ImGui::Text(player_1.c_str());
 
 	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
-
-
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
 
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0) );
@@ -651,21 +579,15 @@ void DojoGui::show_player_name_overlay(bool* settings_opening, float scaling, bo
     ImGui::Text(player_2.c_str());
 
 	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
-void DojoGui::gui_display_paused(bool* settings_opening, float scaling)
+void DojoGui::gui_display_paused(float scaling)
 {
-	show_playback_menu(settings_opening, scaling, true);
-    *settings_opening = true;
+	show_playback_menu(scaling, true);
 }
 
 void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_list)
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -759,9 +681,6 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
     ImGui::End();
     ImGui::PopStyleVar();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void DojoGui::insert_netplay_tab(ImVec2 normal_padding)

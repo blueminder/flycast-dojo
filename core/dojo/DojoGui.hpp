@@ -25,21 +25,21 @@ struct GameMedia {
 class DojoGui
 {
 private:
-	void gui_open_host_delay(bool* settings_opening);
+	void gui_open_host_delay();
 
 public:
-	void gui_display_host_wait(bool* settings_opening, float scaling);
-	void gui_display_guest_wait(bool* settings_opening, float scaling);
+	void gui_display_host_wait(float scaling);
+	void gui_display_guest_wait(float scaling);
 	
-	void gui_display_disconnected(bool* settings_opening, float scaling);
-	void gui_display_end_replay(bool* settings_opening, float scaling);
-	void gui_display_end_spectate(bool* settings_opening, float scaling);
-	void gui_display_host_delay(bool* settings_opening, float scaling);
-	void gui_display_test_game(bool* settings_opening, float scaling);
-	void gui_display_paused(bool* settings_opening, float scaling);
+	void gui_display_disconnected(float scaling);
+	void gui_display_end_replay(float scaling);
+	void gui_display_end_spectate(float scaling);
+	void gui_display_host_delay(float scaling);
+	void gui_display_test_game(float scaling);
+	void gui_display_paused(float scaling);
 
-	void show_playback_menu(bool* settings_opening, float scaling, bool paused);
-	void show_player_name_overlay(bool* settings_opening, float scaling, bool paused);
+	void show_playback_menu(float scaling, bool paused);
+	void show_player_name_overlay(float scaling, bool paused);
 
 	void gui_display_lobby(float scaling, std::vector<GameMedia> game_list);
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
