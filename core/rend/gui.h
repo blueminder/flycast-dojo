@@ -28,6 +28,7 @@ void gui_display_osd();
 void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
+void gui_cheats();
 
 void gui_open_host_wait();
 void gui_open_guest_wait();
@@ -50,6 +51,7 @@ enum class GuiState {
 	SelectDisk,
 	Loading,
 	NetworkStart,
+	Cheats,
 	Lobby,
 	Replays,
 	ReplayPause,
@@ -62,7 +64,6 @@ enum class GuiState {
 	EndSpectate
 };
 extern GuiState gui_state;
-void ImGui_Impl_NewFrame();
 
 static inline bool gui_is_open()
 {
@@ -72,7 +73,9 @@ static inline bool gui_is_content_browser()
 {
 	return gui_state == GuiState::Main;
 }
-float gui_get_scaling();
+static inline float gui_get_scaling() {
+	return scaling;
+}
 
 extern bool game_started;
 extern void gui_start_game(const std::string& path);

@@ -48,7 +48,6 @@
 extern void UpdateInputState();
 bool game_started;
 
-extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
 extern u8 kb_key[6];		// normal keys pressed
 
@@ -57,7 +56,6 @@ int screen_dpi = 96;
 static bool inited = false;
 float scaling = 1;
 GuiState gui_state = GuiState::Main;
-static bool settings_opening;
 #ifdef __ANDROID__
 static bool touch_up;
 #endif
@@ -72,11 +70,6 @@ static void term_vmus();
 static void displayCrosshairs();
 
 GameScanner scanner;
-
-float gui_get_scaling()
-{
-	return scaling;
-}
 
 static void emuEventCallback(Event event)
 {
@@ -257,7 +250,7 @@ void gui_init()
     EventManager::listen(Event::Terminate, emuEventCallback);
 }
 
-void ImGui_Impl_NewFrame()
+static void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();
@@ -390,7 +383,6 @@ void gui_open_settings()
 	if (gui_state == GuiState::Closed)
 	{
 		gui_state = GuiState::Commands;
-		settings_opening = true;
 		HideOSD();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
@@ -442,16 +434,12 @@ static void gui_display_commands()
 {
 	dc_stop();
 
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-    if (!settings_opening && config::RendererType.isOpenGL())
-    	ImGui_ImplOpenGL3_DrawBackground();
+	if (config::RendererType.isOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
 
-    if (!config::FloatVMUs)
-    	// If floating VMUs, they are already visible on the background
-    	display_vmus();
+   	display_vmus();
 
-    ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    centerNextWindow();
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -505,7 +493,13 @@ static void gui_display_commands()
 		}
 	}
 	ImGui::NextColumn();
-	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		gui_state = GuiState::Cheats;
+	}
+	ImGui::Columns(1, nullptr, false);
+	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
+			50 * scaling)))
 	{
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{
@@ -526,10 +520,6 @@ static void gui_display_commands()
 	}
 
 	ImGui::End();
-	ImGui::Render();
-
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
-	settings_opening = false;
 }
 
 const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
@@ -659,11 +649,6 @@ static double map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
 
-static void input_detected(u32 code)
-{
-	mapped_code = code;
-}
-
 static void detect_input_popup(int index, bool analog)
 {
 	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
@@ -787,7 +772,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				ImGui::OpenPopup("Map Button");
 				mapped_device = gamepad;
 				mapped_code = -1;
-				gamepad->detect_btn_input(&input_detected);
+				gamepad->detect_btn_input([](u32 code)
+						{
+							mapped_code = code;
+						});
 			}
 			detect_input_popup(j, false);
 			ImGui::NextColumn();
@@ -834,7 +822,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				ImGui::OpenPopup("Map Axis");
 				mapped_device = gamepad;
 				mapped_code = -1;
-				gamepad->detect_axis_input(&input_detected);
+				gamepad->detect_axis_input([](u32 code)
+						{
+							mapped_code = code;
+						});
 			}
 			detect_input_popup(j, true);
 			ImGui::NextColumn();
@@ -910,7 +901,7 @@ static void contentpath_warning_popup()
     {
         scanner.stop();
         ImGui::OpenPopup("Select Directory");
-        select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
+        select_file_popup("Select Directory", [](bool cancelled, std::string selection)
         {
             show_contentpath_selection = false;
             if (!cancelled)
@@ -923,22 +914,9 @@ static void contentpath_warning_popup()
     }
 }
 
-void directory_selected_callback(bool cancelled, std::string selection)
-{
-	if (!cancelled)
-	{
-		scanner.stop();
-		config::ContentPath.get().push_back(selection);
-		scanner.refresh();
-	}
-}
-
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
-
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
 
 	RenderType pvr_rend = config::RendererType;
 	bool vulkan = !config::RendererType.isOpenGL();
@@ -1053,7 +1031,15 @@ static void gui_display_settings()
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
                 if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
-                select_directory_popup("Select Directory", scaling, &directory_selected_callback);
+                select_file_popup("Select Directory", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                		});
                 ImGui::PopStyleVar();
 
         		ImGui::ListBoxFooter();
@@ -1700,9 +1686,6 @@ static void gui_display_settings()
     ImGui::End();
     ImGui::PopStyleVar();
 
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
-
     if (vulkan != !config::RendererType.isOpenGL())
         pvr_rend = !vulkan ? RenderType::OpenGL
         		: config::RendererType == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
@@ -1726,19 +1709,11 @@ static std::string get_notification()
 
 inline static void gui_display_demo()
 {
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
 	ImGui::ShowDemoWindow();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 static void gui_display_content()
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -1748,6 +1723,7 @@ static void gui_display_content()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
+	ImGui::Indent(10 * scaling);
 
 	static ImGuiComboFlags flags = 0;
 	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE" };
@@ -1816,6 +1792,7 @@ static void gui_display_content()
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
     else if (!config::DojoEnable)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 3);
+    ImGui::Unindent(10 * scaling);
 
     static ImGuiTextFilter filter;
     if (KeyboardDevice::GetInstance() != NULL)
@@ -1827,17 +1804,17 @@ static void gui_display_content()
     {
 		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
-			if (ImGui::Button("Lobby"))//, ImVec2(0, 30 * scaling)))
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+			if (ImGui::Button("Lobby"))
 				gui_state = GuiState::Lobby;
 		}
 
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f * 2/*+ ImGui::GetStyle().ItemSpacing.x*/);
-		if (ImGui::Button("Replays"))//, ImVec2(0, 30 * scaling)))
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
 
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
-		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button("Settings"))
 			gui_state = GuiState::Settings;
     }
     ImGui::PopStyleVar();
@@ -2148,9 +2125,6 @@ static void gui_display_content()
 	error_popup();
     contentpath_warning_popup();
 
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
-
 	if (config::LaunchReplay && config::GameName.get().empty() && !scanner.get_game_list().empty())
 	{
 		std::string s = config::ReplayFilename.get();
@@ -2246,14 +2220,8 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_onboarding()
 {
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
 	ImGui::OpenPopup("Select System Directory");
-	select_directory_popup("Select System Directory", scaling, &systemdir_selected_callback);
-
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+	select_file_popup("Select System Directory", &systemdir_selected_callback);
 }
 
 static std::future<bool> networkStatus;
@@ -2266,10 +2234,7 @@ static void start_network()
 
 static void gui_network_start()
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
-
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2, screen_height / 2), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	centerNextWindow();
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
 
 	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
@@ -2313,21 +2278,16 @@ static void gui_network_start()
 
 	ImGui::End();
 
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
-
 	if ((kcode[0] & DC_BTN_START) == 0)
 		naomiNetwork.startNow();
 }
 
 static void gui_display_loadscreen()
 {
-	ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_DrawBackground();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2, screen_height / 2), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	centerNextWindow();
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
 
     ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
@@ -2419,13 +2379,25 @@ static void gui_display_loadscreen()
 	ImGui::PopStyleVar();
 
     ImGui::End();
-
-    ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void gui_display_ui()
 {
+	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
+		return;
+	if (gui_state == GuiState::Main)
+	{
+		std::string game_file = settings.imgread.ImagePath;
+		if (!game_file.empty())
+		{
+			gui_start_game(game_file);
+			return;
+		}
+	}
+
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
 	switch (gui_state)
 	{
 	case GuiState::Lobby:
@@ -2470,13 +2442,7 @@ void gui_display_ui()
 		break;
 	case GuiState::Main:
 		//gui_display_demo();
-		{
-			std::string game_file = settings.imgread.ImagePath;
-			if (!game_file.empty())
-				gui_start_game(game_file);
-			else
-				gui_display_content();
-		}
+		gui_display_content();
 		break;
 	case GuiState::Closed:
 		break;
@@ -2499,10 +2465,15 @@ void gui_display_ui()
 	case GuiState::NetworkStart:
 		gui_network_start();
 		break;
+	case GuiState::Cheats:
+		gui_cheats();
+		break;
 	default:
 		die("Unknown UI state");
 		break;
 	}
+    ImGui::Render();
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 
 	if (gui_state == GuiState::Closed)
 		dc_resume();
