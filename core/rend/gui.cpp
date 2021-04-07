@@ -409,10 +409,8 @@ void gui_start_game(const std::string& path)
 	{
 		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
-		if (config::EnableMemRestore)
-		{
+		if (config::EnableMemRestore && settings.platform.system != DC_PLATFORM_DREAMCAST)
 			dojo_file.ValidateAndCopyMem(path_copy.c_str());
-		}
 	}
 
 	if (!config::DojoEnable && !dojo.PlayMatch)

@@ -8,6 +8,7 @@
 
 #include <zlib.h>
 #include "dojo/DojoSession.hpp"
+#include "dojo/DojoFile.hpp"
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name = "Visual Memory";
@@ -374,7 +375,8 @@ struct maple_sega_vmu: maple_base
 		// VMU saves used to be stored in .reicast, not in .reicast/data
 		std::string apath = get_writable_config_path(tempy);
 		if (config::DojoEnable && !config::NetCustomVmu)
-			remove(apath.data());
+			dojo_file.ValidateAndCopyVmu();
+
 		if (!file_exists(apath))
 			apath = get_writable_data_path(tempy);
 

@@ -47,6 +47,7 @@ public:
 	void OverwriteDataFolder(std::string new_root);
 	void CopyNewFlycast(std::string new_root);
 	void ValidateAndCopyMem(std::string rom_path);
+	void ValidateAndCopyVmu();
 	std::tuple<std::string, std::string> GetLatestDownloadUrl();
 
 	std::string DownloadFile(std::string download_url, std::string dest_folder);

@@ -256,6 +256,64 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 	}
 }
 
+void DojoFile::ValidateAndCopyVmu()
+{
+	std::string data_path = "data/";
+	std::string default_path = "default/";
+
+	std::string vmu_filename = "vmu_save_A1.bin.net";
+
+	if (ghc::filesystem::exists(default_path))
+	{
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator(default_path))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_write);
+
+		ghc::filesystem::remove_all(default_path);
+	}
+
+	Unzip("data/default.zip");
+
+	std::string current_path = data_path + vmu_filename;
+	std::FILE* file;
+
+	if (!std::ifstream(current_path) ||
+		!CompareFile(current_path, "dojo_dc_vmu"))
+	{
+		file = std::fopen(current_path.data(), "rb");
+
+		if (ghc::filesystem::exists(current_path))
+		{
+			ghc::filesystem::permissions(data_path + vmu_filename,
+				ghc::filesystem::perms::owner_write);
+		}
+
+		ghc::filesystem::copy_file(default_path + vmu_filename, data_path + vmu_filename,
+			ghc::filesystem::copy_options::overwrite_existing);
+
+		ghc::filesystem::permissions(default_path + vmu_filename,
+			ghc::filesystem::perms::owner_read,
+			ghc::filesystem::perm_options::replace);
+
+		INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", vmu_filename.data());
+		fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy\n", vmu_filename.data());
+	}
+	else
+	{
+		INFO_LOG(NETWORK, "DOJO: %s unchanged", vmu_filename.data());
+		fprintf(stdout, "DOJO: %s unchanged\n", vmu_filename.data());
+	}
+
+	if (ghc::filesystem::exists(default_path))
+	{
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator(default_path))
+			ghc::filesystem::permissions(dirEntry,
+				ghc::filesystem::perms::owner_write);
+
+		ghc::filesystem::remove_all(default_path);
+	}
+}
+
 void DojoFile::OverwriteDataFolder(std::string new_root)
 {
 	std::string extracted_data_path = new_root + "/data";
