@@ -2002,7 +2002,7 @@ static void gui_display_content()
 				);
 				*/
 
-				std::string short_game_name = stringfix::split(".", filename)[0];
+				std::string short_game_name = stringfix::remove_extension(filename);
 
 				//if (game_found == scanner.get_game_list().end() &&
 				if (filename.find("chd") == std::string::npos &&

@@ -30,7 +30,7 @@ nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
 bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
 {
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
-	std::string entry_name = "flycast_" + stringfix::split(".", current_filename)[0];
+	std::string entry_name = "flycast_" + stringfix::remove_extension(current_filename);
 	std::string entry_md5_checksum = LoadedFileDefinitions[entry_name][field_name];
 
 	std::FILE* file = std::fopen(file_path.data(), "rb");
@@ -560,7 +560,7 @@ void DojoFile::ExtractEntry(std::string entry_name)
 void DojoFile::RemoveFromRemaining(std::string rom_path)
 {
 	std::string filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
-	auto game_name = stringfix::split(".", filename)[0];
+	auto game_name = stringfix::remove_extension(filename);
 	auto entry_name = "flycast_" + game_name;
 
 	if (RemainingFileDefinitions.count(entry_name) == 1)
