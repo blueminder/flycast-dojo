@@ -140,7 +140,7 @@ OptionString GameName("GameName", "", "dojo");
 Option<bool> EnableMemRestore("EnableMemRestore", true, "dojo");
 OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
 Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
-Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
+Option<bool> IgnoreNetSave("IgnoreNetSave", true, "dojo");
 Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
 Option<int> RxFrameBuffer("RxFrameBuffer", 1800, "dojo");
