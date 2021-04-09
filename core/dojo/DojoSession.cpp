@@ -788,6 +788,11 @@ void DojoSession::transmitter_thread()
 			config::PlayerName.get() + "," +
 			config::OpponentName.get() + ",";
 
+		if (config::EnableMatchCode)
+			header_data = header_data.append(config::MatchCode.get() + ",");
+		else
+			header_data = header_data.append(",");
+
 		header_data.append(256 - header_data.length(), 0);
 
 		asio::write(socket, asio::buffer(header_data.data(), HEADER_SIZE));

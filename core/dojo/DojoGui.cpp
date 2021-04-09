@@ -53,7 +53,6 @@ void DojoGui::gui_display_host_wait(float scaling)
 	if (config::Transmitting &&
 		dojo.remaining_spectators == 0)
 	{
-		dojo.StartTransmitterThread();
 		if (config::EnableLobby)
 			ImGui::Text("This match will be spectated.");
 	}
@@ -270,6 +269,11 @@ void DojoGui::gui_display_host_delay( float scaling)
 	if (ImGui::Button("Start Game"))
 	{
 		dojo.PlayMatch = false;
+		if (config::Transmitting &&
+			dojo.remaining_spectators == 0)
+		{
+			dojo.StartTransmitterThread();
+		}
 
 		dojo.isMatchStarted = true;
 		dojo.StartSession(config::Delay.get(),
