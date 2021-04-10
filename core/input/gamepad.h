@@ -50,6 +50,13 @@ enum DreamcastKey
 	EMU_BTN_ESCAPE			= 1 << 25,
 	EMU_BTN_JUMP_STATE		= 1 << 26,
 
+	// Button combinations
+	DC_CMB_X_Y_LT           = DC_BTN_X | DC_BTN_Y | EMU_BTN_TRIGGER_LEFT, // DC 3P
+	DC_CMB_A_B_RT           = DC_BTN_A | DC_BTN_B | EMU_BTN_TRIGGER_RIGHT, // DC 3K
+	DC_CMB_X_A              = DC_BTN_X | DC_BTN_A, // DC LP + LK
+	DC_CMB_Y_B              = DC_BTN_Y | DC_BTN_B, // DC MP + MK
+	DC_CMB_LT_RT            = EMU_BTN_TRIGGER_LEFT | EMU_BTN_TRIGGER_RIGHT, // DC HP + HK
+
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,
 	DC_AXIS_RT		 = 0x10001,
@@ -80,4 +87,12 @@ enum DreamcastKey
 	EMU_AXIS_DPAD2_DOWN  = 0x40000 | DC_DPAD2_DOWN,
 	EMU_AXIS_DPAD2_LEFT  = 0x40000 | DC_DPAD2_LEFT,
 	EMU_AXIS_DPAD2_RIGHT = 0x40000 | DC_DPAD2_RIGHT,
+
+	// Button combinations (as axes)
+	EMU_AXIS_CMB_X_Y_LT  = 0x40000 | DC_CMB_X_Y_LT,
+	EMU_AXIS_CMB_A_B_RT  = 0x40000 | DC_CMB_A_B_RT,
+	EMU_AXIS_CMB_X_A     = 0x40000 | DC_CMB_X_A,
+	EMU_AXIS_CMB_Y_B     = 0x40000 | DC_CMB_Y_B,
+	EMU_AXIS_CMB_LT_RT   = 0x40000 | DC_CMB_LT_RT,
+
 };

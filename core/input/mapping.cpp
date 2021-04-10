@@ -56,6 +56,11 @@ button_list[] =
 	{ EMU_BTN_ANA_LEFT, "compat", "btn_analog_left" },
 	{ EMU_BTN_ANA_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
+	{ DC_CMB_X_Y_LT, "compat", "cmb_x_y_lt" },
+	{ DC_CMB_A_B_RT, "compat", "cmb_a_b_rt" },
+	{ DC_CMB_X_A, "compat", "cmb_x_a" },
+	{ DC_CMB_Y_B, "compat", "cmb_y_b" },
+	{ DC_CMB_LT_RT, "compat", "cmb_lt_rt" },
 };
 
 static struct
@@ -93,7 +98,12 @@ axis_list[] =
 	{ EMU_AXIS_DPAD2_LEFT, "compat", "axis_dpad2_left", "compat", "axis_dpad2_left_inverted" },
 	{ EMU_AXIS_DPAD2_RIGHT, "compat", "axis_dpad2_right", "compat", "axis_dpad2_right_inverted" },
 	{ EMU_AXIS_DPAD2_UP, "compat", "axis_dpad2_up", "compat", "axis_dpad2_up_inverted" },
-	{ EMU_AXIS_DPAD2_DOWN, "compat", "axis_dpad2_down", "compat", "axis_dpad2_down_inverted" }
+	{ EMU_AXIS_DPAD2_DOWN, "compat", "axis_dpad2_down", "compat", "axis_dpad2_down_inverted" },
+	{ EMU_AXIS_DPAD2_DOWN, "compat", "axis_dpad2_down", "compat", "axis_dpad2_down_inverted" },
+	{ EMU_AXIS_CMB_X_Y_LT, "compat", "axis_cmb_x_y_lt" },
+	{ EMU_AXIS_CMB_A_B_RT, "compat", "axis_cmb_a_b_rt" },
+	{ EMU_AXIS_CMB_X_A, "compat", "axis_cmb_x_a" },
+	{ EMU_AXIS_CMB_Y_B, "compat", "axis_cmb_y_b" },
 };
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;

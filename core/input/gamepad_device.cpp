@@ -149,6 +149,36 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			case EMU_BTN_ANA_RIGHT:
 				joyx[port] = pressed ? 127 : 0;
 				break;
+			case DC_CMB_X_Y_LT:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
+				else
+					kcode[port] |= (DC_BTN_X | DC_BTN_Y);
+				lt[port] = pressed ? 255 : 0;
+				break;
+			case DC_CMB_A_B_RT:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+				else
+					kcode[port] |= (DC_BTN_A | DC_BTN_B);
+				rt[port] = pressed ? 255 : 0;
+				break;
+			case DC_CMB_X_A:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
+				else
+					kcode[port] |= (DC_BTN_X | DC_BTN_A);
+				break;
+			case DC_CMB_Y_B:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
+				else
+					kcode[port] |= (DC_BTN_Y | DC_BTN_B);
+				break;
+			case DC_CMB_LT_RT:
+				lt[port] = pressed ? 255 : 0;
+				rt[port] = pressed ? 255 : 0;
+				break;
 			default:
 				return false;
 			}
@@ -196,6 +226,81 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 	auto handle_axis = [&](u32 port, DreamcastKey key)
 	{
+		// Combinations
+		if (key == EMU_AXIS_CMB_X_Y_LT)
+		{
+			kcode[port] |= DC_BTN_X | DC_BTN_Y | (DC_BTN_X | DC_BTN_Y << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_X | DC_BTN_Y) << 1);
+				lt[port] = 0;
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
+				lt[port] = 255;
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_A_B_RT)
+		{
+			kcode[port] |= DC_BTN_A | DC_BTN_B | (DC_BTN_A | DC_BTN_B << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_A | DC_BTN_B) << 1);
+				rt[port] = 0;
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+				rt[port] = 255;
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_X_A)
+		{
+			kcode[port] |= DC_BTN_X | DC_BTN_A | (DC_BTN_X | DC_BTN_A << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_X | DC_BTN_A) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_Y_B)
+		{
+			kcode[port] |= DC_BTN_Y | DC_BTN_B | (DC_BTN_Y | DC_BTN_B << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_Y | DC_BTN_B) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_LT_RT)
+		{
+			if (v <= -64)
+			{
+				lt[port] = 0;
+				rt[port] = 0;
+			}
+			else if (v >= 64)
+			{
+				lt[port] = 255;
+				rt[port] = 255;
+			}
+			return true;
+		}
 
 		if ((int)key < 0x10000)
 		{
