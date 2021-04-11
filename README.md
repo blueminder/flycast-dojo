@@ -13,6 +13,7 @@ General information about Flycast configuration and supported features can be fo
 - [Getting Started](#getting-started)
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
+  * [Netplay Settings](#netplay-settings)
   * [Match Code Quick Start](#match-code-quick-start)
     + [As Host](#as-host)
       - [Set Delay](#set-delay)
@@ -27,7 +28,11 @@ General information about Flycast configuration and supported features can be fo
     + [Set Server IP & Port](#set-server-ip--port)
     + [Delay Calculation](#manual-delay-calculation)
     + [Launch Game](#launch-game)
+    + [Manual Spectating](#manual-spectating)
+      - [Transmitting](#transmitting)
+      - [Receiving](#receiving)
 - [Replays](#replays)
+    + [Public Replay Servers & Transmitting Game Sessions](#public-replay-servers--transmitting-game-sessions)
 - [Savestates](#savestates)
     + [Auto Generated Savestates](#auto-generated-savestates)
     + [Custom Savestates](#custom-savestates)
@@ -41,7 +46,8 @@ General information about Flycast configuration and supported features can be fo
 - [Roadmap](#roadmap)
 
 # Video Guides
- ## Fightcade Quick Start
+
+## Fightcade Quick Start
 [![Fightcade Quick Start](http://img.youtube.com/vi/47oJOUoGYmI/0.jpg)](https://www.youtube.com/watch?v=47oJOUoGYmI)
 
 ## LAN Lobby Quick Start
@@ -192,6 +198,7 @@ If you wish to enable transmitting when launching via the Command Line, just add
 
 ### Receiving
 To manually launch a spectating session as a receiver, just select the **RECEIVE** option in the top-left menu and select the game of your choice. Flycast Dojo will stay idle until it begins receiving a transmission to the spectating port. By default, this is on port **7000**.
+
 ![Receive](receive_option.png)
 
 To launch as a receiver via the Command Line and set your listening port, add ```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000``` to your command.
@@ -206,6 +213,22 @@ To play the replay file, just click on the corresponding entry, and the replay d
 
 ![Replay](replay1.png)
 
+## Public Replay Servers & Transmitting Game Sessions
+
+If you wish to share your game sessions, there is an option to transmit to any replay server or to any listening spectator with the **RECEIVE** option set.
+
+There is currently an experimental public replay server available at **match.dojo.ooo**. The server accepts transmissions at port **7000**, with an interface to search and download replays at [http://match.dojo.ooo:8000/replays](http://match.dojo.ooo:8000/replays).
+
+**Transmitting to Replay Server**
+
+![Transmitting to Replay Server](transmission-replay-server.png)
+
+**Replay Server Search Interface**
+
+![Replay Server Search Interface](replay-server-search.png)
+
+Once some code cleanup and quality checks are done, the replay server will be made available in its own repository for anyone to be able to host themselves.
+
 # Savestates
 During a netplay match, you can "jump" to a starting savestate by pressing the **Backspace** button by default. This may be edited in the Control mapping section of the Settings.
 
@@ -215,7 +238,11 @@ To help mitigate desyncs and to easily restart game sessions, if one isn't detec
 If you ever encounter any isues, you can delete the savestate located in `data/[ROM Name].state.net` to have the emulator start from the boot sequence and generate a savestate in your next match.
 
 ## Custom Savestates
-To use custom savestates, you must rename your game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files, or else you will be looking at different game states entirely.
+To use custom savestates, you must first disable **Ignore Netplay Savestates** in the **Memory Management** section of your Dojo settings.
+
+![Memory Management - Disabled Ignore Netplay Savestates](mm-disable-ignore-savestate.png)
+
+Fro here, you must rename your desired game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files when you start a session, or else you will be looking at different game states entirely.
 
 # MD5 Checksum Calculation & Validation
 In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
@@ -241,20 +268,26 @@ You may also call Flycast from the command line. All command line flags correspo
 
 ## Netplay
  * Server (Without Match Codes)
-```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
+
+```flycast.exe -config dojo:Enable=yes -config dojo:EnableMatchCode=no -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 -config dojo:PlayerName=Player1 ControllerTest-DJ.cdi```
 
 *  Client (Without Match Codes)
-```flycast.exe -config dojo:Enable dojo:EnableMatchCode=no -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 ControllerTest-DJ.cdi```
+
+```flycast.exe -config dojo:Enable=yes -config dojo:EnableMatchCode=no -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 -config dojo:PlayerName=Player2 ControllerTest-DJ.cdi```
 
 ## Spectating
  * TCP Match Transmission (Spectating)
+
 _append to server arguments_
+
 ```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000```
 
  * TCP Match Receiving
+
 ```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000```
 
 ## Test Game Screen
+
 ```-config dojo:TestGame=yes```
 
 # Game-specific Guides
