@@ -62,6 +62,8 @@ enum DreamcastKey
 	NAOMI_CMB_1_4           = DC_BTN_A | DC_BTN_Y, // NAOMI LP + LK
 	NAOMI_CMB_2_5           = DC_BTN_B | DC_DPAD2_UP, // NAOMI MP + MK
 	NAOMI_CMB_3_6           = DC_BTN_X | DC_DPAD2_DOWN, // NAOMI HP + HK
+	NAOMI_CMB_1_2           = DC_BTN_A | DC_BTN_B, // NAOMI 1+2
+	NAOMI_CMB_2_3           = DC_BTN_B | DC_BTN_X, // NAOMI 2+3
 
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,
@@ -106,5 +108,7 @@ enum DreamcastKey
 	EMU_AXIS_CMB_1_4     = 0x40000 | NAOMI_CMB_1_4,
 	EMU_AXIS_CMB_2_5     = 0x40000 | NAOMI_CMB_2_5,
 	EMU_AXIS_CMB_3_6     = 0x40000 | NAOMI_CMB_3_6,
+	EMU_AXIS_CMB_1_2   = 0x40000 | NAOMI_CMB_1_2,
+	EMU_AXIS_CMB_2_3   = 0x40000 | NAOMI_CMB_2_3,
 
 };

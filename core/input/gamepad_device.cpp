@@ -184,14 +184,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
 				else
 					kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
-				lt[port] = pressed ? 255 : 0;
 				break;
 			case NAOMI_CMB_4_5_6:
 				if (pressed)
 					kcode[port] &= ~(DC_BTN_Y | DC_BTN_B | DC_DPAD2_DOWN);
 				else
 					kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_DPAD2_DOWN);
-				rt[port] = pressed ? 255 : 0;
 				break;
 			case NAOMI_CMB_1_4:
 				if (pressed)
@@ -210,6 +208,18 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
 				else
 					kcode[port] |= (DC_BTN_X | DC_DPAD2_DOWN);
+				break;
+			case NAOMI_CMB_1_2:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+				else
+					kcode[port] |= (DC_BTN_A | DC_BTN_B);
+				break;
+			case NAOMI_CMB_2_3:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
+				else
+					kcode[port] |= (DC_BTN_B | DC_BTN_X);
 				break;
 			default:
 				return false;
@@ -400,6 +410,34 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			else if (v >= 64)
 			{
 				kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_1_2)
+		{
+			kcode[port] |= DC_BTN_A | DC_BTN_B | (DC_BTN_A | DC_BTN_B << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_A | DC_BTN_B) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_2_3)
+		{
+			kcode[port] |= DC_BTN_B | DC_BTN_X | (DC_BTN_B | DC_BTN_X << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_B | DC_BTN_X) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
 			}
 			return true;
 		}
