@@ -20,15 +20,17 @@ h1 {
 	background: #fff;
 	font-weight: bold;
 	transition: background ease 0.2s;
-	width: 230px;
+	width: 245px;
 }
 
 .tabs .tab {
 	order: 99;
-	width: 560px;
+	width: 900px;
+	height: 394px;
 	display: none;
 	padding: 1rem;
 	background: #ffb4b4;
+	text-align: center;
 }
 
 .tabs input[type="radio"] {
@@ -55,6 +57,12 @@ h1 {
 	}
 }
 
+a.small {
+	font-size: 10px;
+	font-weight: bold;
+	vertical-align: super;
+}
+
 body {
 	background: #eee;
 	min-height: 100vh;
@@ -72,25 +80,32 @@ body {
 	<body>
 		<h1>Flycast Dojo</h1>
 		<i>Peer-to-peer Netplay for Dreamcast / NAOMI / Atomiswave</i>
-		<p>Available via <a href="https://www.fightcade.com/">Fightcade</a> &amp; <a href="https://github.com/blueminder/flycast-dojo/releases">GitHub</a></p>
+		<p>Available via <a href="https://github.com/blueminder/flycast-dojo">GitHub</a> &amp; <a href="https://www.fightcade.com/">Fightcade</a></p>
 
 		<h3>Quick Start Videos</h3>
 		<div class="tabs">
-		    <input type="radio" name="tabs" id="tab_fightcade" checked="checked">
-		    <label for="tab_fightcade">Via Fightcade</label>
-		    <div class="tab">
-				<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/47oJOUoGYmI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			<input type="radio" name="tabs" id="tab_match_code" checked="checked">
+		  <label for="tab_match_code">Via Match Codes</label>
+		  <div class="tab">
+				<img src="match-code-qs-kofxi.gif" alt="Match Code Quick Start" width="900">
+			</div>
+
+		  <input type="radio" name="tabs" id="tab_fightcade">
+		  <label for="tab_fightcade">Via Fightcade</label>
+		  <div class="tab">
+				<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/47oJOUoGYmI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 			</div>
 
 			<input type="radio" name="tabs" id="tab_lan">
-		    <label for="tab_lan">Via Virtual LAN</label>
-		    <div class="tab">
-				<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/VcalBJpbjxA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		  <label for="tab_lan">Via Virtual LAN</label>
+		  <div class="tab">
+				<iframe width="700" height="394" src="https://www.youtube-nocookie.com/embed/VcalBJpbjxA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 			</div>
 		</div>
 
 		<p>
 			<a href="https://github.com/blueminder/flycast-dojo#readme">Documentation</a> | 
+			<a href="http://match.dojo.ooo:8000/replays">Replay Server</a> <a class="small" href="https://github.com/blueminder/flycast-dojo/blob/master/README.md#public-replay-servers--transmitting-game-sessions">[?]</a> | 
 			<a href="https://github.com/blueminder/flycast-dojo#video-demos">Video Demos</a>
 		</p>
 	</body>
