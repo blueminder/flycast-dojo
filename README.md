@@ -2,12 +2,13 @@
 
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
 
-**Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games either over a direct IP connection, an internet matchmaking server, or a virtual LAN like ZeroTier or Radmin.
+**Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games using Match Codes over an internet matchmaking server, through a direct IP connection, or a virtual LAN like ZeroTier or Radmin.
 
 General information about Flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
 
 # Contents
-- [Video Guides](#video-guides)
+- [Visual Aids](#visual-aids)
+  * [Match Code Quick Start](#match-code-quick-start)
   * [Fightcade Quick Start](#fightcade-quick-start)
   * [LAN Lobby Quick Start](#lan-lobby-quick-start)
 - [Getting Started](#getting-started)
@@ -45,7 +46,11 @@ General information about Flycast configuration and supported features can be fo
 - [Video Demos](#video-demos)
 - [Roadmap](#roadmap)
 
-# Video Guides
+# Visual Aids
+
+## Match Code Quick Start
+
+![Match Code Quick Start](match-code-qs-kofxi.gif)
 
 ## Fightcade Quick Start
 [![Fightcade Quick Start](http://img.youtube.com/vi/47oJOUoGYmI/0.jpg)](https://www.youtube.com/watch?v=47oJOUoGYmI)
