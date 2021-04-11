@@ -179,6 +179,38 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				lt[port] = pressed ? 255 : 0;
 				rt[port] = pressed ? 255 : 0;
 				break;
+			case NAOMI_CMB_1_2_3:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
+				else
+					kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
+				lt[port] = pressed ? 255 : 0;
+				break;
+			case NAOMI_CMB_4_5_6:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_Y | DC_BTN_B | DC_DPAD2_DOWN);
+				else
+					kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_DPAD2_DOWN);
+				rt[port] = pressed ? 255 : 0;
+				break;
+			case NAOMI_CMB_1_4:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
+				else
+					kcode[port] |= (DC_BTN_A | DC_BTN_Y);
+				break;
+			case NAOMI_CMB_2_5:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
+				else
+					kcode[port] |= (DC_BTN_B | DC_DPAD2_UP);
+				break;
+			case NAOMI_CMB_3_6:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
+				else
+					kcode[port] |= (DC_BTN_X | DC_DPAD2_DOWN);
+				break;
 			default:
 				return false;
 			}
@@ -298,6 +330,76 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				lt[port] = 255;
 				rt[port] = 255;
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_1_2_3)
+		{
+			kcode[port] |= DC_BTN_A | DC_BTN_B | DC_BTN_X | (DC_BTN_A | DC_BTN_B | DC_BTN_X << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_A | DC_BTN_B | DC_BTN_X) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_4_5_6)
+		{
+			kcode[port] |= DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN | (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_1_4)
+		{
+			kcode[port] |= DC_BTN_A | DC_BTN_Y | (DC_BTN_A | DC_BTN_Y << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_A | DC_BTN_Y) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_2_5)
+		{
+			kcode[port] |= DC_BTN_B | DC_DPAD2_UP | (DC_BTN_B | DC_DPAD2_UP << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_B | DC_DPAD2_UP) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_CMB_3_6)
+		{
+			kcode[port] |= DC_BTN_X | DC_DPAD2_DOWN | (DC_BTN_X | DC_DPAD2_DOWN << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_X | DC_DPAD2_DOWN) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
 			}
 			return true;
 		}
