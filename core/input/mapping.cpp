@@ -61,6 +61,11 @@ button_list[] =
 	{ DC_CMB_X_A, "compat", "cmb_x_a" },
 	{ DC_CMB_Y_B, "compat", "cmb_y_b" },
 	{ DC_CMB_LT_RT, "compat", "cmb_lt_rt" },
+	{ NAOMI_CMB_1_2_3, "compat", "cmb_1_2_3" },
+	{ NAOMI_CMB_4_5_6, "compat", "cmb_4_5_6" },
+	{ NAOMI_CMB_1_4, "compat", "cmb_1_4" },
+	{ NAOMI_CMB_2_5, "compat", "cmb_2_5" },
+	{ NAOMI_CMB_3_6, "compat", "cmb_3_6" },
 };
 
 static struct
@@ -104,6 +109,11 @@ axis_list[] =
 	{ EMU_AXIS_CMB_A_B_RT, "compat", "axis_cmb_a_b_rt" },
 	{ EMU_AXIS_CMB_X_A, "compat", "axis_cmb_x_a" },
 	{ EMU_AXIS_CMB_Y_B, "compat", "axis_cmb_y_b" },
+	{ EMU_AXIS_CMB_1_2_3, "compat", "axis_cmb_1_2_3" },
+	{ EMU_AXIS_CMB_4_5_6, "compat", "axis_cmb_4_5_6" },
+	{ EMU_AXIS_CMB_1_4, "compat", "axis_cmb_1_4" },
+	{ EMU_AXIS_CMB_2_5, "compat", "axis_cmb_2_5" },
+	{ EMU_AXIS_CMB_3_6, "compat", "axis_cmb_3_6" },
 };
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
