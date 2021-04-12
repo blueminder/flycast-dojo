@@ -149,6 +149,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			case EMU_BTN_ANA_RIGHT:
 				joyx[port] = pressed ? 127 : 0;
 				break;
+			case DC_CMB_X_Y_A_B:
+				if (pressed)
+					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+				else
+					kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+				break;
 			case DC_CMB_X_Y_LT:
 				if (pressed)
 					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
@@ -269,6 +275,21 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	auto handle_axis = [&](u32 port, DreamcastKey key)
 	{
 		// Combinations
+		if (key == EMU_AXIS_CMB_X_Y_A_B)
+		{
+			kcode[port] |= DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B |
+				(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B << 1);
+			if (v <= -64)
+			{
+				kcode[port] |= ~((DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B) << 1);
+			}
+			else if (v >= 64)
+			{
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+			}
+			return true;
+		}
+
 		if (key == EMU_AXIS_CMB_X_Y_LT)
 		{
 			kcode[port] |= DC_BTN_X | DC_BTN_Y | (DC_BTN_X | DC_BTN_Y << 1);
