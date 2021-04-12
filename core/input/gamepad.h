@@ -62,8 +62,8 @@ enum DreamcastKey
 	NAOMI_CMB_1_4           = DC_BTN_A | DC_BTN_Y, // NAOMI LP + LK
 	NAOMI_CMB_2_5           = DC_BTN_B | DC_DPAD2_UP, // NAOMI MP + MK
 	NAOMI_CMB_3_6           = DC_BTN_X | DC_DPAD2_DOWN, // NAOMI HP + HK
-	NAOMI_CMB_1_2           = DC_BTN_A | DC_BTN_B, // NAOMI 1+2
-	NAOMI_CMB_2_3           = DC_BTN_B | DC_BTN_X, // NAOMI 2+3
+	NAOMI_CMB_1_2           = (DC_BTN_A | DC_BTN_B) + 1, // NAOMI 1+2
+	NAOMI_CMB_2_3           = (DC_BTN_B | DC_BTN_X) + 1, // NAOMI 2+3
 
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,
