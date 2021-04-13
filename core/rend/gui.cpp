@@ -603,7 +603,7 @@ const char *button_names[] = {
 		"Reload",
 		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right", "Save State Jump",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
-		"N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X"
 };
 const char *arcade_button_names[] = {
 		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
@@ -611,7 +611,7 @@ const char *arcade_button_names[] = {
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
 		"Reload",
 		"N/A", "N/A", "N/A", "N/A", "Save State Jump",
-		"N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
+		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3"
 };
 const DreamcastKey axis_keys[] = {
@@ -626,13 +626,13 @@ const char *axis_names[] = {
 		"Right DPad X", "Right DPad Y", "Start", "A", "B", "X", "Y",
 		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
-		"N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X"
 };
 const char *arcade_axis_names[] = {
 		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
 		"Right DPad X", "Right DPad Y", "Start", "Button 1", "Button 2", "Button 3", "Button 4",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
-		"N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
+		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3"
 };
 static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");

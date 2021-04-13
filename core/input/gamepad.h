@@ -51,18 +51,18 @@ enum DreamcastKey
 	EMU_BTN_JUMP_STATE		= 1 << 26,
 
 	// Button combinations
-	DC_CMB_X_Y_A_B          = DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B, // DC Face Buttons
-	DC_CMB_X_Y_LT           = DC_BTN_X | DC_BTN_Y | EMU_BTN_TRIGGER_LEFT, // DC 3P
-	DC_CMB_A_B_RT           = DC_BTN_A | DC_BTN_B | EMU_BTN_TRIGGER_RIGHT, // DC 3K
-	DC_CMB_X_A              = DC_BTN_X | DC_BTN_A, // DC LP + LK
-	DC_CMB_Y_B              = DC_BTN_Y | DC_BTN_B, // DC MP + MK
-	DC_CMB_LT_RT            = EMU_BTN_TRIGGER_LEFT | EMU_BTN_TRIGGER_RIGHT, // DC HP + HK
+	DC_CMB_X_Y_A_B          = (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B) + 1, // DC Face Buttons
+	DC_CMB_X_Y_LT           = (DC_BTN_X | DC_BTN_Y | EMU_BTN_TRIGGER_LEFT) + 1, // DC 3P
+	DC_CMB_A_B_RT           = (DC_BTN_A | DC_BTN_B | EMU_BTN_TRIGGER_RIGHT) + 1, // DC 3K
+	DC_CMB_X_A              = (DC_BTN_X | DC_BTN_A) + 1, // DC LP + LK
+	DC_CMB_Y_B              = (DC_BTN_Y | DC_BTN_B) + 1, // DC MP + MK
+	DC_CMB_LT_RT            = (EMU_BTN_TRIGGER_LEFT | EMU_BTN_TRIGGER_RIGHT) + 1, // DC HP + HK
 
-	NAOMI_CMB_1_2_3         = DC_BTN_A | DC_BTN_B | DC_BTN_X, // NAOMI 3P
-	NAOMI_CMB_4_5_6         = DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN, // NAOMI 3K
-	NAOMI_CMB_1_4           = DC_BTN_A | DC_BTN_Y, // NAOMI LP + LK
-	NAOMI_CMB_2_5           = DC_BTN_B | DC_DPAD2_UP, // NAOMI MP + MK
-	NAOMI_CMB_3_6           = DC_BTN_X | DC_DPAD2_DOWN, // NAOMI HP + HK
+	NAOMI_CMB_1_2_3         = (DC_BTN_A | DC_BTN_B | DC_BTN_X) + 1, // NAOMI 3P
+	NAOMI_CMB_4_5_6         = (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN) + 1, // NAOMI 3K
+	NAOMI_CMB_1_4           = (DC_BTN_A | DC_BTN_Y) + 1, // NAOMI LP + LK
+	NAOMI_CMB_2_5           = (DC_BTN_B | DC_DPAD2_UP) + 1, // NAOMI MP + MK
+	NAOMI_CMB_3_6           = (DC_BTN_X | DC_DPAD2_DOWN) + 1, // NAOMI HP + HK
 	NAOMI_CMB_1_2           = (DC_BTN_A | DC_BTN_B) + 1, // NAOMI 1+2
 	NAOMI_CMB_2_3           = (DC_BTN_B | DC_BTN_X) + 1, // NAOMI 2+3
 
