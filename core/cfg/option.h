@@ -441,6 +441,7 @@ extern Option<bool> ShowPlaybackControls;
 extern Option<int> RxFrameBuffer;
 extern Option<bool> LaunchReplay;
 extern Option<bool> TransmitReplays;
+extern Option<bool> Training;
 
 // Maple
 
