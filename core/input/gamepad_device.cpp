@@ -131,6 +131,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					loading_state = false;
 				}
 				break;
+			case EMU_BTN_QUICK_SAVE:
+				if (pressed && !config::DojoEnable)
+				{
+					dc_savestate();
+				}
+				break;
 			case EMU_BTN_TRIGGER_LEFT:
 				lt[port] = pressed ? 255 : 0;
 				break;
