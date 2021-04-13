@@ -132,7 +132,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				}
 				break;
 			case EMU_BTN_QUICK_SAVE:
-				if (pressed && !config::DojoEnable)
+				if (pressed && (!config::DojoEnable || config::Training))
 				{
 					dc_savestate();
 				}

@@ -147,6 +147,7 @@ Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
 Option<int> RxFrameBuffer("RxFrameBuffer", 1800, "dojo");
 Option<bool> LaunchReplay("LaunchReplay", false, "dojo");
 Option<bool> TransmitReplays("TransmitReplays", false, "dojo");
+Option<bool> Training("Training", false, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
