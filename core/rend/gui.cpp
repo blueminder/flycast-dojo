@@ -624,7 +624,7 @@ const DreamcastKey button_keys[] = {
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
 		DC_BTN_RELOAD,
-		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT, EMU_BTN_JUMP_STATE,
+		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT, EMU_BTN_JUMP_STATE, EMU_BTN_QUICK_SAVE,
 		DC_CMB_X_Y_A_B, DC_CMB_X_Y_LT, DC_CMB_A_B_RT, DC_CMB_X_A, DC_CMB_Y_B, DC_CMB_LT_RT,
 		NAOMI_CMB_1_2_3, NAOMI_CMB_4_5_6, NAOMI_CMB_1_4, NAOMI_CMB_2_5, NAOMI_CMB_3_6, NAOMI_CMB_1_2, NAOMI_CMB_2_3,
 		NAOMI_CMB_3_4, NAOMI_CMB_4_5
@@ -634,7 +634,7 @@ const char *button_names[] = {
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
 		"Reload",
-		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right", "Save State Jump",
+		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right", "Save State Jump", "Quick Save",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
 		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X",
 		"X+Y", "N/A"
@@ -644,7 +644,7 @@ const char *arcade_button_names[] = {
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
 		"Reload",
-		"N/A", "N/A", "N/A", "N/A", "Save State Jump",
+		"N/A", "N/A", "N/A", "N/A", "Save State Jump", "Quick Save",
 		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3",
 		"3+4", "4+5"
