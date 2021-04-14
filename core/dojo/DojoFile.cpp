@@ -4,8 +4,13 @@ DojoFile dojo_file;
 
 DojoFile::DojoFile()
 {
-	LoadedFileDefinitions = LoadJsonFromFile("flycast_roms.json");
-	RemainingFileDefinitions = LoadJsonFromFile("flycast_roms.json");
+	// assign exe root path on launch
+	TCHAR szPath[MAX_PATH];
+	GetModuleFileName(0, szPath, MAX_PATH);
+	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
+
+	LoadedFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
+	RemainingFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
 	start_update = false;
 	update_started = false;
 	start_download = false;
@@ -144,8 +149,8 @@ int DojoFile::Unzip(std::string archive_path, std::string dest_dir)
 
 void DojoFile::ValidateAndCopyMem(std::string rom_path)
 {
-	std::string data_path = "data/";
-	std::string default_path = "default/";
+	std::string data_path = root_path + "data/";
+	std::string default_path = root_path + "default/";
 
 	std::string rom_filename = rom_path.substr(rom_path.find_last_of("/\\") + 1);
 
@@ -162,7 +167,7 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 		ghc::filesystem::remove_all(default_path);
 	}
 
-	Unzip("data/default.zip");
+	Unzip(root_path + "data/default.zip");
 
 	std::string current_path;
 	std::FILE* file;
@@ -258,8 +263,8 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 
 void DojoFile::ValidateAndCopyVmu()
 {
-	std::string data_path = "data/";
-	std::string default_path = "default/";
+	std::string data_path = root_path + "data/";
+	std::string default_path = root_path + "default/";
 
 	std::string vmu_filename = "vmu_save_A1.bin.net";
 
@@ -272,7 +277,7 @@ void DojoFile::ValidateAndCopyVmu()
 		ghc::filesystem::remove_all(default_path);
 	}
 
-	Unzip("data/default.zip");
+	Unzip(root_path + "data/default.zip");
 
 	std::string current_path = data_path + vmu_filename;
 	std::FILE* file;

@@ -75,6 +75,8 @@ public:
 
 	std::string entry_name;
 	std::ofstream of;
+
+	std::string root_path;
 };
 
 extern DojoFile dojo_file;
