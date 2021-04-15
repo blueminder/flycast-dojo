@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <climits>
 
+#include "dojo/DojoSession.hpp"
+
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
 // Gamepads
@@ -137,6 +139,19 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					dc_savestate();
 				}
 				break;
+			case EMU_BTN_RECORD:
+				if (pressed && config::Training)
+				{
+					dojo.ToggleRecording();
+				}
+				break;
+			case EMU_BTN_PLAY:
+				if (pressed && config::Training)
+				{
+					dojo.PlayRecording();
+				}
+				break;
+
 			case EMU_BTN_TRIGGER_LEFT:
 				lt[port] = pressed ? 255 : 0;
 				break;

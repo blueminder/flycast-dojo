@@ -594,7 +594,8 @@ const DreamcastKey button_keys[] = {
 		DC_BTN_RELOAD,
 		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT, EMU_BTN_JUMP_STATE, EMU_BTN_QUICK_SAVE,
 		DC_CMB_X_Y_A_B, DC_CMB_X_Y_LT, DC_CMB_A_B_RT, DC_CMB_X_A, DC_CMB_Y_B, DC_CMB_LT_RT,
-		NAOMI_CMB_1_2_3, NAOMI_CMB_4_5_6, NAOMI_CMB_1_4, NAOMI_CMB_2_5, NAOMI_CMB_3_6, NAOMI_CMB_1_2, NAOMI_CMB_2_3
+		NAOMI_CMB_1_2_3, NAOMI_CMB_4_5_6, NAOMI_CMB_1_4, NAOMI_CMB_2_5, NAOMI_CMB_3_6, NAOMI_CMB_1_2, NAOMI_CMB_2_3,
+		EMU_BTN_RECORD, EMU_BTN_PLAY
 };
 const char *button_names[] = {
 		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
@@ -603,7 +604,8 @@ const char *button_names[] = {
 		"Reload",
 		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right", "Save State Jump", "Quick Save",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
-		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X"
+		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X",
+		"Record", "Play"
 };
 const char *arcade_button_names[] = {
 		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
@@ -612,7 +614,8 @@ const char *arcade_button_names[] = {
 		"Reload",
 		"N/A", "N/A", "N/A", "N/A", "Save State Jump", "Quick Save",
 		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
-		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3"
+		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3",
+		"Record", "Play"
 };
 const DreamcastKey axis_keys[] = {
 		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
