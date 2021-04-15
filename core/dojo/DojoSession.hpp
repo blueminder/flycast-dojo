@@ -120,6 +120,7 @@ public:
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs);
 	u8* TranslateInputToFrameData(u16 buttons);
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons);
+	u8* TranslateInputToFrameData(u32 frame_number, PlainJoystickState* pjs, u16 buttons);
 
 	u8* TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons, int player_num);
 
@@ -215,6 +216,12 @@ public:
 
 	std::string game_name;
 	bool receiver_header_read;
+
+	bool recording;
+	std::vector<std::string> record_slot;
+
+	void ToggleRecording();
+	void PlayRecording();
 };
 
 extern DojoSession dojo;
