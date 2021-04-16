@@ -118,6 +118,7 @@ ifneq (,$(findstring x86,$(platform)))
 ifndef USE_SDL
     USE_X11 := 1
 endif
+    LIBS += -lcurl -lssl -lcrypto -lssl -lcrypto
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
@@ -131,6 +132,7 @@ else ifneq (,$(findstring x64,$(platform)))
 ifndef USE_SDL
     USE_X11 := 1
 endif
+    LIBS += -lcurl -lssl -lcrypto -lssl -lcrypto
 	USE_VULKAN ?= 1
     CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions

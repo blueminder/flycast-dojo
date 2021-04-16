@@ -4,10 +4,17 @@ DojoFile dojo_file;
 
 DojoFile::DojoFile()
 {
+#ifdef _WIN32
 	// assign exe root path on launch
 	TCHAR szPath[MAX_PATH];
 	GetModuleFileName(0, szPath, MAX_PATH);
 	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
+#else
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	if (count != -1)
+		root_path = std::string(dirname(result)) + "/";
+#endif
 
 	LoadedFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
 	RemainingFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
@@ -64,7 +71,11 @@ bool DojoFile::CompareFile(std::string file_path, std::string entry_name)
 
 static void safe_create_dir(const char* dir)
 {
+#ifdef _WIN32
 	if (mkdir(dir) < 0) {
+#elif __linux__
+	if (mkdir(dir, 0777) < 0) {
+#endif
 		if (errno != EEXIST) {
 			perror(dir);
 			exit(1);
@@ -112,8 +123,11 @@ int DojoFile::Unzip(std::string archive_path, std::string dest_dir)
 					fprintf(stderr, "error/n");
 					exit(100);
 				}
-
+#ifdef _WIN32
 				fd = open(sb.name, O_RDWR | O_TRUNC | O_CREAT | O_BINARY, 0644);
+#elif __linux__
+				fd = open(sb.name, O_RDWR | O_TRUNC | O_CREAT, 0644);
+#endif
 				if (fd < 0) {
 					fprintf(stderr, "error/n");
 					exit(101);
@@ -263,8 +277,8 @@ void DojoFile::ValidateAndCopyMem(std::string rom_path)
 
 void DojoFile::ValidateAndCopyVmu()
 {
-	std::string data_path = root_path + "data/";
-	std::string default_path = root_path + "default/";
+	std::string data_path = root_path + "/data/";
+	std::string default_path = root_path + "/default/";
 
 	std::string vmu_filename = "vmu_save_A1.bin.net";
 
@@ -277,7 +291,7 @@ void DojoFile::ValidateAndCopyVmu()
 		ghc::filesystem::remove_all(default_path);
 	}
 
-	Unzip(root_path + "data/default.zip");
+	Unzip(root_path + "/data/default.zip");
 
 	std::string current_path = data_path + vmu_filename;
 	std::FILE* file;

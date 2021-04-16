@@ -1927,21 +1927,23 @@ static void gui_display_content()
 						ImGui::Text("%s", dojo_gui.current_filename.c_str());
 
 						ImGui::InputText("##Calculated", md5, IM_ARRAYSIZE(md5), ImGuiInputTextFlags_ReadOnly);
-
+#ifdef _WIN32
 						ImGui::SameLine();
 						if (ImGui::Button("Copy"))
 						{
 							SDL_SetClipboardText(dojo_gui.current_checksum.data());
 						}
+#endif
 
 						ImGui::InputTextWithHint("", "MD5 Checksum to Compare", verify_md5, IM_ARRAYSIZE(verify_md5));
-
+#ifdef _WIN32
 						ImGui::SameLine();
 						if (ImGui::Button("Paste & Verify"))
 						{
 							char* pasted_txt = SDL_GetClipboardText();
 							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
 						}
+#endif
 
 						if (dojo_gui.current_json_found)
 						{
