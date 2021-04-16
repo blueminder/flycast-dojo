@@ -6,11 +6,19 @@
 
 #include <cstdio>
 #include <zip.h>
-#include <fcntl.h>
-#include <io.h>
-#include <direct.h>
 
-#include "sdl/sdl.h"
+#include <fcntl.h>
+
+#ifdef _WIN32
+    #include <io.h>
+	#include <direct.h>
+	#include "sdl/sdl.h"
+#elif __linux__
+	#include <libgen.h>         // dirname
+	#include <unistd.h>         // readlink
+	#include <linux/limits.h>   // PATH_MAX
+	#include "types.h"
+#endif
 
 #include <dojo/deps/md5/md5.h>
 #include <dojo/deps/json.hpp>

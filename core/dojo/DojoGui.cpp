@@ -99,10 +99,12 @@ void DojoGui::gui_display_host_wait(float scaling)
 	if (config::EnableMatchCode && !config::MatchCode.get().empty())
 	{
 		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
+#ifdef _WIN32
 		if (ImGui::Button("Copy Match Code"))
 		{
 			SDL_SetClipboardText(config::MatchCode.get().data());
 		}
+#endif
 	}
 
 	/*
@@ -162,11 +164,13 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				ImGui::InputTextWithHint("", "ABC123", mc, IM_ARRAYSIZE(mc), ImGuiInputTextFlags_CharsUppercase);
 
 				ImGui::SameLine();
+#ifdef _WIN32
 				if (ImGui::Button("Paste"))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(mc, pasted_txt, strlen(pasted_txt));
 				}
+#endif
 
 				if (ImGui::Button("Start Session"))
 				{
