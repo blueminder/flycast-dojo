@@ -489,6 +489,69 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			return true;
 		}
 
+		if (key == EMU_AXIS_BTN_JUMP_STATE)
+		{
+			if (v >= 64)
+			{
+				if (!loading_state)
+				{
+					loading_state = true;
+					bool dojo_invoke = config::DojoEnable.get();
+					invoke_jump_state(dojo_invoke);
+					loading_state = false;
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_QUICK_SAVE)
+		{
+			if (v >= 64)
+			{
+				if (!config::DojoEnable || config::Training)
+				{
+					dc_savestate();
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_PLAY)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.PlayRecording();
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_RECORD)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.ToggleRecording();
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_SWITCH_PLAYER)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.SwitchPlayer();
+				}
+			}
+			return true;
+		}
+
 		if ((int)key < 0x10000)
 		{
 			kcode[port] |= key | (key << 1);

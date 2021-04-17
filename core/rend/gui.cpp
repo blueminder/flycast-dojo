@@ -592,51 +592,52 @@ const DreamcastKey button_keys[] = {
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
 		DC_BTN_RELOAD,
-		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT, EMU_BTN_JUMP_STATE, EMU_BTN_QUICK_SAVE,
+		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT,
 		DC_CMB_X_Y_A_B, DC_CMB_X_Y_LT, DC_CMB_A_B_RT, DC_CMB_X_A, DC_CMB_Y_B, DC_CMB_LT_RT,
 		NAOMI_CMB_1_2_3, NAOMI_CMB_4_5_6, NAOMI_CMB_1_4, NAOMI_CMB_2_5, NAOMI_CMB_3_6, NAOMI_CMB_1_2, NAOMI_CMB_2_3,
-		EMU_BTN_RECORD, EMU_BTN_PLAY, EMU_BTN_SWITCH_PLAYER
+		EMU_BTN_JUMP_STATE, EMU_BTN_QUICK_SAVE, EMU_BTN_SWITCH_PLAYER, EMU_BTN_RECORD, EMU_BTN_PLAY
 };
 const char *button_names[] = {
 		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
-		"Reload",
-		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right", "Save State Jump", "Quick Save",
+		"Reload", "Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
 		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X",
-		"Record", "Play", "Switch Player"
+		"Quick Load", "Quick Save", "(R) Switch Player", "Record", "Play"
 };
 const char *arcade_button_names[] = {
 		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
-		"Reload",
-		"N/A", "N/A", "N/A", "N/A", "Save State Jump", "Quick Save",
+		"Reload", "N/A", "N/A", "N/A", "N/A",
 		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3",
-		"Record", "Play", "Switch Player"
+		"Quick Load", "Quick Save", "(R) Switch Player", "Record", "Play"
 };
 const DreamcastKey axis_keys[] = {
 		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
 		EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y, EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y,
 		EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT,
 		EMU_AXIS_CMB_X_Y_A_B, EMU_AXIS_CMB_X_Y_LT, EMU_AXIS_CMB_A_B_RT, EMU_AXIS_CMB_X_A, EMU_AXIS_CMB_Y_B, EMU_AXIS_CMB_LT_RT,
-		EMU_AXIS_CMB_1_2_3, EMU_AXIS_CMB_4_5_6, EMU_AXIS_CMB_1_4, EMU_AXIS_CMB_2_5, EMU_AXIS_CMB_3_6, EMU_AXIS_CMB_1_2, EMU_AXIS_CMB_2_3
+		EMU_AXIS_CMB_1_2_3, EMU_AXIS_CMB_4_5_6, EMU_AXIS_CMB_1_4, EMU_AXIS_CMB_2_5, EMU_AXIS_CMB_3_6, EMU_AXIS_CMB_1_2, EMU_AXIS_CMB_2_3,
+		EMU_AXIS_BTN_JUMP_STATE, EMU_AXIS_BTN_QUICK_SAVE, EMU_AXIS_BTN_SWITCH_PLAYER, EMU_AXIS_BTN_RECORD, EMU_AXIS_BTN_PLAY
 };
 const char *axis_names[] = {
 		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
 		"Right DPad X", "Right DPad Y", "Start", "A", "B", "X", "Y",
 		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A",
 		"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
-		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X"
+		"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X",
+		"Quick Load", "Quick Save", "(R) Switch Player", "Record", "Play"
 };
 const char *arcade_axis_names[] = {
 		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
 		"Right DPad X", "Right DPad Y", "Start", "Button 1", "Button 2", "Button 3", "Button 4",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
 		"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
-		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3"
+		"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3",
+		"Quick Load", "Quick Save", "(R) Switch Player", "Record", "Play"
 };
 static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");
 static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(arcade_button_names), "invalid size");
