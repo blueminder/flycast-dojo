@@ -11,6 +11,8 @@
 #include <csignal>
 #include <unistd.h>
 
+#include <libgen.h> // dirname
+
 #if defined(SUPPORT_DISPMANX)
 	#include "dispmanx.h"
 #endif
@@ -343,17 +345,30 @@ std::vector<std::string> find_system_data_dirs()
 	return dirs;
 }
 
+// Flycast Dojo always uses own dir for data/config
+std::string find_dojo_dir()
+{
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	if (count != -1)
+		return std::string(dirname(result)) + "/";
+	else
+		return ".";
+}
+
 int main(int argc, char* argv[])
 {
 	LogManager::Init();
 
 	// Set directories
-	set_user_config_dir(find_user_config_dir());
-	set_user_data_dir(find_user_data_dir());
-	for (const auto& dir : find_system_config_dirs())
-		add_system_config_dir(dir);
-	for (const auto& dir : find_system_data_dirs())
-		add_system_data_dir(dir);
+	set_user_config_dir(find_dojo_dir());
+	set_user_data_dir(find_dojo_dir() + "data/");
+	//set_user_config_dir(find_user_config_dir());
+	//set_user_data_dir(find_user_data_dir());
+	//for (const auto& dir : find_system_config_dirs())
+		//add_system_config_dir(dir);
+	//for (const auto& dir : find_system_data_dirs())
+		//add_system_data_dir(dir);
 	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
