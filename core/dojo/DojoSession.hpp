@@ -221,10 +221,14 @@ public:
 	std::vector<std::string> record_slot;
 
 	void ToggleRecording();
+	void TogglePlayback();
 	void PlayRecording();
 	void SwitchPlayer();
 
-	bool player_switched;
+	bool playback_loop;
+	bool playing_input;
+	bool trigger_playback;
+	u32 next_playback_frame;
 	int record_player;
 };
 

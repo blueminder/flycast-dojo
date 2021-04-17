@@ -440,6 +440,26 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Columns(2, "buttons", false);
+
+	if (config::Training)
+	{
+		std::ostringstream watch_text;
+		watch_text << "Watching Player " << dojo.record_player + 1;
+		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		{
+			dojo.record_player = (dojo.record_player == 0 ? 1 : 0);
+		}
+		ImGui::NextColumn();
+		std::ostringstream playback_loop_text;
+		playback_loop_text << "Playback Loop ";
+		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
+		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		{
+			dojo.playback_loop = (dojo.playback_loop ? false : true);
+		}
+		ImGui::NextColumn();
+	}
+
 	if (!config::DojoEnable)
 	{
 		if (settings.imgread.ImagePath[0] == '\0')
