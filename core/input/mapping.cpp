@@ -128,6 +128,12 @@ axis_list[] =
 	{ EMU_AXIS_CMB_2_3, "compat", "axis_cmb_2_3" },
 	{ EMU_AXIS_CMB_3_4, "compat", "axis_cmb_3_4" },
 	{ EMU_AXIS_CMB_4_5, "compat", "axis_cmb_4_5" },
+	{ EMU_AXIS_BTN_JUMP_STATE, "emulator", "axis_btn_jump_state" },
+	{ EMU_AXIS_BTN_QUICK_SAVE, "emulator", "axis_btn_quick_save" },
+	{ EMU_AXIS_BTN_RECORD, "emulator", "axis_btn_record" },
+	{ EMU_AXIS_BTN_PLAY, "emulator", "axis_btn_play" },
+	{ EMU_AXIS_BTN_SWITCH_PLAYER, "emulator", "axis_btn_switch_player" },
+
 };
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
