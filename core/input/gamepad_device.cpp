@@ -151,7 +151,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					dojo.PlayRecording();
 				}
 				break;
-
+			case EMU_BTN_SWITCH_PLAYER:
+				if (pressed && config::Training)
+				{
+					dojo.SwitchPlayer();
+				}
+				break;
 			case EMU_BTN_TRIGGER_LEFT:
 				lt[port] = pressed ? 255 : 0;
 				break;

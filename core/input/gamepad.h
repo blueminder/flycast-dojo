@@ -52,6 +52,7 @@ enum DreamcastKey
 	EMU_BTN_QUICK_SAVE		= 1 << 27,
 	EMU_BTN_RECORD  		= 1 << 28,
 	EMU_BTN_PLAY    		= 1 << 29,
+	EMU_BTN_SWITCH_PLAYER   = 1 << 30,
 
 	// Button combinations
 	DC_CMB_X_Y_A_B          = (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B) + 1, // DC Face Buttons

@@ -222,6 +222,10 @@ public:
 
 	void ToggleRecording();
 	void PlayRecording();
+	void SwitchPlayer();
+
+	bool player_switched;
+	int record_player;
 };
 
 extern DojoSession dojo;
