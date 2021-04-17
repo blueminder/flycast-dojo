@@ -1621,6 +1621,7 @@ static void gui_display_settings()
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Text("Version: %s", REICAST_VERSION);
+#ifdef _WIN32
 				ImGui::SameLine();
 				if (ImGui::Button("Update"))
 				{
@@ -1629,6 +1630,7 @@ static void gui_display_settings()
 				}
 
 				dojo_gui.update_action();
+#endif
 
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
@@ -2145,6 +2147,7 @@ static void gui_display_content()
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 
+#ifdef _WIN32
 	if (ImGui::Button(REICAST_VERSION))
 	{
 		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
@@ -2155,6 +2158,9 @@ static void gui_display_content()
 	ShowHelpMarker("Current Flycast Dojo version. Click to check for new updates.");
 
 	dojo_gui.update_action();
+#else
+	ImGui::Text(REICAST_VERSION);
+#endif
 
     ImGui::End();
     ImGui::PopStyleVar();
