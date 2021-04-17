@@ -148,7 +148,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			case EMU_BTN_PLAY:
 				if (pressed && config::Training)
 				{
-					dojo.PlayRecording();
+					dojo.TogglePlayback();
 				}
 				break;
 			case EMU_BTN_SWITCH_PLAYER:
@@ -565,7 +565,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				if (config::Training)
 				{
-					dojo.PlayRecording();
+					dojo.TogglePlayback();
 				}
 			}
 			return true;

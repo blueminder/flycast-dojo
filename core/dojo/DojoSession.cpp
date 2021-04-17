@@ -76,7 +76,8 @@ void DojoSession::Init()
 	DcSkipFrame = 180;
 
 	recording = false;
-	player_switched = false;
+	playing_input = false;
+	playback_loop = false;
 	record_player = player;
 
 	if (!net_inputs[0].empty())
@@ -850,6 +851,13 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	{
 		if (recording && GetPlayer((u8*)current_frame_data.data()) == record_player)
 			record_slot.push_back(current_frame_data);
+
+		if (!recording && !playing_input &&
+			playback_loop && trigger_playback &&
+			FrameNumber > next_playback_frame)
+		{
+			PlayRecording();
+		}
 	}
 
 	if (delay > 0 || config::Training)
@@ -908,10 +916,32 @@ void DojoSession::ToggleRecording()
 
 }
 
+void DojoSession::TogglePlayback()
+{
+	if (dojo.playback_loop)
+	{
+		if (dojo.trigger_playback)
+		{
+			dojo.trigger_playback = false;
+			gui_display_notification("Stopping Playback Loop", 2000);
+		}
+		else
+		{
+			dojo.trigger_playback = true;
+			gui_display_notification("Starting Playback Loop", 2000);
+		}
+	}
+	else
+	{
+		dojo.PlayRecording();
+	}
+}
+
 void DojoSession::PlayRecording()
 {
-	if (!recording)
+	if (!recording && !playing_input)
 	{
+		playing_input = true;
 		u8 to_add[FRAME_SIZE] = { 0 };
 		u32 target_frame = dojo.FrameNumber + 1 + dojo.delay;
 		for (std::string frame : dojo.record_slot)
@@ -922,6 +952,8 @@ void DojoSession::PlayRecording()
 			AddNetFrame((const char *)to_add);
 			target_frame++;
 		}
+		next_playback_frame = target_frame;
+		playing_input = false;
 	}
 }
 
