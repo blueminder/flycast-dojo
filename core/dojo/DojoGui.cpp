@@ -826,7 +826,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ImGui::SameLine();
 				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
 
-				OptionCheckbox("Ignore Netplay Savestates", config::IgnoreNetSave);
+				OptionCheckbox("Ignore Existing Netplay Savestates", config::IgnoreNetSave);
 				ImGui::SameLine();
 				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
 
