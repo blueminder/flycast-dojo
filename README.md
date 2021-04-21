@@ -6,6 +6,10 @@
 
 General information about Flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
 
+For general emulator help and updates on Flycast Dojo, check out the **#netplay** room of the [Flycast Discord](https://discord.gg/X8YWP8w).
+
+For Fightcade-specific help, be sure to read the pins and ask questions in the **#flycast-emulator** channel on the [Fightcade Discord](https://discord.gg/EyERRSg)
+
 # Contents
 - [Visual Aids](#visual-aids)
   * [Match Code Quick Start](#match-code-quick-start)
