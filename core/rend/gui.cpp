@@ -988,6 +988,8 @@ static void gui_display_settings()
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
+		dojo_gui.insert_netplay_tab(normal_padding);
+
 		if (ImGui::BeginTabItem("General"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -1528,7 +1530,6 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		dojo_gui.insert_netplay_tab(normal_padding);
 
 		if (ImGui::BeginTabItem("Advanced"))
 		{
