@@ -69,6 +69,8 @@ button_list[] =
 	{ NAOMI_CMB_3_6, "compat", "cmb_3_6" },
 	{ NAOMI_CMB_1_2, "compat", "cmb_1_2" },
 	{ NAOMI_CMB_2_3, "compat", "cmb_2_3" },
+	{ NAOMI_CMB_3_4, "compat", "cmb_3_4" },
+	{ NAOMI_CMB_4_5, "compat", "cmb_4_5" },
 };
 
 static struct
@@ -120,6 +122,8 @@ axis_list[] =
 	{ EMU_AXIS_CMB_3_6, "compat", "axis_cmb_3_6" },
 	{ EMU_AXIS_CMB_1_2, "compat", "axis_cmb_1_2" },
 	{ EMU_AXIS_CMB_2_3, "compat", "axis_cmb_2_3" },
+	{ EMU_AXIS_CMB_3_4, "compat", "axis_cmb_3_4" },
+	{ EMU_AXIS_CMB_4_5, "compat", "axis_cmb_4_5" },
 };
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
