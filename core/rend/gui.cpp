@@ -2563,7 +2563,12 @@ void gui_display_osd()
 			if (!config::Receiving ||
 				(config::Receiving && dojo.receiver_header_read))
 			{
-				dojo_gui.show_player_name_overlay(scaling, false);
+				// if both player names are defaults, hide overlay
+				if (!(config::PlayerName.get().compare("Player") == 0 &&
+					  config::PlayerName.get().compare(config::OpponentName.get()) == 0))
+				{
+					dojo_gui.show_player_name_overlay(scaling, false);
+				}
 			}
 		}
 	}
