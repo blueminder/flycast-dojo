@@ -128,7 +128,7 @@ Option<bool> EnableLobby("EnableLobby", false, "dojo");
 OptionString PlayerName("PlayerName", "Player", "dojo");
 OptionString OpponentName("OpponentName", "Opponent", "dojo");
 Option<bool> TestGame("TestGame", false, "dojo");
-OptionString SpectatorIP("SpectatorIP", "127.0.0.1", "dojo");
+OptionString SpectatorIP("SpectatorIP", "match.dojo.ooo", "dojo");
 OptionString SpectatorPort("SpectatorPort", "7000", "dojo");
 OptionString LobbyMulticastAddress("LobbyMulticastAddress", "26.255.255.255", "dojo");
 OptionString LobbyMulticastPort("LobbyMulticastPort", "52001", "dojo");
