@@ -89,6 +89,7 @@ body {
 	<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
 	<a href="#set-defaults">How do I reset my settings to their defaults?</a><br />
 	<a href="#cant-click">My mouse and keyboard are unable to make any menu selections. What do I do?</a><br />
+	<a href="#no-video">My video is just a blank screen, but I am still able to hear sound. How do I fix this?</a><br />
 	<a href="#desync">Why is my game desyncing? What can I do about it?</a>
 </p>
 
@@ -115,7 +116,11 @@ body {
 
 <a name="can-host-cant-join" /><h3>Why am I able to host games just fine, but I am unable join others?</h3>
 
-<p>It's possible that your computer's firewall is disallowing Flycast Dojo from sending or receiving incoming connections. Check your Windows Firewall and make sure that <code>flycast.exe</code> is able to connect to all networks and that connections are allowed, both incoming and outgoing.</p>
+<p>It's possible that your computer's firewall is disallowing Flycast Dojo from sending or receiving connections. Check your Windows Firewall and make sure that <code>flycast.exe</code> is able to connect to all networks and that connections are allowed, both inbound and outbound.</p>
+
+<a name="no-video" /><h3>My video is just a blank screen, but I am still able to hear sound. How do I fix this?</h3>
+
+<p>In your <b>Video</b> settings, try switching between OpenGL and Vulkan rendering. To toggle this, there is a checkbox with the label <b>Use Vulkan Rendering</b>. Try turning it on and off. Ideal settings depend on your video card.</p>
 
 <a name="set-defaults" /><h3>How do I reset my settings to their defaults?</h3>
 
