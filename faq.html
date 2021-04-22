@@ -81,15 +81,21 @@ body {
 <h1>Frequently Asked Questions</h1>
 
 <p>
-<a href="#where-bios">Where do I put my BIOS & ROMs?</a><br />
-<a href="#button-6">When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</a><br />
-<a href="#analog-joy">How do I map my analog joystick to the directions?</a><br />
-<a href="#can-join-cant-host">Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</a><br />
-<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
-<a href="#set-defaults">How do I reset my settings to their defaults?</a><br />
-<a href="#cant-click">My mouse and keyboard are unable to make any menu selections. What do I do?</a><br />
-<a href="#desync">Why is my game desyncing? What can I do about it?</a>
+	<a href="#romset">What is the preferred romset?</a><br />
+	<a href="#where-bios">Where do I put my BIOS & ROMs?</a><br />
+	<a href="#button-6">When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</a><br />
+	<a href="#analog-joy">How do I map my analog joystick to the directions?</a><br />
+	<a href="#can-join-cant-host">Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</a><br />
+	<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
+	<a href="#set-defaults">How do I reset my settings to their defaults?</a><br />
+	<a href="#cant-click">My mouse and keyboard are unable to make any menu selections. What do I do?</a><br />
+	<a href="#desync">Why is my game desyncing? What can I do about it?</a>
 </p>
+
+<h3></b><a name="romset">What is the preferred romset?</a></h3>
+
+<p>As a general rule, players use the <b>MAME 0.226</b> romset for all NAOMI and Atomiswave games. For Dreamcast games, CHD files based on the Redump set are preferred. You may also look at the included <code>flycast_roms.json</code> file to see a list of filenames and checksums corresponding with the current preferred ROMs as well.</p>
+<p>For more information on specific games, try asking on the relevant <a href="community.html">Community Discord</a>. They typically know what is best for competition play at any point in time.</p>
 
 <a name="where-bios" /><h3>Where do I put my BIOS & ROMs?</h3>
 
@@ -121,11 +127,11 @@ body {
 
 <a name="desync" /><h3>Why is my game desyncing? What can I do about it?</h3>
 
-<p>Games desynchronize when your memory and opponent's memory have mismatched, leading to two different game states. Common causes include not loading the same ROM, having different savestates or dipswitches, or using different builds of Flycast Dojo.</p>
+<p>Games desynchronize when your memory and opponent's memory have mismatched, leading to two different game states. Common causes include not loading the same ROM or BIOS, having different savestates or dipswitches, or using different builds of Flycast Dojo.</p>
 
 <p>First, make sure that you and your opponent are using the same version of the software What version of Flycast Dojo you use determines the common arcade dipswitches/VMUs are, as well as individual software builds. Next, <a href="https://github.com/blueminder/flycast-dojo/blob/master/README.md#md5-checksum-calculation--validation">validate your ROM against your opponent's ROM</a>.</p>
 
-<p>If you are playing a game that is prone to desyncs after a period of time, you can mitigate these by "resynching" to a common savestate made just after a game's boot sequence. You can do this by hitting the <b>Quick Load</b> button (<b>Backspace</b> by default in Flycast Dojo 0.4.2.0)</p>
+<p>If you are playing a game that is prone to desyncs after a period of time, you can mitigate these by "resyncing" to a common savestate made just after a game's boot sequence. You can do this by hitting the <b>Quick Load</b> button (<b>Backspace</b> by default in Flycast Dojo 0.4.2.0)</p>
 
 <p>In general, anything that can lead to a different memory state than your opponent would contribute to desyncs. For more information, check out <a href="https://www.smashladder.com/guides/view/26pv/desync-troubleshooting-guide">E2xD's Desync Troubleshooting Guide</a>. While Smash is a different scene, the causes for desyncs are much the same.</p>
 
