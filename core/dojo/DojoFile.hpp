@@ -61,6 +61,8 @@ public:
 	void RemoveFromRemaining(std::string rom_path);
 	void ExtractEntry(std::string entry_name);
 
+	nlohmann::json FindEntryByFile(std::string filename);
+
 	std::unordered_map<std::string, std::string> game_descriptions;
 
 	std::string status_text = "Idle";

@@ -32,6 +32,18 @@ nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
 	return ret;
 }
 
+nlohmann::json DojoFile::FindEntryByFile(std::string filename)
+{
+	nlohmann::json lfd = LoadedFileDefinitions;
+	for (nlohmann::json::iterator it = lfd.begin(); it != lfd.end(); ++it)
+	{
+		if ((*it).at("filename") == filename)
+		{
+			return *it;
+		}
+	}
+}
+
 bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
 {
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
