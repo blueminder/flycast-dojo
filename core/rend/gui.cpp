@@ -354,6 +354,11 @@ void gui_plot_render_time(int width, int height)
 }
 #endif
 
+void gui_open_bios_warning()
+{
+	gui_state = GuiState::BiosWarning;
+}
+
 void gui_open_host_wait()
 {
 	gui_state = GuiState::HostWait;
@@ -2319,6 +2324,8 @@ static void gui_display_loadscreen()
 			}
 			else if (config::DojoEnable || dojo.PlayMatch)
 			{
+				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
+
 				dojo.StartDojoSession();
 
 				if (dojo.PlayMatch)
@@ -2338,17 +2345,24 @@ static void gui_display_loadscreen()
 				}
 				else
 				{
-					if (config::DojoActAsServer)
+					if (dojo_gui.bios_json_match)
 					{
-						dojo.host_status = 1;
-						if (config::EnableLobby)
-							dojo.remaining_spectators = config::Transmitting ? 1 : 0;
+						if (config::DojoActAsServer)
+						{
+							dojo.host_status = 1;
+							if (config::EnableLobby)
+								dojo.remaining_spectators = config::Transmitting ? 1 : 0;
+							else
+								dojo.remaining_spectators = 0;
+							gui_open_host_wait();
+						}
 						else
-							dojo.remaining_spectators = 0;
-						gui_open_host_wait();
+							gui_open_guest_wait();
 					}
 					else
-						gui_open_guest_wait();
+					{
+						gui_open_bios_warning();
+					}
 				}
 			}
 			else if (!config::DojoEnable && !dojo.PlayMatch)
@@ -2447,6 +2461,9 @@ void gui_display_ui()
 		break;
 	case GuiState::EndSpectate:
 		dojo_gui.gui_display_end_spectate(scaling);
+		break;
+	case GuiState::BiosWarning:
+		dojo_gui.gui_display_bios_warning(scaling);
 		break;
 	case GuiState::Settings:
 		gui_display_settings();

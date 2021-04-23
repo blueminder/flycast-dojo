@@ -2,6 +2,56 @@
 #include <oslib/audiostream.h>
 namespace fs = ghc::filesystem;
 
+void DojoGui::gui_display_bios_warning(float scaling)
+{
+	std::string current_bios;
+	if (settings.platform.system == DC_PLATFORM_NAOMI)
+		current_bios = "naomi.zip";
+	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		current_bios = "awbios.zip";
+
+	ImGui::OpenPopup("BIOS Mismatch");
+	if (ImGui::BeginPopupModal("BIOS Mismatch", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		std::string msg = current_bios + " does not match the checksum of community-recommended file.\nPlease find a new BIOS file and try again.";
+		ImGui::TextColored(ImVec4(128, 0, 0, 1), "WARNING");
+		ImGui::TextColored(ImVec4(128, 128, 0, 1), msg.data());
+		ImGui::Text("Having a different BIOS than your opponent may result in desyncs.\nProceed at your own risk.");
+
+		if (ImGui::Button("Continue"))
+		{
+			if (config::DojoActAsServer)
+			{
+				dojo.host_status = 1;
+				if (config::EnableLobby)
+					dojo.remaining_spectators = config::Transmitting ? 1 : 0;
+				else
+					dojo.remaining_spectators = 0;
+				gui_open_host_wait();
+			}
+			else
+				gui_open_guest_wait();
+		}
+
+		/*
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+
+			// Exit to main menu
+			gui_state = GuiState::Main;
+			game_started = false;
+			settings.imgread.ImagePath[0] = '\0';
+			dc_reset(true);
+		}
+		*/
+
+		ImGui::EndPopup();
+	}
+
+}
+
 void DojoGui::gui_open_host_delay()
 {
 	gui_state = GuiState::HostDelay;
@@ -251,7 +301,12 @@ void DojoGui::gui_display_host_delay( float scaling)
 
 	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("%s vs %s", config::PlayerName.get().c_str(), config::OpponentName.get().c_str());
+	// if both player names are defaults, hide names
+	if (!(config::PlayerName.get().compare("Player") == 0 &&
+		config::PlayerName.get().compare(config::OpponentName.get()) == 0))
+	{
+		ImGui::Text("%s vs %s", config::PlayerName.get().c_str(), config::OpponentName.get().c_str());
+	}
 
 	ImGui::SliderInt("", (int*)&config::Delay.get(), 1, 10);
 	ImGui::SameLine();

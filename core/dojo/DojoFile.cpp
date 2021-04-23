@@ -62,6 +62,22 @@ bool DojoFile::CompareFile(std::string file_path, std::string entry_name)
 	return result;
 }
 
+bool DojoFile::CompareBIOS(int system)
+{
+	if (system == DC_PLATFORM_NAOMI)
+	{
+		return CompareFile(root_path + "data/naomi.zip", "flycast_naomi_bios");
+	}
+	else if (system == DC_PLATFORM_ATOMISWAVE)
+	{
+		return CompareFile(root_path + "data/awbios.zip", "flycast_atomiswave_bios");
+	}
+	else
+	{
+		return true;
+	}
+}
+
 static void safe_create_dir(const char* dir)
 {
 	if (mkdir(dir) < 0) {

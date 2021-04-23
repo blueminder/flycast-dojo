@@ -61,7 +61,8 @@ enum class GuiState {
 	GuestWait,
 	Disconnected,
 	EndReplay,
-	EndSpectate
+	EndSpectate,
+	BiosWarning
 };
 extern GuiState gui_state;
 

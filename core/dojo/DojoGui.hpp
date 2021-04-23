@@ -28,6 +28,8 @@ private:
 	void gui_open_host_delay();
 
 public:
+	void gui_display_bios_warning(float scaling);
+
 	void gui_display_host_wait(float scaling);
 	void gui_display_guest_wait(float scaling);
 	
@@ -52,6 +54,7 @@ public:
 	std::string current_checksum;
 	bool current_json_match = true;
 	bool current_json_found = false;
+	bool bios_json_match = true;
 
 	bool hide_playback_menu = false;
 };
