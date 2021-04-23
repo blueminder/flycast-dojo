@@ -201,11 +201,19 @@ bool LoadRomFiles()
 	nvmem_load();
 	if (config::DojoEnable || dojo.PlayMatch || config::RecordMatches)
 	{
+		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+		prod_id = trim_trailing_ws(prod_id);
+
+		// dreamcast games that require real bios
+		// T0019M: KenJu Atomiswave DC Conversion
+		std::string dc_exceptions[] = { "T0019M" };
+		bool real_boot = std::find(std::begin(dc_exceptions), std::end(dc_exceptions), prod_id) != std::end(dc_exceptions);
+
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 		{
 			// ignore official dc bios for netplay
 			// keeps boot times consistent between players
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
 				return false;
 			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 				bios_loaded = true;
