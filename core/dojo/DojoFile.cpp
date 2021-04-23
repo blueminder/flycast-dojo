@@ -47,8 +47,8 @@ nlohmann::json DojoFile::FindEntryByFile(std::string filename)
 bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
 {
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
-	std::string entry_name = "flycast_" + stringfix::remove_extension(current_filename);
-	std::string entry_md5_checksum = LoadedFileDefinitions[entry_name][field_name];
+	nlohmann::json entry = FindEntryByFile(current_filename);
+	std::string entry_md5_checksum = entry.at(field_name);
 
 	std::FILE* file = std::fopen(file_path.data(), "rb");
 	std::string file_checksum = md5file(file);
@@ -59,7 +59,8 @@ bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std
 bool DojoFile::CompareFile(std::string file_path, std::string entry_name)
 {
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
-	std::string entry_md5_checksum = LoadedFileDefinitions[entry_name]["md5_checksum"];
+	nlohmann::json entry = LoadedFileDefinitions[entry_name];
+	std::string entry_md5_checksum = entry.at("md5_checksum");
 
 	std::FILE* file = std::fopen(file_path.data(), "rb");
 	std::string file_checksum = md5file(file);
