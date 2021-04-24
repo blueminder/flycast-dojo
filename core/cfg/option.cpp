@@ -132,7 +132,7 @@ OptionString SpectatorIP("SpectatorIP", "match.dojo.ooo", "dojo");
 OptionString SpectatorPort("SpectatorPort", "7000", "dojo");
 OptionString LobbyMulticastAddress("LobbyMulticastAddress", "26.255.255.255", "dojo");
 OptionString LobbyMulticastPort("LobbyMulticastPort", "52001", "dojo");
-Option<bool> EnableMatchCode("EnableMatchCode", false, "dojo");
+Option<bool> EnableMatchCode("EnableMatchCode", true, "dojo");
 OptionString MatchmakingServerAddress("MatchmakingServerAddress", "match.dojo.ooo", "dojo");
 OptionString MatchmakingServerPort("MatchmakingServerPort", "52001", "dojo");
 OptionString MatchCode("MatchCode", "", "dojo");
@@ -163,13 +163,13 @@ Option<int> VirtualGamepadVibration("VirtualGamepadVibration", 20, "input");
 
 std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
 	Option<MapleDeviceType>("device1", MDT_SegaController, "input"),
-	Option<MapleDeviceType>("device2", MDT_None, "input"),
+	Option<MapleDeviceType>("device2", MDT_SegaController, "input"),
 	Option<MapleDeviceType>("device3", MDT_None, "input"),
 	Option<MapleDeviceType>("device4", MDT_None, "input"),
 };
 std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device1.1", MDT_SegaVMU, "input"),
-	Option<MapleDeviceType>("device1.2", MDT_SegaVMU, "input"),
+	Option<MapleDeviceType>("device1.2", MDT_None, "input"),
 
 	Option<MapleDeviceType>("device2.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device2.2", MDT_None, "input"),

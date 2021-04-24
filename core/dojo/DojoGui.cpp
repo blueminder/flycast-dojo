@@ -867,73 +867,73 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					}
 				}
 			}
+		}
 
-			if (ImGui::CollapsingHeader("Spectating", ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			OptionCheckbox("Enable Session Transmission", config::Transmitting);
+			ImGui::SameLine();
+			ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
+
+			if (config::Transmitting)
 			{
-				int one = 1;
-				ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+				char SpectatorIP[256];
+
+				strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
+				ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("# of frames to cache before playing received match stream");
+				ShowHelpMarker("Target Spectator IP Address");
+				config::SpectatorIP = SpectatorIP;
 
-				char SpectatorPort[256];
-
-				strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
-				ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				OptionCheckbox("Transmit Replays", config::TransmitReplays);
 				ImGui::SameLine();
-				ShowHelpMarker("Port to send or receive session streams");
-				config::SpectatorPort = SpectatorPort;
-
-				OptionCheckbox("Enable TCP Transmission", config::Transmitting);
-				ImGui::SameLine();
-				ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
-
-				if (config::Transmitting)
-				{
-					char SpectatorIP[256];
-
-					strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
-					ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("Target Spectator IP Address");
-					config::SpectatorIP = SpectatorIP;
-
-					OptionCheckbox("Transmit Replays", config::TransmitReplays);
-					ImGui::SameLine();
-					ShowHelpMarker("Transmit replays to target spectator");
-				}
+				ShowHelpMarker("Transmit replays to target spectator");
 			}
 
-			if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
+			char SpectatorPort[256];
+
+			strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+			ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker("Port to send or receive session streams");
+			config::SpectatorPort = SpectatorPort;
+
+			int one = 1;
+			ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+			ImGui::SameLine();
+			ShowHelpMarker("# of frames to cache before playing received match stream");
+		}
+
+		if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
+		{
+			OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
+			ImGui::SameLine();
+			ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
+
+			OptionCheckbox("Ignore Existing Netplay Savestates", config::IgnoreNetSave);
+			ImGui::SameLine();
+			ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
+
+			OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
+			ImGui::SameLine();
+			ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay when disabled.");
+		}
+
+		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
+			ImGui::SameLine();
+			ShowHelpMarker("Number of packets to send per input frame.");
+
+			OptionCheckbox("Enable Backfill", config::EnableBackfill);
+			ImGui::SameLine();
+			ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
+
+			if (config::EnableBackfill)
 			{
-				OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
+				ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames.get(), 1, 40);
 				ImGui::SameLine();
-				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
-
-				OptionCheckbox("Ignore Existing Netplay Savestates", config::IgnoreNetSave);
-				ImGui::SameLine();
-				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
-
-				OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
-				ImGui::SameLine();
-				ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay when disabled.");
-			}
-
-			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
-			{
-				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
-				ImGui::SameLine();
-				ShowHelpMarker("Number of packets to send per input frame.");
-
-				OptionCheckbox("Enable Backfill", config::EnableBackfill);
-				ImGui::SameLine();
-				ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
-
-				if (config::EnableBackfill)
-				{
-					ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames.get(), 1, 40);
-					ImGui::SameLine();
-					ShowHelpMarker("Number of past inputs to send per frame.");
-				}
+				ShowHelpMarker("Number of past inputs to send per frame.");
 			}
 		}
 
