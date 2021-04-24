@@ -354,9 +354,9 @@ void gui_plot_render_time(int width, int height)
 }
 #endif
 
-void gui_open_bios_warning()
+void gui_open_bios_rom_warning()
 {
-	gui_state = GuiState::BiosWarning;
+	gui_state = GuiState::BiosRomWarning;
 }
 
 void gui_open_host_wait()
@@ -2325,6 +2325,7 @@ static void gui_display_loadscreen()
 			else if (config::DojoEnable || dojo.PlayMatch)
 			{
 				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
+				dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
 
 				dojo.StartDojoSession();
 
@@ -2345,7 +2346,7 @@ static void gui_display_loadscreen()
 				}
 				else
 				{
-					if (dojo_gui.bios_json_match)
+					if (dojo_gui.bios_json_match && dojo_gui.current_json_match)
 					{
 						if (config::DojoActAsServer)
 						{
@@ -2361,7 +2362,7 @@ static void gui_display_loadscreen()
 					}
 					else
 					{
-						gui_open_bios_warning();
+						gui_open_bios_rom_warning();
 					}
 				}
 			}
@@ -2462,8 +2463,8 @@ void gui_display_ui()
 	case GuiState::EndSpectate:
 		dojo_gui.gui_display_end_spectate(scaling);
 		break;
-	case GuiState::BiosWarning:
-		dojo_gui.gui_display_bios_warning(scaling);
+	case GuiState::BiosRomWarning:
+		dojo_gui.gui_display_bios_rom_warning(scaling);
 		break;
 	case GuiState::Settings:
 		gui_display_settings();

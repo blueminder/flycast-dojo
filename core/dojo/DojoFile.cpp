@@ -42,6 +42,7 @@ nlohmann::json DojoFile::FindEntryByFile(std::string filename)
 			return *it;
 		}
 	}
+	return nullptr;
 }
 
 bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
@@ -89,6 +90,28 @@ bool DojoFile::CompareBIOS(int system)
 	{
 		return true;
 	}
+}
+
+bool DojoFile::CompareRom(std::string file_path)
+{
+	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
+	nlohmann::json entry = FindEntryByFile(current_filename);
+	if (entry == nullptr)
+		return true;
+
+	std::string entry_md5_checksum = entry.at("md5_checksum");
+
+	std::FILE* file = std::fopen(file_path.data(), "rb");
+	std::string file_checksum = md5file(file);
+
+	bool result = (entry_md5_checksum == file_checksum);
+
+	if (result)
+		INFO_LOG(NETWORK, "DOJO: MD5 checksum matches %s.", entry_name.data());
+	else
+		INFO_LOG(NETWORK, "DOJO: MD5 checksum mismatch with %s. Please try download again.", entry_name.data());
+
+	return result;
 }
 
 static void safe_create_dir(const char* dir)

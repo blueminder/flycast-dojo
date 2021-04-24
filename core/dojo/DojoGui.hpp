@@ -28,7 +28,7 @@ private:
 	void gui_open_host_delay();
 
 public:
-	void gui_display_bios_warning(float scaling);
+	void gui_display_bios_rom_warning(float scaling);
 
 	void gui_display_host_wait(float scaling);
 	void gui_display_guest_wait(float scaling);

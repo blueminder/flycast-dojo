@@ -62,7 +62,7 @@ enum class GuiState {
 	Disconnected,
 	EndReplay,
 	EndSpectate,
-	BiosWarning
+	BiosRomWarning
 };
 extern GuiState gui_state;
 

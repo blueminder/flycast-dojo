@@ -2,7 +2,7 @@
 #include <oslib/audiostream.h>
 namespace fs = ghc::filesystem;
 
-void DojoGui::gui_display_bios_warning(float scaling)
+void DojoGui::gui_display_bios_rom_warning(float scaling)
 {
 	std::string current_bios;
 	if (settings.platform.system == DC_PLATFORM_NAOMI)
@@ -10,13 +10,41 @@ void DojoGui::gui_display_bios_warning(float scaling)
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		current_bios = "awbios.zip";
 
-	ImGui::OpenPopup("BIOS Mismatch");
-	if (ImGui::BeginPopupModal("BIOS Mismatch", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	std::string file_path = settings.imgread.ImagePath;
+	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
+
+	std::string designation, start_msg, file_d;
+
+	if (!bios_json_match && !current_json_match)
 	{
-		std::string msg = current_bios + " does not match the checksum of community-recommended file.\nPlease find a new BIOS file and try again.";
+		designation = "BIOS & ROM";
+		start_msg = current_bios + " & " + current_filename + " do";
+		file_d = "files";
+	}
+	else if (!bios_json_match)
+	{
+		designation = "BIOS";
+		start_msg = current_bios + " does";
+		file_d = "file";
+	}
+	else if (!current_json_match)
+	{
+		designation = "ROM";
+		start_msg = current_filename + " does";
+		file_d = "file";
+	}
+
+	std::string popup_title = designation + " Mismatch";
+
+
+	ImGui::OpenPopup(popup_title.data());
+	if (ImGui::BeginPopupModal(popup_title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		std::string msg = start_msg + " not match the checksum of community-recommended " + file_d + ".\nPlease find a new " + designation + " and try again.";
 		ImGui::TextColored(ImVec4(128, 0, 0, 1), "WARNING");
 		ImGui::TextColored(ImVec4(128, 128, 0, 1), msg.data());
-		ImGui::Text("Having a different BIOS than your opponent may result in desyncs.\nProceed at your own risk.");
+		std::string msg_2 = "Having a different " + designation + " than your opponent may result in desyncs.\nProceed at your own risk.";
+		ImGui::Text(msg_2.data());
 
 		if (ImGui::Button("Continue"))
 		{
