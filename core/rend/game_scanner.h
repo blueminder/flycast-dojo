@@ -160,6 +160,10 @@ public:
 					std::lock_guard<std::mutex> guard(mutex);
 					game_list.clear();
 				}
+
+				if (config::ContentPath.get().size() == 0)
+					config::ContentPath.get().push_back("ROMs");
+
 				for (const auto& path : config::ContentPath.get())
 				{
 					add_game_directory(path);
