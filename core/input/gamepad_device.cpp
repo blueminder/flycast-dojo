@@ -536,12 +536,16 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			if (v >= 64)
 			{
-				if (!loading_state)
+				if (config::Training ||
+					config::DojoEnable && config::EnableSessionQuickLoad)
 				{
-					loading_state = true;
-					bool dojo_invoke = config::DojoEnable.get();
-					invoke_jump_state(dojo_invoke);
-					loading_state = false;
+					if (!loading_state)
+					{
+						loading_state = true;
+						bool dojo_invoke = config::DojoEnable.get();
+						invoke_jump_state(dojo_invoke);
+						loading_state = false;
+					}
 				}
 			}
 			return true;

@@ -483,7 +483,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 				if (FrameNumber == SkipFrame)
 				{
-					dc_savestate(net_save_path);
+					if (config::EnableSessionQuickLoad)
+					{
+						dc_savestate(net_save_path);
+					}
 				}
 			}
 

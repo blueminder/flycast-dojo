@@ -443,6 +443,7 @@ extern Option<int> RxFrameBuffer;
 extern Option<bool> LaunchReplay;
 extern Option<bool> TransmitReplays;
 extern Option<bool> Training;
+extern Option<bool> EnableSessionQuickLoad;
 
 // Maple
 

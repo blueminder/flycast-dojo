@@ -925,6 +925,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 		{
+			OptionCheckbox("Enable Session Quick Load", config::EnableSessionQuickLoad);
+			ImGui::SameLine();
+			ShowHelpMarker("Saves state at common frame after boot. Allows you to press 'Quick Load' to revert to common state for both players. (Manually set on both sides)");
+
 			ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
 			ImGui::SameLine();
 			ShowHelpMarker("Number of packets to send per input frame.");
