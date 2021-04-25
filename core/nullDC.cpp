@@ -42,6 +42,7 @@
 #include "debug/gdb_server.h"
 
 settings_t settings;
+extern int screen_width, screen_height;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -530,7 +531,7 @@ static void dc_start_game(const char* path)
 		{
 			// Boot BIOS
 			if (!LoadRomFiles())
-				throw ReicastException("No BIOS file found");
+				throw ReicastException("No BIOS file found in " + get_writable_data_path(""));
 			TermDrive();
 			InitDrive();
 		}
@@ -775,15 +776,16 @@ void SaveSettings()
 #endif
 }
 
-void dc_resume()
+void dc_resize_renderer()
 {
-	SetMemoryHandlers();
-	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
 	int hres;
 	int vres = config::RenderResolution;
 	if (config::Widescreen && !config::Rotate90)
 	{
-		hres = config::RenderResolution * 16 / 9;
+		if (config::SuperWidescreen)
+			hres = config::RenderResolution * screen_width / screen_height	;
+		else
+			hres = config::RenderResolution * 16 / 9;
 	}
 	else if (config::Rotate90)
 	{
@@ -796,6 +798,13 @@ void dc_resume()
 	}
 	if (renderer != nullptr)
 		renderer->Resize(hres, vres);
+}
+
+void dc_resume()
+{
+	SetMemoryHandlers();
+	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
+	dc_resize_renderer();
 
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())

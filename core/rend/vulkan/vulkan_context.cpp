@@ -564,25 +564,24 @@ void VulkanContext::CreateSwapChain()
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
 			// Use FIFO on mobile, prefer Mailbox on desktop
-#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
 			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 			{
-				if (presentMode == vk::PresentModeKHR::eMailbox && vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
+#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
+				if (swapOnVSync && presentMode == vk::PresentModeKHR::eMailbox
+						&& vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
 				{
 					INFO_LOG(RENDERER, "Using mailbox present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 					break;
 				}
-#ifdef TEST_AUTOMATION
-				if (presentMode == vk::PresentModeKHR::eImmediate)
+#endif
+				if (!swapOnVSync && presentMode == vk::PresentModeKHR::eImmediate)
 				{
 					INFO_LOG(RENDERER, "Using immediate present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
 					break;
 				}
-#endif
 			}
-#endif
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
@@ -767,7 +766,7 @@ void VulkanContext::BeginRenderPass()
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers)
+void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 {
 	if (!IsValid())
 		return;
@@ -776,8 +775,8 @@ void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuff
 	commandBuffer.end();
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 	std::vector<vk::CommandBuffer> allCmdBuffers;
-	if (cmdBuffers != nullptr)
-		allCmdBuffers = vk::uniqueToRaw(*cmdBuffers);
+	if (overlayCmdBuffer)
+		allCmdBuffers.push_back(overlayCmdBuffer);
 	allCmdBuffers.push_back(commandBuffer);
 	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, allCmdBuffers.size(),allCmdBuffers.data(),
 			1, &(*renderCompleteSemaphores[currentSemaphore]));
@@ -802,6 +801,13 @@ void VulkanContext::Present() noexcept
 		}
 		renderDone = false;
 	}
+#ifndef TEST_AUTOMATION
+	if (swapOnVSync == settings.input.fastForwardMode)
+	{
+		swapOnVSync = !settings.input.fastForwardMode;
+		resized = true;
+	}
+#endif
 	if (resized)
 		try {
 			CreateSwapChain();
@@ -878,7 +884,7 @@ std::string VulkanContext::GetDriverVersion() const
 			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
 }
 
-const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
+vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
 	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
 }
@@ -900,7 +906,7 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& ex
 	{
 		try {
 			NewFrame();
-			auto overlayCmdBuffers = PrepareOverlay(config::FloatVMUs, true);
+			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 
 			BeginRenderPass();
 
@@ -909,7 +915,7 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& ex
 
 			DrawOverlay(gui_get_scaling(), config::FloatVMUs, true);
 			renderer->DrawOSD(false);
-			EndFrame(overlayCmdBuffers);
+			EndFrame(overlayCmdBuffer);
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1144,3 +1150,26 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 	}
 }
 
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
+{
+	VulkanContext *context = VulkanContext::Instance();
+	if (!context->IsValid())
+		return;
+	try {
+		bool rendering = context->IsRendering();
+		vk::CommandBuffer vmuCmdBuffer;
+		if (!rendering)
+		{
+			context->NewFrame();
+			vmuCmdBuffer = context->PrepareOverlay(true, false);
+			context->BeginRenderPass();
+			context->PresentLastFrame();
+			context->DrawOverlay(gui_get_scaling(), true, false);
+		}
+		// Record Imgui Draw Data and draw funcs into command buffer
+		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
+		if (!rendering)
+			context->EndFrame(vmuCmdBuffer);
+	} catch (const InvalidVulkanContext& err) {
+	}
+}
