@@ -44,6 +44,7 @@ void DojoSession::LoadOfflineConfig()
 	player = 0;
 	opponent = 1;
 
+	dojo.record_player = 0;
 	//delay = config::Delay;
 	//debug = config::Debug;
 
