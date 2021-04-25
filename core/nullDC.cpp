@@ -731,6 +731,9 @@ void dc_exit()
 		gui_state != GuiState::Onboarding &&
 		!dojo.PlayMatch)
 	{
+		if (config::IgnoreNetSave)
+			remove(dojo.net_save_path.data());
+
 		dojo.disconnect_toggle = true;
 	}
 	else
