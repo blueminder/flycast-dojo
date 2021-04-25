@@ -142,13 +142,37 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			case EMU_BTN_RECORD:
 				if (pressed && config::Training)
 				{
-					dojo.ToggleRecording();
+					dojo.ToggleRecording(0);
 				}
 				break;
 			case EMU_BTN_PLAY:
 				if (pressed && config::Training)
 				{
-					dojo.TogglePlayback();
+					dojo.TogglePlayback(0);
+				}
+				break;
+			case EMU_BTN_RECORD_1:
+				if (pressed && config::Training)
+				{
+					dojo.ToggleRecording(1);
+				}
+				break;
+			case EMU_BTN_PLAY_1:
+				if (pressed && config::Training)
+				{
+					dojo.TogglePlayback(1);
+				}
+				break;
+			case EMU_BTN_RECORD_2:
+				if (pressed && config::Training)
+				{
+					dojo.ToggleRecording(2);
+				}
+				break;
+			case EMU_BTN_PLAY_2:
+				if (pressed && config::Training)
+				{
+					dojo.TogglePlayback(2);
 				}
 				break;
 			case EMU_BTN_SWITCH_PLAYER:
@@ -569,7 +593,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				if (config::Training)
 				{
-					dojo.TogglePlayback();
+					dojo.TogglePlayback(0);
 				}
 			}
 			return true;
@@ -581,7 +605,55 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				if (config::Training)
 				{
-					dojo.ToggleRecording();
+					dojo.ToggleRecording(0);
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_PLAY_1)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.TogglePlayback(1);
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_RECORD_1)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.ToggleRecording(1);
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_PLAY_2)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.TogglePlayback(2);
+				}
+			}
+			return true;
+		}
+
+		if (key == EMU_AXIS_BTN_RECORD_2)
+		{
+			if (v >= 64)
+			{
+				if (config::Training)
+				{
+					dojo.ToggleRecording(2);
 				}
 			}
 			return true;

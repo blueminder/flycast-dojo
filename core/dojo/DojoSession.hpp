@@ -218,11 +218,11 @@ public:
 	bool receiver_header_read;
 
 	bool recording;
-	std::vector<std::string> record_slot;
+	std::vector<std::string> record_slot[3];
 
-	void ToggleRecording();
-	void TogglePlayback();
-	void PlayRecording();
+	void ToggleRecording(int slot);
+	void TogglePlayback(int slot);
+	void PlayRecording(int slot);
 	void SwitchPlayer();
 
 	bool playback_loop;
@@ -232,6 +232,7 @@ public:
 	int record_player;
 
 	bool player_switched;
+	int current_record_slot;
 };
 
 extern DojoSession dojo;

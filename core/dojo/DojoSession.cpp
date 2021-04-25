@@ -80,6 +80,7 @@ void DojoSession::Init()
 	playing_input = false;
 	playback_loop = false;
 	record_player = player;
+	current_record_slot = 0;
 
 	if (!net_inputs[0].empty())
 	{
@@ -871,13 +872,13 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	if (config::Training)
 	{
 		if (recording && GetPlayer((u8*)current_frame_data.data()) == record_player)
-			record_slot.push_back(current_frame_data);
+			record_slot[current_record_slot].push_back(current_frame_data);
 
 		if (!recording && !playing_input &&
 			playback_loop && trigger_playback &&
 			FrameNumber > next_playback_frame)
 		{
-			PlayRecording();
+			PlayRecording(current_record_slot);
 		}
 	}
 
@@ -919,53 +920,57 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		return buttons;
 }
 
-void DojoSession::ToggleRecording()
+void DojoSession::ToggleRecording(int slot)
 {
 	std::ostringstream NoticeStream;
 	if (recording)
 	{
 		recording = false;
-		NoticeStream << "Player " << record_player + 1 << " Recording Stopped";
+		NoticeStream << " Slot" << slot + 1 << "Player " << record_player + 1 << "Recording Stopped";
 	}
 	else
 	{
-		record_slot.clear();
+		current_record_slot = slot;
+		record_slot[slot].clear();
 		recording = true;
-		NoticeStream << "Player " << record_player + 1 << " Recording Started";
+		NoticeStream << " Slot" << slot + 1 << "Player " << record_player + 1 << "Recording Started";
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);
-
 }
 
-void DojoSession::TogglePlayback()
+void DojoSession::TogglePlayback(int slot)
 {
+	std::ostringstream NoticeStream;
 	if (dojo.playback_loop)
 	{
 		if (dojo.trigger_playback)
 		{
 			dojo.trigger_playback = false;
-			gui_display_notification("Stopping Playback Loop", 2000);
+			NoticeStream << "Stopping Slot " << slot + 1 << " Playback Loop";
 		}
 		else
 		{
+			current_record_slot = slot;
 			dojo.trigger_playback = true;
-			gui_display_notification("Starting Playback Loop", 2000);
+			NoticeStream << "Starting Slot " << slot + 1 << " Playback Loop";
 		}
+		gui_display_notification(NoticeStream.str().data(), 2000);
 	}
 	else
 	{
-		dojo.PlayRecording();
+		current_record_slot = slot;
+		dojo.PlayRecording(slot);
 	}
 }
 
-void DojoSession::PlayRecording()
+void DojoSession::PlayRecording(int slot)
 {
 	if (!recording && !playing_input)
 	{
 		playing_input = true;
 		u8 to_add[FRAME_SIZE] = { 0 };
 		u32 target_frame = dojo.FrameNumber + 1 + dojo.delay;
-		for (std::string frame : dojo.record_slot)
+		for (std::string frame : dojo.record_slot[slot])
 		{
 			//to_add[0] = (u8)port;
 			memcpy(to_add, frame.data(), FRAME_SIZE);
