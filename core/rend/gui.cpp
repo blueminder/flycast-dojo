@@ -1832,12 +1832,14 @@ static void gui_display_content()
 		config::DojoEnable = true;
 		config::DojoActAsServer = true;
 		config::Receiving = false;
+		config::Training = false;
 	}
 	else if (item_current_idx == 2)
 	{
 		config::DojoEnable = true;
 		config::DojoActAsServer = false;
 		config::Receiving = false;
+		config::Training = false;
 
 		if (config::EnableMatchCode)
 			config::MatchCode = "";
@@ -1849,6 +1851,7 @@ static void gui_display_content()
 		config::DojoActAsServer = true;
 		config::Receiving = true;
 		config::Transmitting = false;
+		config::Training = false;
 
 		config::DojoServerIP = "";
 	}
@@ -1860,6 +1863,7 @@ static void gui_display_content()
 	else if (item_current_idx == 0)
 	{
 		config::DojoEnable = false;
+		config::Training = false;
 	}
 
 	if (item_current_idx != last_item_current_idx)
