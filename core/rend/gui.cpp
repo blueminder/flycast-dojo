@@ -2436,7 +2436,7 @@ static void gui_display_loadscreen()
 					}
 				}
 			}
-			else if (!config::DojoEnable && !dojo.PlayMatch)
+			else if ((!config::DojoEnable && !dojo.PlayMatch) || config::Training)
 			{
 				dojo.delay = config::Delay;
 				if (dojo.delay > 0)

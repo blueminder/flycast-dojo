@@ -838,12 +838,19 @@ void DojoSession::transmitter_thread()
 
 u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
+	u32 target_port = port;
+
+	if (player == 1)
+	{
+		target_port = (port == 0 ? 1 : 0);
+	}
+
 	std::string current_frame_data;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-		current_frame_data = std::string((const char*)TranslateInputToFrameData(pjs, 0, port), FRAME_SIZE);
+		current_frame_data = std::string((const char*)TranslateInputToFrameData(pjs, 0, target_port), FRAME_SIZE);
 	else
-		current_frame_data = std::string((const char*)TranslateInputToFrameData(0, buttons, port), FRAME_SIZE);
+		current_frame_data = std::string((const char*)TranslateInputToFrameData(0, buttons, target_port), FRAME_SIZE);
 
 	AddNetFrame(current_frame_data.data());
 
@@ -962,6 +969,12 @@ void DojoSession::SwitchPlayer()
 	record_player == 0 ?
 		record_player = 1 :
 		record_player = 0;
+
+	player == 0 ?
+		player = 1 :
+		player = 0;
+
+	opponent = player == 0 ? 1 : 0;
 
 	std::ostringstream NoticeStream;
 	NoticeStream << "Monitoring Player " << record_player + 1;
