@@ -1,5 +1,6 @@
 #include "DojoSession.hpp"
 #include <oslib/audiostream.h>
+#include <input/gamepad_device.h>
 
 DojoSession::DojoSession()
 {
@@ -840,7 +841,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 {
 	u32 target_port = port;
 
-	if (player == 1)
+	if (player == 1 && delay > 0)
 	{
 		target_port = (port == 0 ? 1 : 0);
 	}
@@ -975,6 +976,15 @@ void DojoSession::SwitchPlayer()
 		player = 0;
 
 	opponent = player == 0 ? 1 : 0;
+
+	if (delay == 0)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(0);
+		gamepad->set_maple_port(player);
+
+		if (player != 0)
+			player_switched = true;
+	}
 
 	std::ostringstream NoticeStream;
 	NoticeStream << "Monitoring Player " << record_player + 1;

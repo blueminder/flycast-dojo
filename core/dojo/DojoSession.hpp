@@ -230,6 +230,8 @@ public:
 	bool trigger_playback;
 	u32 next_playback_frame;
 	int record_player;
+
+	bool player_switched;
 };
 
 extern DojoSession dojo;
