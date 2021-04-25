@@ -33,7 +33,10 @@ void UDPClient::ConnectMMServer()
 		mm_msg = "guest:cmd:" + dojo.MatchCode;
 	}
 
-	sendto(local_socket, (const char*)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr*)&mms_addr, sizeof(mms_addr));
+	for (int i = 0; i < dojo.packets_per_frame; i++)
+	{
+		sendto(local_socket, (const char*)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr*)&mms_addr, sizeof(mms_addr));
+	}
 	INFO_LOG(NETWORK, "Connecting to Matchmaking Relay");
 }
 
@@ -199,10 +202,13 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
-	if (config::IgnoreNetSave)
+	int net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
+
+	if (config::IgnoreNetSave && net_save_exists)
 		remove(dojo.net_save_path.data());
 
-	int net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
+	net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
+
 	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(net_save_exists), host_addr);
 }
 
