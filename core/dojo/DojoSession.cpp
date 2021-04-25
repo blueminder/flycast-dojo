@@ -839,6 +839,16 @@ void DojoSession::transmitter_thread()
 
 u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 {
+	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	{
+		// ignore when entering atomiswave service or test menu
+		if ((pjs->kcode & AWAVE_TEST_KEY) == 0 ||
+			(pjs->kcode & AWAVE_SERVICE_KEY) == 0)
+		{
+			return 0;
+		}
+	}
+
 	u32 target_port = port;
 
 	if (player == 1 && delay > 0)
