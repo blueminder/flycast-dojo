@@ -926,14 +926,14 @@ void DojoSession::ToggleRecording(int slot)
 	if (recording)
 	{
 		recording = false;
-		NoticeStream << " Slot" << slot + 1 << "Player " << record_player + 1 << "Recording Stopped";
+		NoticeStream << "Stop Recording Slot" << slot + 1 << "Player " << record_player + 1;
 	}
 	else
 	{
 		current_record_slot = slot;
 		record_slot[slot].clear();
 		recording = true;
-		NoticeStream << " Slot" << slot + 1 << "Player " << record_player + 1 << "Recording Started";
+		NoticeStream << "Recording Slot" << slot + 1 << "Player " << record_player + 1;
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);
 }
@@ -946,21 +946,22 @@ void DojoSession::TogglePlayback(int slot)
 		if (dojo.trigger_playback)
 		{
 			dojo.trigger_playback = false;
-			NoticeStream << "Stopping Slot " << slot + 1 << " Playback Loop";
+			NoticeStream << "Stop Loop Slot " << slot + 1;
 		}
 		else
 		{
 			current_record_slot = slot;
 			dojo.trigger_playback = true;
-			NoticeStream << "Starting Slot " << slot + 1 << " Playback Loop";
+			NoticeStream << "Play Loop Slot " << slot + 1;
 		}
-		gui_display_notification(NoticeStream.str().data(), 2000);
 	}
 	else
 	{
 		current_record_slot = slot;
+		NoticeStream << "Play Slot " << slot + 1;
 		dojo.PlayRecording(slot);
 	}
+	gui_display_notification(NoticeStream.str().data(), 2000);
 }
 
 void DojoSession::PlayRecording(int slot)

@@ -1445,7 +1445,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
 							     config::DojoEnable)
 							{
-
 								if (config::DojoEnable)
 								{
 									btns[player] = dojo.ApplyNetInputs(btns[player], player);
@@ -1463,6 +1462,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 										btns[player] = dojo.ApplyOfflineInputs(0, btns[player], player);
 									}
 								}
+							}
+
+							if (settings.platform.system == DC_PLATFORM_NAOMI && config::Training)
+							{
+								btns[player] = dojo.ApplyOfflineInputs(0, btns[player], player);
 							}
 
 							LOGJVS("P%d %02x ", player + 1 + first_player, btns[player] >> 8);
