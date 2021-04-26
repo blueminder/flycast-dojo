@@ -714,10 +714,9 @@ void dc_request_reset()
 
 void dc_exit()
 {
-	if (config::Training && dojo.player_switched)
+	if (config::Training)
 	{
-		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(0);
-		gamepad->set_maple_port(0);
+		dojo.ResetTraining();
 	}
 
 	if (config::DojoEnable &&

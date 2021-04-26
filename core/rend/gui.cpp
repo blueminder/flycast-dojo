@@ -546,6 +546,11 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
+		if (config::Training)
+		{
+			dojo.ResetTraining();
+		}
+
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{
 			dojo.disconnect_toggle = true;

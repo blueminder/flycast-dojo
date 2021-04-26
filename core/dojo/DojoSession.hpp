@@ -224,6 +224,7 @@ public:
 	void TogglePlayback(int slot);
 	void PlayRecording(int slot);
 	void SwitchPlayer();
+	void ResetTraining();
 
 	bool playback_loop;
 	bool playing_input;

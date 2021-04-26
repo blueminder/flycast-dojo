@@ -1019,5 +1019,36 @@ void DojoSession::SwitchPlayer()
 	gui_display_notification(NoticeStream.str().data(), 2000);
 }
 
+void DojoSession::ResetTraining()
+{
+	if (delay == 0 && player_switched)
+	{
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad->name() != "Default Mouse")
+			{
+				if (gamepad->maple_port() == player)
+					gamepad->set_maple_port(opponent);
+				else if (gamepad->maple_port() == opponent)
+					gamepad->set_maple_port(player);
+			}
+		}
+	}
+
+	player_switched = false;
+
+	record_player = 0;
+	player = 0;
+	opponent = 1;
+
+	current_record_slot = 0;
+
+	for (int i = 0; i < 3; i++)
+	{
+		record_slot[i].clear();
+	}
+}
+
 DojoSession dojo;
 
