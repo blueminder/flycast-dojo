@@ -471,7 +471,7 @@ static void gui_display_commands()
 		watch_text << "Watching Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
 		{
-			dojo.record_player = (dojo.record_player == 0 ? 1 : 0);
+			dojo.SwitchPlayer();
 		}
 		ImGui::NextColumn();
 		std::ostringstream playback_loop_text;
