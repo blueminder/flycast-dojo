@@ -4,7 +4,9 @@
 
 **Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games using Match Codes over an internet matchmaking server, through a direct IP connection, or a virtual LAN like ZeroTier or Radmin.
 
-General information about Flycast configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
+For quick start guides, frequently asked questions, online replays, and community links where you can find people to play against, head to the [Flycast Dojo](http://flycast.dojo.ooo/) site.
+
+General information about Flycast configuration and supported features can be found on [TheArcadeStriker's flycast wiki](https://github.com/TheArcadeStriker/flycast-wiki/wiki)
 
 For general emulator help and updates on Flycast Dojo, check out the **#netplay** room of the [Flycast Discord](https://discord.gg/X8YWP8w).
 
@@ -42,6 +44,7 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
     + [Auto Generated Savestates](#auto-generated-savestates)
     + [Custom Savestates](#custom-savestates)
 - [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
+- [Training Mode](#training-mode)
 - [Command Line](#command-line)
   * [Netplay](#netplay)
   * [Spectating](#spectating)
@@ -271,6 +274,28 @@ If a `flycast_roms.json` file is found, it should contain a listing of MD5 check
 If your ROM is found in this file, the MD5 Checksum window will say *"Validation File Match"*. So long as you see this, you should be good to go!
 
 ![MD5 Checksum Window - Verified!](validation-4.png)
+# Training Mode
+
+With the new Training Mode, you can enable game cheats while playing offline using RetroArch's `.cht` file format to adjust game parameters, quickly load states, save states, record, and play back user inputs for practice on any supported Dreamcast, NAOMI, or Atomiswave game. You can enter Training mode by selecting the **TRAIN** option in the drop-down menu on the top left of the Flycast main menu.
+
+![Open Training Mode Menu](training-menu.png)
+
+To target a specific player port or set playback loop settings, just press the **F7** key, or hit the **Menu** button (**TAB** by default) and click on the corresponding button to switch. Player 1 corresponds with Port A, while Player 2 corresponds with Port B. You can also switch players by pressing **F9** by default.
+
+To record inputs, hit **F1**, and hit it again to stop recording. To play back the input, press **F4**. If the Playback Loop is enabled, the input will be repeated until the Play button is hit again. If it is disabled, playback will be invoked on demand. You also have two more slots to record on **F2** and **F3**, with playback on **F5**, and **F6**.
+
+To save your current game state, hit, **F8** and to quickly load it again, hit **F9**.
+
+All of the Training Mode controls can be assigned to any keyboard key or gamepad input in the Controls settings.
+
+Defaults:
+* **F1-F3** Record Slots
+* **F4-F6** Play Slots
+* **F7** One-Button Player Change
+* **F8** Quick Save
+* **F9** Quick Load
+
+![Training Mode Controller Mapping](training-mode-map.png)
 
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
@@ -293,7 +318,7 @@ _append to server arguments_
 
  * TCP Match Receiving
 
-```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000```
+```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000 -config:DojoActAsServer=yes```
 
 ## Test Game Screen
 
