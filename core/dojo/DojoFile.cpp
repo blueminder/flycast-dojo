@@ -456,7 +456,13 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 		{
 			nlohmann::json j = nlohmann::json::parse(body);
 			tag_name = j["tag_name"].get<std::string>();
-			download_url = j["assets"][0]["browser_download_url"].get<std::string>();
+			for (nlohmann::json::iterator it = j["assets"].begin(); it != j["assets"].end(); ++it)
+			{
+				if ((*it)["content_type"] == "application/x-zip-compressed")
+				{
+					download_url = (*it)["browser_download_url"].get<std::string>();
+				}
+			}
 		}
 	}
 	else
