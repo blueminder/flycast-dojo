@@ -1816,9 +1816,9 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "RECEIVE", "TRAIN" };
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
 	static int item_current_idx = 0;
-	static int last_item_current_idx = 5;
+	static int last_item_current_idx = 4;
 
 	// Here our selection data is an index.
 	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
@@ -1827,7 +1827,7 @@ static void gui_display_content()
 
 	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
-	if (last_item_current_idx == 5 && gui_state != GuiState::Replays)
+	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
 		// set default offline delay to 0
 		config::Delay = 0;
@@ -1856,6 +1856,8 @@ static void gui_display_content()
 			config::MatchCode = "";
 		config::DojoServerIP = "";
 	}
+	/*
+	* RECEIVE menu option
 	else if (item_current_idx == 3)
 	{
 		config::DojoEnable = true;
@@ -1866,7 +1868,8 @@ static void gui_display_content()
 
 		config::DojoServerIP = "";
 	}
-	else if (item_current_idx == 4)
+	*/
+	else if (item_current_idx == 3)
 	{
 		config::Training = true;
 		config::DojoEnable = false;
