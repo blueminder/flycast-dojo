@@ -45,6 +45,7 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
     + [Custom Savestates](#custom-savestates)
 - [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
 - [Training Mode](#training-mode)
+- [Linux Build](#linux-build)
 - [Command Line](#command-line)
   * [Netplay](#netplay)
   * [Spectating](#spectating)
@@ -297,6 +298,20 @@ Defaults:
 
 ![Training Mode Controller Mapping](training-mode-map.png)
 
+# Linux Build
+Flycast Dojo is currently available as a `tar.gz` archive containing a 64-bit x86 binary `flycast.elf`. It can run self-contained from the same directory, with all user configurations and relevant game metadata kept in the same place. It has been tested to run on **Ubuntu 20.10**, as well as **Arch Linux 2021.04.01**. So long as you have the dependencies installed, you should be able to run `tar zxvf flycast-dojo-*.tar.gz`, enter the directory, and start using it immediately.
+
+The following are the relevant dependencies:
+
+* **Ubuntu 20.10** Dependencies
+  * `libcurl3-gnutls`
+  * `libzip5`
+* **Arch Linux 2021.04.01** Dependencies
+  * `libcurl3-gnutls`
+  * `libzip`
+
+To compile on your own, just head to `shell/linux` and run `make -j8`, where `-j` defines the number of cores you wish to devote to the process. When you run the resulting binary, be sure that the directory structure in the official tarball is preserved, so that `data/`, `replays/`, `mappings/` and `ROMs/` are in the same directory as the binary.
+
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
@@ -349,6 +364,7 @@ _append to server arguments_
 - [x] TCP Spectating
 - [x] Offline Game Recording
 - [x] Offline Game Delay (Practice)
-- [ ] Native Linux Support
+- [x] Training Mode
+- [x] Native Linux Support
 - [ ] Native Mac OS Support
 - [ ] Lua Scripting
