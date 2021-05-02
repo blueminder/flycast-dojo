@@ -789,7 +789,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		const float col_width = (width
 				- ImGui::GetStyle().GrabMinSize
 				- (0 + ImGui::GetStyle().ItemSpacing.x)
-				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)) / 2;
+				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)
+				- (ImGui::CalcTextSize("Unmap").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)) / 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
@@ -865,6 +866,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 						});
 			}
 			detect_input_popup(j, false);
+			ImGui::SameLine();
+			if (ImGui::Button("Unmap"))
+			{
+				input_mapping->clear_button(gamepad_port, button_keys[j], j);
+			}
 			ImGui::NextColumn();
 			ImGui::PopID();
 		}
@@ -915,6 +921,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 						});
 			}
 			detect_input_popup(j, true);
+			ImGui::SameLine();
+			if (ImGui::Button("Unmap"))
+			{
+				input_mapping->clear_axis(gamepad_port, axis_keys[j], j);
+			}
 			ImGui::NextColumn();
 			ImGui::PopID();
 		}
