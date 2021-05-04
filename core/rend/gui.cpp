@@ -819,9 +819,30 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			ImGui::PopItemWidth();
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Arcade button names").x
-				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
-		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Dreamcast Controls").x
+			- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x * 3.0f);
+
+		ImGui::AlignTextToFramePadding();
+		static ImGuiComboFlags flags = 0;
+		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
+		static int item_current_map_idx = 0;
+		static int last_item_current_map_idx = 2;
+
+		// Here our selection data is an index.
+		const char* combo_label = items[item_current_map_idx];  // Label to preview before opening the combo (technically it could be anything)
+
+		ImGui::PushItemWidth(ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+
+		ImGui::Combo("", &item_current_map_idx, items, IM_ARRAYSIZE(items));
+
+		if (item_current_map_idx == 0)
+		{
+			arcade_button_mode = false;
+		}
+		else if (item_current_map_idx == 1)
+		{
+			arcade_button_mode = true;
+		}
 
 		char key_id[32];
 		ImGui::BeginGroup();
