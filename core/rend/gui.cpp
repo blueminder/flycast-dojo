@@ -2236,7 +2236,10 @@ static void gui_display_content()
 	{
 		try {
 			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
-			gui_start_game(entry_path);
+			if (file_exists(entry_path))
+				gui_start_game(entry_path);
+			else
+				throw std::runtime_error("File not found.");
 		}
 		catch (...)
 		{
@@ -2419,6 +2422,7 @@ static void gui_display_loadscreen()
 	{
 		try {
 			dc_get_load_status();
+
 			if (NaomiNetworkSupported())
 			{
 				start_network();

@@ -1,5 +1,5 @@
 #include "DojoGui.hpp"
-#include <oslib/audiostream.h>
+#include <hw/naomi/naomi_cart.h>
 namespace fs = ghc::filesystem;
 
 void DojoGui::gui_display_bios_rom_warning(float scaling)
@@ -36,7 +36,6 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 
 	std::string popup_title = designation + " Mismatch";
 
-
 	ImGui::OpenPopup(popup_title.data());
 	if (ImGui::BeginPopupModal(popup_title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
@@ -48,7 +47,14 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 
 		if (ImGui::Button("Continue"))
 		{
-			if (config::DojoActAsServer)
+			if (config::TestGame)
+			{
+				if (strlen(settings.imgread.ImagePath) > 0)
+					gui_start_game(settings.imgread.ImagePath);
+				else
+					gui_state = GuiState::Main;
+			}
+			else if (config::DojoActAsServer)
 			{
 				dojo.host_status = 1;
 				if (config::EnableLobby)
@@ -404,11 +410,34 @@ void DojoGui::gui_display_test_game( float scaling)
 			}
 			catch (...) { }
 		}
-
 		if (strlen(settings.imgread.ImagePath) > 0)
-			gui_start_game(settings.imgread.ImagePath);
+		{
+			std::string extension = get_file_extension(settings.imgread.ImagePath);
+			// dreamcast games use built-in bios by default
+			if (extension == "chd" || extension == "gdi" || extension == "cdi")
+			{
+				dojo_gui.bios_json_match = true;
+				settings.platform.system = DC_PLATFORM_DREAMCAST;
+			}
+			else
+			{
+				int platform = naomi_cart_GetPlatform(settings.imgread.ImagePath);
+				settings.platform.system = platform;
+				dojo_gui.bios_json_match = dojo_file.CompareBIOS(platform);
+			}
+
+			dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
+
+			if (!dojo_gui.bios_json_match || !dojo_gui.current_json_match)
+				gui_state = GuiState::BiosRomWarning;
+			else
+				gui_start_game(settings.imgread.ImagePath);
+		}
 		else
+		{
 			gui_state = GuiState::Main;
+		}
+
 	}
 
 	ImGui::End();

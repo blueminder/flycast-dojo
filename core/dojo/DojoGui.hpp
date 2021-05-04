@@ -14,6 +14,9 @@
 #include "rend/gles/gles.h"
 #include "rend/gui_util.h"
 
+#include <oslib/audiostream.h>
+#include <hw/naomi/naomi_cart.h>
+
 #ifndef _STRUCT_GAMEMEDIA
 #define _STRUCT_GAMEMEDIA
 struct GameMedia {
