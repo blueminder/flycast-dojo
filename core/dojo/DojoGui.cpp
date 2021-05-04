@@ -395,7 +395,20 @@ void DojoGui::gui_display_test_game( float scaling)
 	if (ImGui::Button("Start Game", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Closed;
-		gui_start_game(settings.imgread.ImagePath);
+
+		if (!config::GameEntry.get().empty())
+		{
+			try {
+				std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+				strcpy(settings.imgread.ImagePath, entry_path.c_str());
+			}
+			catch (...) { }
+		}
+
+		if (strlen(settings.imgread.ImagePath) > 0)
+			gui_start_game(settings.imgread.ImagePath);
+		else
+			gui_state = GuiState::Main;
 	}
 
 	ImGui::End();

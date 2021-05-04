@@ -71,6 +71,7 @@ public:
 	void ExtractEntry(std::string entry_name);
 
 	nlohmann::json FindEntryByFile(std::string filename);
+	std::string GetEntryPath(std::string entry_name);
 
 	std::unordered_map<std::string, std::string> game_descriptions;
 

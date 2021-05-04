@@ -52,6 +52,31 @@ nlohmann::json DojoFile::FindEntryByFile(std::string filename)
 	return nullptr;
 }
 
+std::string DojoFile::GetEntryPath(std::string entry_name)
+{
+	std::string filename = LoadedFileDefinitions[entry_name]["filename"];
+
+	std::string dir_name = "ROMs";
+	std::string nested_dir = "";
+
+	try {
+		nested_dir = LoadedFileDefinitions[entry_name]["dir"];
+	}
+	catch (...) {}
+
+	// check if destination filename exists, return if so
+	std::string target;
+	if (nested_dir.empty())
+		target = root_path + dir_name + "/" + filename;
+	else
+		target = root_path + dir_name + "/" + nested_dir + "/" + filename;
+
+	if (ghc::filesystem::exists(target))
+		return target;
+
+	return "";
+}
+
 bool DojoFile::CompareEntry(std::string file_path, std::string md5_checksum, std::string field_name)
 {
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);

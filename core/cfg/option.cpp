@@ -149,6 +149,7 @@ Option<bool> LaunchReplay("LaunchReplay", false, "dojo");
 Option<bool> TransmitReplays("TransmitReplays", false, "dojo");
 Option<bool> Training("Training", false, "dojo");
 Option<bool> EnableSessionQuickLoad("EnableSessionQuickLoad", false, "dojo");
+OptionString GameEntry("GameEntry", "", "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

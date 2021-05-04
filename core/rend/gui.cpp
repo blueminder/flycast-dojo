@@ -2232,6 +2232,19 @@ static void gui_display_content()
 	error_popup();
     contentpath_warning_popup();
 
+	if (!config::GameEntry.get().empty())
+	{
+		try {
+			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+			gui_start_game(entry_path);
+		}
+		catch (...)
+		{
+			error_msg = "Entry " + config::GameEntry.get() + " not found.";
+		}
+		config::GameEntry = "";
+	}
+
 	if (config::LaunchReplay && config::GameName.get().empty() && !scanner.get_game_list().empty())
 	{
 		std::string s = config::ReplayFilename.get();
