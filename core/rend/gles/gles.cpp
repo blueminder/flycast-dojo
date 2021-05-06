@@ -853,6 +853,7 @@ bool gles_init()
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
 	fog_needs_update = true;
+	palette_updated = true;
 
 	return true;
 }
@@ -907,12 +908,22 @@ void UpdatePaletteTexture(GLenum texture_slot)
 
 void OSD_DRAW(bool clear_screen)
 {
+	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
 		gl_load_osd_resources();
 	if (gl.OSD_SHADER.osd_tex != 0)
 	{
-		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
+		glcache.Disable(GL_SCISSOR_TEST);
+		glViewport(0, 0, screen_width, screen_height);
+
+		if (clear_screen)
+		{
+			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			render_output_framebuffer();
+			glViewport(0, 0, screen_width, screen_height);
+		}
 
 #ifndef GLES2
 		if (gl.gl_major >= 3)
@@ -940,6 +951,7 @@ void OSD_DRAW(bool clear_screen)
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
 
 		glcache.Enable(GL_BLEND);
@@ -950,14 +962,6 @@ void OSD_DRAW(bool clear_screen)
 		glcache.DepthFunc(GL_ALWAYS);
 
 		glcache.Disable(GL_CULL_FACE);
-		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
-
-		if (clear_screen)
-		{
-			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
 		int dfa = osdVertices.size() / 4;
 
 		for (int i = 0; i < dfa; i++)
@@ -966,7 +970,6 @@ void OSD_DRAW(bool clear_screen)
 		glCheck();
 	}
 #endif
-	gui_display_osd();
 }
 
 bool ProcessFrame(TA_context* ctx)
