@@ -66,6 +66,7 @@ static std::string osd_message;
 static double osd_message_end;
 static std::mutex osd_message_mutex;
 
+static int map_system = 0;
 static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
@@ -796,7 +797,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 		{
 			ImGui::CloseCurrentPopup();
-			gamepad->save_mapping();
+			gamepad->save_mapping(map_system);
 		}
 		ImGui::SetItemDefaultFocus();
 
@@ -835,13 +836,28 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::Combo("", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 
+		if (item_current_map_idx != last_item_current_map_idx)
+		{
+			gamepad->save_mapping(map_system);
+		}
+
 		if (item_current_map_idx == 0)
 		{
 			arcade_button_mode = false;
+			map_system = DC_PLATFORM_DREAMCAST;
 		}
 		else if (item_current_map_idx == 1)
 		{
 			arcade_button_mode = true;
+			map_system = DC_PLATFORM_NAOMI;
+		}
+
+		if (item_current_map_idx != last_item_current_map_idx)
+		{
+			gamepad->find_mapping(map_system);
+			input_mapping = gamepad->get_input_mapping();
+
+			last_item_current_map_idx = item_current_map_idx;
 		}
 
 		char key_id[32];
@@ -852,6 +868,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::Columns(3, "bindings", false);
 		ImGui::SetColumnWidth(0, col_width);
 		ImGui::SetColumnWidth(1, col_width);
+
+		gamepad->find_mapping(map_system);
 		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
 		{
 			sprintf(key_id, "key_id%d", j);
@@ -890,6 +908,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::SameLine();
 			if (ImGui::Button("Unmap"))
 			{
+				input_mapping = gamepad->get_input_mapping();
 				input_mapping->clear_button(gamepad_port, button_keys[j], j);
 			}
 			ImGui::NextColumn();
@@ -1338,6 +1357,7 @@ static void gui_display_settings()
 					if (gamepad->remappable() && ImGui::Button("Map"))
 					{
 						gamepad_port = 0;
+						gamepad->verify_or_create_system_mappings();
 						ImGui::OpenPopup("Controller Mapping");
 					}
 
