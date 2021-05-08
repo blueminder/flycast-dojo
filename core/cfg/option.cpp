@@ -150,6 +150,7 @@ Option<bool> TransmitReplays("TransmitReplays", false, "dojo");
 Option<bool> Training("Training", false, "dojo");
 Option<bool> EnableSessionQuickLoad("EnableSessionQuickLoad", false, "dojo");
 OptionString GameEntry("GameEntry", "", "dojo");
+OptionString Quark("Quark", "", "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

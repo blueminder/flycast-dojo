@@ -807,6 +807,11 @@ void DojoSession::transmitter_thread()
 		else
 			header_data = header_data.append(",");
 
+		if (!config::Quark.get().empty())
+			header_data = header_data.append(config::Quark.get() + ",");
+		else
+			header_data = header_data.append(",");
+
 		header_data.append(256 - header_data.length(), 0);
 
 		asio::write(socket, asio::buffer(header_data.data(), HEADER_SIZE));
