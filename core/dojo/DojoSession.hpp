@@ -59,6 +59,7 @@ private:
 	bool started;
 
 	void receiver_thread();
+	void receiver_client_thread();
 	void transmitter_thread();
 
 public:

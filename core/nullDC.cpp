@@ -721,6 +721,11 @@ void dc_exit()
 		dojo.ResetTraining();
 	}
 
+	if (config::Receiving && !dojo.disconnect_toggle)
+	{
+		gui_state = GuiState::EndSpectate;
+	}
+
 	if (config::DojoEnable &&
 		!dojo.disconnect_toggle &&
 		gui_state != GuiState::Main &&
@@ -730,6 +735,7 @@ void dc_exit()
 		gui_state != GuiState::TestGame &&
 		gui_state != GuiState::Settings &&
 		gui_state != GuiState::Onboarding &&
+		gui_state != GuiState::Loading &&
 		!dojo.PlayMatch)
 	{
 		if (config::IgnoreNetSave)

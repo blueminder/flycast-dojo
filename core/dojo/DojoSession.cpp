@@ -355,8 +355,16 @@ int DojoSession::StartDojoSession()
 
 		if (!receiver_started)
 		{
-			std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
-			t5.detach();
+			if (config::DojoActAsServer)
+			{
+				std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
+				t5.detach();
+			}
+			else
+			{
+				std::thread t5(&DojoSession::receiver_client_thread, std::ref(dojo));
+				t5.detach();
+			}
 
 			receiver_started = true;
 		}
@@ -774,6 +782,66 @@ void DojoSession::receiver_thread()
 		asio::io_context io_context;
 		AsyncTcpServer s(io_context, atoi(config::SpectatorPort.get().data()));
 		io_context.run();
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Exception: " << e.what() << "\n";
+	}
+}
+
+void DojoSession::receiver_client_thread()
+{
+	try
+	{
+		receiver_ended = false;
+		asio::io_context io_context;
+
+		tcp::resolver resolver(io_context);
+		tcp::resolver::results_type endpoints =
+			resolver.resolve(config::SpectatorIP, config::SpectatorPort);
+
+		tcp::socket socket(io_context);
+		asio::connect(socket, endpoints);
+		char buf[255] = { 0 };
+
+		size_t header_length = asio::read(socket,
+			asio::buffer(buf, 255));
+
+		std::vector<std::string> hdr = stringfix::split(",", buf);
+		dojo.game_name = hdr[0];
+		config::PlayerName = hdr[1];
+		config::OpponentName = hdr[2];
+		receiver_header_read = true;
+
+		std::cout << dojo.game_name << config::PlayerName.get() << config::OpponentName.get() << std::endl;
+
+		FillSkippedFrames(SkipFrame);
+		last_consecutive_common_frame = SkipFrame - 1;
+
+		char frame_buf[FRAME_SIZE] = { 0 };
+		while (!receiver_ended)
+		{
+			asio::read(socket, asio::buffer(frame_buf, FRAME_SIZE));
+			std::string frame = std::string(frame_buf, FRAME_SIZE);
+			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				receiver_ended = true;
+			}
+			else
+			{
+				dojo.AddNetFrame(frame.data());
+				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+				std::cout << added_frame_data << std::endl;
+
+				last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+				// buffer stream
+				if (net_inputs[1].size() == config::RxFrameBuffer.get() &&
+					FrameNumber < last_consecutive_common_frame)
+					resume();
+			}
+		}
 	}
 	catch (std::exception& e)
 	{
