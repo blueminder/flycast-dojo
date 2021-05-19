@@ -54,6 +54,12 @@ nlohmann::json DojoFile::FindEntryByFile(std::string filename)
 
 std::string DojoFile::GetEntryPath(std::string entry_name)
 {
+	if (!LoadedFileDefinitions.contains(entry_name) &&
+		entry_name.rfind("flycast_", 0) != 0)
+	{
+		entry_name = "flycast_" + entry_name;
+	}
+
 	std::string filename = LoadedFileDefinitions[entry_name]["filename"];
 
 	std::string dir_name = "ROMs";
