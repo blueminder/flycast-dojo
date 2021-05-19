@@ -29,12 +29,6 @@ if(ENABLE_CTEST)
     include(CTest)
 endif()
 
-if(MSVC)
-    enable_language(ASM_MASM)
-else()
-    enable_language(ASM)
-endif()
-
 if(APPLE)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
     enable_language(Swift)
@@ -314,14 +308,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdr/huffman.c
         core/deps/chdr/huffman.h)
 
-target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/crypto/md5.cpp
-        core/deps/crypto/md5.h
-        core/deps/crypto/sha1.cpp
-        core/deps/crypto/sha1.h
-        core/deps/crypto/sha256.cpp
-        core/deps/crypto/sha256.h)
-
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
 if(NOT FLAC_FOUND)
@@ -464,29 +450,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/ZipArchive.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/arm_emitter/arm_coding.h
-        core/arm_emitter/arm_disasm.h
-        core/arm_emitter/arm_emitter.h
-        core/arm_emitter/arm_registers.h
-        core/arm_emitter/E_Branches.h
-        core/arm_emitter/E_DataOp.h
-        core/arm_emitter/E_Extend.h
-        core/arm_emitter/E_LoadStore.h
-        core/arm_emitter/E_Misc.h
-        core/arm_emitter/E_Multiply.h
-        core/arm_emitter/E_Parallel.h
-        core/arm_emitter/E_Special.h
-        core/arm_emitter/E_Status.h
-        core/arm_emitter/E_VDataOp.h
-        core/arm_emitter/E_VLoadStore.h
-        core/arm_emitter/E_VRegXfer.h
-        core/arm_emitter/H_Branches.h
-        core/arm_emitter/H_fp.h
-        core/arm_emitter/H_LoadStore.h
-        core/arm_emitter/H_psuedo.h
-        core/arm_emitter/H_state.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
         core/cfg/cfg.cpp
         core/cfg/cfg.h
         core/cfg/cl.cpp
@@ -545,8 +508,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/maple/maple_if.cpp
         core/hw/maple/maple_if.h
         core/hw/maple/maple_jvs.cpp
-        core/hw/mem/vmem32.cpp
-        core/hw/mem/vmem32.h
         core/hw/mem/_vmem.cpp
         core/hw/mem/_vmem.h
         core/hw/modem/modem.cpp
@@ -626,7 +587,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/modules/intc.cpp
         core/hw/sh4/modules/mmu.cpp
         core/hw/sh4/modules/mmu.h
-        core/hw/sh4/modules/mmu_impl.h
         core/hw/sh4/modules/modules.h
         core/hw/sh4/modules/rtc.cpp
         core/hw/sh4/modules/serial.cpp
@@ -902,7 +862,39 @@ if(USE_VULKAN AND NOT APPLE)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
-    target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM/ngen_arm.S core/rec-ARM/rec_arm.cpp)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/rec-ARM/rec_arm.cpp
+    	core/deps/vixl/aarch32/location-aarch32.cc
+    	core/deps/vixl/aarch32/location-aarch32.h
+		core/deps/vixl/aarch32/assembler-aarch32.cc
+		core/deps/vixl/aarch32/assembler-aarch32.h
+		core/deps/vixl/aarch32/instructions-aarch32.cc
+		core/deps/vixl/aarch32/instructions-aarch32.h
+		core/deps/vixl/aarch32/constants-aarch32.cc
+		core/deps/vixl/aarch32/constants-aarch32.h
+		core/deps/vixl/aarch32/macro-assembler-aarch32.cc
+		core/deps/vixl/aarch32/macro-assembler-aarch32.h
+		core/deps/vixl/aarch32/operands-aarch32.cc
+		core/deps/vixl/aarch32/operands-aarch32.h
+		core/deps/vixl/aarch32/disasm-aarch32.cc
+		core/deps/vixl/aarch32/disasm-aarch32.h
+    	core/deps/vixl/assembler-base-vixl.h
+    	core/deps/vixl/code-buffer-vixl.cc
+    	core/deps/vixl/code-buffer-vixl.h
+    	core/deps/vixl/code-generation-scopes-vixl.h
+    	core/deps/vixl/compiler-intrinsics-vixl.cc
+    	core/deps/vixl/compiler-intrinsics-vixl.h
+    	core/deps/vixl/cpu-features.cc
+    	core/deps/vixl/cpu-features.h
+    	core/deps/vixl/globals-vixl.h
+    	core/deps/vixl/invalset-vixl.h
+    	core/deps/vixl/macro-assembler-interface.h
+    	core/deps/vixl/platform-vixl.h
+    	core/deps/vixl/pool-manager.h
+    	core/deps/vixl/pool-manager-impl.h
+    	core/deps/vixl/utils-vixl.cc
+    	core/deps/vixl/utils-vixl.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
