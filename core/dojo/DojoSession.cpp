@@ -802,6 +802,14 @@ void DojoSession::receiver_client_thread()
 
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
+
+		std::string spectate_header = "";
+		if (!config::Quark.get().empty())
+			spectate_header = spectate_header.append(config::Quark.get() + ",");
+		spectate_header.append(HEADER_SIZE - spectate_header.length(), 0);
+
+		asio::write(socket, asio::buffer(spectate_header, HEADER_SIZE));
+
 		char buf[255] = { 0 };
 
 		size_t header_length = asio::read(socket,
