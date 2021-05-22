@@ -12,6 +12,8 @@
 #include "cfg/cfg.h"
 #include "cfg/option.h"
 
+#include <iostream>
+
 char* trim_ws(char* str)
 {
 	if (str==0 || strlen(str)==0)
@@ -115,6 +117,9 @@ static int showhelp()
 
 bool ParseCommandLine(int argc,char* argv[])
 {
+	for(int i = 0; i < argc; ++i)
+		NOTICE_LOG(COMMON, "ARG %s", argv[i]);
+
 	settings.imgread.ImagePath[0] = '\0';
 	int cl=argc-2;
 	char** arg=argv+1;

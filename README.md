@@ -1,4 +1,7 @@
+
+![Flycast Dojo Logo](FlycastDojoFoxlum.png)
 # Flycast Dojo
+*Logo Credit: @Foxlum*
 
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
 
@@ -210,11 +213,9 @@ To transmit your current game session or replays, go into the **Dojo** settings 
 If you wish to enable transmitting when launching via the Command Line, just add ```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000``` to your command.
 
 ### Receiving
-To manually launch a spectating session as a receiver, just select the **RECEIVE** option in the top-left menu and select the game of your choice. Flycast Dojo will stay idle until it begins receiving a transmission to the spectating port. By default, this is on port **7000**.
+To launch as a spectating client via the Command Line and set your listening port, add ```-config dojo:Receiving=yes -config dojo:ActAsServer=no``` to your command.
 
-![Receive](receive_option.png)
-
-To launch as a receiver via the Command Line and set your listening port, add ```-config dojo:Receiving=yes -config dojo:SpectatorPort=7000``` to your command.
+To launch as a receiving server via the Command Line and set your listening port, add ```-config dojo:Receiving=yes  -config dojo:ActAsServer=yes -config dojo:SpectatorPort=7000``` to your command.
 
 # Replays
 
