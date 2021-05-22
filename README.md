@@ -1,8 +1,6 @@
-
-![Flycast Dojo Logo](FlycastDojoFoxlum.png)
-# Flycast Dojo
-*Logo Credit: @Foxlum*
-
+<p align="center"><img src="FlycastDojoFoxlum.png" alt="Flycast Dojo Logo" ><br /><i>Logo Credit: <a href="https://github.com/Foxlum">@Foxlum</a></i></p>
+<h1 align="center">Flycast Dojo</h1>
+ 
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
 
 **Flycast Dojo** can be retrieved from GitHub, or as a part of the [Fightcade](https://www.fightcade.com/) matchmaking service. However you obtain it, you will always have the option to use it standalone for P2P games using Match Codes over an internet matchmaking server, through a direct IP connection, or a virtual LAN like ZeroTier or Radmin.
