@@ -969,7 +969,7 @@ void jump_state()
 	}
 	else
 	{
-		dc_loadstate();
+		dc_loadstate(config::SavestateSlot);
 	}
 	dc_resume();
 }

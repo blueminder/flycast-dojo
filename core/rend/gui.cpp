@@ -468,26 +468,6 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-
-	if (config::Training)
-	{
-		std::ostringstream watch_text;
-		watch_text << "Watching Player " << dojo.record_player + 1;
-		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
-		{
-			dojo.SwitchPlayer();
-		}
-		ImGui::NextColumn();
-		std::ostringstream playback_loop_text;
-		playback_loop_text << "Playback Loop ";
-		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
-		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
-		{
-			dojo.playback_loop = (dojo.playback_loop ? false : true);
-		}
-		ImGui::NextColumn();
-	}
-
 	if (!config::DojoEnable)
 	{
 		if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
@@ -501,13 +481,13 @@ static void gui_display_commands()
 			ImGui::OpenPopup("slot_select_popup");
 		if (ImGui::BeginPopup("slot_select_popup"))
 		{
-		    for (int i = 0; i < 10; i++)
-		        if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-		        		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-		            config::SavestateSlot = i;
-		            SaveSettings();
-		        }
-		    ImGui::EndPopup();
+			for (int i = 0; i < 10; i++)
+				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					config::SavestateSlot = i;
+					SaveSettings();
+				}
+			ImGui::EndPopup();
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
@@ -515,11 +495,33 @@ static void gui_display_commands()
 
 		if (settings.imgread.ImagePath[0] == '\0')
 		{
-		    ImGui::PopItemFlag();
-		    ImGui::PopStyleVar();
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
 		}
 	}
-	//ImGui::Columns(2, "buttons", false);
+
+	ImGui::Columns(2, "buttons", false);
+
+	if (config::Training)
+	{
+		std::ostringstream watch_text;
+		watch_text << "Watching Player " << dojo.record_player + 1 << " Input";
+		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		{
+			dojo.SwitchPlayer();
+		}
+		ImGui::NextColumn();
+		std::ostringstream playback_loop_text;
+		playback_loop_text << "Playback Loop ";
+		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
+		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		{
+			dojo.playback_loop = (dojo.playback_loop ? false : true);
+		}
+
+		ImGui::NextColumn();
+	}
+
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
