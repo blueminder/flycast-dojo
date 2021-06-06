@@ -60,15 +60,27 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 		entry_name = "flycast_" + entry_name;
 	}
 
-	std::string filename = LoadedFileDefinitions[entry_name]["filename"];
-
+	std::string filename = "";
 	std::string dir_name = "ROMs";
 	std::string nested_dir = "";
 
-	try {
-		nested_dir = LoadedFileDefinitions[entry_name]["dir"];
+	if (LoadedFileDefinitions.contains(entry_name))
+	{
+		filename = LoadedFileDefinitions[entry_name]["filename"];
+
+		try {
+			nested_dir = LoadedFileDefinitions[entry_name]["dir"];
+		}
+		catch (...) {}
 	}
-	catch (...) {}
+	else if (entry_name.rfind("flycast_dc_", 0) != 0)
+	{
+		// when rom not in reference json file
+		// default arcade rom name + .zip, ignore dc entries
+		filename = entry_name;
+		stringfix::replace(filename, "flycast_", "");
+		filename.append(".zip");
+	}
 
 	// check if destination filename exists, return if so
 	std::string target;
