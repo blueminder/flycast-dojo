@@ -41,8 +41,10 @@ void dc_resume();
 void dc_step();
 void dc_savestate(int index = 0);
 void dc_savestate(std::string filename);
+void dc_savestate(int index, std::string filename);
 void dc_loadstate(int index = 0);
 void dc_loadstate(std::string filename);
+void dc_loadstate(int index, std::string filename);
 void dc_load_game(const char *path);
 bool dc_is_load_done();
 void dc_cancel_load();
@@ -51,7 +53,8 @@ bool dc_is_running();
 void dc_resize_renderer();
 
 extern std::string get_game_name();
-extern std::string get_savestate_file_path(bool writable);
+extern std::string get_net_savestate_file_path(bool writable);
+std::string get_savestate_file_path(int index, bool writable);
 
 void jump_state();
 extern void invoke_jump_state(bool dojo_invoke);

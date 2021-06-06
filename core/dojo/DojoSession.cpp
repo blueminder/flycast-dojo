@@ -327,8 +327,7 @@ void DojoSession::StartTransmitterThread()
 
 int DojoSession::StartDojoSession()
 {
-	net_save_path = get_savestate_file_path(false);
-	net_save_path.append(".net");
+	net_save_path = get_net_savestate_file_path(false);
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		SkipFrame = DcSkipFrame;
@@ -441,8 +440,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 3)
 	{
-		std::string net_save_path = get_savestate_file_path(false);
-		net_save_path.append(".net");
+		std::string net_save_path = get_net_savestate_file_path(false);
 		if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
 		{
 			jump_state_requested = true;

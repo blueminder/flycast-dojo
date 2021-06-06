@@ -831,7 +831,14 @@ std::string get_game_name()
 	return state_file;
 }
 
-static std::string get_savestate_file_path(int index, bool writable)
+std::string get_net_savestate_file_path(bool writable)
+{
+	std::string path = get_savestate_file_path(0, writable);
+	path.append(".net");
+	return path;
+}
+
+std::string get_savestate_file_path(int index, bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -861,7 +868,7 @@ static std::string get_savestate_file_path(int index, bool writable)
 
 void dc_savestate(int index)
 {
-	dc_savestate(index, "");
+	dc_savestate(index, std::string(""));
 }
 
 void dc_savestate(std::string filename)
@@ -901,7 +908,7 @@ void dc_savestate(int index, std::string filename)
     	return;
 	}
 
-	if (filename.length == 0)
+	if (filename.length() == 0)
 		filename = get_savestate_file_path(index, true);
 #if 0
 	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
@@ -956,7 +963,7 @@ void jump_state()
 {
 	if (config::DojoEnable)
 	{
-		std::string net_save_path = get_savestate_file_path(false);
+		std::string net_save_path = get_savestate_file_path(0, false);
 		net_save_path.append(".net");
 		dc_loadstate(net_save_path);
 	}
@@ -969,7 +976,7 @@ void jump_state()
 
 void dc_loadstate(int index)
 {
-	dc_loadstate(index, "");
+	dc_loadstate(index, std::string(""));
 }
 
 void dc_loadstate(std::string filename)
@@ -984,7 +991,7 @@ void dc_loadstate(int index, std::string filename)
 
 	dc_stop();
 
-	if (filename.length == 0)
+	if (filename.length() == 0)
 		filename = get_savestate_file_path(index, false);
 	RZipFile zipFile;
 	if (zipFile.Open(filename, false))

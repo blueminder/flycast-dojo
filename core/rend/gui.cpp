@@ -490,36 +490,36 @@ static void gui_display_commands()
 
 	if (!config::DojoEnable)
 	{
-	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
-	{
-		gui_state = GuiState::Closed;
-		dc_loadstate(config::SavestateSlot);
-	ImGui::SameLine();
-	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
-		ImGui::OpenPopup("slot_select_popup");
-    if (ImGui::BeginPopup("slot_select_popup"))
-    {
-        for (int i = 0; i < 10; i++)
-            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-                config::SavestateSlot = i;
-                SaveSettings();
-            }
-        ImGui::EndPopup();
-    }
-	ImGui::SameLine();
-	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
-		dc_savestate(config::SavestateSlot);
-	}
-	if (settings.imgread.ImagePath[0] == '\0')
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
-	}
+		if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate(config::SavestateSlot);
+		}
+		ImGui::SameLine();
+		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+			ImGui::OpenPopup("slot_select_popup");
+		if (ImGui::BeginPopup("slot_select_popup"))
+		{
+		    for (int i = 0; i < 10; i++)
+		        if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+		        		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+		            config::SavestateSlot = i;
+		            SaveSettings();
+		        }
+		    ImGui::EndPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
+			dc_savestate(config::SavestateSlot);
 
-	ImGui::Columns(2, "buttons", false);
+		if (settings.imgread.ImagePath[0] == '\0')
+		{
+		    ImGui::PopItemFlag();
+		    ImGui::PopStyleVar();
+		}
+	}
+	//ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -1755,7 +1755,7 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::Text("Version: %s", GIT_VERSION);
 #ifdef _WIN32
 				ImGui::SameLine();
 				if (ImGui::Button("Update"))
@@ -2277,10 +2277,10 @@ static void gui_display_content()
 		ImGui::Text(" ");
 	}
 
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(REICAST_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(GIT_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 
 #ifdef _WIN32
-	if (ImGui::Button(REICAST_VERSION))
+	if (ImGui::Button(GIT_VERSION))
 	{
 		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
 		ImGui::OpenPopup("Update?");
@@ -2291,7 +2291,7 @@ static void gui_display_content()
 
 	dojo_gui.update_action();
 #else
-	ImGui::Text(REICAST_VERSION);
+	ImGui::Text(GIT_VERSION);
 #endif
 
     ImGui::End();
@@ -2508,8 +2508,7 @@ static void gui_display_loadscreen()
 				}
 				else if (config::Receiving)
 				{
-					std::string net_save_path = get_savestate_file_path(false);
-					net_save_path.append(".net");
+					std::string net_save_path = get_net_savestate_file_path(false);
 					remove(net_save_path.data());
 
 					gui_state = GuiState::Closed;

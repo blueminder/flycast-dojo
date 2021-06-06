@@ -1001,7 +1001,7 @@ void DojoGui::update_action()
 
 		std::tie(tag_name, download_url) = dojo_file.tag_download;
 
-		if (strcmp(tag_name.data(), REICAST_VERSION) != 0)
+		if (strcmp(tag_name.data(), GIT_VERSION) != 0)
 		{
 			ImGui::Text("There is a new version of Flycast Dojo available.\nWould you like to Update?");
 

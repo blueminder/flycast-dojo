@@ -396,8 +396,7 @@ void UDPClient::ClientLoop()
 				config::OpponentName = tokens[0];
 				dojo.net_save_present = (bool)atoi(tokens[1].data());
 
-				std::string net_save_path = get_savestate_file_path(false);
-				net_save_path.append(".net");
+				std::string net_save_path = get_net_savestate_file_path(false);
 
 				if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
 					dojo.jump_state_requested = true;
