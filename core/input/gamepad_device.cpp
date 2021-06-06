@@ -863,6 +863,11 @@ bool GamepadDevice::find_mapping(int system)
 	std::string mapping_file;
 	mapping_file = make_mapping_filename(false, system);
 
+	// fall back on default flycast mapping filename if system profile not found
+	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+	if (!file_exists(system_mapping_path))
+		mapping_file = make_mapping_filename(false);
+
 	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
 	return !!input_mapper;
 }
