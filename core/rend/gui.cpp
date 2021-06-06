@@ -2560,6 +2560,7 @@ static void gui_display_loadscreen()
 #endif
 			gui_state = GuiState::Main;
 			settings.imgread.ImagePath[0] = '\0';
+			config::GameEntry = "";
 		}
 	}
 	else
