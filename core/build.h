@@ -207,20 +207,7 @@
 	#endif
 #endif
 
-#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
-#define HOST_64BIT_CPU
-#endif
-
-// Compiler Related
-
-#ifndef _MSC_VER
-#define ATTR_USED   __attribute__((used))
-#define ATTR_UNUSED __attribute__((used))
-#else
-#define ATTR_USED
-#define ATTR_UNUSED
-#endif
-
+#define USE_MINIUPNPC
 
 // Some restrictions on FEAT_NO_RWX_PAGES
 #if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT

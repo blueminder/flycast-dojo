@@ -82,12 +82,12 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
-		if (!config::DojoEnable && config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
-			dc_loadstate();
+		if (!config::DojoEnable && config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
+			dc_loadstate(config::SavestateSlot);
 		break;
 	case Event::Terminate:
-		if (!config::DojoEnable && config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
-			dc_savestate();
+		if (!config::DojoEnable && config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
+			dc_savestate(config::SavestateSlot);
 		break;
 	default:
 		break;
@@ -299,18 +299,14 @@ void ImGui_Impl_NewFrame()
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(mo_x_phy - insetLeft, mo_y_phy - insetTop);
+	static bool delayTouch;
 #ifdef __ANDROID__
-	// Put the "mouse" outside the screen one frame after a touch up
-	// This avoids buttons and the like to stay selected
-	if ((mo_buttons[0] & 0xf) == 0xf)
-	{
-		if (touch_up)
-			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-		else if (io.MouseDown[0])
-			touch_up = true;
-	}
+	// Delay touch by one frame to allow widgets to be hovered before click
+	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
+	if (!delayTouch && (mo_buttons[0] & (1 << 2)) == 0 && io.MouseDown[ImGuiMouseButton_Left] == 0)
+		delayTouch = true;
 	else
-		touch_up = false;
+		delayTouch = false;
 #endif
 	if (io.WantCaptureMouse)
 	{
@@ -320,9 +316,10 @@ void ImGui_Impl_NewFrame()
 		mo_y_delta[0] = 0;
 		mo_wheel_delta[0] = 0;
 	}
-	io.MouseDown[0] = (mo_buttons[0] & (1 << 2)) == 0;
-	io.MouseDown[1] = (mo_buttons[0] & (1 << 1)) == 0;
-	io.MouseDown[2] = (mo_buttons[0] & (1 << 3)) == 0;
+	if (!delayTouch)
+		io.MouseDown[ImGuiMouseButton_Left] = (mo_buttons[0] & (1 << 2)) == 0;
+	io.MouseDown[ImGuiMouseButton_Right] = (mo_buttons[0] & (1 << 1)) == 0;
+	io.MouseDown[ImGuiMouseButton_Middle] = (mo_buttons[0] & (1 << 3)) == 0;
 	io.MouseDown[3] = (mo_buttons[0] & (1 << 0)) == 0;
 
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
@@ -471,7 +468,6 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Columns(2, "buttons", false);
 
 	if (config::Training)
 	{
@@ -494,30 +490,36 @@ static void gui_display_commands()
 
 	if (!config::DojoEnable)
 	{
-		if (settings.imgread.ImagePath[0] == '\0')
-		{
-			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		}
-		if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
-		{
-			gui_state = GuiState::Closed;
-			dc_loadstate();
-		}
-		ImGui::NextColumn();
-		if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
-		{
-			gui_state = GuiState::Closed;
-			dc_savestate();
-		}
-		if (settings.imgread.ImagePath[0] == '\0')
-		{
-			ImGui::PopItemFlag();
-			ImGui::PopStyleVar();
-		}
-
-		ImGui::NextColumn();
+	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
+	{
+		gui_state = GuiState::Closed;
+		dc_loadstate(config::SavestateSlot);
+	ImGui::SameLine();
+	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+		ImGui::OpenPopup("slot_select_popup");
+    if (ImGui::BeginPopup("slot_select_popup"))
+    {
+        for (int i = 0; i < 10; i++)
+            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+                config::SavestateSlot = i;
+                SaveSettings();
+            }
+        ImGui::EndPopup();
+    }
+	ImGui::SameLine();
+	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
+		dc_savestate(config::SavestateSlot);
 	}
+	if (settings.imgread.ImagePath[0] == '\0')
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	}
+
+	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -1220,8 +1222,12 @@ static void gui_display_settings()
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
-			OptionCheckbox("Auto load/save state", config::AutoSavestate,
-					"Automatically save the state of the game when stopping and load it at start up.");
+	    	ImGui::Text("Automatic State:");
+			OptionCheckbox("Load", config::AutoLoadState,
+					"Load the last saved state of the game when starting");
+			ImGui::SameLine();
+			OptionCheckbox("Save", config::AutoSaveState,
+					"Save the state of the game when stopping");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1792,7 +1798,7 @@ static void gui_display_settings()
 #ifdef TARGET_IPHONE
 		    		"iOS"
 #else
-					"OSX"
+					"macOS"
 #endif
 #elif defined(_WIN32)
 					"Windows"

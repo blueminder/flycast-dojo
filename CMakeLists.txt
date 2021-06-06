@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -34,7 +34,7 @@ if(APPLE)
     enable_language(Swift)
 endif()
 
-find_package(Git QUIET)
+find_package(Git)
 if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     execute_process(
         COMMAND ${GIT_EXECUTABLE} describe --tags --always
@@ -64,7 +64,9 @@ else()
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	CXX_EXTENSIONS OFF
+	LINK_FLAGS_RELEASE -s)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
@@ -82,7 +84,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
         $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
@@ -113,7 +115,7 @@ if(NOT APPLE)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
 
-find_package(ALSA QUIET)
+find_package(ALSA)
 if(ALSA_FOUND AND NOT ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
@@ -125,16 +127,16 @@ if(WIN32)
 	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-	if(MSVC)
+	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
 	endif()
-	execute_process(COMMAND ${CMAKE_COMMAND} 
-		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" 
+	execute_process(COMMAND ${CMAKE_COMMAND}
+		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
 		-DLIBC=ON
 		-DBUILD_SHARED_LIBS=OFF
 		-G "${CMAKE_GENERATOR}"
 		${SDL_CMAKE_ARCH_ARG}
-		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL" 
+		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
     	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
 endif()
@@ -143,7 +145,7 @@ if(MINGW)
 	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 endif()
 
-if(WIN32)
+if(APPLE OR WIN32)
     find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 elseif(NOT ANDROID)
     find_package(SDL2)
@@ -165,19 +167,23 @@ if(SDL2_FOUND)
     endif()
 endif()
 
-find_package(ZLIB QUIET)
+find_package(ZLIB)
 if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
+    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
     target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
-else()
-    set(SKIP_INSTALL_ALL ON)
-    add_subdirectory(core/deps/zlib)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
-    target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
+endif()
+add_subdirectory(core/deps/libchdr)
+target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
+
+if(NOT WITH_SYSTEM_ZLIB)
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
+    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
     # help libzip find the package
     set(ZLIB_FOUND TRUE)
-    set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
+    set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
     cmake_policy(SET CMP0026 OLD)
-    get_target_property(ZLIB_LIBRARY zlibstatic LOCATION)
+    get_target_property(ZLIB_LIBRARY zlib LOCATION)
 endif()
 
 # installed via vcpkg for now
@@ -189,17 +195,12 @@ endif()
 find_package(CURL CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
 
-find_package(PkgConfig QUIET)
+find_package(PkgConfig)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
     pkg_check_modules(AO IMPORTED_TARGET ao)
     if(AO_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::AO)
-    endif()
-
-    pkg_check_modules(FLAC IMPORTED_TARGET flac)
-    if(FLAC_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::FLAC)
     endif()
 
 	if(NOT SDL2_FOUND)
@@ -294,48 +295,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdpsr/cdipsr.cpp
         core/deps/chdpsr/cdipsr.h)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE CHD5_FLAC CHD5_LZMA)
-target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/chdr/bitstream.c
-        core/deps/chdr/bitstream.h
-        core/deps/chdr/cdrom.c
-        core/deps/chdr/cdrom.h
-        core/deps/chdr/chd.c
-        core/deps/chdr/chd.h
-        core/deps/chdr/coretypes.h
-        core/deps/chdr/flac.c
-        core/deps/chdr/flac.h
-        core/deps/chdr/huffman.c
-        core/deps/chdr/huffman.h)
-
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
-
-if(NOT FLAC_FOUND)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CONFIG_H $<$<BOOL:MINGW>:HAVE_FSEEKO>)
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/flac/include core/deps/flac/src/libFLAC/include)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/deps/flac/src/libFLAC/bitmath.c
-            core/deps/flac/src/libFLAC/bitreader.c
-            core/deps/flac/src/libFLAC/cpu.c
-            core/deps/flac/src/libFLAC/crc.c
-            core/deps/flac/src/libFLAC/fixed.c
-            core/deps/flac/src/libFLAC/fixed_intrin_sse2.c
-            core/deps/flac/src/libFLAC/fixed_intrin_ssse3.c
-            core/deps/flac/src/libFLAC/float.c
-            core/deps/flac/src/libFLAC/format.c
-            core/deps/flac/src/libFLAC/lpc.c
-            core/deps/flac/src/libFLAC/lpc_intrin_avx2.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse2.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse41.c
-            core/deps/flac/src/libFLAC/md5.c
-            core/deps/flac/src/libFLAC/memory.c
-            core/deps/flac/src/libFLAC/metadata_iterators.c
-            core/deps/flac/src/libFLAC/metadata_object.c
-            core/deps/flac/src/libFLAC/stream_decoder.c
-            core/deps/flac/src/libFLAC/window.c
-            core/deps/flac/src/libFLAC/windows_unicode_filenames.c)
-endif()
 
 if(NOT MINIUPNP_FOUND)
 	option(UPNPC_BUILD_SHARED "Build shared library" OFF)
@@ -604,7 +564,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_mem.h
         core/hw/sh4/sh4_mmr.cpp
         core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode.h
         core/hw/sh4/sh4_opcode_list.cpp
         core/hw/sh4/sh4_opcode_list.h
         core/hw/sh4/sh4_rom.cpp
@@ -620,8 +579,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/cue.cpp
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp
-        core/imgread/SCSIDEFS.H)
+        core/imgread/ioctl.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
@@ -941,6 +899,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    add_subdirectory(core/deps/xbyak)
+    target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     	target_sources(${PROJECT_NAME} PRIVATE
     		core/rec-x64/xbyak_base.h
@@ -981,11 +941,12 @@ elseif(APPLE)
 	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME "Flycast"
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
         MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
         MACOSX_BUNDLE_INFO_STRING ""
         MACOSX_BUNDLE_ICON_FILE "AppIcon"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.reicast.Flycast"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
         MACOSX_BUNDLE_LONG_VERSION_STRING ""
         MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
@@ -994,6 +955,8 @@ elseif(APPLE)
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
 		RESOURCE "${XIB}"
 		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@loader_path/../Frameworks"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
@@ -1015,7 +978,7 @@ elseif(WIN32)
     endif()
     target_sources(${PROJECT_NAME} PRIVATE
             core/windows/win_vmem.cpp
-            shell/windows/reicast.rc)
+            shell/windows/flycast.rc)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 endif()
@@ -1029,5 +992,6 @@ if(BUILD_TESTING)
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp
-            tests/src/AicaArmTest.cpp)
+            tests/src/AicaArmTest.cpp
+            tests/src/Sh4InterpreterTest.cpp)
 endif()

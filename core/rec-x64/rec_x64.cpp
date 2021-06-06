@@ -4,7 +4,6 @@
 
 //#define CANONICAL_TEST
 
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 using namespace Xbyak::util;
@@ -18,7 +17,6 @@ using namespace Xbyak::util;
 
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
-#include "oslib/oslib.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
 
@@ -38,7 +36,6 @@ static void (*mainloop)();
 static void (*handleException)();
 
 u32 mem_writes, mem_reads;
-u32 mem_rewrites_w, mem_rewrites_r;
 
 static u64 jmp_rsp;
 

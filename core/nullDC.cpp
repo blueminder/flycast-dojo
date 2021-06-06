@@ -27,7 +27,6 @@
 #include "hw/arm7/arm7_rec.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
-#include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
@@ -832,7 +831,7 @@ std::string get_game_name()
 	return state_file;
 }
 
-std::string get_savestate_file_path(bool writable)
+static std::string get_savestate_file_path(int index, bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -848,19 +847,29 @@ std::string get_savestate_file_path(bool writable)
 	lastindex = state_file.find_last_of('.');
 	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
-	state_file = state_file + ".state";
+
+	char index_str[4] = "";
+	if (index != 0) // When index is 0, use same name before multiple states is added
+		sprintf(index_str, "_%d", index);
+
+	state_file = state_file + index_str + ".state";
 	if (writable)
 		return get_writable_data_path(state_file);
 	else
 		return get_readonly_data_path(state_file);
 }
 
-void dc_savestate()
+void dc_savestate(int index)
 {
-	dc_savestate(get_savestate_file_path(true));
+	dc_savestate(index, "");
 }
 
 void dc_savestate(std::string filename)
+{
+	dc_savestate(0, filename);
+}
+
+void dc_savestate(int index, std::string filename)
 {
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
@@ -892,6 +901,8 @@ void dc_savestate(std::string filename)
     	return;
 	}
 
+	if (filename.length == 0)
+		filename = get_savestate_file_path(index, true);
 #if 0
 	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
 
@@ -956,18 +967,25 @@ void jump_state()
 	dc_resume();
 }
 
-void dc_loadstate()
+void dc_loadstate(int index)
 {
-	dc_loadstate(get_savestate_file_path(false));
+	dc_loadstate(index, "");
 }
 
 void dc_loadstate(std::string filename)
+{
+	dc_loadstate(0, filename);
+}
+
+void dc_loadstate(int index, std::string filename)
 {
 	u32 total_size = 0;
 	FILE *f = nullptr;
 
 	dc_stop();
 
+	if (filename.length == 0)
+		filename = get_savestate_file_path(index, false);
 	RZipFile zipFile;
 	if (zipFile.Open(filename, false))
 	{

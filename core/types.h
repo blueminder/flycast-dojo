@@ -53,11 +53,6 @@ typedef size_t unat;
 typedef u64 unat;
 #endif
 
-#ifndef CDECL
-#define CDECL __cdecl
-#endif
-
-
 //intc function pointer and enums
 enum HollyInterruptType
 {
@@ -333,7 +328,6 @@ struct settings_t
 
 	struct
 	{
-		bool PatchRegion;
 		char ImagePath[512];
 	} imgread;
 
@@ -461,4 +455,4 @@ enum serialize_version_enum {
 	V15 = 810,
 	V16 = 811,
 	VCUR_FLYCAST = V16,
-} ;
+};

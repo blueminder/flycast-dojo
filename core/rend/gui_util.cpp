@@ -78,7 +78,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
@@ -311,7 +311,8 @@ void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button
     ImGuiWindow* window = g.CurrentWindow;
     bool hovered = false;
     bool held = false;
-    ImGuiButtonFlags button_flags = (mouse_button == 0) ? ImGuiButtonFlags_MouseButtonLeft : (mouse_button == 1) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
+    ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
+    		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
     if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
         ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
     if (held && delta.x != 0.0f)
@@ -576,7 +577,7 @@ void ShowHelpMarker(const char* desc)
     if (ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
         ImGui::TextUnformatted(desc);
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
