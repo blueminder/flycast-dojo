@@ -140,8 +140,6 @@ void gui_init()
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
     //ImGui::GetStyle().WindowRounding = 0;
 #ifdef __ANDROID__
-    ImGui::GetStyle().GrabMinSize = 20.0f;				// from 10
-    ImGui::GetStyle().ScrollbarSize = 24.0f;			// from 16
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 
@@ -276,8 +274,8 @@ void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();
-	ImGui::GetIO().DisplaySize.x = screen_width - insetLeft - insetRight;
-	ImGui::GetIO().DisplaySize.y = screen_height - insetTop - insetBottom;
+	ImGui::GetIO().DisplaySize.x = screen_width;
+	ImGui::GetIO().DisplaySize.y = screen_height;
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -298,12 +296,12 @@ void ImGui_Impl_NewFrame()
 	if (mo_x_phy < 0 || mo_x_phy >= screen_width || mo_y_phy < 0 || mo_y_phy >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mo_x_phy - insetLeft, mo_y_phy - insetTop);
+		io.MousePos = ImVec2(mo_x_phy, mo_y_phy);
 	static bool delayTouch;
 #ifdef __ANDROID__
 	// Delay touch by one frame to allow widgets to be hovered before click
 	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
-	if (!delayTouch && (mo_buttons[0] & (1 << 2)) == 0 && io.MouseDown[ImGuiMouseButton_Left] == 0)
+	if (!delayTouch && (mo_buttons[0] & (1 << 2)) == 0 && !io.MouseDown[ImGuiMouseButton_Left])
 		delayTouch = true;
 	else
 		delayTouch = false;
@@ -355,6 +353,7 @@ void ImGui_Impl_NewFrame()
 			    	io.AddInputCharacter((0xc2 + (b > 0xbf)) | ((b & 0x3f) + 0x80) << 8);
 		}
 	}
+	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 }
 
 void gui_set_insets(int left, int right, int top, int bottom)
@@ -785,10 +784,9 @@ static void detect_input_popup(int index, bool analog)
 
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		const float width = ImGui::GetIO().DisplaySize.x / 2;
 		const float col_width = (width
@@ -918,6 +916,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::NextColumn();
 			ImGui::PopID();
 		}
+		ImGui::Columns(1, nullptr, false);
+	    scrollWhenDraggingOnVoid();
+	    windowDragScroll();
+
 		ImGui::EndChildFrame();
 		ImGui::EndGroup();
 
@@ -926,7 +928,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::BeginGroup();
 		ImGui::Text("  Analog Axes  ");
 		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
-		ImGui::Columns(3, "bindings", false);
+		ImGui::Columns(3, "anabindings", false);
 		ImGui::SetColumnWidth(0, col_width);
 		ImGui::SetColumnWidth(1, col_width);
 
@@ -973,6 +975,9 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::NextColumn();
 			ImGui::PopID();
 		}
+		ImGui::Columns(1, nullptr, false);
+	    scrollWhenDraggingOnVoid();
+	    windowDragScroll();
 		ImGui::EndChildFrame();
 		ImGui::EndGroup();
 		ImGui::EndPopup();
@@ -1056,14 +1061,21 @@ static void contentpath_warning_popup()
     }
 }
 
+inline static void header(const char *title)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleVar();
+}
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
 
 	RenderType pvr_rend = config::RendererType;
 	bool vulkan = !config::RendererType.isOpenGL();
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+
+	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
     ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -1185,6 +1197,7 @@ static void gui_display_settings()
                 			}
                 		});
                 ImGui::PopStyleVar();
+                scrollWhenDraggingOnVoid();
 
         		ImGui::ListBoxFooter();
             	if (to_delete >= 0)
@@ -1237,7 +1250,76 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
+			header("Physical Devices");
+		    {
+				ImGui::Columns(4, "physicalDevices", false);
+				ImGui::Text("System");
+				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				ImGui::NextColumn();
+				ImGui::Text("Name");
+				ImGui::NextColumn();
+				ImGui::Text("Port");
+				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
+					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
+				ImGui::NextColumn();
+				ImGui::NextColumn();
+				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+				{
+					std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+					if (!gamepad)
+						continue;
+					ImGui::Text("%s", gamepad->api_name().c_str());
+					ImGui::NextColumn();
+					ImGui::Text("%s", gamepad->name().c_str());
+					ImGui::NextColumn();
+					char port_name[32];
+					sprintf(port_name, "##mapleport%d", i);
+					ImGui::PushID(port_name);
+					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
+					{
+						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
+						{
+							bool is_selected = gamepad->maple_port() == j;
+							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+								gamepad->set_maple_port(j);
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+					ImGui::NextColumn();
+					if (gamepad->remappable() && ImGui::Button("Map"))
+					{
+						gamepad_port = 0;
+						ImGui::OpenPopup("Controller Mapping");
+					}
+
+					controller_mapping_popup(gamepad);
+
+#ifdef __ANDROID__
+					if (gamepad->is_virtual_gamepad())
+					{
+						if (ImGui::Button("Edit"))
+						{
+							vjoy_start_editing();
+							gui_state = GuiState::VJoyEdit;
+						}
+						ImGui::SameLine();
+						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
+					}
+#endif
+					ImGui::NextColumn();
+					ImGui::PopID();
+				}
+		    }
+	    	ImGui::Columns(1, NULL, false);
+
+	    	ImGui::Spacing();
+	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
+
+			ImGui::Spacing();
+			header("Dreamcast Devices");
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
@@ -1321,76 +1403,7 @@ static void gui_display_settings()
 					}
 					ImGui::PopItemWidth();
 				}
-				ImGui::Spacing();
 		    }
-		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
-		    {
-				ImGui::Columns(4, "physicalDevices", false);
-				ImGui::Text("System");
-				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
-				ImGui::NextColumn();
-				ImGui::Text("Name");
-				ImGui::NextColumn();
-				ImGui::Text("Port");
-				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
-					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
-				ImGui::NextColumn();
-				ImGui::NextColumn();
-				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
-				{
-					std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
-					if (!gamepad)
-						continue;
-					ImGui::Text("%s", gamepad->api_name().c_str());
-					ImGui::NextColumn();
-					ImGui::Text("%s", gamepad->name().c_str());
-					ImGui::NextColumn();
-					char port_name[32];
-					sprintf(port_name, "##mapleport%d", i);
-					ImGui::PushID(port_name);
-					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
-					{
-						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
-						{
-							bool is_selected = gamepad->maple_port() == j;
-							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
-								gamepad->set_maple_port(j);
-							if (is_selected)
-								ImGui::SetItemDefaultFocus();
-						}
-
-						ImGui::EndCombo();
-					}
-					ImGui::NextColumn();
-					if (gamepad->remappable() && ImGui::Button("Map"))
-					{
-						gamepad_port = 0;
-						gamepad->verify_or_create_system_mappings();
-						ImGui::OpenPopup("Controller Mapping");
-					}
-
-					controller_mapping_popup(gamepad);
-
-#ifdef __ANDROID__
-					if (gamepad->is_virtual_gamepad())
-					{
-						if (ImGui::Button("Edit"))
-						{
-							vjoy_start_editing();
-							gui_state = GuiState::VJoyEdit;
-						}
-						ImGui::SameLine();
-						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
-					}
-#endif
-					ImGui::NextColumn();
-					ImGui::PopID();
-				}
-		    }
-	    	ImGui::Columns(1, NULL, false);
-
-	    	ImGui::Spacing();
-	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1409,7 +1422,7 @@ static void gui_display_settings()
 #else
 			bool has_per_pixel = false;
 #endif
-		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
+		    header("Transparent Sorting");
 		    {
 		    	int renderer = (pvr_rend == RenderType::OpenGL_OIT || pvr_rend == RenderType::Vulkan_OIT) ? 2 : config::PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
@@ -1452,7 +1465,8 @@ static void gui_display_settings()
 		    		break;
 		    	}
 		    }
-		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Rendering Options");
 		    {
 		    	ImGui::Text("Automatic Frame Skipping:");
 		    	ImGui::Columns(3, "autoskip", false);
@@ -1514,9 +1528,9 @@ static void gui_display_settings()
 	            	resLabels[i] += " (" + scalingsText[i] + ")";
 	            }
 
-                ImGuiStyle& scaling_style = ImGui::GetStyle();
-                float scaling_spacing = scaling_style.ItemInnerSpacing.x;
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - scaling_spacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                ImGuiStyle& style = ImGui::GetStyle();
+                float innerSpacing = style.ItemInnerSpacing.x;
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
                 if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
                 {
                 	for (u32 i = 0; i < scalings.size(); i++)
@@ -1530,20 +1544,20 @@ static void gui_display_settings()
                     ImGui::EndCombo();
                 }
                 ImGui::PopItemWidth();
-                ImGui::SameLine(0, scaling_spacing);
+                ImGui::SameLine(0, innerSpacing);
                 
                 if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
                 {
                     if (selected > 0)
                     	config::RenderResolution = vres[selected - 1];
                 }
-                ImGui::SameLine(0, scaling_spacing);
+                ImGui::SameLine(0, innerSpacing);
                 if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
                 {
                     if (selected < vres.size() - 1)
                     	config::RenderResolution = vres[selected + 1];
                 }
-                ImGui::SameLine(0, scaling_style.ItemInnerSpacing.x);
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
                 
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
@@ -1551,22 +1565,24 @@ static void gui_display_settings()
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
 		    			"Stretch the screen horizontally");
-		    	OptionSlider("Frame Skipping", config::SkipFrame, 0, 6,
+		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");
 		    }
-		    if (ImGui::CollapsingHeader("Render to Texture", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Render to Texture");
 		    {
 		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
 		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
 		    }
-		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Texture Upscaling");
 		    {
 #ifndef TARGET_NO_OPENMP
-		    	OptionSlider("Texture Upscaling", config::TextureUpscale, 1, 8,
+		    	OptionArrowButtons("Texture Upscaling", config::TextureUpscale, 1, 8,
 		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
-		    	OptionSlider("Upscaled Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
+		    	OptionSlider("Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
 		    			"Textures larger than this dimension squared will not be upscaled");
-		    	OptionSlider("Max Threads", config::MaxThreads, 1, 8,
+		    	OptionArrowButtons("Max Threads", config::MaxThreads, 1, 8,
 		    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 #endif
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
@@ -1688,7 +1704,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Advanced"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    if (ImGui::CollapsingHeader("CPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
+		    header("CPU Mode");
 		    {
 				ImGui::Columns(2, "cpu_modes", false);
 				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
@@ -1698,13 +1714,16 @@ static void gui_display_settings()
 					"Use the interpreter. Very slow but may help in case of a dynarec problem");
 				ImGui::Columns(1, NULL, false);
 		    }
-		    if (config::DynarecEnabled && ImGui::CollapsingHeader("Dynarec Options", ImGuiTreeNodeFlags_DefaultOpen))
+		    if (config::DynarecEnabled)
 		    {
+		    	ImGui::Spacing();
+		    	header("Dynarec Options");
 		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
 		    			"Do not optimize integer division. Not recommended");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
-			if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Network");
 		    {
 		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
@@ -1725,7 +1744,8 @@ static void gui_display_settings()
 					}
 		    	}
 		    }
-		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Other");
 		    {
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
 	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
@@ -1755,7 +1775,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
+		    header("Flycast");
 		    {
 				ImGui::Text("Version: %s", GIT_VERSION);
 #ifdef _WIN32
@@ -1772,7 +1792,8 @@ static void gui_display_settings()
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 		    }
-		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
+	    	ImGui::Spacing();
+		    header("Platform");
 		    {
 		    	ImGui::Text("CPU: %s",
 #if HOST_CPU == CPU_X86
@@ -1809,24 +1830,21 @@ static void gui_display_settings()
 #endif
 						);
 		    }
+	    	ImGui::Spacing();
 	    	if (config::RendererType.isOpenGL())
 	    	{
-				if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-		    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
-		    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
-		    	}
+				header("Open GL");
+	    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
+	    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
 	    	}
 #ifdef USE_VULKAN
 	    	else
 	    	{
-				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-		    		std::string name = VulkanContext::Instance()->GetDriverName();
-		    		ImGui::Text("Driver Name: %s", name.c_str());
-		    		std::string version = VulkanContext::Instance()->GetDriverVersion();
-		    		ImGui::Text("Version: %s", version.c_str());
-				}
+				header("Vulkan");
+				std::string name = VulkanContext::Instance()->GetDriverName();
+				ImGui::Text("Driver Name: %s", name.c_str());
+				std::string version = VulkanContext::Instance()->GetDriverVersion();
+				ImGui::Text("Version: %s", version.c_str());
 	    	}
 #endif
 
@@ -1844,8 +1862,8 @@ static void gui_display_settings()
     }
     ImGui::PopStyleVar();
 
-    ImVec2 mouse_delta = ImGui::GetIO().MouseDelta;
-    ScrollWhenDraggingOnVoid(ImVec2(0.0f, -mouse_delta.y), ImGuiMouseButton_Left);
+    scrollWhenDraggingOnVoid();
+    windowDragScroll();
     ImGui::End();
     ImGui::PopStyleVar();
 
@@ -1877,8 +1895,7 @@ inline static void gui_display_demo()
 
 static void gui_display_content()
 {
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 
@@ -2217,37 +2234,7 @@ static void gui_display_content()
 			}
 		}
     }
-
-	if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
-	{
-		ImGui::Text(dojo_file.status_text.data());
-		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.download_ended)
-		{
-			ImGui::CloseCurrentPopup();
-			scanner.refresh();
-			dojo_file.start_download = false;
-			dojo_file.download_started = false;
-			dojo_file.download_ended = false;
-		}
-		else
-		{
-			float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-			char buf[32];
-			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
-		}
-		ImGui::EndPopup();
-	}
-
-	if (dojo_file.start_download && !dojo_file.download_started)
-	{
-		dojo_file.download_started = true;
-		std::thread t([&]() {
-			dojo_file.DownloadEntry(dojo_file.entry_name);
-		});
-		t.detach();
-	}
-
+    windowDragScroll();
 	ImGui::EndChild();
 
 	if (!config::DojoEnable)
