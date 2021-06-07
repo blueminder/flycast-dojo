@@ -22,6 +22,7 @@
 #include "oslib/oslib.h"
 #include "rend/gui.h"
 #include "emulator.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <climits>

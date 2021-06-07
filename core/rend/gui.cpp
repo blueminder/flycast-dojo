@@ -425,6 +425,7 @@ void gui_open_settings()
 	else if (gui_state == GuiState::Commands)
 	{
 		gui_state = GuiState::Closed;
+		GamepadDevice::load_system_mappings();
 		dc_resume();
 	}
 }
@@ -528,6 +529,7 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
 	{
+		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
 	}
 
@@ -788,12 +790,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
-		const float width = ImGui::GetIO().DisplaySize.x / 2;
-		const float col_width = (width
-				- ImGui::GetStyle().GrabMinSize
-				- (0 + ImGui::GetStyle().ItemSpacing.x)
-				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)
-				- (ImGui::CalcTextSize("Unmap").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)) / 2;
+		const ImGuiStyle& style = ImGui::GetStyle();
+		const float width = (ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - style.ItemSpacing.x) / 2 - style.WindowBorderSize - style.WindowPadding.x;
+		const float col_width = (width - style.GrabMinSize - style.ItemSpacing.x
+				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
+				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
@@ -970,6 +971,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::SameLine();
 			if (ImGui::Button("Unmap"))
 			{
+				input_mapping = gamepad->get_input_mapping();
 				input_mapping->clear_axis(gamepad_port, axis_keys[j], j);
 			}
 			ImGui::NextColumn();
@@ -1292,6 +1294,7 @@ static void gui_display_settings()
 					if (gamepad->remappable() && ImGui::Button("Map"))
 					{
 						gamepad_port = 0;
+						gamepad->verify_or_create_system_mappings();
 						ImGui::OpenPopup("Controller Mapping");
 					}
 
