@@ -287,7 +287,8 @@ void input_sdl_handle()
 				}
 				else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
 				{
-					captureMouse(!mouseCaptured);
+					if (cfgLoadBool("input", "EnableMouseCaptureToggle", false))
+						captureMouse(!mouseCaptured);
 				}
 				else
 				{
