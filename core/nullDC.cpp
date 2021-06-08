@@ -497,6 +497,9 @@ static void dc_start_game(const char* path)
 	dc_reset(true);
 	config::Settings::instance().load(false);
 
+	if (config::DojoEnable)
+		dojo.SetDojoDevices();
+
 	GamepadDevice::load_system_mappings();
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)

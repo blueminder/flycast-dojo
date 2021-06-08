@@ -999,6 +999,19 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		return buttons;
 }
 
+void DojoSession::SetDojoDevices()
+{
+	config::MapleMainDevices[0] = MDT_SegaController;
+	config::MapleMainDevices[1] = MDT_SegaController;
+	config::MapleMainDevices[2] = MDT_None;
+	config::MapleMainDevices[3] = MDT_None;
+
+	config::MapleExpansionDevices[0][0] = MDT_SegaVMU;
+	config::MapleExpansionDevices[0][1] = MDT_None;
+	config::MapleExpansionDevices[1][0] = MDT_None;
+	config::MapleExpansionDevices[1][1] = MDT_None;
+}
+
 void DojoSession::ToggleRecording(int slot)
 {
 	std::ostringstream NoticeStream;

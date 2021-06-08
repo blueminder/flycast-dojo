@@ -215,6 +215,8 @@ public:
 
 	void FillSkippedFrames(u32 end_frame);
 
+	void SetDojoDevices();
+
 	std::string game_name;
 	bool receiver_header_read;
 
