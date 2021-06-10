@@ -498,7 +498,7 @@ static void dc_start_game(const char* path)
 	config::Settings::instance().load(false);
 
 	if (config::DojoEnable)
-		dojo.SetDojoDevices();
+		dojo.SetDojoDevicesByPath(std::string(path));
 
 	GamepadDevice::load_system_mappings();
 

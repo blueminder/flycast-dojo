@@ -90,7 +90,6 @@ void DojoSession::Init()
 		net_inputs[1].clear();
 		net_input_keys[1].clear();
 	}
-
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -999,17 +998,46 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		return buttons;
 }
 
-void DojoSession::SetDojoDevices()
+bool DojoSession::SetDojoDevicesByPath(std::string path)
 {
+	bool enable_vmu = false;
+
+	std::string vmu_games[] =
+	{
+		"Capcom vs. SNK 2 - Millionaire Fighting 2001 (Japan).chd",
+		"Dead or Alive 2 (Japan) (Shokai Genteiban).chd",
+		"Fighting Vipers 2 (Japan) (En,Ja).chd",
+		"Marvel vs. Capcom 2 (USA).chd",
+		"Mortal Kombat Gold (USA) (Rev 1).chd",
+		"Plasma Sword - Nightmare of Bilstein (USA).chd",
+		"Power Stone 2 (USA).chd",
+		"Soulcalibur (USA).chd"
+	};
+
+	for (auto it = std::begin(vmu_games); it != std::end(vmu_games); ++it)
+	{
+		if (path.find(*it) != std::string::npos)
+		{
+			enable_vmu = true;
+			NOTICE_LOG(NETWORK, "DOJO: path %s, match %s enabled VMU\n", path.data(), it->data());
+		}
+	}
+
 	config::MapleMainDevices[0] = MDT_SegaController;
 	config::MapleMainDevices[1] = MDT_SegaController;
 	config::MapleMainDevices[2] = MDT_None;
 	config::MapleMainDevices[3] = MDT_None;
 
-	config::MapleExpansionDevices[0][0] = MDT_SegaVMU;
+	if (enable_vmu)
+		config::MapleExpansionDevices[0][0] = MDT_SegaVMU;
+	else
+		config::MapleExpansionDevices[0][0] = MDT_None;
+
 	config::MapleExpansionDevices[0][1] = MDT_None;
 	config::MapleExpansionDevices[1][0] = MDT_None;
 	config::MapleExpansionDevices[1][1] = MDT_None;
+
+	return enable_vmu;
 }
 
 void DojoSession::ToggleRecording(int slot)

@@ -409,12 +409,12 @@ void DojoFile::ValidateAndCopyVmu()
 			ghc::filesystem::perms::owner_read,
 			ghc::filesystem::perm_options::replace);
 
-		INFO_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", vmu_filename.data());
+		NOTICE_LOG(NETWORK, "DOJO: %s change detected. replacing with fresh copy", vmu_filename.data());
 		fprintf(stdout, "DOJO: %s change detected. replacing with fresh copy\n", vmu_filename.data());
 	}
 	else
 	{
-		INFO_LOG(NETWORK, "DOJO: %s unchanged", vmu_filename.data());
+		NOTICE_LOG(NETWORK, "DOJO: %s unchanged", vmu_filename.data());
 		fprintf(stdout, "DOJO: %s unchanged\n", vmu_filename.data());
 	}
 
