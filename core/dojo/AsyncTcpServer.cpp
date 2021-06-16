@@ -10,6 +10,7 @@ receiver_session::receiver_session(tcp::socket socket)
 void receiver_session::start()
 {
 	dojo.receiver_header_read = false;
+	dojo.receiver_start_read = false;
 	do_read_header();
 }
 
@@ -17,7 +18,7 @@ void receiver_session::do_read_header()
 {
 	auto self(shared_from_this());
 
-	socket_.async_read_some(asio::buffer(data_, HEADER_SIZE),
+	socket_.async_read_some(asio::buffer(data_, HEADER_LEN),
 		[this, self](std::error_code ec, std::size_t length)
 		{
 			if (!ec)
@@ -28,67 +29,98 @@ void receiver_session::do_read_header()
 					socket_.close();
 				}
 
-				if (length == HEADER_SIZE && !dojo.receiver_header_read)
+				if (length == HEADER_LEN)
 				{
-					std::vector<std::string> hdr = stringfix::split(",", data_);
-					dojo.game_name = hdr[0];
-					config::PlayerName = hdr[1];
-					config::OpponentName = hdr[2];
+					int size = HeaderReader::GetSize((unsigned char*)data_);
+					int seq = HeaderReader::GetSeq((unsigned char*)data_);
+					int cmd = HeaderReader::GetCmd((unsigned char*)data_);
 
-					dojo.receiver_header_read = true;
+					working_size = size;
+					working_cmd = cmd;
 
-					do_read_frame();
+					memcpy(message, data_, HEADER_LEN);
+
+					do_read_body();
 				}
-
-				if (!dojo.receiver_header_read)
-					do_read_header();
 
 			}
 		});
 }
 
-void receiver_session::do_read_frame()
+void receiver_session::do_read_body()
 {
 	auto self(shared_from_this());
 
-	socket_.async_read_some(asio::buffer(data_, FRAME_SIZE),
+	socket_.async_read_some(asio::buffer(&data_[HEADER_LEN], working_size),
 		[this, self](std::error_code ec, std::size_t length)
 		{
 			if (!ec)
 			{
-				if (length == 0)
+				if (working_size > 0 && length == working_size)
 				{
-					INFO_LOG(NETWORK, "Client disconnected");
-					socket_.close();
+					memcpy(message + HEADER_LEN, data_ + HEADER_LEN, working_size);
+					const char* body = message + HEADER_LEN;
+
+					if (working_cmd == SPECTATE_START)
+						read_start_spectate();
+					else if (working_cmd == GAME_BUFFER)
+						read_frame();
 				}
 
-				if (length == FRAME_SIZE)
-				{
-					std::string frame = std::string(data_, FRAME_SIZE);
-					//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-					if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
-					{
-						dojo.receiver_ended = true;
-					}
-					else
-					{
-						dojo.AddNetFrame(frame.data());
-						std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
-
-						std::cout << added_frame_data << std::endl;
-						dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
-
-						// buffer stream
-						if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-							dojo.FrameNumber < dojo.last_consecutive_common_frame)
-							dojo.resume();
-					}
-				}
-
-				do_read_frame();
-
+				do_read_header();
 			}
 		});
+}
+
+void receiver_session::read_start_spectate()
+{
+	auto self(shared_from_this());
+	int offset = 0;
+
+	const char* body = message + HEADER_LEN;
+	
+	int v = MessageReader::ReadInt(body, &offset);
+	dojo.game_name = MessageReader::ReadString(body, &offset);
+	std::string PlayerName = MessageReader::ReadString(body, &offset);
+	std::string OpponentName = MessageReader::ReadString(body, &offset);
+	std::string Quark = MessageReader::ReadString(body, &offset);
+	std::string MatchCode = MessageReader::ReadString(body, &offset);
+
+	config::PlayerName = PlayerName;
+	config::OpponentName = OpponentName;
+	config::Quark = Quark;
+
+	dojo.receiver_start_read = true;
+}
+
+void receiver_session::read_frame()
+{
+	auto self(shared_from_this());
+	int offset = 0;
+
+	const char* body = message + HEADER_LEN;
+
+	std::string frame = MessageReader::ReadString(body, &offset);
+
+	//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+	if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+	{
+		dojo.receiver_ended = true;
+	}
+	else
+	{
+		dojo.AddNetFrame(frame.data());
+		std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+
+		std::cout << added_frame_data << std::endl;
+		dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+		// buffer stream
+		if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+			dojo.FrameNumber < dojo.last_consecutive_common_frame)
+			dojo.resume();
+	}
+
 }
 
 void receiver_session::do_write(std::size_t length)
@@ -100,7 +132,7 @@ void receiver_session::do_write(std::size_t length)
 			if (!ec)
 			{
 				INFO_LOG(NETWORK, "Message Sent: %s", data_);
-				do_read_frame();
+				do_read_header();
 			}
 		});
 }

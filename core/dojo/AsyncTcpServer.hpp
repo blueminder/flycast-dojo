@@ -17,12 +17,19 @@ public:
 
 private:
 	void do_read_header();
-	void do_read_frame();
+	void do_read_body();
+	void read_start_spectate();
+	void read_frame();
 	void do_write(std::size_t length);
 
 	tcp::socket socket_;
 	enum { max_length = 1024 };
 	char data_[max_length];
+	char message[max_length];
+
+	int working_size;
+	int working_seq;
+	int working_cmd;
 };
 
 class AsyncTcpServer

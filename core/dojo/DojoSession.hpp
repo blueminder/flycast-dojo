@@ -29,6 +29,9 @@
 #include "dojo/deps/StringFix/StringFix.h"
 #include "dojo/deps/filesystem.hpp"
 
+#include "MessageWriter.hpp"
+#include "MessageReader.hpp"
+
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
 #define HEADER_SIZE 256
@@ -219,6 +222,7 @@ public:
 
 	std::string game_name;
 	bool receiver_header_read;
+	bool receiver_start_read;
 
 	bool recording;
 	std::vector<std::string> record_slot[3];

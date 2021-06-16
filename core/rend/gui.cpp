@@ -505,7 +505,7 @@ static void gui_display_commands()
 	if (config::Training)
 	{
 		std::ostringstream watch_text;
-		watch_text << "Watching Player " << dojo.record_player + 1 << " Input";
+		watch_text << "Watching Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
 		{
 			dojo.SwitchPlayer();
@@ -1907,9 +1907,9 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN", "RECEIVE"};
 	static int item_current_idx = 0;
-	static int last_item_current_idx = 4;
+	static int last_item_current_idx = 5;
 
 	// Here our selection data is an index.
 	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
@@ -1918,7 +1918,7 @@ static void gui_display_content()
 
 	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
-	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
+	if (last_item_current_idx == 5 && gui_state != GuiState::Replays)
 	{
 		// set default offline delay to 0
 		config::Delay = 0;
@@ -1947,9 +1947,13 @@ static void gui_display_content()
 			config::MatchCode = "";
 		config::DojoServerIP = "";
 	}
-	/*
-	* RECEIVE menu option
 	else if (item_current_idx == 3)
+	{
+		config::Training = true;
+		config::DojoEnable = false;
+	}
+	// RECEIVE menu option
+	else if (item_current_idx == 4)
 	{
 		config::DojoEnable = true;
 		config::DojoActAsServer = true;
@@ -1959,13 +1963,7 @@ static void gui_display_content()
 
 		config::DojoServerIP = "";
 	}
-	*/
-	else if (item_current_idx == 3)
-	{
-		config::Training = true;
-		config::DojoEnable = false;
-	}
-	else if (item_current_idx == 0)
+	else if (item_current_idx == 5)
 	{
 		config::DojoEnable = false;
 		config::Training = false;

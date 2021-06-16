@@ -871,23 +871,21 @@ void DojoSession::transmitter_thread()
 		std::string current_frame;
 		volatile bool transmission_in_progress;
 
-		std::string header_data = get_game_name() + "," +
-			config::PlayerName.get() + "," +
-			config::OpponentName.get() + ",";
+		MessageWriter spectate_start;
 
-		if (config::EnableMatchCode)
-			header_data = header_data.append(config::MatchCode.get() + ",");
-		else
-			header_data = header_data.append(",");
+		spectate_start.AppendHeader(1, 3);
 
-		if (!config::Quark.get().empty())
-			header_data = header_data.append(config::Quark.get() + ",");
-		else
-			header_data = header_data.append(",");
+		spectate_start.AppendInt(1);
+		spectate_start.AppendString(get_game_name());
+		spectate_start.AppendString(config::PlayerName.get());
+		spectate_start.AppendString(config::OpponentName.get());
 
-		header_data.append(256 - header_data.length(), 0);
+		spectate_start.AppendString(config::Quark.get());
+		spectate_start.AppendString(config::MatchCode.get());
 
-		asio::write(socket, asio::buffer(header_data.data(), HEADER_SIZE));
+		std::vector<unsigned char> message = spectate_start.Msg();
+		asio::write(socket, asio::buffer(message));
+
 		std::cout << "Transmission Started" << std::endl;
 
 		for (;;)
@@ -898,8 +896,15 @@ void DojoSession::transmitter_thread()
 			{
 				current_frame = transmission_frames.front();
 
-				asio::write(socket, asio::buffer(current_frame.data(), FRAME_SIZE));
-				//std::cout << PrintFrameData("SENT", (u8*)current_frame.data()) << std::endl;
+				u32 frame_num = GetFrameNumber((u8*)current_frame.data());
+
+				MessageWriter frame_msg;
+				frame_msg.AppendHeader(frame_num, GAME_BUFFER);
+				frame_msg.AppendData(current_frame.data(), FRAME_SIZE);
+
+				message = frame_msg.Msg();
+
+				asio::write(socket, asio::buffer(message));
 
 				transmission_frames.pop_front();
 			}
@@ -907,7 +912,10 @@ void DojoSession::transmitter_thread()
 			if (transmitter_ended ||
 				(disconnect_toggle && !transmission_in_progress))
 			{
-				asio::write(socket, asio::buffer("000000000000", FRAME_SIZE));
+				MessageWriter disconnect_msg;
+				disconnect_msg.AppendHeader(0, GAME_BUFFER);
+				disconnect_msg.AppendData("000000000000", FRAME_SIZE);
+				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
 				std::cout << "Transmission Ended" << std::endl;
 				break;
 			}
