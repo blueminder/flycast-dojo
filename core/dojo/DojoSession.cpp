@@ -800,52 +800,82 @@ void DojoSession::receiver_client_thread()
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
 
-		std::string spectate_header = "";
-		if (!config::Quark.get().empty())
-			spectate_header = spectate_header.append(config::Quark.get() + ",");
-		spectate_header.append(HEADER_SIZE - spectate_header.length(), 0);
+		MessageWriter spectate_request;
 
-		asio::write(socket, asio::buffer(spectate_header, HEADER_SIZE));
+		spectate_request.AppendHeader(1, 4);
 
-		char buf[255] = { 0 };
+		spectate_request.AppendString(config::Quark.get());
+		spectate_request.AppendString(config::MatchCode.get());
 
-		size_t header_length = asio::read(socket,
-			asio::buffer(buf, 255));
+		std::vector<unsigned char> message = spectate_request.Msg();
+		asio::write(socket, asio::buffer(message));
 
-		std::vector<std::string> hdr = stringfix::split(",", buf);
-		dojo.game_name = hdr[0];
-		config::PlayerName = hdr[1];
-		config::OpponentName = hdr[2];
-		receiver_header_read = true;
+		// read spectate_start header
+		char header_buf[HEADER_LEN] = { 0 };
+		asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
 
-		std::cout << dojo.game_name << config::PlayerName.get() << config::OpponentName.get() << std::endl;
+		unsigned int start_size = HeaderReader::GetSize((unsigned char*)header_buf);
+		unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
+		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
-		FillSkippedFrames(SkipFrame);
-		last_consecutive_common_frame = SkipFrame - 1;
+		// read spectate_start body
+		std::vector<unsigned char> body_buf(start_size);
+		asio::read(socket, asio::buffer(body_buf, start_size));
 
+		int offset = 0;
+
+		unsigned int v = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
+		dojo.game_name = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+		std::string PlayerName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+		std::string OpponentName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+		std::string Quark = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+		std::string MatchCode = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+
+		config::PlayerName = PlayerName;
+		config::OpponentName = OpponentName;
+		config::Quark = Quark;
+
+		dojo.receiver_start_read = true;
+
+		// read frames until receiver ends
 		char frame_buf[FRAME_SIZE] = { 0 };
 		while (!receiver_ended)
 		{
-			asio::read(socket, asio::buffer(frame_buf, FRAME_SIZE));
-			std::string frame = std::string(frame_buf, FRAME_SIZE);
+			// read frame header
+			header_buf[HEADER_LEN] = { 0 };
+			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+
+			unsigned int size = HeaderReader::GetSize((unsigned char*)header_buf);
+			//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+			// read frame body
+			body_buf.resize(size);
+			asio::read(socket, asio::buffer(body_buf, size));
+
+			offset = 0;
+
+			const char* body = (const char *)body_buf.data() + HEADER_LEN;
+			std::string frame = MessageReader::ReadString(body, &offset);
+
 			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
 			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
 			{
-				receiver_ended = true;
+				dojo.receiver_ended = true;
 			}
 			else
 			{
 				dojo.AddNetFrame(frame.data());
 				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
-				std::cout << added_frame_data << std::endl;
 
-				last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+				std::cout << added_frame_data << std::endl;
+				dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
 
 				// buffer stream
-				if (net_inputs[1].size() == config::RxFrameBuffer.get() &&
-					FrameNumber < last_consecutive_common_frame)
-					resume();
+				if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+					dojo.FrameNumber < dojo.last_consecutive_common_frame)
+					dojo.resume();
 			}
+
 		}
 	}
 	catch (std::exception& e)
