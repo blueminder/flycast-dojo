@@ -130,11 +130,11 @@ bool DojoFile::CompareBIOS(int system)
 {
 	if (system == DC_PLATFORM_NAOMI)
 	{
-		return CompareFile(root_path + "data/naomi.zip", "flycast_naomi_bios");
+		return CompareFile(get_readonly_data_path("naomi.zip"), "flycast_naomi_bios");
 	}
 	else if (system == DC_PLATFORM_ATOMISWAVE)
 	{
-		return CompareFile(root_path + "data/awbios.zip", "flycast_atomiswave_bios");
+		return CompareFile(get_readonly_data_path("awbios.zip"), "flycast_atomiswave_bios");
 	}
 	else
 	{
@@ -656,8 +656,9 @@ void DojoFile::ExtractEntry(std::string entry_name)
 	if (entry_name.find("bios") != std::string::npos)
 	{
 		Unzip("cache/" + filename, "data");
-		CompareFile("data/naomi.zip", "flycast_naomi_bios");
-		CompareFile("data/awbios.zip", "flycast_atomiswave_bios");
+
+		CompareFile(get_readonly_data_path("naomi.zip"), "flycast_naomi_bios");
+		CompareFile(get_readonly_data_path("awbios.zip"), "flycast_atomiswave_bios");
 	}
 	else
 	{

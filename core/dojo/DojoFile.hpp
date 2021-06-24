@@ -39,6 +39,8 @@ struct GameMedia {
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include <stdclass.h>
+
 class DojoFile
 {
 private:
