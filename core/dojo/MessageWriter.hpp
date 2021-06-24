@@ -25,10 +25,13 @@ public:
 		AppendInt(_command);
 	}
 
-	int UpdateSize()
+	unsigned int UpdateSize()
 	{
-		int size = message.size() - HEADER_LEN;
-		memcpy(&message[0], &size, sizeof(int));
+		unsigned int size = message.size() - HEADER_LEN;
+		message[0] = (unsigned char)(size & 0xFF);
+		message[1] = (unsigned char)((size >> 8) & 0xFF);
+		message[2] = (unsigned char)((size >> 16) & 0xFF);
+		message[3] = (unsigned char)((size >> 24) & 0xFF);
 		return size;
 	}
 

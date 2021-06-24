@@ -31,9 +31,9 @@ void receiver_session::do_read_header()
 
 				if (length == HEADER_LEN)
 				{
-					int size = HeaderReader::GetSize((unsigned char*)data_);
-					int seq = HeaderReader::GetSeq((unsigned char*)data_);
-					int cmd = HeaderReader::GetCmd((unsigned char*)data_);
+					unsigned int size = HeaderReader::GetSize((unsigned char*)data_);
+					unsigned int seq = HeaderReader::GetSeq((unsigned char*)data_);
+					unsigned int cmd = HeaderReader::GetCmd((unsigned char*)data_);
 
 					working_size = size;
 					working_cmd = cmd;
@@ -79,7 +79,7 @@ void receiver_session::read_start_spectate()
 
 	const char* body = message + HEADER_LEN;
 	
-	int v = MessageReader::ReadInt(body, &offset);
+	unsigned int v = MessageReader::ReadInt(body, &offset);
 	dojo.game_name = MessageReader::ReadString(body, &offset);
 	std::string PlayerName = MessageReader::ReadString(body, &offset);
 	std::string OpponentName = MessageReader::ReadString(body, &offset);

@@ -27,9 +27,9 @@ private:
 	char data_[max_length];
 	char message[max_length];
 
-	int working_size;
-	int working_seq;
-	int working_cmd;
+	unsigned int working_size;
+	unsigned int working_seq;
+	unsigned int working_cmd;
 };
 
 class AsyncTcpServer

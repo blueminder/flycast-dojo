@@ -12,19 +12,19 @@ public:
 	{
 	}
 
-	static int GetSize(const unsigned char* buffer)
+	static unsigned int GetSize(const unsigned char* buffer)
 	{
-		return (int)buffer[0];
+		return (unsigned int)buffer[0];
 	}
 
-	static int GetSeq(const unsigned char* buffer)
+	static unsigned int GetSeq(const unsigned char* buffer)
 	{
-		return (int)buffer[4];
+		return (unsigned int)buffer[4];
 	}
 
-	static int GetCmd(const unsigned char* buffer)
+	static unsigned int GetCmd(const unsigned char* buffer)
 	{
-		return (int)buffer[8];
+		return (unsigned int)buffer[8];
 	}
 };
 
@@ -36,10 +36,10 @@ public:
 	{
 	}
 
-	static int ReadInt(const char* buffer, int* offset)
+	static unsigned int ReadInt(const char* buffer, int* offset)
 	{
-		int value;
-		int len = sizeof(int);
+		unsigned int value;
+		unsigned int len = sizeof(unsigned int);
 		memcpy(&value, buffer + *offset, len);
 		offset[0] += len;
 		return value;
@@ -47,7 +47,7 @@ public:
 
 	static std::string ReadString(const char* buffer, int* offset)
 	{
-		int len = ReadInt(buffer, offset);
+		unsigned int len = ReadInt(buffer, offset);
 		std::string out = std::string(buffer + *offset, len);
 		offset[0] += len;
 		return out;
