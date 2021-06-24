@@ -842,7 +842,7 @@ void DojoSession::receiver_client_thread()
 		while (!receiver_ended)
 		{
 			// read frame header
-			header_buf[HEADER_LEN] = { 0 };
+			memset((void*)header_buf, 0, HEADER_LEN);
 			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
 
 			unsigned int size = HeaderReader::GetSize((unsigned char*)header_buf);
@@ -854,7 +854,7 @@ void DojoSession::receiver_client_thread()
 
 			offset = 0;
 
-			const char* body = (const char *)body_buf.data() + HEADER_LEN;
+			const char* body = (const char *)body_buf.data();
 			std::string frame = MessageReader::ReadString(body, &offset);
 
 			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
