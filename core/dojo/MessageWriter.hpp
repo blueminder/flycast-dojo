@@ -13,6 +13,7 @@ class MessageWriter
 {
 private:
 	std::vector<unsigned char> message;
+	unsigned int size;
 
 public:
 	MessageWriter()
@@ -28,11 +29,16 @@ public:
 
 	unsigned int UpdateSize()
 	{
-		unsigned int size = message.size() - HEADER_LEN;
+		size = message.size() - HEADER_LEN;
 		message[0] = (unsigned char)(size & 0xFF);
 		message[1] = (unsigned char)((size >> 8) & 0xFF);
 		message[2] = (unsigned char)((size >> 16) & 0xFF);
 		message[3] = (unsigned char)((size >> 24) & 0xFF);
+		return size;
+	}
+
+	unsigned int GetSize()
+	{
 		return size;
 	}
 

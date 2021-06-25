@@ -246,7 +246,10 @@ void DojoSession::resume()
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
 	if (config::RecordMatches && !dojo.PlayMatch)
+	{
 		CreateReplayFile();
+		AppendHeaderToReplayFile();
+	}
 
 	FillDelay(session_delay);
 	delay = session_delay;
@@ -669,17 +672,22 @@ std::string DojoSession::CreateReplayFile()
 	return CreateReplayFile(rom_name);
 }
 
-std::string DojoSession::CreateReplayFile(std::string rom_name)
+std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 {
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
 	std::string filename =
-		"replays/" + rom_name +  "__" +
+		"replays/" + rom_name + "__" +
 		timestamp + "__" +
-		config::PlayerName.get() + "__" + 
-		config::OpponentName.get() + "__" + 
-		".flyreplay";
+		config::PlayerName.get() + "__" +
+		config::OpponentName.get() + "__";
+
+	if (version == 0)
+		filename.append(".flyreplay");
+	else if (version == 1)
+		filename.append(".flyr");
+
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);
@@ -691,15 +699,58 @@ std::string DojoSession::CreateReplayFile(std::string rom_name)
 	return filename;
 }
 
-void DojoSession::AppendToReplayFile(std::string frame)
+void DojoSession::AppendHeaderToReplayFile()
+{
+	std::ofstream fout(replay_filename,
+		std::ios::out | std::ios::binary | std::ios_base::app);
+
+	MessageWriter spectate_start;
+
+	spectate_start.AppendHeader(1, SPECTATE_START);
+
+	// version
+	spectate_start.AppendInt(1);
+	spectate_start.AppendString(get_game_name());
+	spectate_start.AppendString(config::PlayerName.get());
+	spectate_start.AppendString(config::OpponentName.get());
+
+	spectate_start.AppendString(config::Quark.get());
+	spectate_start.AppendString(config::MatchCode.get());
+
+	std::vector<unsigned char> message = spectate_start.Msg();
+
+	fout.write((const char*)spectate_start.Msg().data(), spectate_start.GetSize() + (unsigned int)HEADER_LEN);
+
+	fout.close();
+}
+
+void DojoSession::AppendToReplayFile(std::string frame, int version)
 {
 	if (frame.size() == FRAME_SIZE)
 	{
 		// append frame data to replay file
-		std::ofstream fout(replay_filename, 
+		std::ofstream fout(replay_filename,
 			std::ios::out | std::ios::binary | std::ios_base::app);
 
-		fout.write(frame.data(), FRAME_SIZE);
+		if (version == 0)
+		{
+			fout.write(frame.data(), FRAME_SIZE);
+		}
+		else if (version == 1)
+		{
+			// append frame data to replay file
+			std::ofstream fout(replay_filename,
+				std::ios::out | std::ios::binary | std::ios_base::app);
+
+			MessageWriter frame_msg;
+			unsigned int frame_num = GetEffectiveFrameNumber((u8*)frame.data());
+
+			frame_msg.AppendHeader(frame_num, GAME_BUFFER);
+			frame_msg.AppendData(frame.data(), FRAME_SIZE);
+
+			fout.write((const char *)frame_msg.Msg().data(), frame_msg.GetSize() + (unsigned int)HEADER_LEN);
+		}
+
 		fout.close();
 	}
 }

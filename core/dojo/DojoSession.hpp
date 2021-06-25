@@ -179,8 +179,9 @@ public:
 	std::string GetRomNamePrefix(std::string state_file);
 
 	std::string CreateReplayFile();
-	std::string CreateReplayFile(std::string rom_name);
-	void AppendToReplayFile(std::string frame);
+	std::string CreateReplayFile(std::string rom_name, int version=1);
+	void AppendHeaderToReplayFile();
+	void AppendToReplayFile(std::string frame, int version=1);
 	void LoadReplayFile(std::string path);
 
 	std::string replay_filename;
