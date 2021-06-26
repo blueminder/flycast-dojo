@@ -180,9 +180,12 @@ public:
 
 	std::string CreateReplayFile();
 	std::string CreateReplayFile(std::string rom_name, int version=1);
-	void AppendHeaderToReplayFile();
+	void AppendHeaderToReplayFile(std::string rom_name="");
 	void AppendToReplayFile(std::string frame, int version=1);
+
 	void LoadReplayFile(std::string path);
+	void LoadReplayFileV0(std::string path);
+	void LoadReplayFileV1(std::string path);
 
 	std::string replay_filename;
 

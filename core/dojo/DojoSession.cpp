@@ -246,10 +246,7 @@ void DojoSession::resume()
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
 	if (config::RecordMatches && !dojo.PlayMatch)
-	{
 		CreateReplayFile();
-		AppendHeaderToReplayFile();
-	}
 
 	FillDelay(session_delay);
 	delay = session_delay;
@@ -691,15 +688,17 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 	// create replay file itself
 	std::ofstream file;
 	file.open(filename);
-	// TODO define metadata at beginning of file
 
 	dojo.ReplayFilename = filename;
 	dojo.replay_filename = filename;
 
+	if (version == 1)
+		AppendHeaderToReplayFile(rom_name);
+
 	return filename;
 }
 
-void DojoSession::AppendHeaderToReplayFile()
+void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 {
 	std::ofstream fout(replay_filename,
 		std::ios::out | std::ios::binary | std::ios_base::app);
@@ -710,7 +709,10 @@ void DojoSession::AppendHeaderToReplayFile()
 
 	// version
 	spectate_start.AppendInt(1);
-	spectate_start.AppendString(get_game_name());
+	if (rom_name == "")
+		spectate_start.AppendString(get_game_name());
+	else
+		spectate_start.AppendString(rom_name);
 	spectate_start.AppendString(config::PlayerName.get());
 	spectate_start.AppendString(config::OpponentName.get());
 
@@ -738,17 +740,26 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		}
 		else if (version == 1)
 		{
-			// append frame data to replay file
-			std::ofstream fout(replay_filename,
-				std::ios::out | std::ios::binary | std::ios_base::app);
+			u8 frame_header[16] = { 0 };
 
-			MessageWriter frame_msg;
-			unsigned int frame_num = GetEffectiveFrameNumber((u8*)frame.data());
+			// message size
+			frame_header[0] = (u8)16;
 
-			frame_msg.AppendHeader(frame_num, GAME_BUFFER);
-			frame_msg.AppendData(frame.data(), FRAME_SIZE);
+			// sequence number
+			u32 seq = GetEffectiveFrameNumber((u8*)frame.data());
+			frame_header[4] = (unsigned char)(seq & 0xFF);
+			frame_header[5] = (unsigned char)((seq >> 8) & 0xFF);
+			frame_header[6] = (unsigned char)((seq >> 16) & 0xFF);
+			frame_header[7] = (unsigned char)((seq >> 24) & 0xFF);
 
-			fout.write((const char *)frame_msg.Msg().data(), frame_msg.GetSize() + (unsigned int)HEADER_LEN);
+			// message type
+			frame_header[8] = (u8)GAME_BUFFER;
+
+			// frame size
+			frame_header[12] = (u8)12;
+
+			fout.write((const char *)frame_header, 16);
+			fout.write(frame.data(), FRAME_SIZE);
 		}
 
 		fout.close();
@@ -756,6 +767,14 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 }
 
 void DojoSession::LoadReplayFile(std::string path)
+{
+	if (stringfix::get_extension(path) == "flyreplay")
+		LoadReplayFileV0(path);
+	else
+		LoadReplayFileV1(path);
+}
+
+void DojoSession::LoadReplayFileV0(std::string path)
 {
 	std::string ppath = path;
 	stringfix::replace(ppath, "__", ":");
@@ -795,6 +814,88 @@ void DojoSession::LoadReplayFile(std::string path)
 	}
 
 	delete[] buffer;
+}
+
+void DojoSession::LoadReplayFileV1(std::string path)
+{
+	// add string in increments of FRAME_SIZE to net_inputs
+	std::ifstream fin(path,
+		std::ios::in | std::ios::binary);
+
+	// read spectate_start header
+	char header_buf[HEADER_LEN] = { 0 };
+	fin.read(header_buf, HEADER_LEN);
+
+	unsigned int start_size = HeaderReader::GetSize((unsigned char*)header_buf);
+	unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
+	unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+	// read spectate_start body
+	std::vector<unsigned char> body_buf(start_size);
+	fin.read((char*)body_buf.data(), start_size);
+
+	int offset = 0;
+
+	unsigned int v = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
+	std::string GameName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+	std::string PlayerName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+	std::string OpponentName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+	std::string Quark = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+	std::string MatchCode = MessageReader::ReadString((const char *)body_buf.data(), &offset);
+
+	dojo.game_name = GameName;
+	config::PlayerName = PlayerName;
+	config::OpponentName = OpponentName;
+	config::Quark = Quark;
+	config::MatchCode = MatchCode;
+
+	std::cout << "Game: " << GameName << std::endl;
+	std::cout << "Player: " << PlayerName << std::endl;
+	std::cout << "Opponent: " << OpponentName << std::endl;
+	std::cout << "Quark: " << Quark << std::endl;
+	std::cout << "Match Code: " << MatchCode << std::endl;
+
+	dojo.receiver_start_read = true;
+
+	// read frames until receiver ends
+	char frame_buf[FRAME_SIZE] = { 0 };
+	while (fin)
+	{
+		// read frame header
+		memset((void*)header_buf, 0, HEADER_LEN);
+		fin.read(header_buf, FRAME_SIZE);
+
+		unsigned int size = HeaderReader::GetSize((unsigned char*)header_buf);
+		//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+		// read frame body
+		body_buf.resize(size + sizeof(int));
+		fin.read((char*)body_buf.data(), size);
+
+		offset = 0;
+
+		const char* body = (const char *)body_buf.data();
+		std::string frame = MessageReader::ReadString(body, &offset);
+
+		//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+		if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+		{
+			dojo.receiver_ended = true;
+		}
+		else
+		{
+			dojo.AddNetFrame(frame.data());
+			std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+
+			std::cout << added_frame_data << std::endl;
+			dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+			// buffer stream
+			if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+				dojo.FrameNumber < dojo.last_consecutive_common_frame)
+				dojo.resume();
+		}
+	}
 }
 
 void DojoSession::RequestSpectate(std::string host, std::string port)
