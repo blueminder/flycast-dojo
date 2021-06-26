@@ -807,7 +807,7 @@ std::string GamepadDevice::make_mapping_filename(bool instance)
 
 void GamepadDevice::verify_or_create_system_mappings()
 {
-	std::string dc_name = make_mapping_filename(false, 0);
+	std::string dc_name = make_mapping_filename(false);
 	std::string arcade_name = make_mapping_filename(false, 2);
 
 	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
@@ -841,9 +841,7 @@ std::string GamepadDevice::make_mapping_filename(bool instance, int system)
 	std::string mapping_file = api_name() + "_" + name();
 	if (instance)
 		mapping_file += "-" + _unique_id;
-	if (system == 0)
-		mapping_file += "_dc";
-	else
+	if (system != 0)
 		mapping_file += "_arcade";
 	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
@@ -864,12 +862,35 @@ bool GamepadDevice::find_mapping(int system)
 	std::string mapping_file;
 	mapping_file = make_mapping_filename(false, system);
 
-	// fall back on default flycast mapping filename if system profile not found
-	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
-	if (!file_exists(system_mapping_path))
-		mapping_file = make_mapping_filename(false);
+	// if legacy dc mapping name is used, rename to default
+	std::string arcade_name = make_mapping_filename(false, 2);
+	size_t postfix_loc = arcade_name.find("_arcade");
+	std::string old_dc_name = arcade_name.substr(0, postfix_loc) + "_dc.cfg";
+
+	std::string old_dc_path = get_readonly_config_path(std::string("mappings/") + old_dc_name);
+	std::string dc_path = get_readonly_config_path(std::string("mappings/") + make_mapping_filename(false));
+
+	if (file_exists(old_dc_path))
+	{
+		if (file_exists(dc_path))
+			remove(dc_path.data());
+
+		rename(old_dc_path.data(), dc_path.data());
+	}
 
 	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+
+	// fallback to default mapping filename for sdl inputs
+	if (!input_mapper && mapping_file.find("SDL") != std::string::npos)
+	{
+		mapping_file = make_mapping_filename(false);
+		std::string mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+
+		// create default mapping filename if none exists
+		if (!file_exists(mapping_path))
+			std::ofstream file{ mapping_path.c_str() };
+		input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	}
 	return !!input_mapper;
 }
 
