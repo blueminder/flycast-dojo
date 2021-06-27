@@ -756,6 +756,10 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 	ImGui::Separator();
 
 	fs::path path = fs::current_path() / "replays";
+
+	if (!ghc::filesystem::exists(path))
+		ghc::filesystem::create_directory(path);
+
 	std::map<std::string, std::string> replays;
 	for (auto& p : fs::directory_iterator(path))
 	{
