@@ -761,60 +761,65 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 	{
 		std::string replay_path = p.path().string();
 
-		std::string s = replay_path;
-		std::string delimiter = "__";
+		if (stringfix::get_extension(replay_path) == "flyreplay" ||
+			stringfix::get_extension(replay_path) == "flyr")
+		{
 
-		std::vector<std::string> replay_entry;
+			std::string s = replay_path;
+			std::string delimiter = "__";
 
-		size_t pos = 0;
-		std::string token;
-		while ((pos = s.find(delimiter)) != std::string::npos) {
-		    token = s.substr(0, pos);
-		    //std::cout << token << std::endl;
-			replay_entry.push_back(token);
-		    s.erase(0, pos + delimiter.length());
-		}
+			std::vector<std::string> replay_entry;
+
+			size_t pos = 0;
+			std::string token;
+			while ((pos = s.find(delimiter)) != std::string::npos) {
+				token = s.substr(0, pos);
+				//std::cout << token << std::endl;
+				replay_entry.push_back(token);
+				s.erase(0, pos + delimiter.length());
+			}
 
 #ifdef _WIN32
-		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
+			std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
 #else
-		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
+			std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
 #endif
 
-		std::string date = replay_entry[1];
-		std::string host_player = replay_entry[2];
-		std::string guest_player = replay_entry[3];
+			std::string date = replay_entry[1];
+			std::string host_player = replay_entry[2];
+			std::string guest_player = replay_entry[3];
 
-		std::string game_path = "";
+			std::string game_path = "";
 
-		std::vector<GameMedia> games = game_list;
-		std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
-			[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+			std::vector<GameMedia> games = game_list;
+			std::vector<GameMedia>::iterator it = std::find_if(games.begin(), games.end(),
+				[&](GameMedia gm) { return (gm.name.rfind(game_name, 0) == 0); });
 
-		if (it != games.end())
-		{
-			game_path = it->path;
+			if (it != games.end())
+			{
+				game_path = it->path;
+			}
+
+			bool is_selected = false;
+			if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
+			{
+				dojo.ReplayFilename = replay_path;
+				dojo.PlayMatch = true;
+
+				gui_state = GuiState::Closed;
+				//dojo.StartDojoSession();
+
+				config::DojoEnable = true;
+				gui_start_game(game_path);
+			}
+			ImGui::NextColumn();
+
+			std::string players = host_player;
+			if (!guest_player.empty())
+				players += " vs " + guest_player;
+			ImGui::Text(players.c_str());  ImGui::NextColumn();
+			ImGui::Text(game_name.c_str());  ImGui::NextColumn();
 		}
-
-		bool is_selected = false;
-		if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
-		{
-			dojo.ReplayFilename = replay_path;
-			dojo.PlayMatch = true;
-
-			gui_state = GuiState::Closed;
-			//dojo.StartDojoSession();
-
-			config::DojoEnable = true;
-			gui_start_game(game_path);
-		}
-		ImGui::NextColumn();
-
-		std::string players = host_player;
-		if (!guest_player.empty())
-			players += " vs " + guest_player;
-		ImGui::Text(players.c_str());  ImGui::NextColumn();
-		ImGui::Text(game_name.c_str());  ImGui::NextColumn();
 	}
 
     ImGui::End();
