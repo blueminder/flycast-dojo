@@ -444,6 +444,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		{
 			jump_state_requested = true;
 		}
+		else
+		{
+			dc_request_reset();
+		}
 	}
 
 	if (config::Receiving &&
