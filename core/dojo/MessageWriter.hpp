@@ -68,6 +68,15 @@ public:
 		}
 	}
 
+	// append int by divisible data size after header before calling
+	void AppendContinuousData(const char* value, unsigned int size)
+	{
+		for (int i = 0; i < size; i++)
+		{
+			message.push_back((unsigned char)value[i]);
+		}
+	}
+
 	std::vector<unsigned char> Msg()
 	{
 		UpdateSize();

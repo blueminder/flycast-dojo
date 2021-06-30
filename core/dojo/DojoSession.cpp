@@ -1074,6 +1074,15 @@ void DojoSession::transmitter_thread()
 
 		std::cout << "Transmission Started" << std::endl;
 
+		unsigned int sent_frame_count = 0;
+
+		MessageWriter frame_msg;
+		frame_msg.AppendHeader(0, GAME_BUFFER);
+
+		// start with individual frame size
+		// (body_size % data_size == 0)
+		frame_msg.AppendInt(FRAME_SIZE);
+
 		for (;;)
 		{
 			transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
@@ -1081,25 +1090,40 @@ void DojoSession::transmitter_thread()
 			if (transmission_in_progress)
 			{
 				current_frame = transmission_frames.front();
+				//u32 frame_num = GetFrameNumber((u8*)current_frame.data());
 
-				u32 frame_num = GetFrameNumber((u8*)current_frame.data());
-
-				MessageWriter frame_msg;
-				frame_msg.AppendHeader(frame_num, GAME_BUFFER);
-				frame_msg.AppendData(current_frame.data(), FRAME_SIZE);
-
-				message = frame_msg.Msg();
-
-				asio::write(socket, asio::buffer(message));
+				frame_msg.AppendContinuousData(current_frame.data(), FRAME_SIZE);
 
 				transmission_frames.pop_front();
+				sent_frame_count++;
+
+				// send packet every 60 frames
+				if (sent_frame_count % 60 == 0)
+				{
+					message = frame_msg.Msg();
+					asio::write(socket, asio::buffer(message));
+
+					frame_msg = MessageWriter();
+					frame_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
+
+					// start with individual frame size
+					// (body_size % data_size == 0)
+					frame_msg.AppendInt(FRAME_SIZE);
+				}
 			}
 
 			if (transmitter_ended ||
 				(disconnect_toggle && !transmission_in_progress))
 			{
+				// send remaining frames
+				if (sent_frame_count % 60 > 0)
+				{
+					message = frame_msg.Msg();
+					asio::write(socket, asio::buffer(message));
+				}
+
 				MessageWriter disconnect_msg;
-				disconnect_msg.AppendHeader(0, GAME_BUFFER);
+				disconnect_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
 				disconnect_msg.AppendData("000000000000", FRAME_SIZE);
 				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
 				std::cout << "Transmission Ended" << std::endl;
