@@ -36,6 +36,8 @@
 #define INPUT_SIZE 6
 #define HEADER_SIZE 256
 
+#define FRAME_BATCH 120
+
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
 #define DEBUG_BACKFILL 3

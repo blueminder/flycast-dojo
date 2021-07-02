@@ -757,7 +757,7 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 			replay_msg.AppendContinuousData(frame.data(), FRAME_SIZE);
 			replay_frame_count++;
 
-			if (replay_frame_count % 60 == 0)
+			if (replay_frame_count % FRAME_BATCH == 0)
 			{
 				std::vector<unsigned char> message = replay_msg.Msg();
 				fout.write((const char*)&message[0], message.size());
@@ -770,7 +770,7 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
 			{
 				// send remaining frames
-				if (replay_frame_count % 60 > 0)
+				if (replay_frame_count % FRAME_BATCH > 0)
 				{
 					std::vector<unsigned char> message = replay_msg.Msg();
 					fout.write((const char*)&message[0], message.size());
@@ -1120,7 +1120,7 @@ void DojoSession::transmitter_thread()
 				sent_frame_count++;
 
 				// send packet every 60 frames
-				if (sent_frame_count % 60 == 0)
+				if (sent_frame_count % FRAME_BATCH == 0)
 				{
 					message = frame_msg.Msg();
 					asio::write(socket, asio::buffer(message));
@@ -1138,7 +1138,7 @@ void DojoSession::transmitter_thread()
 				(disconnect_toggle && !transmission_in_progress))
 			{
 				// send remaining frames
-				if (sent_frame_count % 60 > 0)
+				if (sent_frame_count % FRAME_BATCH > 0)
 				{
 					message = frame_msg.Msg();
 					asio::write(socket, asio::buffer(message));
