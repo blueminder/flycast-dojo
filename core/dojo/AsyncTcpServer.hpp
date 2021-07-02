@@ -19,7 +19,7 @@ private:
 	void do_read_header();
 	void do_read_body();
 	void read_start_spectate();
-	void read_frame();
+	void read_frames();
 	void do_write(std::size_t length);
 
 	tcp::socket socket_;

@@ -53,4 +53,11 @@ public:
 		return out;
 	}
 
+	static std::string ReadContinuousData(const char* buffer, int* offset, unsigned int len)
+	{
+		std::string out = std::string(buffer + *offset, len);
+		offset[0] += len;
+		return out;
+	}
+
 };
