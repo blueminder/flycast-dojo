@@ -14,17 +14,17 @@ public:
 
 	static unsigned int GetSize(const unsigned char* buffer)
 	{
-		return (unsigned int)buffer[0];
+		return *((unsigned int*)(&buffer[0]));
 	}
 
 	static unsigned int GetSeq(const unsigned char* buffer)
 	{
-		return (unsigned int)buffer[4];
+		return *((unsigned int*)(&buffer[4]));
 	}
 
 	static unsigned int GetCmd(const unsigned char* buffer)
 	{
-		return (unsigned int)buffer[8];
+		return *((unsigned int*)(&buffer[8]));
 	}
 };
 

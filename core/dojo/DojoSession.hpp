@@ -245,6 +245,9 @@ public:
 
 	bool player_switched;
 	int current_record_slot;
+
+	unsigned int replay_frame_count;
+	MessageWriter replay_msg;
 };
 
 extern DojoSession dojo;

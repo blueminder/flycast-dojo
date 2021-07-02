@@ -90,6 +90,9 @@ void DojoSession::Init()
 		net_inputs[1].clear();
 		net_input_keys[1].clear();
 	}
+
+	unsigned int replay_frame_count = 0;
+	MessageWriter replay_msg;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -744,26 +747,35 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		}
 		else if (version == 1)
 		{
-			u8 frame_header[16] = { 0 };
+			if (replay_frame_count == 0)
+			{
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, GAME_BUFFER);
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
 
-			// message size
-			frame_header[0] = (u8)16;
+			replay_msg.AppendContinuousData(frame.data(), FRAME_SIZE);
+			replay_frame_count++;
 
-			// sequence number
-			u32 seq = GetEffectiveFrameNumber((u8*)frame.data());
-			frame_header[4] = (unsigned char)(seq & 0xFF);
-			frame_header[5] = (unsigned char)((seq >> 8) & 0xFF);
-			frame_header[6] = (unsigned char)((seq >> 16) & 0xFF);
-			frame_header[7] = (unsigned char)((seq >> 24) & 0xFF);
+			if (replay_frame_count % 60 == 0)
+			{
+				std::vector<unsigned char> message = replay_msg.Msg();
+				fout.write((const char*)&message[0], message.size());
 
-			// message type
-			frame_header[8] = (u8)GAME_BUFFER;
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, GAME_BUFFER);
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
 
-			// frame size
-			frame_header[12] = (u8)12;
-
-			fout.write((const char *)frame_header, 16);
-			fout.write(frame.data(), FRAME_SIZE);
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				// send remaining frames
+				if (replay_frame_count % 60 > 0)
+				{
+					std::vector<unsigned char> message = replay_msg.Msg();
+					fout.write((const char*)&message[0], message.size());
+				}
+			}
 		}
 
 		fout.close();
@@ -867,25 +879,22 @@ void DojoSession::LoadReplayFileV1(std::string path)
 	{
 		// read frame header
 		memset((void*)header_buf, 0, HEADER_LEN);
-
 		fin.read(header_buf, HEADER_LEN);
-		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
 
+		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
 		//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
 		// read body
-		body_buf.resize(body_size + sizeof(int));
+		body_buf.resize(body_size);
 		fin.read((char*)body_buf.data(), body_size);
 
 		offset = 0;
-		const char* body = (const char *)body_buf.data();
-
-		unsigned int frame_size = MessageReader::ReadInt(body, &offset);
+		unsigned int frame_size = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
 
 		// read frames
 		while (offset < body_size)
 		{
-			std::string frame = MessageReader::ReadContinuousData(body, &offset, frame_size);
+			std::string frame = MessageReader::ReadContinuousData((const char *)body_buf.data(), &offset, frame_size);
 
 			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
 			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
