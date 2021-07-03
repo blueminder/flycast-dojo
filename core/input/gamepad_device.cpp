@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <fstream>
 
 #include "dojo/DojoSession.hpp"
 
