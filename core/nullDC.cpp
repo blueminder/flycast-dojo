@@ -954,7 +954,12 @@ void dc_savestate(int index, std::string filename)
 void invoke_jump_state(bool dojo_invoke)
 {
 	if (dojo_invoke)
-		dojo.jump_state_requested = true;
+	{
+		if (dojo.net_save_present && !config::IgnoreNetSave)
+			dojo.jump_state_requested = true;
+		else
+			dc_request_reset();
+	}
 	else
 	{
 		jump_state_requested = true;

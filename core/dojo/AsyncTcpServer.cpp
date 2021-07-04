@@ -64,7 +64,7 @@ void receiver_session::do_read_body()
 					if (working_cmd == SPECTATE_START)
 						read_start_spectate();
 					else if (working_cmd == GAME_BUFFER)
-						read_frame();
+						read_frames();
 				}
 
 				do_read_header();
@@ -93,32 +93,36 @@ void receiver_session::read_start_spectate()
 	dojo.receiver_start_read = true;
 }
 
-void receiver_session::read_frame()
+void receiver_session::read_frames()
 {
 	auto self(shared_from_this());
 	int offset = 0;
 
 	const char* body = message + HEADER_LEN;
+	unsigned int frame_size = MessageReader::ReadInt(body, &offset);
 
-	std::string frame = MessageReader::ReadString(body, &offset);
-
-	//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-	if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+	while (offset < working_size)
 	{
-		dojo.receiver_ended = true;
-	}
-	else
-	{
-		dojo.AddNetFrame(frame.data());
-		std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+		std::string frame = MessageReader::ReadContinuousData(body, &offset, frame_size);
 
-		std::cout << added_frame_data << std::endl;
-		dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+		//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+		if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+		{
+			dojo.receiver_ended = true;
+		}
+		else
+		{
+			dojo.AddNetFrame(frame.data());
+			std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-		// buffer stream
-		if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-			dojo.FrameNumber < dojo.last_consecutive_common_frame)
-			dojo.resume();
+			std::cout << added_frame_data << std::endl;
+			dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+			// buffer stream
+			if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+				dojo.FrameNumber < dojo.last_consecutive_common_frame)
+				dojo.resume();
+		}
 	}
 
 }

@@ -967,7 +967,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			OptionCheckbox("Ignore Existing Netplay Savestates", config::IgnoreNetSave);
 			ImGui::SameLine();
-			ShowHelpMarker("Ignore previously generated or custom savestates ending in .net. Generates fallback savestate for every match.");
+			ShowHelpMarker("Ignore previously generated or custom savestates ending in .net.");
 
 			OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
 			ImGui::SameLine();

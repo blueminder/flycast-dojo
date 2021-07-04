@@ -90,6 +90,9 @@ void DojoSession::Init()
 		net_inputs[1].clear();
 		net_input_keys[1].clear();
 	}
+
+	unsigned int replay_frame_count = 0;
+	MessageWriter replay_msg;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -444,6 +447,10 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		{
 			jump_state_requested = true;
 		}
+		else
+		{
+			dc_request_reset();
+		}
 	}
 
 	if (config::Receiving &&
@@ -740,26 +747,35 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		}
 		else if (version == 1)
 		{
-			u8 frame_header[16] = { 0 };
+			if (replay_frame_count == 0)
+			{
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, GAME_BUFFER);
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
 
-			// message size
-			frame_header[0] = (u8)16;
+			replay_msg.AppendContinuousData(frame.data(), FRAME_SIZE);
+			replay_frame_count++;
 
-			// sequence number
-			u32 seq = GetEffectiveFrameNumber((u8*)frame.data());
-			frame_header[4] = (unsigned char)(seq & 0xFF);
-			frame_header[5] = (unsigned char)((seq >> 8) & 0xFF);
-			frame_header[6] = (unsigned char)((seq >> 16) & 0xFF);
-			frame_header[7] = (unsigned char)((seq >> 24) & 0xFF);
+			if (replay_frame_count % FRAME_BATCH == 0)
+			{
+				std::vector<unsigned char> message = replay_msg.Msg();
+				fout.write((const char*)&message[0], message.size());
 
-			// message type
-			frame_header[8] = (u8)GAME_BUFFER;
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, GAME_BUFFER);
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
 
-			// frame size
-			frame_header[12] = (u8)12;
-
-			fout.write((const char *)frame_header, 16);
-			fout.write(frame.data(), FRAME_SIZE);
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				// send remaining frames
+				if (replay_frame_count % FRAME_BATCH > 0)
+				{
+					std::vector<unsigned char> message = replay_msg.Msg();
+					fout.write((const char*)&message[0], message.size());
+				}
+			}
 		}
 
 		fout.close();
@@ -863,37 +879,41 @@ void DojoSession::LoadReplayFileV1(std::string path)
 	{
 		// read frame header
 		memset((void*)header_buf, 0, HEADER_LEN);
-		fin.read(header_buf, FRAME_SIZE);
+		fin.read(header_buf, HEADER_LEN);
 
-		unsigned int size = HeaderReader::GetSize((unsigned char*)header_buf);
+		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
 		//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
-		// read frame body
-		body_buf.resize(size + sizeof(int));
-		fin.read((char*)body_buf.data(), size);
+		// read body
+		body_buf.resize(body_size);
+		fin.read((char*)body_buf.data(), body_size);
 
 		offset = 0;
+		unsigned int frame_size = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
 
-		const char* body = (const char *)body_buf.data();
-		std::string frame = MessageReader::ReadString(body, &offset);
-
-		//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-		if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+		// read frames
+		while (offset < body_size)
 		{
-			dojo.receiver_ended = true;
-		}
-		else
-		{
-			dojo.AddNetFrame(frame.data());
-			std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+			std::string frame = MessageReader::ReadContinuousData((const char *)body_buf.data(), &offset, frame_size);
 
-			std::cout << added_frame_data << std::endl;
-			dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				dojo.receiver_ended = true;
+			}
+			else
+			{
+				dojo.AddNetFrame(frame.data());
+				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-			// buffer stream
-			if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-				dojo.FrameNumber < dojo.last_consecutive_common_frame)
-				dojo.resume();
+				std::cout << added_frame_data << std::endl;
+				dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+				// buffer stream
+				if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+					dojo.FrameNumber < dojo.last_consecutive_common_frame)
+					dojo.resume();
+			}
 		}
 	}
 }
@@ -997,35 +1017,41 @@ void DojoSession::receiver_client_thread()
 			memset((void*)header_buf, 0, HEADER_LEN);
 			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
 
-			unsigned int size = HeaderReader::GetSize((unsigned char*)header_buf);
+			unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
 			//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
-			// read frame body
-			body_buf.resize(size);
-			asio::read(socket, asio::buffer(body_buf, size));
+			// read body
+			body_buf.resize(body_size);
+			asio::read(socket, asio::buffer(body_buf, body_size));
 
 			offset = 0;
-
 			const char* body = (const char *)body_buf.data();
-			std::string frame = MessageReader::ReadString(body, &offset);
 
-			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			unsigned int frame_size = MessageReader::ReadInt(body, &offset);
+
+			// read frames
+			while (offset < body_size)
 			{
-				dojo.receiver_ended = true;
-			}
-			else
-			{
-				dojo.AddNetFrame(frame.data());
-				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+				std::string frame = MessageReader::ReadContinuousData(body, &offset, frame_size);
 
-				std::cout << added_frame_data << std::endl;
-				dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+				//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+				if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+				{
+					dojo.receiver_ended = true;
+				}
+				else
+				{
+					dojo.AddNetFrame(frame.data());
+					std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-				// buffer stream
-				if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-					dojo.FrameNumber < dojo.last_consecutive_common_frame)
-					dojo.resume();
+					std::cout << added_frame_data << std::endl;
+					dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+					// buffer stream
+					if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+						dojo.FrameNumber < dojo.last_consecutive_common_frame)
+						dojo.resume();
+				}
 			}
 
 		}
@@ -1070,6 +1096,15 @@ void DojoSession::transmitter_thread()
 
 		std::cout << "Transmission Started" << std::endl;
 
+		unsigned int sent_frame_count = 0;
+
+		MessageWriter frame_msg;
+		frame_msg.AppendHeader(0, GAME_BUFFER);
+
+		// start with individual frame size
+		// (body_size % data_size == 0)
+		frame_msg.AppendInt(FRAME_SIZE);
+
 		for (;;)
 		{
 			transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
@@ -1077,25 +1112,40 @@ void DojoSession::transmitter_thread()
 			if (transmission_in_progress)
 			{
 				current_frame = transmission_frames.front();
+				//u32 frame_num = GetFrameNumber((u8*)current_frame.data());
 
-				u32 frame_num = GetFrameNumber((u8*)current_frame.data());
-
-				MessageWriter frame_msg;
-				frame_msg.AppendHeader(frame_num, GAME_BUFFER);
-				frame_msg.AppendData(current_frame.data(), FRAME_SIZE);
-
-				message = frame_msg.Msg();
-
-				asio::write(socket, asio::buffer(message));
+				frame_msg.AppendContinuousData(current_frame.data(), FRAME_SIZE);
 
 				transmission_frames.pop_front();
+				sent_frame_count++;
+
+				// send packet every 60 frames
+				if (sent_frame_count % FRAME_BATCH == 0)
+				{
+					message = frame_msg.Msg();
+					asio::write(socket, asio::buffer(message));
+
+					frame_msg = MessageWriter();
+					frame_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
+
+					// start with individual frame size
+					// (body_size % data_size == 0)
+					frame_msg.AppendInt(FRAME_SIZE);
+				}
 			}
 
 			if (transmitter_ended ||
 				(disconnect_toggle && !transmission_in_progress))
 			{
+				// send remaining frames
+				if (sent_frame_count % FRAME_BATCH > 0)
+				{
+					message = frame_msg.Msg();
+					asio::write(socket, asio::buffer(message));
+				}
+
 				MessageWriter disconnect_msg;
-				disconnect_msg.AppendHeader(0, GAME_BUFFER);
+				disconnect_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
 				disconnect_msg.AppendData("000000000000", FRAME_SIZE);
 				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
 				std::cout << "Transmission Ended" << std::endl;
