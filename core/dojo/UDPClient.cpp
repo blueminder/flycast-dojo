@@ -181,7 +181,7 @@ void UDPClient::StartSession()
 		<< " " << dojo.packets_per_frame
 		<< " " << dojo.num_back_frames
 		<< " " << config::PlayerName.get()
-		<< " " << ghc::filesystem::exists(dojo.net_save_path) ? 1 : 0;
+		<< " " << (ghc::filesystem::exists(dojo.net_save_path) && !config::IgnoreNetSave) ? 1 : 0;
 
 	std::string to_send_start = start_ss.str();
 
@@ -202,14 +202,8 @@ void UDPClient::SendDisconnectOK()
 
 void UDPClient::SendPlayerName()
 {
-	int net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
-
-	if (config::IgnoreNetSave && net_save_exists)
-		remove(dojo.net_save_path.data());
-
-	net_save_exists = ghc::filesystem::exists(dojo.net_save_path);
-
-	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(net_save_exists), host_addr);
+	int use_net_save = ghc::filesystem::exists(dojo.net_save_path) && !config::IgnoreNetSave;
+	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(use_net_save), host_addr);
 }
 
 void UDPClient::SendNameOK()
@@ -395,11 +389,7 @@ void UDPClient::ClientLoop()
 
 				config::OpponentName = tokens[0];
 				dojo.net_save_present = (bool)atoi(tokens[1].data());
-
-				std::string net_save_path = get_net_savestate_file_path(false);
-
-				if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
-					dojo.jump_state_requested = true;
+				dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
 
 				opponent_addr = sender;
 
@@ -477,6 +467,7 @@ void UDPClient::ClientLoop()
 				int nbf = atoi(tokens[2].data());
 				std::string op = tokens[3];
 				dojo.net_save_present = (bool)atoi(tokens[4].data());
+				dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
 
 				config::OpponentName = op;
 
