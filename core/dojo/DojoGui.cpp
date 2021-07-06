@@ -674,49 +674,57 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		player_2 = config::PlayerName;
 	}
 
-	float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
-	float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
 
-	//ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
+	if (player_1.length() > 1)
+	{
+		float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
 
-	ImGui::SetNextWindowBgAlpha(0.5f);
-	ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
-	ImGui::SetNextWindowSize(ImVec2(font_size_1 + 10, 35));
+		//ImGui_Impl_NewFrame();
+		ImGui::NewFrame();
 
-	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
+		ImGui::SetNextWindowBgAlpha(0.5f);
+		ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size_1 + 10, 35));
 
-	ImGui::SameLine(
-        ImGui::GetWindowSize().x / 2 -
-        font_size_1 + (font_size_1 / 2) + 5
-    );
+		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
 
-    ImGui::Text(player_1.c_str());
+		ImGui::SameLine(
+			ImGui::GetWindowSize().x / 2 -
+			font_size_1 + (font_size_1 / 2) + 5
+		);
 
-	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Text(player_1.c_str());
+
+		ImGui::End();
+		ImGui::Render();
+		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+	}
 
 
-	//ImGui_Impl_NewFrame();
-	ImGui::NewFrame();
+	if (player_2.length() > 1)
+	{
+		float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
 
-	ImGui::SetNextWindowBgAlpha(0.5f);
-	ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0) );
-	ImGui::SetNextWindowSize(ImVec2(font_size_2 + 10, 35));
+		//ImGui_Impl_NewFrame();
+		ImGui::NewFrame();
 
-	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
+		ImGui::SetNextWindowBgAlpha(0.5f);
+		ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size_2 + 10, 35));
 
-	ImGui::SameLine(
-        ImGui::GetWindowSize().x / 2 -
-        font_size_2 + (font_size_2 / 2) + 5
-    );
+		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
 
-    ImGui::Text(player_2.c_str());
+		ImGui::SameLine(
+			ImGui::GetWindowSize().x / 2 -
+			font_size_2 + (font_size_2 / 2) + 5
+		);
 
-	ImGui::End();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Text(player_2.c_str());
+
+		ImGui::End();
+		ImGui::Render();
+		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+	}
 }
 
 void DojoGui::gui_display_paused(float scaling)
