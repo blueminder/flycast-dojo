@@ -576,16 +576,25 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 			frame_timeout++;
 
-			if (!hosting && frame_timeout > delay)
+			if (frame_timeout > delay * 2)
+			{
 				client.request_repeat = true;
+				NOTICE_LOG(NETWORK, "DOJO: frame timeout > delay, resending payload");
+			}
 
 			// give ~40 seconds for connection to continue
-			if (!config::Receiving && frame_timeout > 2400)
+			if (!config::Receiving && frame_timeout > 4800)
+			{
 				disconnect_toggle = true;
+				NOTICE_LOG(NETWORK, "DOJO: > frame timeout, toggling disconnect");
+			}
 
 			// give ~30 seconds for spectating connection to continue
-			if (config::Receiving && frame_timeout > 3600)
+			if (config::Receiving && frame_timeout > 7200)
+			{
 				receiver_ended = true;
+				NOTICE_LOG(NETWORK, "DOJO: > frame timeout, ending receiver");
+			}
 
 			if (config::Receiving &&
 				FrameNumber >= last_consecutive_common_frame)
