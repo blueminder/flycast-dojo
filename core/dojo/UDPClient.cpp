@@ -324,7 +324,8 @@ void UDPClient::ClientLoop()
 			if (request_repeat &&
 				!last_sent.empty())
 			{
-				sendto(local_socket, "REP", strlen("REP"), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				sendto(local_socket, (const char*)last_sent.data(), dojo.PayloadSize(), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
+				//sendto(local_socket, "REP", strlen("REP"), 0, (const struct sockaddr*)&opponent_addr, sizeof(opponent_addr));
 				request_repeat = false;
 			}
 		}
