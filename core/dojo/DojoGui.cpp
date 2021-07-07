@@ -663,7 +663,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 	std::string player_1;
 	std::string player_2;
 
-	if (dojo.hosting || dojo.PlayMatch)
+	if (dojo.hosting || dojo.PlayMatch || config::Receiving)
 	{
 		player_1 = config::PlayerName;
 		player_2 = config::OpponentName;
@@ -673,7 +673,6 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		player_1 = config::OpponentName;
 		player_2 = config::PlayerName;
 	}
-
 
 	if (player_1.length() > 1)
 	{

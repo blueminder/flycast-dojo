@@ -1012,6 +1012,7 @@ void DojoSession::receiver_client_thread()
 		config::OpponentName = OpponentName;
 		config::Quark = Quark;
 
+		dojo.receiver_header_read = true;
 		dojo.receiver_start_read = true;
 
 		// read frames until receiver ends
