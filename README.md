@@ -22,7 +22,7 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
   * [Netplay Settings](#netplay-settings)
-  * [Match Code Quick Start](#match-code-quick-start)
+  * [Match Code Quick Start](#match-code-quick-start-1)
     + [As Host](#as-host)
       - [Set Delay](#set-delay)
     + [As Guest](#as-guest)
@@ -42,7 +42,6 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 - [Replays](#replays)
     + [Public Replay Servers & Transmitting Game Sessions](#public-replay-servers--transmitting-game-sessions)
 - [Savestates](#savestates)
-    + [Auto Generated Savestates](#auto-generated-savestates)
     + [Custom Savestates](#custom-savestates)
 - [MD5 Checksum Calculation & Validation](#md5-checksum-calculation--validation)
 - [Training Mode](#training-mode)
@@ -58,7 +57,6 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 # Visual Aids
 
 ## Match Code Quick Start
-
 ![Match Code Quick Start](match-code-qs-kofxi.gif)
 
 ## Fightcade Quick Start
@@ -88,7 +86,6 @@ Select the **Arcade button names** checkbox to show the arcade button mapping. I
 The following is a sample mapping for XInput (XBOX 360) Controllers created by **pokeshark** on the [Official Fightcade Discord](https://discord.com/invite/EyERRSg). Note that the triggers are on the right hand side of the screen, corresponding with analog axes.
 
 <img alt="CvS2 Sample Mapping for XInput Controllers" src="CVS2_Sample_Mapping_for_XInput_Controllers.png" width="640">
-
 
 # Starting a Netplay Session
 
@@ -242,19 +239,14 @@ There is currently an experimental public replay server available at **match.doj
 Once some code cleanup and quality checks are done, the replay server will be made available in its own repository for anyone to be able to host themselves.
 
 # Savestates
-During a netplay match, you can "jump" to a starting savestate by pressing the **Backspace** button by default. This may be edited in the Control mapping section of the Settings.
-
-## Auto Generated Savestates
-To help mitigate desyncs and to easily restart game sessions, if one isn't detected, Flycast Dojo automatically generates a savestate shortly after the boot sequence to provide a starting point to rewind a session. If it is detected that you and your opponent have a savestate, the match will start right after the boot sequence to save time.
-
-If you ever encounter any isues, you can delete the savestate located in `data/[ROM Name].state.net` to have the emulator start from the boot sequence and generate a savestate in your next match.
+During a netplay match, if a custom savestate is present, you can "jump" to a starting savestate by pressing the **Backspace** button by default. This may be edited in the Control mapping section of the Settings.
 
 ## Custom Savestates
 To use custom savestates, you must first disable **Ignore Netplay Savestates** in the **Memory Management** section of your Dojo settings.
 
 ![Memory Management - Disabled Ignore Netplay Savestates](mm-disable-ignore-savestate.png)
 
-Fro here, you must rename your desired game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files when you start a session, or else you will be looking at different game states entirely.
+From here, you must rename your desired game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files when you start a session, or else you will be looking at different game states entirely.
 
 # MD5 Checksum Calculation & Validation
 In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
