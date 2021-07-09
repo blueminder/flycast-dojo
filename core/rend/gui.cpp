@@ -2006,7 +2006,12 @@ static void gui_display_content()
 	if (gui_state == GuiState::Replays)
 		config::DojoEnable = true;
 
-	if (item_current_idx == 1)
+	if (item_current_idx == 0)
+	{
+		config::Training = false;
+		config::DojoEnable = false;
+	}
+	else if (item_current_idx == 1)
 	{
 		config::DojoEnable = true;
 		config::DojoActAsServer = true;
