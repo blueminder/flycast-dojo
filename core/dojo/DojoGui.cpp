@@ -947,9 +947,11 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ShowHelpMarker("Target Spectator IP Address");
 				config::SpectatorIP = SpectatorIP;
 
+				/*
 				OptionCheckbox("Transmit Replays", config::TransmitReplays);
 				ImGui::SameLine();
 				ShowHelpMarker("Transmit replays to target spectator");
+				*/
 			}
 
 			char SpectatorPort[256];
