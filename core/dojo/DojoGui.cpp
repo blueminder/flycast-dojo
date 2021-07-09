@@ -660,6 +660,13 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
+	// if both player names are defaults, hide overlay
+	if (strcmp(config::PlayerName.get().data(), "Player") == 0 &&
+		strcmp(config::PlayerName.get().data(), config::OpponentName.get().data()) == 0)
+	{
+		return;
+	}
+
 	std::string player_1;
 	std::string player_2;
 
