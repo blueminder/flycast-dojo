@@ -60,4 +60,19 @@ public:
 		return out;
 	}
 
+	static std::vector<std::string> ReadPlayerInfo(const char* buffer, int* offset)
+	{
+		std::string player_str = ReadString(buffer, offset);
+		std::size_t sep = player_str.find_last_of("#");
+
+		std::string player_name = player_str.substr(0, sep);
+		std::string player_details = player_str.substr(sep);
+
+		auto player_info = stringfix::split(",", player_details);
+		player_info.push_back(player_str);
+		std::rotate(player_info.rbegin(), player_info.rbegin() + 1, player_info.rend());
+
+		return player_info;
+	}
+
 };

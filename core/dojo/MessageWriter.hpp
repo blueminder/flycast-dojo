@@ -6,6 +6,7 @@
 #define GAME_BUFFER 2
 #define SPECTATE_START 3
 #define SPECTATE_REQUEST 4
+#define PLAYER_INFO 5
 
 #define HEADER_LEN 12
 
