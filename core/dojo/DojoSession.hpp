@@ -189,6 +189,8 @@ public:
 	void LoadReplayFileV0(std::string path);
 	void LoadReplayFileV1(std::string path);
 
+	void ProcessBody(unsigned int cmd, unsigned int body_size, const char* buffer, int* offset);
+
 	std::string replay_filename;
 
 	uint64_t unix_timestamp();
