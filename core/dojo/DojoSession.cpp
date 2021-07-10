@@ -733,8 +733,23 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 
 	std::vector<unsigned char> message = spectate_start.Msg();
 
-	fout.write((const char*)spectate_start.Msg().data(), spectate_start.GetSize() + (unsigned int)HEADER_LEN);
+	fout.write((const char*)spectate_start.Msg().data(), (std::streamsize)(spectate_start.GetSize() + (unsigned int)HEADER_LEN));
+	fout.close();
+}
 
+void DojoSession::AppendPlayerInfoToReplayFile()
+{
+	std::ofstream fout(replay_filename,
+		std::ios::out | std::ios::binary | std::ios_base::app);
+
+	MessageWriter player_info;
+	player_info.AppendHeader(1, PLAYER_INFO);
+	player_info.AppendString(config::PlayerName.get() + "#undefined,0,XX");
+	player_info.AppendString(config::OpponentName.get() + "#undefined,0,XX");
+
+	std::vector<unsigned char> message = player_info.Msg();
+
+	fout.write((const char*)player_info.Msg().data(), (std::streamsize)(player_info.GetSize() + (unsigned int)HEADER_LEN));
 	fout.close();
 }
 
@@ -862,6 +877,20 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 		dojo.receiver_header_read = true;
 		dojo.receiver_start_read = true;
+	}
+	else if (cmd == PLAYER_INFO)
+	{
+		auto p1_info = MessageReader::ReadPlayerInfo(buffer, offset);
+		auto p2_info = MessageReader::ReadPlayerInfo(buffer, offset);
+
+		auto player_name = p1_info[0];
+		auto opponent_name = p2_info[0];
+
+		std::cout << "P1: " << player_name << std::endl;
+		std::cout << "P2: " << opponent_name << std::endl;
+
+		config::PlayerName = player_name;
+		config::OpponentName = opponent_name;
 	}
 	else if (cmd == GAME_BUFFER)
 	{
@@ -1005,8 +1034,6 @@ void DojoSession::receiver_client_thread()
 
 		dojo.ProcessBody(cmd, start_size, (const char*)body_buf.data(), &offset);
 
-		// read frames until receiver ends
-		char frame_buf[FRAME_SIZE] = { 0 };
 		while (!receiver_ended)
 		{
 			// read frame header

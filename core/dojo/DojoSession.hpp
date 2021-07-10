@@ -183,6 +183,7 @@ public:
 	std::string CreateReplayFile();
 	std::string CreateReplayFile(std::string rom_name, int version=1);
 	void AppendHeaderToReplayFile(std::string rom_name="");
+	void AppendPlayerInfoToReplayFile();
 	void AppendToReplayFile(std::string frame, int version=1);
 
 	void LoadReplayFile(std::string path);

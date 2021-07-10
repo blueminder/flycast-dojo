@@ -66,10 +66,10 @@ public:
 		std::size_t sep = player_str.find_last_of("#");
 
 		std::string player_name = player_str.substr(0, sep);
-		std::string player_details = player_str.substr(sep);
+		std::string player_details = player_str.substr(sep + 1);
 
 		auto player_info = stringfix::split(",", player_details);
-		player_info.push_back(player_str);
+		player_info.push_back(player_name);
 		std::rotate(player_info.rbegin(), player_info.rbegin() + 1, player_info.rend());
 
 		return player_info;
