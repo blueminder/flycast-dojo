@@ -843,81 +843,77 @@ void DojoSession::LoadReplayFileV1(std::string path)
 	std::ifstream fin(path,
 		std::ios::in | std::ios::binary);
 
-	// read spectate_start header
 	char header_buf[HEADER_LEN] = { 0 };
-	fin.read(header_buf, HEADER_LEN);
-
-	unsigned int start_size = HeaderReader::GetSize((unsigned char*)header_buf);
-	unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
-	unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
-
-	// read spectate_start body
-	std::vector<unsigned char> body_buf(start_size);
-	fin.read((char*)body_buf.data(), start_size);
-
+	std::vector<unsigned char> body_buf;
 	int offset = 0;
 
-	unsigned int v = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
-	std::string GameName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
-	std::string PlayerName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
-	std::string OpponentName = MessageReader::ReadString((const char *)body_buf.data(), &offset);
-	std::string Quark = MessageReader::ReadString((const char *)body_buf.data(), &offset);
-	std::string MatchCode = MessageReader::ReadString((const char *)body_buf.data(), &offset);
-
-	dojo.game_name = GameName;
-	config::PlayerName = PlayerName;
-	config::OpponentName = OpponentName;
-	config::Quark = Quark;
-	config::MatchCode = MatchCode;
-
-	std::cout << "Game: " << GameName << std::endl;
-	std::cout << "Player: " << PlayerName << std::endl;
-	std::cout << "Opponent: " << OpponentName << std::endl;
-	std::cout << "Quark: " << Quark << std::endl;
-	std::cout << "Match Code: " << MatchCode << std::endl;
-
-	dojo.receiver_start_read = true;
-
-	// read frames until receiver ends
-	char frame_buf[FRAME_SIZE] = { 0 };
+	// read messages until receiver ends
 	while (fin)
 	{
-		// read frame header
+		// read header
 		memset((void*)header_buf, 0, HEADER_LEN);
 		fin.read(header_buf, HEADER_LEN);
 
 		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
-		//unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+		unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
+		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
 		// read body
 		body_buf.resize(body_size);
 		fin.read((char*)body_buf.data(), body_size);
 
 		offset = 0;
-		unsigned int frame_size = MessageReader::ReadInt((const char *)body_buf.data(), &offset);
 
-		// read frames
-		while (offset < body_size)
+		if (cmd == SPECTATE_START)
 		{
-			std::string frame = MessageReader::ReadContinuousData((const char *)body_buf.data(), &offset, frame_size);
+			unsigned int v = MessageReader::ReadInt((const char*)body_buf.data(), &offset);
+			std::string GameName = MessageReader::ReadString((const char*)body_buf.data(), &offset);
+			std::string PlayerName = MessageReader::ReadString((const char*)body_buf.data(), &offset);
+			std::string OpponentName = MessageReader::ReadString((const char*)body_buf.data(), &offset);
+			std::string Quark = MessageReader::ReadString((const char*)body_buf.data(), &offset);
+			std::string MatchCode = MessageReader::ReadString((const char*)body_buf.data(), &offset);
 
-			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			dojo.game_name = GameName;
+			config::PlayerName = PlayerName;
+			config::OpponentName = OpponentName;
+			config::Quark = Quark;
+			config::MatchCode = MatchCode;
+
+			std::cout << "Game: " << GameName << std::endl;
+			std::cout << "Player: " << PlayerName << std::endl;
+			std::cout << "Opponent: " << OpponentName << std::endl;
+			std::cout << "Quark: " << Quark << std::endl;
+			std::cout << "Match Code: " << MatchCode << std::endl;
+
+			dojo.receiver_start_read = true;
+		}
+		else if (cmd == GAME_BUFFER)
+		{
+			unsigned int frame_size = MessageReader::ReadInt((const char*)body_buf.data(), &offset);
+
+			// read frames
+			while (offset < body_size)
 			{
-				dojo.receiver_ended = true;
-			}
-			else
-			{
-				dojo.AddNetFrame(frame.data());
-				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
+				std::string frame = MessageReader::ReadContinuousData((const char*)body_buf.data(), &offset, frame_size);
 
-				std::cout << added_frame_data << std::endl;
-				dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+				//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+				if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+				{
+					dojo.receiver_ended = true;
+				}
+				else
+				{
+					dojo.AddNetFrame(frame.data());
+					std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-				// buffer stream
-				if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-					dojo.FrameNumber < dojo.last_consecutive_common_frame)
-					dojo.resume();
+					std::cout << added_frame_data << std::endl;
+					dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
+
+					// buffer stream
+					if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+						dojo.FrameNumber < dojo.last_consecutive_common_frame)
+						dojo.resume();
+				}
 			}
 		}
 	}
