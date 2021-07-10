@@ -58,73 +58,15 @@ void receiver_session::do_read_body()
 			{
 				if (working_size > 0 && length == working_size)
 				{
-					memcpy(message + HEADER_LEN, data_ + HEADER_LEN, working_size);
-					const char* body = message + HEADER_LEN;
+					const char* body = data_ + HEADER_LEN;
+					int offset = 0;
 
-					if (working_cmd == SPECTATE_START)
-						read_start_spectate();
-					else if (working_cmd == GAME_BUFFER)
-						read_frames();
+					dojo.ProcessBody(working_cmd, working_size, body, &offset);
 				}
 
 				do_read_header();
 			}
 		});
-}
-
-void receiver_session::read_start_spectate()
-{
-	auto self(shared_from_this());
-	int offset = 0;
-
-	const char* body = message + HEADER_LEN;
-	
-	unsigned int v = MessageReader::ReadInt(body, &offset);
-	dojo.game_name = MessageReader::ReadString(body, &offset);
-	std::string PlayerName = MessageReader::ReadString(body, &offset);
-	std::string OpponentName = MessageReader::ReadString(body, &offset);
-	std::string Quark = MessageReader::ReadString(body, &offset);
-	std::string MatchCode = MessageReader::ReadString(body, &offset);
-
-	config::PlayerName = PlayerName;
-	config::OpponentName = OpponentName;
-	config::Quark = Quark;
-
-	dojo.receiver_start_read = true;
-}
-
-void receiver_session::read_frames()
-{
-	auto self(shared_from_this());
-	int offset = 0;
-
-	const char* body = message + HEADER_LEN;
-	unsigned int frame_size = MessageReader::ReadInt(body, &offset);
-
-	while (offset < working_size)
-	{
-		std::string frame = MessageReader::ReadContinuousData(body, &offset, frame_size);
-
-		//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-		if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
-		{
-			dojo.receiver_ended = true;
-		}
-		else
-		{
-			dojo.AddNetFrame(frame.data());
-			std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
-
-			std::cout << added_frame_data << std::endl;
-			dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
-
-			// buffer stream
-			if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
-				dojo.FrameNumber < dojo.last_consecutive_common_frame)
-				dojo.resume();
-		}
-	}
-
 }
 
 void receiver_session::do_write(std::size_t length)
