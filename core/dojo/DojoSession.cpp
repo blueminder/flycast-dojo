@@ -93,6 +93,8 @@ void DojoSession::Init()
 
 	unsigned int replay_frame_count = 0;
 	MessageWriter replay_msg;
+
+	received_player_info = false;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -864,14 +866,19 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
 
 		dojo.game_name = GameName;
-		config::PlayerName = PlayerName;
-		config::OpponentName = OpponentName;
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
 
 		std::cout << "Game: " << GameName << std::endl;
-		std::cout << "Player: " << PlayerName << std::endl;
-		std::cout << "Opponent: " << OpponentName << std::endl;
+
+		if (!received_player_info)
+		{
+			config::PlayerName = PlayerName;
+			config::OpponentName = OpponentName;
+			std::cout << "Player: " << PlayerName << std::endl;
+			std::cout << "Opponent: " << OpponentName << std::endl;
+		}
+
 		std::cout << "Quark: " << Quark << std::endl;
 		std::cout << "Match Code: " << MatchCode << std::endl;
 
@@ -885,6 +892,8 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 		auto player_name = p1_info[0];
 		auto opponent_name = p2_info[0];
+
+		received_player_info = true;
 
 		std::cout << "P1: " << player_name << std::endl;
 		std::cout << "P2: " << opponent_name << std::endl;
@@ -1018,25 +1027,13 @@ void DojoSession::receiver_client_thread()
 		std::vector<unsigned char> message = spectate_request.Msg();
 		asio::write(socket, asio::buffer(message));
 
-		// read spectate_start header
 		char header_buf[HEADER_LEN] = { 0 };
-		asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
-
-		unsigned int start_size = HeaderReader::GetSize((unsigned char*)header_buf);
-		unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
-		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
-
-		// read spectate_start body
-		std::vector<unsigned char> body_buf(start_size);
-		asio::read(socket, asio::buffer(body_buf, start_size));
-
+		std::vector<unsigned char> body_buf;
 		int offset = 0;
-
-		dojo.ProcessBody(cmd, start_size, (const char*)body_buf.data(), &offset);
 
 		while (!receiver_ended)
 		{
-			// read frame header
+			// read header
 			memset((void*)header_buf, 0, HEADER_LEN);
 			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
 

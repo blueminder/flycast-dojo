@@ -253,6 +253,8 @@ public:
 
 	unsigned int replay_frame_count;
 	MessageWriter replay_msg;
+
+	bool received_player_info;
 };
 
 extern DojoSession dojo;
