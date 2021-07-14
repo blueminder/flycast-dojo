@@ -2147,7 +2147,7 @@ static void gui_display_content()
 					bool checksum_same = false;
 
 					std::string popup_name = "Options " + game.path;
-					if (ImGui::BeginPopupContextItem(popup_name.c_str()))
+					if (ImGui::BeginPopupContextItem(popup_name.c_str(), 2))
 					{
 						if (ImGui::MenuItem("Calculate MD5 Sum"))
 						{
