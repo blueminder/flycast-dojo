@@ -564,7 +564,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			if (v >= 64)
 			{
 				if (config::Training ||
-					config::DojoEnable && config::EnableSessionQuickLoad)
+					config::DojoEnable && config::EnableSessionQuickLoad ||
+					!config::DojoEnable)
 				{
 					if (!loading_state)
 					{
