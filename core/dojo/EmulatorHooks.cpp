@@ -192,6 +192,22 @@ u8* DojoSession::TranslateInputToFrameData(PlainJoystickState* pjs, u16 buttons)
 	int frame = FrameNumber;
 	memcpy(data + 2, (u8*)&frame, 4);
 
+	if (dojo.jump_state_requested)
+	{
+		dojo.jump_state_requested = false;
+
+		// when savestate is loaded,
+		// set data array elements to 254
+		data[6] = 254;
+		data[7] = 254;
+		data[8] = 254;
+		data[9] = 254;
+		data[10] = 254;
+		data[11] = 254;
+
+		return data;
+	}
+
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -285,23 +301,6 @@ void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 		memcpy(data, TranslateInputToFrameData(pjs), FRAME_SIZE);
 	else 
 		memcpy(data, TranslateInputToFrameData(buttons), FRAME_SIZE);
-
-	data[0] = player;
-	data[1] = delay;
-
-	if (dojo.jump_state_requested)
-	{
-		dojo.jump_state_requested = false;
-
-		// when savestate is loaded,
-		// set data array elements to 254
-		data[6] = 254;
-		data[7] = 254;
-		data[8] = 254;
-		data[9] = 254;
-		data[10] = 254;
-		data[11] = 254;
-	}
 
 	// add current input frame to player slot
 	if (local_input_keys.count(GetEffectiveFrameNumber(data)) == 0)
