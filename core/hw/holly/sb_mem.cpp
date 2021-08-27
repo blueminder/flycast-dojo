@@ -206,7 +206,8 @@ bool LoadRomFiles()
 
 		// dreamcast games that require real bios
 		// T0019M: KenJu Atomiswave DC Conversion
-		std::string dc_exceptions[] = { "T0019M" };
+		// T-31101N: Psychic Force 2012
+		std::string dc_exceptions[] = { "T0019M", "T-31101N" };
 		bool real_boot = std::find(std::begin(dc_exceptions), std::end(dc_exceptions), prod_id) != std::end(dc_exceptions);
 
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)

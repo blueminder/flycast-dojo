@@ -1244,6 +1244,7 @@ bool DojoSession::SetDojoDevicesByPath(std::string path)
 		"Mortal Kombat Gold (USA) (Rev 1).chd",
 		"Plasma Sword - Nightmare of Bilstein (USA).chd",
 		"Power Stone 2 (USA).chd",
+		"Psychic Force 2012 (USA).chd",
 		"Soulcalibur (USA).chd"
 	};
 
