@@ -126,14 +126,32 @@ bool emu_renderer_enabled()
 	return mainui_loop_enabled();
 }
 
-int emu_single_frame(int w, int h)
+bool emu_fast_forward()
 {
-    if (!emu_frame_pending())
-        return 0;
+    return settings.input.fastForwardMode;
+}
 
+bool emu_vsync_enabled()
+{
+    return config::VSync;
+}
+
+bool emu_single_frame(int w, int h)
+{
     screen_width = w;
     screen_height = h;
-    return (int)mainui_rend_frame();
+    
+    //For DelayFrameSwapping: use while loop to call multple mainui_rend_frame() until rend_swap_frame(u32 fb_r_sof1)
+    int counter = 0;
+    while (mainui_enabled && counter < 5)
+    {
+        counter++;
+        if (mainui_rend_frame())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void emu_gles_init(int width, int height)

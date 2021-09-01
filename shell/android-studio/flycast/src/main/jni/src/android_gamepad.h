@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 
 #include "input/gamepad_device.h"
 
@@ -267,6 +268,18 @@ public:
 		{
 			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;
+		}
+		if (rt > 0)
+		{
+			if ((kcode & DC_BTN_A) == 0)
+				// RT + A -> D (coin)
+				kcode &= ~DC_BTN_D;
+			if ((kcode & DC_BTN_B) == 0)
+				// RT + B -> C (service)
+				kcode &= ~DC_BTN_C;
+			if ((kcode & DC_BTN_X) == 0)
+				// RT + X -> Z (test)
+				kcode &= ~DC_BTN_Z;
 		}
 		u32 changes = kcode ^ previous_kcode;
 		for (int i = 0; i < 32; i++)

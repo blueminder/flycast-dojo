@@ -10,18 +10,34 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
+    var backingRect: NSRect?
+    var swapOnVSync = emu_vsync_enabled()
+    
     override var acceptsFirstResponder: Bool {
         return true;
     }
     
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-
-        openGLContext!.makeCurrentContext()
+        backingRect = convertToBacking(dirtyRect)
         
-        let rect = convertToBacking(dirtyRect)
-        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0) {
-            openGLContext!.flushBuffer()
+        if swapOnVSync {
+            draw()
+        }
+    }
+    
+    func draw() {
+        if swapOnVSync == (emu_fast_forward() || !emu_vsync_enabled()) {
+            swapOnVSync = (!emu_fast_forward() && emu_vsync_enabled())
+            var sync: GLint = swapOnVSync ? 1 : 0
+            CGLSetParameter(openGLContext!.cglContextObj!, kCGLCPSwapInterval, &sync)
+        }
+        
+        if let backingRect = backingRect {
+            openGLContext!.makeCurrentContext()
+            if emu_single_frame(Int32(backingRect.width), Int32(backingRect.height)) {
+                openGLContext!.flushBuffer() //Swap for macOS
+            }
         }
     }
     
@@ -68,8 +84,12 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 		if (!emu_renderer_enabled()) {
 			NSApplication.shared.terminate(self)
 		}
-        else if (emu_frame_pending()) {
-            self.needsDisplay = true
+        else if emu_frame_pending() {
+            if swapOnVSync {
+                self.needsDisplay = true
+            } else {
+                self.draw()
+            }
         }
     }
     

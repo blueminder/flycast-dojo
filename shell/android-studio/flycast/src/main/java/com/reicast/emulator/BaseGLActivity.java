@@ -13,17 +13,17 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -42,6 +42,7 @@ import tv.ouya.console.api.OuyaController;
 
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+import static android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION;
 import static android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
 
 public abstract class BaseGLActivity extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
@@ -66,7 +67,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
             Window window = getWindow();
             window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(FLAG_TRANSLUCENT_STATUS);
+            window.clearFlags(FLAG_TRANSLUCENT_STATUS | FLAG_TRANSLUCENT_NAVIGATION);
             window.setNavigationBarColor(0);
             window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
@@ -236,7 +237,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 return true;
         }
         else if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) == InputDevice.SOURCE_CLASS_POINTER) {
-            InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_SCROLL:
+                    InputDeviceManager.getInstance().mouseScrollEvent(Math.round(-event.getAxisValue(MotionEvent.AXIS_VSCROLL)));
+                    break;
+                default:
+                    InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+                    break;
+            }
+            return true;
         }
         return super.onGenericMotionEvent(event);
     }

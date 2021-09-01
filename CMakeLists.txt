@@ -21,6 +21,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
 endif()
 
 project(flycast)
@@ -53,8 +54,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
     set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
@@ -91,11 +90,12 @@ if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
     if(MINGW)
         target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
         target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    elseif(ANDROID)
+        # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
     else()
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-        if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
-            target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
-        endif()
     endif()
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
@@ -111,6 +111,7 @@ add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(NOT APPLE)
+	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	add_subdirectory(core/deps/glslang)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
@@ -844,7 +845,7 @@ if(WIN32)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/rec-ARM/rec_arm.cpp
@@ -878,7 +879,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     	core/deps/vixl/pool-manager-impl.h
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+     set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/deps/vixl/aarch64/abi-aarch64.h
@@ -923,7 +926,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
     add_subdirectory(core/deps/xbyak)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -939,16 +944,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
         	core/rec-x64/rec_x64.cpp
         	core/rec-x64/x64_regalloc.h)
     endif()
-else()
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(NOT KNOWN_ARCHITECTURE_DETECTED)
     message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 
-    target_sources(${PROJECT_NAME} PRIVATE
-            shell/android-studio/flycast/src/main/jni/src/Android.cpp
-            shell/android-studio/flycast/src/main/jni/src/utils.cpp)
+    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 elseif(APPLE)

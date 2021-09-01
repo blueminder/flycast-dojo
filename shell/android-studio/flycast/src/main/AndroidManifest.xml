@@ -42,14 +42,16 @@
         android:banner="@drawable/ic_banner"
         android:logo="@drawable/ic_banner"
         android:hardwareAccelerated="true"
-        android:isGame="true">
+        android:isGame="true"
+		android:requestLegacyExternalStorage="true">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
             android:name="com.reicast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="sensorLandscape"
-            android:exported="true"/>
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity-alias
             android:name="com.reicast.emulator.MainActivity"
             android:targetActivity="com.reicast.emulator.NativeGLActivity">
@@ -159,7 +161,7 @@
 			</intent-filter>
         </activity-alias>
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
