@@ -2140,8 +2140,6 @@ static void gui_display_content()
 							gui_state = GuiState::Closed;
 							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
-							ImGui::PopID();
-							break;
 						}
 					}
 

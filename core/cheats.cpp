@@ -378,9 +378,12 @@ void CheatManager::reset(const std::string& gameId)
 		cheats.clear();
 		active = false;
 		this->gameId = gameId;
-		std::string cheatFile = cfgLoadStr("cheats", gameId, "");
-		if (!cheatFile.empty())
-			loadCheatFile(cheatFile);
+		if (!config::DojoEnable || config::Training)
+		{
+			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
+			if (!cheatFile.empty())
+				loadCheatFile(cheatFile);
+		}
 	}
 	widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)
