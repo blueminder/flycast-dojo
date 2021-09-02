@@ -1012,7 +1012,7 @@ void DojoSession::receiver_client_thread()
 
 		tcp::resolver resolver(io_context);
 		tcp::resolver::results_type endpoints =
-			resolver.resolve(config::SpectatorIP, config::SpectatorPort);
+			resolver.resolve(config::SpectatorIP.get(), config::SpectatorPort.get());
 
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
@@ -1063,7 +1063,7 @@ void DojoSession::transmitter_thread()
 
 		tcp::resolver resolver(io_context);
 		tcp::resolver::results_type endpoints =
-			resolver.resolve(config::SpectatorIP, config::SpectatorPort);
+			resolver.resolve(config::SpectatorIP.get(), config::SpectatorPort.get());
 
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);

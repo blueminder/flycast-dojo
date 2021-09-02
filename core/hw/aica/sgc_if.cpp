@@ -423,7 +423,7 @@ struct ChannelEx
 		void (* plfo_calc)(ChannelEx* ch);
 		__forceinline void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
 		void Reset(ChannelEx* ch) { state=0; counter=start_value; alfo_calc(ch); plfo_calc(ch); }
-		void SetStartValue(u32 nv) { start_value=nv;counter=start_value; }
+		void SetStartValue(u32 nv) { start_value = nv;}
 	} lfo;
 
 	bool enabled;	//set to false to 'freeze' the channel
@@ -679,7 +679,7 @@ struct ChannelEx
 	}
 
 	//LFORE,LFOF,PLFOWS,PLFOS,ALFOWS,ALFOS
-	void UpdateLFO()
+	void UpdateLFO(bool derivedState)
 	{
 		{
 			int N=ccd->LFOF;
@@ -689,6 +689,8 @@ struct ChannelEx
 			int L = (G-1)<<2;
 			int O = L + G * (M+1);
 			lfo.SetStartValue(O);
+			if (!derivedState)
+				lfo.counter = O;
 		}
 
 		lfo.alfo_shft=8-ccd->ALFOS;
@@ -697,7 +699,7 @@ struct ChannelEx
 		lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
 		lfo.plfo_scale = PLFO_Scales[ccd->PLFOS];
 
-		if (ccd->LFORE)
+		if (ccd->LFORE && !derivedState)
 		{
 			lfo.Reset(this);
 		}
@@ -711,7 +713,7 @@ struct ChannelEx
 	//ISEL
 	void UpdateDSPMIX()
 	{
-		VolMix.DSPOut = &dsp.MIXS[ccd->ISEL];
+		VolMix.DSPOut = &dsp::state.MIXS[ccd->ISEL];
 	}
 	//TL,DISDL,DIPAN,IMXL
 	void UpdateAtts()
@@ -809,7 +811,7 @@ struct ChannelEx
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
 		case 0x1D://PLFOWS,LFOF,LFORE
-			UpdateLFO();
+			UpdateLFO(false);
 			break;
 
 		case 0x20://ISEL,IMXL
@@ -1286,12 +1288,12 @@ void sgc_Init()
 			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
 	}
 
-	dsp_init();
+	dsp::init();
 }
 
 void sgc_Term()
 {
-	dsp_term();
+	dsp::term();
 }
 
 void WriteChannelReg(u32 channel, u32 reg, int size)
@@ -1343,11 +1345,12 @@ void ReadCommonReg(u32 reg,bool byte)
 void WriteCommonReg8(u32 reg,u32 data)
 {
 	WriteMemArr<1>(aica_reg, reg, data);
-	if (reg==0x2804 || reg==0x2805)
+	if (reg == 0x2804 || reg == 0x2805)
 	{
-		dsp.RBL = (8192 << CommonData->RBL) - 1;
-		dsp.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
-		dsp.dyndirty=true;
+		using namespace dsp;
+		state.RBL = (8192 << CommonData->RBL) - 1;
+		state.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
+		state.dirty = true;
 	}
 }
 
@@ -1363,7 +1366,6 @@ void AICA_Sample32()
 
 	//Generate 32 samples for each channel, before moving to next channel
 	//much more cache efficient !
-	u32 sg=0;
 	for (int ch = 0; ch < 64; ch++)
 	{
 		for (int i=0;i<32;i++)
@@ -1373,10 +1375,8 @@ void AICA_Sample32()
 			if (!Chans[ch].Step(oLeft, oRight, oDsp))
 				break;
 
-			sg++;
-
 			if (oLeft + oRight == 0)
-				oLeft = oRight = oDsp;
+				oLeft = oRight = oDsp >> 4;
 
 			mxlr[i*2+0] += oLeft;
 			mxlr[i*2+1] += oRight;
@@ -1412,7 +1412,7 @@ void AICA_Sample32()
 		no dsp for now -- needs special handling of oDSP for ch paraller version ...
 		if (config::DSPEnabled)
 		{
-			dsp_step();
+			dsp::step();
 
 			for (int i=0;i<16;i++)
 			{
@@ -1456,7 +1456,7 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		if (!settings.input.fastForwardMode && !config::DisableSound)
+		if (!settings.input.fastForwardMode && !settings.aica.muteAudio)
 			WriteSample(mixr,mixl);
 	}
 }
@@ -1466,7 +1466,7 @@ void AICA_Sample()
 	SampleType mixl,mixr;
 	mixl = 0;
 	mixr = 0;
-	memset(dsp.MIXS,0,sizeof(dsp.MIXS));
+	memset(dsp::state.MIXS, 0, sizeof(dsp::state.MIXS));
 
 	ChannelEx::StepAll(mixl,mixr);
 	
@@ -1494,13 +1494,13 @@ void AICA_Sample()
 
 	if (config::DSPEnabled)
 	{
-		dsp_step();
+		dsp::step();
 
 		for (int i=0;i<16;i++)
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
-	if (settings.input.fastForwardMode || config::DisableSound)
+	if (settings.input.fastForwardMode || settings.aica.muteAudio)
 		return;
 
 	//Mono !
@@ -1580,7 +1580,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 	int i = 0 ;
 	int addr = 0 ;
 	u32 dum;
-	bool old_format = ver < V7 && ver != VCUR_LIBRETRO;
+	bool old_format = (ver >= V5 && ver < V7) || ver < V8_LIBRETRO;
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
@@ -1675,7 +1675,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			REICAST_US(dumu8);	// Chans[i].lfo.alfo_calc_lut
 			REICAST_US(dumu8);	// Chans[i].lfo.plfo_calc_lut
 		}
-		Chans[i].UpdateLFO();
+		Chans[i].UpdateLFO(true);
 		REICAST_US(Chans[i].enabled) ;
 		if (old_format)
 			REICAST_US(dum); // Chans[i].ChannelNumber

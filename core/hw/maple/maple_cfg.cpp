@@ -6,6 +6,8 @@
 #include "dojo/DojoSession.hpp"
 #include "cfg/option.h"
 
+u32 maple_kcode[4];
+
 static u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
@@ -67,7 +69,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		pjs->kcode = kcode[player_num];
+		pjs->kcode = maple_kcode[player_num];
 		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
 		pjs->trigger[PJTI_R] = rt[player_num];
@@ -75,13 +77,17 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
+#ifdef LIBRETRO
+		pjs->kcode = maple_kcode[player_num];
+#else
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
 		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 		{
-			if ((kcode[player_num] & (1 << i)) == 0)
+			if ((maple_kcode[player_num] & (1 << i)) == 0)
 				pjs->kcode &= ~mapping[i];
 		}
+#endif
 		if (NaomiGameInputs != NULL)
 		{
 			for (u32 axis = 0; axis < PJAI_Count; axis++)
@@ -175,17 +181,17 @@ bool maple_atomiswave_coin_chute(int slot)
 			return true;
 		}
 	}
-	else
+
+#ifdef LIBRETRO
+	return maple_kcode[slot] & AWAVE_COIN_KEY;
+#else
+	for (int i = 0; i < 16; i++)
 	{
-		for (int i = 0; i < 16; i++)
-		{
-			if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
-			{
-				return true;
-			}
-		}
+		if ((maple_kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
+			return true;
 	}
 	return false;
+#endif
 }
 
 static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)

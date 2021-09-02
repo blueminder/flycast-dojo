@@ -461,6 +461,7 @@ void DojoFile::CopyNewFlycast(std::string new_root)
    }
 }
 
+/*
 size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
     data->append((char*) ptr, size * nmemb);
     return size * nmemb;
@@ -647,6 +648,7 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 
 	return filename;
 }
+*/
 
 void DojoFile::ExtractEntry(std::string entry_name)
 {
@@ -690,7 +692,7 @@ void DojoFile::RemoveFromRemaining(std::string rom_path)
 		RemainingFileDefinitions.erase(it);
 	}
 }
-
+/*
 void DojoFile::Update()
 {
 	update_started = true;
@@ -707,4 +709,5 @@ void DojoFile::Update()
 
 	ghc::filesystem::remove_all(dirname);
 }
+*/
 

@@ -22,19 +22,21 @@
 #include <atomic>
 #include <map>
 #include <vector>
+#include <string>
 
-void LoadGameSpecificSettings();
+void loadGameSpecificSettings();
 void SaveSettings();
 
 extern std::atomic<bool> loading_canceled;
 
-int reicast_init(int argc, char* argv[]);
+int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard);
 void dc_init();
-void* dc_run(void*);
+void dc_run();
 void dc_term();
 void dc_stop();
 void dc_term_game();
+void dc_term_emulator();
 void dc_request_reset();
 void dc_exit();
 void dc_resume();
@@ -45,12 +47,15 @@ void dc_savestate(int index, std::string filename);
 void dc_loadstate(int index = 0);
 void dc_loadstate(std::string filename);
 void dc_loadstate(int index, std::string filename);
+bool dc_loadstate(const void **data, unsigned size);
 void dc_load_game(const char *path);
+void dc_start_game(const char *path);
 bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
 void dc_resize_renderer();
+std::string dc_get_last_error();
 
 extern std::string get_game_name();
 extern std::string get_net_savestate_file_path(bool writable);

@@ -609,7 +609,7 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 
 	if (!paused)
 	{
-		ImGui_Impl_NewFrame();
+		//ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
 	}
 
@@ -1017,6 +1017,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	}
 }
 
+/*
 void DojoGui::update_action()
 {
 	if (ImGui::BeginPopupModal("Update?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -1079,6 +1080,6 @@ void DojoGui::update_action()
 	}
 
 }
-
+*/
 DojoGui dojo_gui;
 

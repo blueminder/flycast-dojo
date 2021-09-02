@@ -19,11 +19,10 @@
 #include <array>
 #include <memory>
 #include "maple_devs.h"
-#include "stdclass.h"
-#include "cfg/cfg.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
 #include <xxhash.h>
+#include "oslib/oslib.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -37,16 +36,16 @@ void load_naomi_eeprom()
 	if (!EEPROM_loaded)
 	{
 		EEPROM_loaded = true;
-		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 		std::string eeprom_file;
 		if (config::DojoEnable)
-			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom.net";
+			eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom.net";
 		else
-			eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+			eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
-			std::fread(EEPROM, 1, 0x80, f);
+			if (std::fread(EEPROM, 1, 0x80, f) != 0x80)
+				WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
 			std::fclose(f);
 			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 		}
@@ -60,7 +59,7 @@ void load_naomi_eeprom()
 	}
 }
 
-static u32 naomi_button_mapping[32] = {
+const u32 naomi_button_mapping[32] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B
 		NAOMI_BTN0_KEY,		// DC_BTN_A
@@ -78,7 +77,7 @@ static u32 naomi_button_mapping[32] = {
 		NAOMI_BTN6_KEY,		// DC_DPAD2_LEFT
 		NAOMI_BTN7_KEY,		// DC_DPAD2_RIGHT
 
-		0,					// DC_BTN_RELOAD
+		NAOMI_RELOAD_KEY,	// DC_BTN_RELOAD
 		NAOMI_BTN8_KEY,
 };
 extern u32 awave_button_mapping[32];
@@ -183,16 +182,16 @@ protected:
 	virtual const char *get_id() = 0;
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
 
-	virtual void read_digital_in(u16 *v)
+	virtual void read_digital_in(const u32 *buttons, u16 *v)
 	{
 		memset(v, 0, sizeof(u16) * 4);
-		for (u32 player = first_player; player < ARRAY_SIZE(kcode); player++)
+		for (u32 player = first_player; player < 4; player++)
 		{
-			u32 keycode = ~kcode[player];
+			u32 keycode = buttons[player];
 			if (keycode == 0)
 				continue;
-			if (keycode & DC_BTN_RELOAD)
-				keycode |= DC_BTN_A;
+			if (keycode & NAOMI_RELOAD_KEY)
+				keycode |= NAOMI_BTN0_KEY;
 
 			// P1 mapping (only for P2)
 			if (player == 1)
@@ -239,7 +238,8 @@ private:
 	{
 		p1_mapping.fill(0);
 		p2_mapping.fill(0);
-		memcpy(&cur_mapping[0], naomi_button_mapping, sizeof(naomi_button_mapping));
+		for (u32 i = 0; i < cur_mapping.size(); i++)
+			cur_mapping[i] = 1 << i;
 		if (NaomiGameInputs == nullptr)
 			// Use default mapping
 			return;
@@ -247,19 +247,18 @@ private:
 		for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
 		{
 			u32 source = NaomiGameInputs->buttons[i].source;
-			for (u32 j = 0; j < ARRAY_SIZE(naomi_button_mapping); j++)
-			{
-				if (naomi_button_mapping[j] == source)
-				{
-					p1_mapping[j] = NaomiGameInputs->buttons[i].p1_target;
-					p2_mapping[j] = NaomiGameInputs->buttons[i].p2_target;
-					u32 target = NaomiGameInputs->buttons[i].target;
-					if (target == 0 && p1_mapping[j] == 0 && p2_mapping[j] == 0)
-						target = source;
-					cur_mapping[j] = target;
+			int keyIdx = 0;
+			for (; keyIdx < 32; keyIdx++)
+				if (1u << keyIdx == source)
 					break;
-				}
-			}
+			verify(keyIdx < 32);
+			p1_mapping[keyIdx] = NaomiGameInputs->buttons[i].p1_target;
+			p2_mapping[keyIdx] = NaomiGameInputs->buttons[i].p2_target;
+			u32 target = NaomiGameInputs->buttons[i].target;
+			if (target != 0)
+				cur_mapping[keyIdx] = target;
+			else if (p1_mapping[keyIdx] != 0 || p2_mapping[keyIdx] != 0)
+				cur_mapping[keyIdx] = 0;
 		}
 	}
 
@@ -380,9 +379,9 @@ public:
 	{
 	}
 protected:
-	void read_digital_in(u16 *v) override
+	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
-		jvs_837_13844::read_digital_in(v);
+		jvs_837_13844::read_digital_in(buttons, v);
 
 		// The drive board RX0-7 is connected to the following player inputs
 		v[0] |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
@@ -521,9 +520,9 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(u16 *v) override
+	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
-		jvs_io_board::read_digital_in(v);
+		jvs_io_board::read_digital_in(buttons, v);
 				// main button
 		v[0] = ((v[0] & NAOMI_BTN0_KEY) << 6)		// start
 				| ((v[1] & NAOMI_BTN0_KEY) << 2)	// left
@@ -600,9 +599,9 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(u16 *v) override
+	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
-		jvs_io_board::read_digital_in(v);
+		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
 		{
 			u8 trigger = rt[player] >> 2;
@@ -984,8 +983,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 			if (!config::DojoEnable)
 			{
-				std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-				std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+				std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
@@ -1425,6 +1423,16 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		if (jvs_cmd >= 0x20 && jvs_cmd <= 0x38) // Read inputs and more
 		{
 			LOGJVS("JVS Node %d: ", node_id);
+			u32 buttons[4] {};
+#ifdef LIBRETRO
+			for (int p = 0; p < 4; p++)
+				buttons[p] = ~maple_kcode[p];
+#else
+			for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
+				for (int p = 0; p < 4; p++)
+					if ((maple_kcode[p] & (1 << i)) == 0)
+						buttons[p] |= naomi_button_mapping[i];
+#endif
 
 			JVS_STATUS1();	// status
 			for (u32 cmdi = 0; cmdi < length_in; )
@@ -1435,10 +1443,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
-						u16 btns[4];
-						read_digital_in(btns);
-						JVS_OUT((btns[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
-
+						u16 inputs[4];
+						read_digital_in(buttons, inputs);
+						JVS_OUT((inputs[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
@@ -1447,11 +1454,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							{
 								if (config::DojoEnable)
 								{
-									btns[player] = dojo.ApplyNetInputs(btns[player], player);
+									inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
 
 									if (player == 0)
 									{
-										if (btns[0] & 1)
+										if (inputs[0] & 1)
 											dojo.net_coin_press = true;
 									}
 								}
@@ -1459,22 +1466,22 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								{
 									if (!dojo.PlayMatch)
 									{
-										btns[player] = dojo.ApplyOfflineInputs(0, btns[player], player);
+										inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
 									}
 								}
 							}
 
 							if (settings.platform.system == DC_PLATFORM_NAOMI && config::Training)
 							{
-								btns[player] = dojo.ApplyOfflineInputs(0, btns[player], player);
+								inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
 							}
 
-							LOGJVS("P%d %02x ", player + 1 + first_player, btns[player] >> 8);
-							JVS_OUT(btns[player] >> 8);
+							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);
+							JVS_OUT(inputs[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
 							{
-								LOGJVS("%02x ", btns[player] & 0xFF);
-								JVS_OUT(btns[player]);
+								LOGJVS("%02x ", inputs[player] & 0xFF);
+								JVS_OUT(inputs[player]);
 							}
 						}
 						cmdi += 3;
@@ -1485,21 +1492,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
-						u32 mask = 0;
-						for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
-						{
-							if (naomi_button_mapping[i] == NAOMI_COIN_KEY)
-							{
-								mask = 1 << i;
-								break;
-							}
-						}
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
-							u32 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-
-							if (((keycode & mask) && !config::DojoEnable) ||
+							if (((buttons[first_player + slot] & NAOMI_COIN_KEY) && !config::DojoEnable) ||
 								(dojo.net_coin_press && config::DojoEnable))
 							{
 								coin_chute = true;
@@ -1535,7 +1531,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								u16 y;
 								if (mo_x_abs[playerNum] < 0 || mo_x_abs[playerNum] > 639
 										|| mo_y_abs[playerNum] < 0 || mo_y_abs[playerNum] > 479
-										|| (kcode[playerNum] & DC_BTN_RELOAD) == 0)
+										|| (buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
 								{
 									x = 0;
 									y = 0;
@@ -1648,7 +1644,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						int playerNum = first_player + buffer_in[cmdi + 1] - 1;
 						s16 x;
 						s16 y;
-						if ((kcode[playerNum] & DC_BTN_RELOAD) == 0)
+						if ((buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
 						{
 							x = 0;
 							y = 0;

@@ -2,8 +2,8 @@
 #include "maple_cfg.h"
 #include "maple_helper.h"
 #include "hw/pvr/spg.h"
-#include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "oslib/oslib.h"
 #include "cfg/option.h"
 
 #include <zlib.h>
@@ -336,17 +336,23 @@ struct maple_sega_vmu: maple_base
 	bool serialize(void **data, unsigned int *total_size) override
 	{
 		maple_base::serialize(data, total_size);
-		REICAST_SA(flash_data,128*1024);
-		REICAST_SA(lcd_data,192);
-		REICAST_SA(lcd_data_decoded,48*32);
+		REICAST_S(flash_data);
+		REICAST_S(lcd_data);
+		REICAST_S(lcd_data_decoded);
 		return true ;
 	}
 	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
 		maple_base::unserialize(data, total_size, version);
-		REICAST_USA(flash_data,128*1024);
-		REICAST_USA(lcd_data,192);
-		REICAST_USA(lcd_data_decoded,48*32);
+		REICAST_US(flash_data);
+		REICAST_US(lcd_data);
+		REICAST_US(lcd_data_decoded);
+		for (u8 b : lcd_data)
+			if (b != 0)
+			{
+				config->SetImage(lcd_data_decoded);
+				break;
+			}
 		return true ;
 	}
 
@@ -373,18 +379,10 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		char tempy[512];
+		
+		std::string apath = hostfs::getVmuPath(logical_port);
 		if (config::DojoEnable)
-			sprintf(tempy, "vmu_save_%s.bin.net", logical_port);
-		else
-			sprintf(tempy, "vmu_save_%s.bin", logical_port);
-		// VMU saves used to be stored in .reicast, not in .reicast/data
-		std::string apath = get_writable_config_path(tempy);
-		if (config::DojoEnable && !config::NetCustomVmu)
-			dojo_file.ValidateAndCopyVmu();
-
-		if (!file_exists(apath))
-			apath = get_writable_data_path(tempy);
+			apath = apath + ".net";
 
 		file = nowide::fopen(apath.c_str(), "rb+");
 		if (file == nullptr)

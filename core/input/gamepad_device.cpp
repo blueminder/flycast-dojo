@@ -124,7 +124,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					gui_open_settings();
 				break;
 			case EMU_BTN_FFORWARD:
-				if (pressed)
+				if (pressed && !gui_is_open())
 					settings.input.fastForwardMode = !settings.input.fastForwardMode;
 				break;
 			case EMU_BTN_JUMP_STATE:
@@ -1037,13 +1037,13 @@ void Mouse::setRelPos(int deltax, int deltay) {
 }
 
 void Mouse::setWheel(int delta) {
-	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_wheel_delta))
+	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_wheel_delta))
 		mo_wheel_delta[maple_port()] += delta;
 }
 
 void Mouse::setButton(Button button, bool pressed)
 {
-	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_buttons))
+	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_buttons))
 	{
 		if (pressed)
 			mo_buttons[maple_port()] &= ~(1 << (int)button);

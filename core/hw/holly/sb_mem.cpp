@@ -17,6 +17,7 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "dojo/DojoSession.hpp"
+#include "oslib/oslib.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -175,22 +176,23 @@ static bool nvmem_load()
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin.net", "nvram");
 		else
-			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem.net");
+			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem.net");
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-			sys_rom->Load(get_game_save_prefix() + ".nvmem2.net");
+			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2.net");
 	}
 	else
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 		else
-			rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
+			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+	
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-			sys_rom->Load(get_game_save_prefix() + ".nvmem2");
+			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
 	}
 
 	return true;
@@ -239,16 +241,16 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
-	// make no changes to netplay memory
-	if (!config::DojoEnable)
-	{
+	// make no changes to delay netplay memory
+	//if (!config::DojoEnable)
+	//{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 			sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 		else
-			sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
+			sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-			sys_rom->Save(get_game_save_prefix() + ".nvmem2");
-	}
+			sys_rom->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
+	//}
 }
 
 bool LoadHle()

@@ -139,12 +139,18 @@ enum HollyInterruptID
 int darw_printf(const char* Text,...);
 #endif
 
+#ifndef TARGET_IPHONE
 #if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
-	#define __ARM_MAC__
-	#include "pthread.h"
-	static void JITWriteProtect(bool enabled) { if (__builtin_available(macOS 11.0, *)) pthread_jit_write_protect_np(enabled); }
+#define TARGET_ARM_MAC
+#include "pthread.h"
+inline static void JITWriteProtect(bool enabled) {
+	if (__builtin_available(macOS 11.0, *))
+		pthread_jit_write_protect_np(enabled);
+}
 #else
-	__forceinline static void JITWriteProtect(bool enabled) {}
+inline static void JITWriteProtect(bool enabled) {
+}
+#endif
 #endif
 
 //includes from c++rt
@@ -182,8 +188,8 @@ void os_DebugBreak();
 
 bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
+bool dc_serialize(void **data, unsigned int *total_size, bool rollback = false);
+bool dc_unserialize(void **data, unsigned int *total_size, bool rollback = false);
 
 #define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
 #define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
@@ -333,6 +339,7 @@ struct settings_t
 	struct
 	{
 		bool NoBatch;
+		bool muteAudio;
 	} aica;
 
 	struct
@@ -347,6 +354,8 @@ struct settings_t
 	} input;
 
 	bool gameStarted;
+	bool endOfFrame;
+	bool disableRenderer;
 };
 
 extern settings_t settings;
@@ -433,12 +442,10 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-class ReicastException
+class FlycastException : public std::runtime_error
 {
 public:
-	ReicastException(std::string reason) : reason(reason) {}
-
-	std::string reason;
+	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
 enum serialize_version_enum {
@@ -446,8 +453,15 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V11_LIBRETRO = 10,
-	VCUR_LIBRETRO = V11_LIBRETRO,
+	V5_LIBRETRO,
+	V6_LIBRETRO,
+	V7_LIBRETRO,
+	V8_LIBRETRO,
+	V9_LIBRETRO,
+	V10_LIBRETRO,
+	V11_LIBRETRO,
+	V12_LIBRETRO,
+	V13_LIBRETRO,
 
 	V5 = 800,
 	V6 = 801,
@@ -462,5 +476,7 @@ enum serialize_version_enum {
 	V15 = 810,
 	V16 = 811,
 	V17 = 812,
-	VCUR_FLYCAST = V17,
+	V18 = 813,
+	V19 = 814,
+	VCUR_FLYCAST = V19,
 };

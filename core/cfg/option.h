@@ -23,6 +23,9 @@
 #include <cmath>
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
+#ifdef LIBRETRO
+#include <libretro.h>
+#endif
 
 namespace config {
 
@@ -33,6 +36,10 @@ public:
 	virtual void load() = 0;
 	virtual void reset() = 0;
 };
+
+#ifdef LIBRETRO
+#include "option_lr.h"
+#else
 
 class Settings {
 public:
@@ -275,6 +282,7 @@ protected:
 	bool overridden = false;
 	Settings& settings;
 };
+#endif
 
 using OptionString = Option<std::string>;
 
@@ -300,7 +308,6 @@ extern Option<int> SavestateSlot;
 
 constexpr bool LimitFPS = true;
 extern Option<bool> DSPEnabled;
-extern Option<bool> DisableSound;
 extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
 extern Option<bool> AutoLatency;
 
@@ -406,12 +413,16 @@ extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
 extern Option<bool> VSync;
+extern Option<u64> PixelBufferSize;
+extern Option<int> AnisotropicFiltering;
+extern Option<bool> ThreadedRendering;
 
 // Misc
 
 extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
 extern Option<bool> UseReios;
+extern Option<bool> FastGDRomLoad;
 
 extern Option<bool> OpenGlChecks;
 
@@ -425,6 +436,7 @@ extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<bool> EmulateBBA;
+extern Option<bool> GGPOEnable;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

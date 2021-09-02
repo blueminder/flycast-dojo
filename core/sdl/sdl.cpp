@@ -18,6 +18,9 @@
 #ifdef _WIN32
 #include "windows/rawinput.h"
 #endif
+#ifdef __SWITCH__
+#include "nswitch.h"
+#endif
 
 static SDL_Window* window = NULL;
 
@@ -178,6 +181,15 @@ void input_sdl_init()
 	EventManager::listen(Event::Resume, emuEventCallback);
 
 	checkRawInput();
+#endif
+
+#ifdef __SWITCH__
+    // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
+    // when railed, both joycons are mapped to joystick #0,
+    // else joycons are individually mapped to joystick #0, joystick #1, ...
+    // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45
+	sdl_open_joystick(0);
+	sdl_open_joystick(1);
 #endif
 }
 
@@ -396,6 +408,9 @@ void sdl_window_set_text(const char* text)
 }
 
 #if !defined(__APPLE__)
+
+static float hdpiScaling = 1.f;
+
 static void get_window_state()
 {
 	u32 flags = SDL_GetWindowFlags(window);
@@ -403,8 +418,8 @@ static void get_window_state()
 	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
     if (!window_fullscreen && !window_maximized){
         SDL_GetWindowSize(window, &window_width, &window_height);
-        window_width /= scaling;
-        window_height /= scaling;
+        window_width /= hdpiScaling;
+        window_height /= hdpiScaling;
     }
 		
 }
@@ -442,6 +457,7 @@ bool sdl_recreate_window(u32 flags)
             if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
                 //When using HiDPI mode, set correct DPI scaling
                 scaling = ddpi/96.f;
+                hdpiScaling = scaling;
             }
         }
     }
@@ -449,6 +465,21 @@ bool sdl_recreate_window(u32 flags)
     
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
+#ifdef __SWITCH__
+	AppletOperationMode om = appletGetOperationMode();
+	if (om == AppletOperationMode_Handheld)
+	{
+		window_width  = 1280;
+		window_height = 720;
+		scaling = 1.5f;
+	}
+	else
+	{
+		window_width  = 1920;
+		window_height = 1080;
+		scaling = 1.0f;
+	}
+#else
 	window_width  = cfgLoadInt("window", "width", window_width);
 	window_height = cfgLoadInt("window", "height", window_height);
 	window_fullscreen = cfgLoadBool("window", "fullscreen", window_fullscreen);
@@ -457,8 +488,11 @@ bool sdl_recreate_window(u32 flags)
 	{
 		SDL_GetWindowPosition(window, &x, &y);
 		get_window_state();
-		SDL_DestroyWindow(window);
 	}
+#endif
+	if (window != nullptr)
+		SDL_DestroyWindow(window);
+
 #if !defined(GLES)
 	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
@@ -469,16 +503,16 @@ bool sdl_recreate_window(u32 flags)
 	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
 
-	window = SDL_CreateWindow("Flycast Dojo", x, y, window_width * scaling, window_height * scaling, flags);
+	window = SDL_CreateWindow("Flycast Dojo", x, y, window_width * hdpiScaling, window_height * hdpiScaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
-	screen_width = window_width * scaling;
-	screen_height = window_height * scaling;
+	screen_width = window_width * hdpiScaling;
+	screen_height = window_height * hdpiScaling;
 
-#if !defined(GLES) && !defined(_WIN32)
+#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
@@ -518,11 +552,13 @@ void sdl_window_create()
 
 void sdl_window_destroy()
 {
+#ifndef __SWITCH__
 	get_window_state();
 	cfgSaveInt("window", "width", window_width);
 	cfgSaveInt("window", "height", window_height);
 	cfgSaveBool("window", "maximized", window_maximized);
 	cfgSaveBool("window", "fullscreen", window_fullscreen);
+#endif
 	TermRenderApi();
 	SDL_DestroyWindow(window);
 }
