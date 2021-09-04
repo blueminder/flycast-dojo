@@ -123,7 +123,6 @@ if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
-		$<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
