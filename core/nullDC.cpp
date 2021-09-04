@@ -72,12 +72,10 @@ void dc_exit()
 	{
 		dojo.ResetTraining();
 	}
-
 	if (config::Receiving && !dojo.disconnect_toggle)
 	{
 		gui_state = GuiState::EndSpectate;
 	}
-
 	if (config::DojoEnable &&
 		!dojo.disconnect_toggle &&
 		gui_state != GuiState::Main &&

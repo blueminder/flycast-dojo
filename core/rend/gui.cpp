@@ -1835,6 +1835,9 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("Your peer IP address and optional port");
 					config::NetworkServer.set(server_name);
+					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
+						"Sets Frame Delay, advisable for sessions with ping >100 ms");
+
 		    	}
 		    	else if (config::NetworkEnable)
 		    	{
@@ -2842,7 +2845,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded())
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || ggpo::active())
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2863,6 +2866,7 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
+		ggpo::displayStats();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());

@@ -83,6 +83,5 @@ static inline bool gui_is_content_browser()
 static inline float gui_get_scaling() {
 	return scaling;
 }
-
 extern bool game_started;
 extern void gui_start_game(const std::string& path);

@@ -30,6 +30,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <xxhash.h>
+#include "imgui/imgui.h"
 
 //#define SYNC_TEST 1
 
@@ -58,6 +59,8 @@ struct MemPages
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
+
+static int timesyncOccurred;
 
 /*
  * begin_game callback - This callback has been deprecated.  You must
@@ -99,6 +102,7 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
+		timesyncOccurred += 5;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / 60));	// FIXME assumes 60 FPS
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
@@ -149,6 +153,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 {
 	INFO_LOG(NETWORK, "load_game_state");
 
+	rend_start_rollback();
 	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
 	int frame = *(u32 *)buffer;
@@ -172,6 +177,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d aica ram", f, (u32)pages.ram.size(),
 					(u32)pages.vram.size(), (u32)pages.aram.size());
 	}
+	rend_allow_rollback();	// ggpo might load another state right after this one
 	memwatch::reset();
 	memwatch::protect();
 	return true;
@@ -220,7 +226,18 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 			MemPages memPages;
 			memPages.load();
 			const MemPages& savedPages = deltaStates[frame - 1];
-			verify(memPages.ram.size() == savedPages.ram.size());
+			//verify(memPages.ram.size() == savedPages.ram.size());
+			if (memPages.ram.size() != savedPages.ram.size())
+			{
+				ERROR_LOG(NETWORK, "old ram size %d new %d", (u32)savedPages.ram.size(), (u32)memPages.ram.size());
+				if (memPages.ram.size() > savedPages.ram.size())
+					for (const auto& pair : memPages.ram)
+						if (savedPages.ram.count(pair.first) == 0)
+							ERROR_LOG(NETWORK, "new page @ %x", pair.first);
+						else
+							DEBUG_LOG(NETWORK, "page ok @ %x", pair.first);
+				die("fatal");
+			}
 			for (const auto& pair : memPages.ram)
 			{
 				verify(savedPages.ram.count(pair.first) == 1);
@@ -232,7 +249,12 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 				verify(savedPages.vram.count(pair.first) == 1);
 				verify(memcmp(&pair.second[0], &savedPages.vram.find(pair.first)->second[0], PAGE_SIZE) == 0);
 			}
-			verify(memPages.aram.size() == savedPages.aram.size());
+			//verify(memPages.aram.size() == savedPages.aram.size());
+			if (memPages.aram.size() != savedPages.aram.size())
+			{
+				ERROR_LOG(NETWORK, "old aram size %d new %d", (u32)savedPages.aram.size(), (u32)memPages.aram.size());
+				die("fatal");
+			}
 			for (const auto& pair : memPages.aram)
 			{
 				verify(savedPages.aram.count(pair.first) == 1);
@@ -339,7 +361,7 @@ void startSession(int localPort, int localPlayerNum)
 		ggpoSession = nullptr;
 		return;
 	}
-//	ggpo_set_frame_delay(ggpoSession, localPlayer, FRAME_DELAY);
+	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
 	size_t colon = config::NetworkServer.get().find(':');
 	std::string peerIp = config::NetworkServer.get().substr(0, colon);
@@ -424,7 +446,7 @@ void nextFrame()
 	} while (active());
 #ifdef SYNC_TEST
 	u32 input = ~kcode[1 - localPlayerNum];
-	result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
+	GGPOErrorCode result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
 	if (result != GGPO_OK)
 		WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
 #endif
@@ -462,10 +484,73 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 		// save initial state (frame 0)
 		if (active())
-			getInput();
+		{
+			u32 k[4];
+			getInput(k);
+		}
 #endif
 		return active();
 	});
+}
+
+void displayStats()
+{
+	if (!active())
+		return;
+	GGPONetworkStats stats;
+	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(10, 10));
+	ImGui::SetNextWindowSize(ImVec2(95 * scaling, 0));
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+	// Send Queue
+	ImGui::Text("Send Q");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * scaling), "");
+
+	// Frame Delay
+	ImGui::Text("Delay");
+	std::string delay = std::to_string(config::GGPODelay.get());
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+	ImGui::Text("%s", delay.c_str());
+
+	// Ping
+	ImGui::Text("Ping");
+	std::string ping = std::to_string(stats.network.ping);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+	ImGui::Text("%s", ping.c_str());
+
+	// Predicted Frames
+	if (stats.sync.predicted_frames >= 7)
+		// red
+	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+	else if (stats.sync.predicted_frames >= 5)
+		// yellow
+	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+	ImGui::Text("Predicted");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * scaling), "");
+	if (stats.sync.predicted_frames >= 5)
+		ImGui::PopStyleColor();
+
+	// Frames behind
+	int timesync = timesyncOccurred;
+	if (timesync > 0)
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+	ImGui::Text("Behind");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * scaling), "");
+	if (timesync > 0)
+	{
+		ImGui::PopStyleColor();
+		timesyncOccurred--;
+	}
+
+	ImGui::PopStyleColor();
+	ImGui::End();
+	ImGui::PopStyleVar(2);
 }
 
 }
@@ -494,6 +579,9 @@ bool active() {
 
 std::future<bool> startNetwork() {
 	return std::async(std::launch::deferred, []{ return false; });;
+}
+
+void displayStats() {
 }
 
 }

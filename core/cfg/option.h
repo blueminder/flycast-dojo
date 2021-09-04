@@ -437,6 +437,7 @@ extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<bool> EmulateBBA;
 extern Option<bool> GGPOEnable;
+extern Option<int> GGPODelay;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;
