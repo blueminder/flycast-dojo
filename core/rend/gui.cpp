@@ -2388,21 +2388,7 @@ static void gui_display_content()
     windowDragScroll();
 	ImGui::EndChild();
 
-	if (config::NetplayMethod.get() == "GGPO" && (item_current_idx == 1 || item_current_idx == 2))
-	{
-		int delay_min = 0;
-		int delay_max = 10;
-		ImGui::PushItemWidth(80);
-		int delay_one = 1;
-		ImGui::InputScalar("GGPO Delay", ImGuiDataType_S8, &config::GGPODelay.get(), &delay_one, NULL, "%d");
-
-		if (config::GGPODelay < 0)
-			config::Delay = 10;
-
-		if (config::GGPODelay > 10)
-			config::Delay = 0;
-	}
-	else if (!config::DojoEnable)
+	if (!config::DojoEnable && config::NetplayMethod.get() != "GGPO")
 	{
 		int delay_min = 0;
 		int delay_max = 10;
@@ -2416,7 +2402,7 @@ static void gui_display_content()
 		if (config::Delay > 10)
 			config::Delay = 0;
 	}
-	else if (config::DojoEnable && !config::Receiving)
+	else if (config::DojoEnable && !config::Receiving && config::NetplayMethod.get() != "GGPO")
 	{
 		char PlayerName[256] = { 0 };
 		strcpy(PlayerName, config::PlayerName.get().c_str());

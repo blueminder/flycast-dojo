@@ -285,13 +285,15 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	ImGui::OpenPopup("Connect to GGPO Player");
-	if (ImGui::BeginPopupModal("Connect to GGPO Player", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	ImGui::OpenPopup("Connect to GGPO Opponent");
+	if (ImGui::BeginPopupModal("Connect to GGPO Opponent", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		ImGui::Text("Enter GGPO Player Details");
+		ImGui::Text("Enter GGPO Opponent Details");
 
 		static char si[128] = "";
 		ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+		OptionSlider("Delay", config::GGPODelay, 0, 20,
+						"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
 		if (ImGui::Button("Start Session"))
 		{
