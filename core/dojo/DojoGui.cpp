@@ -285,10 +285,10 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	ImGui::OpenPopup("Connect to GGPO Host");
-	if (ImGui::BeginPopupModal("Connect to GGPO Host", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	ImGui::OpenPopup("Connect to GGPO Player");
+	if (ImGui::BeginPopupModal("Connect to GGPO Player", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		ImGui::Text("Enter GGPO Host Details");
+		ImGui::Text("Enter GGPO Player Details");
 
 		static char si[128] = "";
 		ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));

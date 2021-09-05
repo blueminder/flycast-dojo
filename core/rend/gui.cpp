@@ -2657,14 +2657,7 @@ static void gui_display_loadscreen()
 
 			if (config::GGPOEnable)
 			{
-				if (!config::ActAsServer)
-				{
-					gui_open_ggpo_join();
-				}
-				else
-				{
-					start_ggpo();
-				}
+				gui_open_ggpo_join();
 			}
 			else if (NaomiNetworkSupported())
 			{
