@@ -425,6 +425,11 @@ void gui_open_guest_wait()
 	}
 }
 
+void gui_open_ggpo_join()
+{
+	gui_state = GuiState::GGPOJoin;
+}
+
 void gui_open_disconnected()
 {
 	gui_state = GuiState::Disconnected;
@@ -556,7 +561,7 @@ static void gui_display_commands()
 		watch_text << "Watching Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
 		{
-			dojo.SwitchPlayer();
+			dojo.TrainingSwitchPlayer();
 		}
 		ImGui::NextColumn();
 		std::ostringstream playback_loop_text;
@@ -1821,25 +1826,9 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
-		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 		    			"Enable networking for supported Naomi games");
-		    	if (config::GGPOEnable)
-		    	{
-					OptionCheckbox("Play as player 1", config::ActAsServer,
-							"Deselect to play as player 2");
-					char server_name[256];
-					strcpy(server_name, config::NetworkServer.get().c_str());
-					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("Your peer IP address and optional port");
-					config::NetworkServer.set(server_name);
-					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
-						"Sets Frame Delay, advisable for sessions with ping >100 ms");
-
-		    	}
-		    	else if (config::NetworkEnable)
+			if (config::NetworkEnable)
 		    	{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
@@ -2041,6 +2030,8 @@ static void gui_display_content()
 
 	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
+		if (config::PlayerSwitched)
+			dojo.SwitchPlayer();
 		// set default offline delay to 0
 		config::Delay = 0;
 		// set offline as default action
@@ -2054,29 +2045,51 @@ static void gui_display_content()
 	{
 		config::Training = false;
 		config::DojoEnable = false;
+		config::GGPOEnable = false;
 	}
 	else if (item_current_idx == 1)
 	{
-		config::DojoEnable = true;
-		config::DojoActAsServer = true;
-		config::Receiving = false;
-		config::Training = false;
+		if (config::NetplayMethod.get() == "GGPO")
+		{
+			config::GGPOEnable = true;
+			config::ActAsServer = true;
+			if (config::PlayerSwitched)
+				dojo.SwitchPlayer();
+		}
+		else
+		{
+			config::DojoEnable = true;
+			config::DojoActAsServer = true;
+			config::Receiving = false;
+			config::Training = false;
+		}
 	}
 	else if (item_current_idx == 2)
 	{
-		config::DojoEnable = true;
-		config::DojoActAsServer = false;
-		config::Receiving = false;
-		config::Training = false;
+		if (config::NetplayMethod.get() == "GGPO")
+		{
+			config::GGPOEnable = true;
+			config::ActAsServer = false;
+			if (!config::PlayerSwitched)
+				dojo.SwitchPlayer();
+		}
+		else
+		{
+			config::DojoEnable = true;
+			config::DojoActAsServer = false;
+			config::Receiving = false;
+			config::Training = false;
 
-		if (config::EnableMatchCode)
-			config::MatchCode = "";
-		config::DojoServerIP = "";
+			if (config::EnableMatchCode)
+				config::MatchCode = "";
+			config::DojoServerIP = "";
+		}
 	}
 	else if (item_current_idx == 3)
 	{
 		config::Training = true;
 		config::DojoEnable = false;
+		config::GGPOEnable = false;
 	}
 	// RECEIVE menu option
 	/*
@@ -2366,7 +2379,21 @@ static void gui_display_content()
     windowDragScroll();
 	ImGui::EndChild();
 
-	if (!config::DojoEnable)
+	if (config::NetplayMethod.get() == "GGPO" && (item_current_idx == 1 || item_current_idx == 2))
+	{
+		int delay_min = 0;
+		int delay_max = 10;
+		ImGui::PushItemWidth(80);
+		int delay_one = 1;
+		ImGui::InputScalar("GGPO Delay", ImGuiDataType_S8, &config::GGPODelay.get(), &delay_one, NULL, "%d");
+
+		if (config::GGPODelay < 0)
+			config::Delay = 10;
+
+		if (config::GGPODelay > 10)
+			config::Delay = 0;
+	}
+	else if (!config::DojoEnable)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
@@ -2597,16 +2624,23 @@ static void gui_network_start()
 		naomiNetwork.startNow();
 }
 
+void start_ggpo()
+{
+	networkStatus = ggpo::startNetwork();
+	gui_state = GuiState::NetworkStart;
+}
+
 static void gui_display_loadscreen()
 {
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
 
-    ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+  ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
-    ImGui::AlignTextToFramePadding();
-    ImGui::SetCursorPosX(20.f * scaling);
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+  ImGui::AlignTextToFramePadding();
+  ImGui::SetCursorPosX(20.f * scaling);
+
 	if (dc_is_load_done())
 	{
 		try {
@@ -2614,8 +2648,14 @@ static void gui_display_loadscreen()
 
 			if (config::GGPOEnable)
 			{
-				networkStatus = ggpo::startNetwork();
-				gui_state = GuiState::NetworkStart;
+				if (!config::ActAsServer)
+				{
+					gui_open_ggpo_join();
+				}
+				else
+				{
+					start_ggpo();
+				}
 			}
 			else if (NaomiNetworkSupported())
 			{
@@ -2755,6 +2795,9 @@ void gui_display_ui()
 		break;
 	case GuiState::GuestWait:
 		dojo_gui.gui_display_guest_wait(scaling);
+		break;
+	case GuiState::GGPOJoin:
+		dojo_gui.gui_display_ggpo_join(scaling);
 		break;
 	case GuiState::Disconnected:
 		dojo_gui.gui_display_disconnected(scaling);

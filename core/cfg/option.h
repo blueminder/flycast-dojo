@@ -490,6 +490,8 @@ extern Option<bool> Training;
 extern Option<bool> EnableSessionQuickLoad;
 extern OptionString GameEntry;
 extern OptionString Quark;
+extern Option<bool> PlayerSwitched;
+extern OptionString NetplayMethod;
 
 // Maple
 

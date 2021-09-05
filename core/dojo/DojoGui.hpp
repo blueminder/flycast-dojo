@@ -36,6 +36,8 @@ public:
 	void gui_display_host_wait(float scaling);
 	void gui_display_guest_wait(float scaling);
 	
+	void gui_display_ggpo_join(float scaling);
+
 	void gui_display_disconnected(float scaling);
 	void gui_display_end_replay(float scaling);
 	void gui_display_end_spectate(float scaling);

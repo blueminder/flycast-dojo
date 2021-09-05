@@ -181,7 +181,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			case EMU_BTN_SWITCH_PLAYER:
 				if (pressed && config::Training)
 				{
-					dojo.SwitchPlayer();
+					dojo.TrainingSwitchPlayer();
 				}
 				break;
 			case EMU_BTN_TRIGGER_LEFT:
@@ -669,7 +669,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				if (config::Training)
 				{
-					dojo.SwitchPlayer();
+					dojo.TrainingSwitchPlayer();
 				}
 			}
 			return true;

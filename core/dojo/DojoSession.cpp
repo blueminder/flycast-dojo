@@ -1338,7 +1338,7 @@ void DojoSession::PlayRecording(int slot)
 	}
 }
 
-void DojoSession::SwitchPlayer()
+void DojoSession::TrainingSwitchPlayer()
 {
 	record_player == 0 ?
 		record_player = 1 :
@@ -1366,12 +1366,34 @@ void DojoSession::SwitchPlayer()
 
 		if (player != 0)
 			player_switched = true;
+
+		config::PlayerSwitched.set(!config::PlayerSwitched);
+		cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
 	}
 
 	std::ostringstream NoticeStream;
 	NoticeStream << "Monitoring Player " << record_player + 1;
 	gui_display_notification(NoticeStream.str().data(), 2000);
 }
+
+void DojoSession::SwitchPlayer()
+{
+	for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+		if (gamepad->name() != "Default Mouse")
+		{
+			if (gamepad->maple_port() == 0)
+				gamepad->set_maple_port(1);
+			else if (gamepad->maple_port() == 1)
+				gamepad->set_maple_port(0);
+		}
+	}
+
+	config::PlayerSwitched.set(!config::PlayerSwitched);
+	cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
+}
+
 
 void DojoSession::ResetTraining()
 {

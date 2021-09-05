@@ -283,6 +283,41 @@ void DojoGui::gui_display_guest_wait(float scaling)
 	ImGui::End();
 }
 
+void DojoGui::gui_display_ggpo_join(float scaling)
+{
+	ImGui::OpenPopup("Connect to GGPO Host");
+	if (ImGui::BeginPopupModal("Connect to GGPO Host", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::Text("Enter GGPO Host Details");
+
+		static char si[128] = "";
+		ImGui::InputTextWithHint("IP:Port", "0.0.0.0:19713", si, IM_ARRAYSIZE(si));
+
+		if (ImGui::Button("Start Session"))
+		{
+			config::NetworkServer.set(std::string(si, strlen(si)));
+			ImGui::CloseCurrentPopup();
+			start_ggpo();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+		    ImGui::CloseCurrentPopup();
+
+		    // Exit to main menu
+		    gui_state = GuiState::Main;
+		    game_started = false;
+		    settings.imgread.ImagePath[0] = '\0';
+		    dc_reset(true);
+
+		    config::NetworkServer.set("");
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 void DojoGui::gui_display_disconnected( float scaling)
 {
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -860,6 +895,33 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
 		ImGui::SameLine();
 		ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
+
+		if (ImGui::CollapsingHeader("Netplay Method", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int netplayMethod;
+			if (config::NetplayMethod.get() == "Delay")
+				netplayMethod = 0;
+			else
+				netplayMethod = 1;
+
+			ImGui::Columns(2, "netplayMethod", false);
+			ImGui::RadioButton("Delay", &netplayMethod, 0);
+			ImGui::NextColumn();
+			ImGui::RadioButton("GGPO (experimental)", &netplayMethod, 1);
+			ImGui::NextColumn();
+			ImGui::Columns(1, NULL, false);
+
+			switch (netplayMethod)
+			{
+			case 0:
+				config::NetplayMethod = "Delay";
+				break;
+			case 1:
+				config::NetplayMethod = "GGPO";
+				break;
+			}
+
+		}
 
 		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 		{

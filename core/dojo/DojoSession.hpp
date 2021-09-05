@@ -239,6 +239,7 @@ public:
 	void ToggleRecording(int slot);
 	void TogglePlayback(int slot);
 	void PlayRecording(int slot);
+	void TrainingSwitchPlayer();
 	void SwitchPlayer();
 	void ResetTraining();
 

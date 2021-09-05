@@ -43,6 +43,8 @@ void gui_open_host_wait();
 void gui_open_guest_wait();
 void gui_open_disconnected();
 
+void gui_open_ggpo_join();
+
 extern int screen_dpi;
 extern float scaling;
 
@@ -65,6 +67,7 @@ enum class GuiState {
 	HostDelay,
 	HostWait,
 	GuestWait,
+	GGPOJoin,
 	Disconnected,
 	EndReplay,
 	EndSpectate,
@@ -85,3 +88,5 @@ static inline float gui_get_scaling() {
 }
 extern bool game_started;
 extern void gui_start_game(const std::string& path);
+
+extern void start_ggpo();
