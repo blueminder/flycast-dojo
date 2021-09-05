@@ -291,7 +291,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		ImGui::Text("Enter GGPO Host Details");
 
 		static char si[128] = "";
-		ImGui::InputTextWithHint("IP:Port", "0.0.0.0:19713", si, IM_ARRAYSIZE(si));
+		ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 
 		if (ImGui::Button("Start Session"))
 		{
