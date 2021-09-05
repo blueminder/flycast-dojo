@@ -2607,7 +2607,7 @@ static void gui_network_start()
 	else
 	{
 		ImGui::Text("STARTING NETWORK...");
-		if (config::ActAsServer)
+		if (config::ActAsServer && !config::GGPOEnable)
 			ImGui::Text("Press Start to start the game now.");
 	}
 	ImGui::Text("%s", get_notification().c_str());
