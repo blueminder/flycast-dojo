@@ -815,19 +815,19 @@ std::string GamepadDevice::make_mapping_filename(bool instance)
 void GamepadDevice::verify_or_create_system_mappings()
 {
 	std::string dc_name = make_mapping_filename(false);
-	std::string arcade_name = make_mapping_filename(false, 2);
+	std::string arcade_name = make_mapping_filename(false, DC_PLATFORM_NAOMI);
 
 	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
 	std::string arcade_path = get_readonly_config_path(std::string("mappings/") + arcade_name);
 
 	if (!file_exists(arcade_path))
 	{
-		save_mapping(2);
+		save_mapping(DC_PLATFORM_NAOMI);
 		input_mapper->ClearMappings();
 	}
 	if (!file_exists(dc_path))
 	{
-		save_mapping(0);
+		save_mapping(DC_PLATFORM_DREAMCAST);
 		input_mapper->ClearMappings();
 	}
 
