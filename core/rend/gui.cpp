@@ -83,9 +83,13 @@ static void emuEventCallback(Event event)
 	case Event::Start:
 		if (config::GGPOEnable)
 		{
+			GamepadDevice::load_system_mappings();
+			if (settings.platform.system == DC_PLATFORM_NAOMI)
+				SetNaomiNetworkConfig(-1);
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
-			dc_loadstate(net_save_path);
+			if (ghc::filesystem::exists(net_save_path))
+				dc_loadstate(net_save_path);
 		}
 		else if (!config::DojoEnable && config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
 		{
