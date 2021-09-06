@@ -157,7 +157,7 @@ struct maple_sega_controller: maple_base
 				}
 				else
 				{
-					if (!dojo.PlayMatch)
+					if (config::Training)
 					{
 						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 							settings.platform.system == DC_PLATFORM_ATOMISWAVE)

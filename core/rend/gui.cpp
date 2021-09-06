@@ -2392,7 +2392,7 @@ static void gui_display_content()
     windowDragScroll();
 	ImGui::EndChild();
 
-	if (!config::DojoEnable && config::NetplayMethod.get() != "GGPO")
+	if (config::Training)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
