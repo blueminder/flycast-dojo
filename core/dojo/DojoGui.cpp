@@ -292,6 +292,13 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		static char si[128] = "";
 		ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+		ImGui::SameLine();
+		if (ImGui::Button("Paste"))
+		{
+			char* pasted_txt = SDL_GetClipboardText();
+			memcpy(si, pasted_txt, strlen(pasted_txt));
+		}
+
 		OptionSlider("Delay", config::GGPODelay, 0, 20,
 						"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
