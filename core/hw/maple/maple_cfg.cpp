@@ -7,6 +7,8 @@
 #include "cfg/option.h"
 
 u32 maple_kcode[4];
+u8 maple_rt[4];
+u8 maple_lt[4];
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -72,8 +74,8 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->kcode = maple_kcode[player_num];
 		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R] = rt[player_num];
-		pjs->trigger[PJTI_L] = lt[player_num];
+		pjs->trigger[PJTI_R] = maple_rt[player_num];
+		pjs->trigger[PJTI_L] = maple_lt[player_num];
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -120,10 +122,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 4:
-							pjs->joy[axis] = rt[player_num];
+							pjs->joy[axis] = maple_rt[player_num];
 							break;
 						case 5:
-							pjs->joy[axis] = lt[player_num];
+							pjs->joy[axis] = maple_lt[player_num];
 							break;
 						default:
 							pjs->joy[axis] = 0x80;
@@ -143,8 +145,8 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		{
 			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = rt[player_num];
-			pjs->joy[PJAI_Y2] = lt[player_num];
+			pjs->joy[PJAI_X2] = maple_rt[player_num];
+			pjs->joy[PJAI_Y2] = maple_lt[player_num];
 		}
 	}
 }

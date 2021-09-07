@@ -71,43 +71,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		if (key <= DC_BTN_RELOAD)
 		{
 			if (pressed)
-			{
 				kcode[port] &= ~key;
-				// Avoid two opposite dpad keys being pressed simultaneously
-				switch (key)
-				{
-				case DC_DPAD_UP:
-					kcode[port] |= DC_DPAD_DOWN;
-					break;
-				case DC_DPAD_DOWN:
-					kcode[port] |= DC_DPAD_UP;
-					break;
-				case DC_DPAD_LEFT:
-					kcode[port] |= DC_DPAD_RIGHT;
-					break;
-				case DC_DPAD_RIGHT:
-					kcode[port] |= DC_DPAD_LEFT;
-					break;
-				case DC_DPAD2_UP:
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-						kcode[port] |= DC_DPAD2_DOWN;
-					break;
-				case DC_DPAD2_DOWN:
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-						kcode[port] |= DC_DPAD2_UP;
-					break;
-				case DC_DPAD2_LEFT:
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-						kcode[port] |= DC_DPAD2_RIGHT;
-					break;
-				case DC_DPAD2_RIGHT:
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-						kcode[port] |= DC_DPAD2_LEFT;
-					break;
-				default:
-					break;
-				}
-			}
 			else
 				kcode[port] |= key;
 #ifdef TEST_AUTOMATION
@@ -195,16 +159,36 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				rt[port] = pressed ? 255 : 0;
 				break;
 			case EMU_BTN_ANA_UP:
-				joyy[port] = pressed ? -128 : 0;
-				break;
 			case EMU_BTN_ANA_DOWN:
-				joyy[port] = pressed ? 127 : 0;
+				{
+					if (pressed)
+						digitalToAnalogState[port] |= key;
+					else
+						digitalToAnalogState[port] &= ~key;
+					const u32 upDown = digitalToAnalogState[port] & (EMU_BTN_ANA_UP | EMU_BTN_ANA_DOWN);
+					if (upDown == 0 || upDown == (EMU_BTN_ANA_UP | EMU_BTN_ANA_DOWN))
+						joyy[port] = 0;
+					else if (upDown == EMU_BTN_ANA_UP)
+						joyy[port] = -128;
+					else
+						joyy[port] = 127;
+				}
 				break;
 			case EMU_BTN_ANA_LEFT:
-				joyx[port] = pressed ? -128 : 0;
-				break;
 			case EMU_BTN_ANA_RIGHT:
-				joyx[port] = pressed ? 127 : 0;
+			{
+				if (pressed)
+					digitalToAnalogState[port] |= key;
+				else
+					digitalToAnalogState[port] &= ~key;
+				const u32 leftRight = digitalToAnalogState[port] & (EMU_BTN_ANA_LEFT | EMU_BTN_ANA_RIGHT);
+				if (leftRight == 0 || leftRight == (EMU_BTN_ANA_LEFT | EMU_BTN_ANA_RIGHT))
+					joyx[port] = 0;
+				else if (leftRight == EMU_BTN_ANA_LEFT)
+					joyx[port] = -128;
+				else
+					joyx[port] = 127;
+			}
 				break;
 			case DC_CMB_X_Y_A_B:
 				if (pressed)
