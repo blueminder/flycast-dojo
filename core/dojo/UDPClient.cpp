@@ -346,23 +346,32 @@ void UDPClient::ClientLoop()
 					std::string data = std::string(buffer + 8, strlen(buffer + 5));
 					std::vector<std::string> opp = stringfix::split(":", data);
 
-					if (!config::DojoActAsServer)
+					if (config::GGPOEnable)
 					{
-						config::DojoServerIP = opp[0];
-						//config::DojoServerPort = opp[1];
+						config::NetworkServer = opp[0];
+						config::DojoEnable = false;
+						return;
 					}
-
-					opponent_addr.sin_family = AF_INET;
-					opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
-					inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
-
-					if (!config::DojoActAsServer)
+					else
 					{
-						host_addr.sin_port = htons((u16)std::stol(opp[1]));
-						inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
-					}
+						if (!config::DojoActAsServer)
+						{
+							config::DojoServerIP = opp[0];
+							//config::DojoServerPort = opp[1];
+						}
 
-					SendPlayerName();
+						opponent_addr.sin_family = AF_INET;
+						opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
+						inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
+
+						if (!config::DojoActAsServer)
+						{
+							host_addr.sin_port = htons((u16)std::stol(opp[1]));
+							inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
+						}
+
+						SendPlayerName();
+					}
 				}
 			}
 
@@ -520,12 +529,14 @@ void UDPClient::ClientThread()
 	// connect to matchmaking server
 	if (config::EnableMatchCode)
 	{
-		if (!config::DojoActAsServer)
+		if (!config::DojoActAsServer || (config::GGPOEnable && !config::ActAsServer))
 			while (dojo.MatchCode.empty());
 		ConnectMMServer();
 	}
 
 	ClientLoop();
-	EndSession();
+	// close dojo udp client when ggpo session is activated
+	if (!config::GGPOEnable)
+		EndSession();
 }
 

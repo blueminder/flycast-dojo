@@ -2062,34 +2062,45 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 1)
 	{
+		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
 		{
+			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = true;
 			if (config::PlayerSwitched)
 				dojo.SwitchPlayer();
+
+			//if (config::EnableMatchCode)
+				//config::MatchCode = "";
+			config::NetworkServer = "";
 		}
 		else
 		{
 			config::DojoEnable = true;
-			config::DojoActAsServer = true;
 			config::Receiving = false;
 			config::Training = false;
 		}
 	}
 	else if (item_current_idx == 2)
 	{
+		config::DojoActAsServer = false;
+		config::NetworkServer = "";
 		if (config::NetplayMethod.get() == "GGPO")
 		{
+			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = false;
 			if (!config::PlayerSwitched)
 				dojo.SwitchPlayer();
+
+			if (config::EnableMatchCode)
+				config::MatchCode = "";
+			config::NetworkServer = "";
 		}
 		else
 		{
 			config::DojoEnable = true;
-			config::DojoActAsServer = false;
 			config::Receiving = false;
 			config::Training = false;
 
@@ -2647,7 +2658,20 @@ static void gui_display_loadscreen()
 
 			if (config::GGPOEnable)
 			{
-				gui_open_ggpo_join();
+				if (config::EnableMatchCode)
+				{
+					// use dojo session for match codes & initial handshake
+					dojo.StartDojoSession();
+
+					if (config::ActAsServer)
+						gui_open_host_wait();
+					else
+						gui_open_guest_wait();
+				}
+				else
+				{
+					gui_open_ggpo_join();
+				}
 			}
 			else if (NaomiNetworkSupported())
 			{

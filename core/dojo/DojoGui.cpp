@@ -105,12 +105,10 @@ void DojoGui::gui_display_host_wait(float scaling)
 	if (config::EnableMatchCode && !config::MatchCode.get().empty())
 	{
 		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
-#ifdef _WIN32
 		if (ImGui::Button("Copy Match Code"))
 		{
 			SDL_SetClipboardText(config::MatchCode.get().data());
 		}
-#endif
 	}
 
 	/*
@@ -127,20 +125,30 @@ void DojoGui::gui_display_host_wait(float scaling)
 	}
 	*/
 
-	if (!dojo.OpponentIP.empty())
+	if (config::GGPOEnable)
 	{
-		dojo.host_status = 2;
-		dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
-
-		gui_state = GuiState::Closed;
-		gui_open_host_delay();
+		if (!config::NetworkServer.get().empty())
+		{
+			gui_open_ggpo_join();
+		}
 	}
-
-	if (config::Transmitting &&
-		dojo.remaining_spectators == 0)
+	else
 	{
-		if (config::EnableLobby)
-			ImGui::Text("This match will be spectated.");
+		if (!dojo.OpponentIP.empty())
+		{
+			dojo.host_status = 2;
+			dojo.OpponentPing = dojo.DetectDelay(dojo.OpponentIP.data());
+
+			gui_state = GuiState::Closed;
+			gui_open_host_delay();
+		}
+
+		if (config::Transmitting &&
+			dojo.remaining_spectators == 0)
+		{
+			if (config::EnableLobby)
+				ImGui::Text("This match will be spectated.");
+		}
 	}
 
 	ImGui::End();
@@ -150,7 +158,8 @@ void DojoGui::gui_display_guest_wait(float scaling)
 {
 	//dc_stop();
 
-	dojo.pause();
+	if (!config::GGPOEnable)
+		dojo.pause();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -159,7 +168,8 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 	if (!dojo.client.name_acknowledged)
 	{
-		if (config::EnableMatchCode && config::MatchCode.get().empty())
+		if ((!config::GGPOEnable && config::EnableMatchCode && config::MatchCode.get().empty()) ||
+			(config::GGPOEnable && config::EnableMatchCode && config::NetworkServer.get().empty()))
 		{
 			ImGui::OpenPopup("Match Code");
 			if (ImGui::BeginPopupModal("Match Code", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -170,13 +180,11 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				ImGui::InputTextWithHint("", "ABC123", mc, IM_ARRAYSIZE(mc), ImGuiInputTextFlags_CharsUppercase);
 
 				ImGui::SameLine();
-#ifdef _WIN32
 				if (ImGui::Button("Paste"))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(mc, pasted_txt, strlen(pasted_txt));
 				}
-#endif
 
 				if (ImGui::Button("Start Session"))
 				{
@@ -201,7 +209,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				ImGui::EndPopup();
 			}
 		}
-		else if (config::DojoServerIP.get().empty())
+		else if (!config::GGPOEnable && config::DojoServerIP.get().empty())
 		{
    			ImGui::OpenPopup("Connect to Host Server");
    			if (ImGui::BeginPopupModal("Connect to Host Server", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -245,7 +253,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
    			}
 		}
 
-		if (!config::DojoServerIP.get().empty())
+		if (!config::GGPOEnable && !config::DojoServerIP.get().empty())
 		{
 			ImGui::Text("Connecting to host...");
 
@@ -274,6 +282,9 @@ void DojoGui::gui_display_guest_wait(float scaling)
 		ImGui::Text("Waiting for host to select delay...");
 	}
 
+	if (config::GGPOEnable && !config::NetworkServer.get().empty())
+		gui_open_ggpo_join();
+
 	if (dojo.session_started)
 	{
 		gui_state = GuiState::Closed;
@@ -285,18 +296,27 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	ImGui::OpenPopup("Connect to GGPO Opponent");
-	if (ImGui::BeginPopupModal("Connect to GGPO Opponent", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	std::string title = config::EnableMatchCode ? "Select GGPO Frame Delay" : "Connect to GGPO Opponent";
+	ImGui::OpenPopup(title.data());
+	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		ImGui::Text("Enter GGPO Opponent Details");
-
 		static char si[128] = "";
-		ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
-		ImGui::SameLine();
-		if (ImGui::Button("Paste"))
+
+		if (config::EnableMatchCode)
 		{
-			char* pasted_txt = SDL_GetClipboardText();
-			memcpy(si, pasted_txt, strlen(pasted_txt));
+			ImGui::Text(title.data());
+		}
+		else
+		{
+			ImGui::Text("Enter GGPO Opponent Details");
+
+			ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+			ImGui::SameLine();
+			if (ImGui::Button("Paste"))
+			{
+				char* pasted_txt = SDL_GetClipboardText();
+				memcpy(si, pasted_txt, strlen(pasted_txt));
+			}
 		}
 
 		OptionSlider("Delay", config::GGPODelay, 0, 20,
@@ -304,7 +324,8 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
-			config::NetworkServer.set(std::string(si, strlen(si)));
+			if (!config::EnableMatchCode)
+				config::NetworkServer.set(std::string(si, strlen(si)));
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
 		}
