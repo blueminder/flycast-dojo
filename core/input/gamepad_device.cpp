@@ -93,7 +93,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				break;
 			case EMU_BTN_FFORWARD:
 				if (pressed && !gui_is_open())
-					settings.input.fastForwardMode = !settings.input.fastForwardMode;
+					settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
 				break;
 			case EMU_BTN_JUMP_STATE:
 				if (pressed && !loading_state)

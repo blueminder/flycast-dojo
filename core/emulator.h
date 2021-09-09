@@ -56,6 +56,7 @@ void dc_get_load_status();
 bool dc_is_running();
 void dc_resize_renderer();
 std::string dc_get_last_error();
+void dc_set_network_state(bool online);
 
 extern std::string get_game_name();
 extern std::string get_net_savestate_file_path(bool writable);

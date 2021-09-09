@@ -27,7 +27,7 @@
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
-#include "network/naomi_network.h"
+#include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
@@ -81,11 +81,9 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
 		if (config::GGPOEnable)
 		{
-			GamepadDevice::load_system_mappings();
-			if (settings.platform.system == DC_PLATFORM_NAOMI)
-				SetNaomiNetworkConfig(-1);
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
 			if (ghc::filesystem::exists(net_save_path))
@@ -93,10 +91,8 @@ static void emuEventCallback(Event event)
 		}
 		else if (!config::DojoEnable && config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
 		{
-			GamepadDevice::load_system_mappings();
-			if (settings.platform.system == DC_PLATFORM_NAOMI)
-				SetNaomiNetworkConfig(-1);
 			if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
+				// TODO don't load state if using naomi networking
 				dc_loadstate(config::SavestateSlot);
 		}
 		break;
@@ -536,37 +532,51 @@ static void gui_display_commands()
 
 	if (!config::DojoEnable)
 	{
-		if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
-		{
-			gui_state = GuiState::Closed;
-			dc_loadstate(config::SavestateSlot);
-		}
-		ImGui::SameLine();
-		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-		if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
-			ImGui::OpenPopup("slot_select_popup");
-		if (ImGui::BeginPopup("slot_select_popup"))
-		{
-			for (int i = 0; i < 10; i++)
-				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-					config::SavestateSlot = i;
-					SaveSettings();
-				}
-			ImGui::EndPopup();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
-			dc_savestate(config::SavestateSlot);
 
-		if (settings.imgread.ImagePath[0] == '\0')
-		{
-			ImGui::PopItemFlag();
-			ImGui::PopStyleVar();
-		}
+    bool loadSaveStateDisabled = settings.imgread.ImagePath[0] == '\0' || settings.online;
+	if (loadSaveStateDisabled)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
-	ImGui::Columns(2, "buttons", false);
+	// Load State
+	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	{
+		gui_state = GuiState::Closed;
+		dc_loadstate(config::SavestateSlot);
+	}
+	ImGui::SameLine();
+
+	// Slot #
+	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+		ImGui::OpenPopup("slot_select_popup");
+    if (ImGui::BeginPopup("slot_select_popup"))
+    {
+        for (int i = 0; i < 10; i++)
+            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+                config::SavestateSlot = i;
+                SaveSettings();
+            }
+        ImGui::EndPopup();
+    }
+	ImGui::SameLine();
+
+	// Save State
+	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	{
+		gui_state = GuiState::Closed;
+		dc_savestate(config::SavestateSlot);
+	}
+	if (loadSaveStateDisabled)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+
+	} // if !config::DojoEnable
 
 	if (config::Training)
 	{
@@ -574,7 +584,7 @@ static void gui_display_commands()
 		watch_text << "Watching Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
 		{
-			dojo.TrainingSwitchPlayer();
+			dojo.SwitchPlayer();
 		}
 		ImGui::NextColumn();
 		std::ostringstream playback_loop_text;
@@ -588,6 +598,9 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 	}
 
+	ImGui::Columns(2, "buttons", false);
+
+	// Settings
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -600,28 +613,47 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
+
 	if (!config::DojoEnable)
 	{
-		const char* disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-		if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
+
+	// Insert/Eject Disk
+	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
+	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
+	{
+		if (libGDR_GetDiscType() == Open)
 		{
-			if (libGDR_GetDiscType() == Open)
-			{
-				gui_state = GuiState::SelectDisk;
-			}
-			else
-			{
-				DiscOpenLid();
-				gui_state = GuiState::Closed;
-			}
+			gui_state = GuiState::SelectDisk;
 		}
-		ImGui::NextColumn();
-		if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
+		else
 		{
-			gui_state = GuiState::Cheats;
+			DiscOpenLid();
+			gui_state = GuiState::Closed;
 		}
 	}
+	ImGui::NextColumn();
+
+	// Cheats
+	if (settings.online)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.online)
+	{
+		gui_state = GuiState::Cheats;
+	}
+	if (settings.online)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+
+	} // if !config::DojoEnable
+
 	ImGui::Columns(1, nullptr, false);
+
+	// Exit
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
@@ -2575,12 +2607,6 @@ static void gui_display_onboarding()
 
 static std::future<bool> networkStatus;
 
-static void start_network()
-{
-	networkStatus = naomiNetwork.startNetworkAsync();
-	gui_state = GuiState::NetworkStart;
-}
-
 static void gui_network_start()
 {
 	centerNextWindow();
@@ -2608,7 +2634,7 @@ static void gui_network_start()
 	else
 	{
 		ImGui::Text("STARTING NETWORK...");
-		if (config::ActAsServer && !config::GGPOEnable)
+		if (NetworkHandshake::instance->canStartNow() && !config::GGPOEnable)
 			ImGui::Text("Press Start to start the game now.");
 	}
 	ImGui::Text("%s", get_notification().c_str());
@@ -2618,10 +2644,7 @@ static void gui_network_start()
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
-		if (config::GGPOEnable)
-			ggpo::stopSession();
-		else
-			naomiNetwork.terminate();
+		NetworkHandshake::instance->stop();
 		networkStatus.get();
 		gui_state = GuiState::Main;
 		settings.imgread.ImagePath[0] = '\0';
@@ -2631,7 +2654,7 @@ static void gui_network_start()
 	ImGui::End();
 
 	if ((kcode[0] & DC_BTN_START) == 0)
-		naomiNetwork.startNow();
+		NetworkHandshake::instance->startNow();
 }
 
 void start_ggpo()
@@ -2672,10 +2695,6 @@ static void gui_display_loadscreen()
 				{
 					gui_open_ggpo_join();
 				}
-			}
-			else if (NaomiNetworkSupported())
-			{
-				start_network();
 			}
 			else if (config::DojoEnable || dojo.PlayMatch)
 			{

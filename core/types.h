@@ -353,9 +353,8 @@ struct settings_t
 		bool fastForwardMode;
 	} input;
 
-	bool gameStarted;
-	bool endOfFrame;
 	bool disableRenderer;
+	bool online;
 };
 
 extern settings_t settings;
