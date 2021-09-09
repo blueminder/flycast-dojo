@@ -140,7 +140,7 @@ OptionString SpectatorIP("SpectatorIP", "match.dojo.ooo", "dojo");
 OptionString SpectatorPort("SpectatorPort", "7000", "dojo");
 OptionString LobbyMulticastAddress("LobbyMulticastAddress", "26.255.255.255", "dojo");
 OptionString LobbyMulticastPort("LobbyMulticastPort", "52001", "dojo");
-Option<bool> EnableMatchCode("EnableMatchCode", false, "dojo");
+Option<bool> EnableMatchCode("EnableMatchCode", true, "dojo");
 OptionString MatchmakingServerAddress("MatchmakingServerAddress", "match.dojo.ooo", "dojo");
 OptionString MatchmakingServerPort("MatchmakingServerPort", "52001", "dojo");
 OptionString MatchCode("MatchCode", "", "dojo");
