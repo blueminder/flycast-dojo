@@ -578,6 +578,8 @@ static void gui_display_commands()
 
 	} // if !config::DojoEnable
 
+	ImGui::Columns(2, "buttons", false);
+
 	if (config::Training)
 	{
 		std::ostringstream watch_text;
@@ -597,8 +599,6 @@ static void gui_display_commands()
 
 		ImGui::NextColumn();
 	}
-
-	ImGui::Columns(2, "buttons", false);
 
 	// Settings
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
