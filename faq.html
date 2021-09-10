@@ -86,6 +86,7 @@ body {
 	<a href="#button-6">When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</a><br />
 	<a href="#analog-joy">How do I map my analog joystick to the directions?</a><br />
 	<a href="#input-latency">What are the optimal settings for the least input latency? / Why is the frame pacing weird on my computer?</a><br />
+	<a href="#match-code-connect">I can't establish a connection using Match Codes, is there anything I can do about this?</a><br />
 	<a href="#can-join-cant-host">Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</a><br />
 	<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
 	<a href="#set-defaults">How do I reset my settings to their defaults?</a><br />
@@ -123,7 +124,16 @@ body {
 <a name="input-latency" /><h3>What are the optimal settings for the least input latency? / Why is the frame pacing weird on my computer?</h3>
 
 <p>To improve input latency, and to ensure the correct frame pacing for monitors that run above 60Hz, you can disable VSync in your Flycast video settings and set <code>flycast.exe</code> to be limited to 60FPS either in your video card settings or an FPS limiter like <a href="https://www.guru3d.com/content-page/rivatuner.html">Rivatuner Statistics Server</a>. Just make sure that you and your opponent are operating at approximately 60FPS to ensure proper syncing in netplay. We hope to eventually make this an internal option.</p>
-	
+
+<a name="match-code-connect" /><h3>I can't establish a connection using Match Codes, is there anything I can do about this?</h3>
+
+<p>In some edge cases, Match Codes don't work out of the box if someone is behind a double NAT or has a noncompliant router. Sometimes this can be resolved by switching who is hosting and who is joining. If that doesn't work, try the following:
+
+<ol>
+	<li>Keep Internet Matchmaking enabled and try forwarding UDP Port 19713 to your machine from your router.</li>
+	<li>If all else fails, you can disable Internet Matchmaking in the settings and use IP entry over a virtual LAN like Radmin VPN or ZeroTier. This would be a last resort, but should consistently work.</li>
+</ol></p>
+
 <a name="can-join-cant-host" /><h3>Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</h3>
 
 <a name="can-host-cant-join" /><h3>Why am I able to host games just fine, but I am unable join others?</h3>
@@ -168,7 +178,7 @@ body {
 
 	<li>Report crash log.</li>
 	<p>If none of the steps above worked, please run <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/debugview">DebugView</a>, replicate the crash, and send the log to me through the <code>#flycast-emulator</code> channel on the <a href="https://discord.gg/EyERRSg">Fightcade Discord</a> or via a <a href="https://github.com/blueminder/flycast-dojo/issues">GitHub issue</a>. Be sure to include Flycast Dojo version, your hardware specs and OS version.</p>
-</ol>
+</ol></p>
 
 <a name="wifi"><h3>I'm playing on Wi-Fi and my game performance is crap. Is there anything I can do to improve performance?</h3>
 
