@@ -371,7 +371,7 @@ extern OptionString AudioBackend;
 
 class AudioVolumeOption : public Option<int> {
 public:
-	AudioVolumeOption() : Option<int>("aica.Volume", 100) {};
+	AudioVolumeOption() : Option<int>("aica.Volume", 75) {};
 	float logarithmic_volume_scale = 1.0;
 
 	void load() override {
