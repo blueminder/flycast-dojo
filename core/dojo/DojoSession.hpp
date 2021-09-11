@@ -94,6 +94,7 @@ public:
 	void LoadOfflineConfig();
 	int StartDojoSession();
 	void StartSession(int session_delay, int session_ppf, int session_num_bf);
+	void StartGGPOSession();
 
 	void StartTransmitterThread();
 
@@ -196,6 +197,7 @@ public:
 
 	uint64_t unix_timestamp();
 	uint64_t DetectDelay(const char* ipAddr);
+	uint64_t DetectGGPODelay(const char* ipAddr);
 
 	int host_status;
 

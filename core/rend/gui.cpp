@@ -2659,6 +2659,7 @@ static void gui_network_start()
 
 void start_ggpo()
 {
+	dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;
 }

@@ -140,9 +140,9 @@ uint64_t UDPClient::GetAvgPing(const char * ip_addr, int port)
 	return avg_ping_ms;
 }
 
-uint64_t UDPClient::GetOpponentAvgPing()
+uint64_t UDPClient::GetOpponentAvgPing(int num_requests)
 {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < num_requests; i++)
 	{
 		PingAddress(opponent_addr, i);
 	}
@@ -349,8 +349,10 @@ void UDPClient::ClientLoop()
 					if (config::GGPOEnable)
 					{
 						config::NetworkServer = opp[0];
-						config::DojoEnable = false;
-						return;
+
+						opponent_addr.sin_family = AF_INET;
+						opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
+						inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
 					}
 					else
 					{
@@ -466,22 +468,31 @@ void UDPClient::ClientLoop()
 			}
 			if (memcmp("START", buffer, 5) == 0)
 			{
-				std::string buffer_str(buffer + 6, strlen(buffer + 6));
-				auto tokens = stringfix::split(" ", buffer_str);
-
-				int delay = atoi(tokens[0].data());
-				int ppf = atoi(tokens[1].data());
-				int nbf = atoi(tokens[2].data());
-				std::string op = tokens[3];
-				dojo.net_save_present = (bool)atoi(tokens[4].data());
-				dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
-
-				config::OpponentName = op;
-
-				if (!dojo.session_started)
+				if (config::GGPOEnable)
 				{
-					// adopt host delay and payload settings
-					dojo.StartSession(delay, ppf, nbf);
+					// close dojo matching functions and hand over to ggpo
+					config::DojoEnable = false;
+					return;
+				}
+				else
+				{
+					std::string buffer_str(buffer + 6, strlen(buffer + 6));
+					auto tokens = stringfix::split(" ", buffer_str);
+
+					int delay = atoi(tokens[0].data());
+					int ppf = atoi(tokens[1].data());
+					int nbf = atoi(tokens[2].data());
+					std::string op = tokens[3];
+					dojo.net_save_present = (bool)atoi(tokens[4].data());
+					dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
+
+					config::OpponentName = op;
+
+					if (!dojo.session_started)
+					{
+						// adopt host delay and payload settings
+						dojo.StartSession(delay, ppf, nbf);
+					}
 				}
 			}
 

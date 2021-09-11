@@ -107,6 +107,16 @@ uint64_t DojoSession::DetectDelay(const char* ipAddr)
 	return avg_ping_ms;
 }
 
+uint64_t DojoSession::DetectGGPODelay(const char* ipAddr)
+{
+	uint64_t avg_ping_ms = client.GetOpponentAvgPing();
+
+	int delay = (int)ceil(((int)avg_ping_ms * 1.0f) / 32.0f) - 3;
+	config::GGPODelay = delay > 0 ? delay : 0;
+
+	return avg_ping_ms;
+}
+
 uint64_t DojoSession::unix_timestamp()
 {
 	using namespace std::chrono;
@@ -267,6 +277,11 @@ void DojoSession::StartSession(int session_delay, int session_ppf, int session_n
 	dojo.resume();
 
 	INFO_LOG(NETWORK, "Session Initiated");
+}
+
+void DojoSession::StartGGPOSession()
+{
+	client.StartSession();
 }
 
 void DojoSession::FillDelay(int fill_delay)

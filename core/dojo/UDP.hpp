@@ -52,7 +52,7 @@ public:
 	int PingAddress(sockaddr_in target_addr, int add_to_seed);
 
 	uint64_t GetAvgPing(const char * ip_addr, int port);
-	uint64_t GetOpponentAvgPing();
+	uint64_t GetOpponentAvgPing(int num_requests = 5);
 
 	int SendData(std::string data);
 

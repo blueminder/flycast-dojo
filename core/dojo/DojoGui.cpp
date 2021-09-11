@@ -301,16 +301,19 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		static char si[128] = "";
+		std::string detect_address;
 
 		if (config::EnableMatchCode)
 		{
 			ImGui::Text(title.data());
+			detect_address = config::NetworkServer.get();
 		}
 		else
 		{
 			ImGui::Text("Enter GGPO Opponent Details");
 
 			ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+			detect_address = std::string(si);
 			ImGui::SameLine();
 			if (ImGui::Button("Paste"))
 			{
@@ -319,8 +322,19 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			}
 		}
 
-		OptionSlider("Delay", config::GGPODelay, 0, 20,
-						"Sets Frame Delay, advisable for sessions with ping >100 ms");
+		ImGui::SliderInt("", (int*)&config::GGPODelay.get(), 1, 20);
+
+		if (config::EnableMatchCode)
+		{
+			if (ImGui::Button("Detect Delay"))
+				dojo.OpponentPing = dojo.DetectGGPODelay(detect_address.data());
+
+			if (dojo.OpponentPing > 0)
+			{
+				ImGui::SameLine();
+				ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
+			}
+		}
 
 		if (ImGui::Button("Start Session"))
 		{
