@@ -2637,6 +2637,10 @@ static void gui_network_start()
 		if (NetworkHandshake::instance->canStartNow() && !config::GGPOEnable)
 			ImGui::Text("Press Start to start the game now.");
 	}
+
+	if (config::GGPOEnable && config::EnableMatchCode && get_notification().empty())
+		ImGui::Text("Waiting for opponent to select delay.");
+
 	ImGui::Text("%s", get_notification().c_str());
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
