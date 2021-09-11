@@ -929,16 +929,20 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 
-		char PlayerName[256] = { 0 };
-		strcpy(PlayerName, config::PlayerName.get().c_str());
-		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-		ImGui::SameLine();
-		ShowHelpMarker("Name visible to other players");
-		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
-		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
-		ImGui::SameLine();
-		ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
+		if (config::NetplayMethod.get() == "Delay")
+		{
+			char PlayerName[256] = { 0 };
+			strcpy(PlayerName, config::PlayerName.get().c_str());
+			ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker("Name visible to other players");
+			config::PlayerName = std::string(PlayerName, strlen(PlayerName));
+
+			OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
+			ImGui::SameLine();
+			ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
+		}
 
 		if (ImGui::CollapsingHeader("Netplay Method", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -967,27 +971,47 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		}
 
-		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
+		if (config::NetplayMethod.get() == "Delay")
 		{
-			OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
-			ImGui::SameLine();
-			ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
+			if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
+				ImGui::SameLine();
+				ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
 
-			OptionCheckbox("Record All Sessions", config::RecordMatches);
-			ImGui::SameLine();
-			ShowHelpMarker("Record all gameplay sessions to a local file");
+				OptionCheckbox("Record All Sessions", config::RecordMatches);
+				ImGui::SameLine();
+				ShowHelpMarker("Record all gameplay sessions to a local file");
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			std::string PortDescription = "The server port to listen on";
+			std::string PortTitle;
+			std::string PortDescription;
+
+			if (config::NetplayMethod.get() == "Delay")
+			{
+				PortTitle = "Server Port";
+				PortDescription = "The server port to listen on";
+			}
+			else
+			{
+				PortTitle = "Handshake Port";
+				PortDescription = "The handshake port to listen on";
+			}
 
 			char ServerPort[256];
 			strcpy(ServerPort, config::DojoServerPort.get().c_str());
-			ImGui::InputText("Server Port", ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker(PortDescription.c_str());
-			config::DojoServerPort = ServerPort;
+
+			if (config::NetplayMethod.get() == "Delay" ||
+				(config::NetplayMethod.get() == "GGPO" && config::EnableMatchCode))
+			{
+				ImGui::InputText(PortTitle.c_str(), ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker(PortDescription.c_str());
+				config::DojoServerPort = ServerPort;
+			}
 
 			if (!config::EnableLobby)
 			{
@@ -1014,7 +1038,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
-			if (!config::EnableMatchCode)
+			if (!config::EnableMatchCode && config::NetplayMethod.get() == "Delay")
 			{
 				OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
 				ImGui::SameLine();
@@ -1044,41 +1068,44 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
+		if (config::NetplayMethod.get() == "Delay")
 		{
-			OptionCheckbox("Enable Session Transmission", config::Transmitting);
-			ImGui::SameLine();
-			ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
-
-			if (config::Transmitting)
+			if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				char SpectatorIP[256];
-
-				strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
-				ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				OptionCheckbox("Enable Session Transmission", config::Transmitting);
 				ImGui::SameLine();
-				ShowHelpMarker("Target Spectator IP Address");
-				config::SpectatorIP = SpectatorIP;
+				ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
 
-				/*
-				OptionCheckbox("Transmit Replays", config::TransmitReplays);
+				if (config::Transmitting)
+				{
+					char SpectatorIP[256];
+
+					strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
+					ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Target Spectator IP Address");
+					config::SpectatorIP = SpectatorIP;
+
+					/*
+					OptionCheckbox("Transmit Replays", config::TransmitReplays);
+					ImGui::SameLine();
+					ShowHelpMarker("Transmit replays to target spectator");
+					*/
+				}
+
+				char SpectatorPort[256];
+
+				strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+				ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Transmit replays to target spectator");
-				*/
+				ShowHelpMarker("Port to send or receive session streams");
+				config::SpectatorPort = SpectatorPort;
+
+				int one = 1;
+				ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+				ImGui::SameLine();
+				ShowHelpMarker("# of frames to cache before playing received match stream");
 			}
-
-			char SpectatorPort[256];
-
-			strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
-			ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("Port to send or receive session streams");
-			config::SpectatorPort = SpectatorPort;
-
-			int one = 1;
-			ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
-			ImGui::SameLine();
-			ShowHelpMarker("# of frames to cache before playing received match stream");
 		}
 
 		if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
@@ -1096,25 +1123,28 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay when disabled.");
 		}
 
-		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+		if (config::NetplayMethod.get() == "Delay")
 		{
-			OptionCheckbox("Enable Session Quick Load", config::EnableSessionQuickLoad);
-			ImGui::SameLine();
-			ShowHelpMarker("Saves state at common frame after boot. Allows you to press 'Quick Load' to revert to common state for both players. (Manually set on both sides)");
-
-			ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
-			ImGui::SameLine();
-			ShowHelpMarker("Number of packets to send per input frame.");
-
-			OptionCheckbox("Enable Backfill", config::EnableBackfill);
-			ImGui::SameLine();
-			ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
-
-			if (config::EnableBackfill)
+			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames.get(), 1, 40);
+				OptionCheckbox("Enable Session Quick Load", config::EnableSessionQuickLoad);
 				ImGui::SameLine();
-				ShowHelpMarker("Number of past inputs to send per frame.");
+				ShowHelpMarker("Saves state at common frame after boot. Allows you to press 'Quick Load' to revert to common state for both players. (Manually set on both sides)");
+
+				ImGui::SliderInt("Packets Per Frame", (int*)&config::PacketsPerFrame.get(), 1, 10);
+				ImGui::SameLine();
+				ShowHelpMarker("Number of packets to send per input frame.");
+
+				OptionCheckbox("Enable Backfill", config::EnableBackfill);
+				ImGui::SameLine();
+				ShowHelpMarker("Transmit past input frames along with current one in packet payload. Aids in unreliable connections.");
+
+				if (config::EnableBackfill)
+				{
+					ImGui::SliderInt("Number of Past Input Frames", (int*)&config::NumBackFrames.get(), 1, 40);
+					ImGui::SameLine();
+					ShowHelpMarker("Number of past inputs to send per frame.");
+				}
 			}
 		}
 
