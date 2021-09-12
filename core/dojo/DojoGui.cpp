@@ -339,7 +339,10 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		if (ImGui::Button("Start Session"))
 		{
 			if (!config::EnableMatchCode)
+			{
 				config::NetworkServer.set(std::string(si, strlen(si)));
+				config::DojoEnable = false;
+			}
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
 		}
