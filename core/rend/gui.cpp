@@ -1875,7 +1875,8 @@ static void gui_display_settings()
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 		    			"Enable networking for supported Naomi games");
-			if (config::NetworkEnable)
+				if (config::NetworkEnable)
+		    	{
 		    	{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
@@ -2930,7 +2931,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || ggpo::active())
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2951,7 +2952,8 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
-		ggpo::displayStats();
+		if (ggpo::active() && config::NetworkStats)
+			ggpo::displayStats();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());

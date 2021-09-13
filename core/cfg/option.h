@@ -495,6 +495,8 @@ extern Option<bool> EmulateBBA;
 extern Option<bool> GGPOEnable;
 extern Option<int> GGPODelay;
 extern Option<bool> GGPOEnableUPnP;
+extern Option<bool> NetworkStats;
+extern Option<int> GGPOAnalogAxes;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;
