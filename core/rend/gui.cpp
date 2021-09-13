@@ -1870,27 +1870,26 @@ static void gui_display_settings()
 		    }
 	    	ImGui::Spacing();
 		    header("Network");
-		    {
-		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
-		    			"Enable networking for supported Naomi games");
-				if (config::NetworkEnable)
-		    	{
-		    	{
-					OptionCheckbox("Act as Server", config::ActAsServer,
-							"Create a local server for Naomi network games");
-					if (!config::ActAsServer)
+				{
+					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+						"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+					OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
+						"Enable networking for supported Naomi games");
+					if (config::NetworkEnable)
 					{
-						char server_name[256];
-						strcpy(server_name, config::NetworkServer.get().c_str());
-						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
-						config::NetworkServer.set(server_name);
+						OptionCheckbox("Act as Server", config::ActAsServer,
+							"Create a local server for Naomi network games");
+						if (!config::ActAsServer)
+						{
+							char server_name[256];
+							strcpy(server_name, config::NetworkServer.get().c_str());
+							ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+							ImGui::SameLine();
+							ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+							config::NetworkServer.set(server_name);
+						}
 					}
-		    	}
-		    }
+				}
 	    	ImGui::Spacing();
 		    header("Other");
 		    {
