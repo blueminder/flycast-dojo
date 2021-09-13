@@ -1016,6 +1016,13 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				config::DojoServerPort = ServerPort;
 			}
 
+			if (config::NetplayMethod.get() == "GGPO")
+			{
+				OptionCheckbox("Enable UPnP for GGPO", config::GGPOEnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable Universal Plug & Play for GGPO game sessions.");
+			}
+
 			if (!config::EnableLobby)
 			{
 				OptionCheckbox("Enable Internet Matchmaking", config::EnableMatchCode);

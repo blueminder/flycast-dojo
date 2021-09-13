@@ -433,7 +433,8 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
-	miniupnp.Term();
+	if (config::GGPOEnableUPnP)
+		miniupnp.Term();
 	dc_set_network_state(false);
 }
 
@@ -550,8 +551,11 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
-			miniupnp.Init();
-			miniupnp.AddPortMapping(SERVER_PORT, false);
+			if (config::GGPOEnableUPnP)
+			{
+				miniupnp.Init();
+				miniupnp.AddPortMapping(SERVER_PORT, false);
+			}
 
 			if (config::ActAsServer)
 				startSession(SERVER_PORT, 0);
