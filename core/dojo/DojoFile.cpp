@@ -461,7 +461,6 @@ void DojoFile::CopyNewFlycast(std::string new_root)
    }
 }
 
-/*
 size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
     data->append((char*) ptr, size * nmemb);
     return size * nmemb;
@@ -603,7 +602,7 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	if (entry_name.find("bios") != std::string::npos)
 		dir_name = "data";
 	else
-		dir_name = "ROMS";
+		dir_name = "ROMs";
 
 	if (!ghc::filesystem::exists(dir_name))
 		ghc::filesystem::create_directory(dir_name);
@@ -621,8 +620,12 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	if (ghc::filesystem::exists(target))
 		return target;
 
-	if (entry_name.find("chd") != std::string::npos ||
-		entry_name.find("bios") != std::string::npos)
+	if (entry_name.find("bios") != std::string::npos)
+	{
+		status_text = "Downloading " + entry_name;
+		filename = DownloadFile(download_url, "data", download_size);
+	}
+	else if (entry_name.find("chd") != std::string::npos)
 	{
 		status_text = "Downloading " + entry_name;
 		if (!ghc::filesystem::exists("cache"))
@@ -648,36 +651,25 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 
 	return filename;
 }
-*/
 
 void DojoFile::ExtractEntry(std::string entry_name)
 {
-	std::string download_url = LoadedFileDefinitions[entry_name]["download"];
+	auto entry = LoadedFileDefinitions.find(entry_name);
+
+	std::string download_url = (*entry)["download"];
 	std::string filename = download_url.substr(download_url.find_last_of("/") + 1);
 
-	if (entry_name.find("bios") != std::string::npos)
-	{
-		Unzip("cache/" + filename, "data");
+	Unzip("cache/" + filename, "cache");
 
-		CompareFile(get_readonly_data_path("naomi.zip"), "flycast_naomi_bios");
-		CompareFile(get_readonly_data_path("awbios.zip"), "flycast_atomiswave_bios");
-	}
-	else
-	{
-		auto entry = LoadedFileDefinitions.find(entry_name);
+	std::string src = (*entry)["extract_to"][0]["src"];
+	std::string dst = (*entry)["extract_to"][0]["dst"];
 
-		Unzip("cache/" + filename, "cache");
+	std::string dir_name = "ROMS";
 
-		std::string src = (*entry)["extract_to"][0]["src"];
-		std::string dst = (*entry)["extract_to"][0]["dst"];
+	ghc::filesystem::rename("cache/" + src, dir_name + "/" + dst);
 
-		std::string dir_name = "ROMS";
-
-		ghc::filesystem::rename("cache/" + src, dir_name + dst);
-
-		if (entry_name.find("chd") != std::string::npos)
-			CompareFile(dir_name + dst, entry_name);
-	}
+	if (entry_name.find("chd") != std::string::npos)
+		CompareFile(dir_name + dst, entry_name);
 }
 
 void DojoFile::RemoveFromRemaining(std::string rom_path)
@@ -692,7 +684,7 @@ void DojoFile::RemoveFromRemaining(std::string rom_path)
 		RemainingFileDefinitions.erase(it);
 	}
 }
-/*
+
 void DojoFile::Update()
 {
 	update_started = true;
@@ -709,5 +701,4 @@ void DojoFile::Update()
 
 	ghc::filesystem::remove_all(dirname);
 }
-*/
 

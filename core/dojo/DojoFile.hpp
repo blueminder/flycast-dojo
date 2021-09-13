@@ -35,8 +35,8 @@ struct GameMedia {
 };
 #endif
 
-//#include <curl/curl.h>
-//#include <curl/easy.h>
+#include <curl/curl.h>
+#include <curl/easy.h>
 
 #include <stdclass.h>
 

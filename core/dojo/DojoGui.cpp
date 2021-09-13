@@ -1163,7 +1163,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	}
 }
 
-/*
 void DojoGui::update_action()
 {
 	if (ImGui::BeginPopupModal("Update?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -1226,6 +1225,6 @@ void DojoGui::update_action()
 	}
 
 }
-*/
+
 DojoGui dojo_gui;
 

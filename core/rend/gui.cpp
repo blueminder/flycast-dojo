@@ -1924,7 +1924,6 @@ static void gui_display_settings()
 		    header("Flycast");
 		    {
 				ImGui::Text("Version: %s", GIT_VERSION);
-/*
 #ifdef _WIN32
 				ImGui::SameLine();
 				if (ImGui::Button("Update"))
@@ -1935,7 +1934,6 @@ static void gui_display_settings()
 
 				dojo_gui.update_action();
 #endif
-*/
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 		    }
@@ -2210,7 +2208,7 @@ static void gui_display_content()
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, -(ImGui::CalcTextSize("Foo").y + ImGui::GetStyle().FramePadding.y * 4.0f)), true);
-    {
+  {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
 		ImGui::PushID("bios");
@@ -2309,23 +2307,19 @@ static void gui_display_content()
 						ImGui::Text("%s", dojo_gui.current_filename.c_str());
 
 						ImGui::InputText("##Calculated", md5, IM_ARRAYSIZE(md5), ImGuiInputTextFlags_ReadOnly);
-#ifdef _WIN32
 						ImGui::SameLine();
 						if (ImGui::Button("Copy"))
 						{
 							SDL_SetClipboardText(dojo_gui.current_checksum.data());
 						}
-#endif
 
 						ImGui::InputTextWithHint("", "MD5 Checksum to Compare", verify_md5, IM_ARRAYSIZE(verify_md5));
-#ifdef _WIN32
 						ImGui::SameLine();
 						if (ImGui::Button("Paste & Verify"))
 						{
 							char* pasted_txt = SDL_GetClipboardText();
 							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
 						}
-#endif
 
 						if (dojo_gui.current_json_found)
 						{
@@ -2388,7 +2382,6 @@ static void gui_display_content()
 				std::string download_url = (*it)["download"].get<std::string>();
 				//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
 
-				/*
 				auto game_found = std::find_if(
 					scanner.get_game_list().begin(),
 					scanner.get_game_list().end(),
@@ -2396,12 +2389,11 @@ static void gui_display_content()
 						return c.name.find(filename) != std::string::npos;
 					}
 				);
-				*/
 
 				std::string short_game_name = stringfix::remove_extension(filename);
 
-				//if (game_found == scanner.get_game_list().end() &&
-				if (filename.find("chd") == std::string::npos &&
+				if (game_found == scanner.get_game_list().end() &&
+					filename.find("chd") == std::string::npos &&
 					filename.find("data") == std::string::npos &&
 					!download_url.empty())
 				{
@@ -2419,8 +2411,8 @@ static void gui_display_content()
 					{
 						if (ImGui::Selectable(game_name.data()))
 						{
-							if (std::find(config::ContentPath.get().begin(), config::ContentPath.get().end(), get_writable_config_path("")) == config::ContentPath.get().end())
-								config::ContentPath.get().push_back(get_writable_config_path(""));
+							if (std::find(config::ContentPath.get().begin(), config::ContentPath.get().end(), "ROMs") == config::ContentPath.get().end())
+								config::ContentPath.get().push_back("ROMs");
 							ImGui::OpenPopup("Download");
 							dojo_file.entry_name = "flycast_" + short_game_name;
 							dojo_file.start_download = true;
@@ -2433,8 +2425,39 @@ static void gui_display_content()
 				}
 			}
 		}
-    }
-    windowDragScroll();
+
+		if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			ImGui::Text(dojo_file.status_text.data());
+			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.download_ended)
+			{
+				ImGui::CloseCurrentPopup();
+				scanner.refresh();
+				dojo_file.start_download = false;
+				dojo_file.download_started = false;
+				dojo_file.download_ended = false;
+			}
+			else
+			{
+				float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+				char buf[32];
+				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+			}
+			ImGui::EndPopup();
+		}
+
+		if (dojo_file.start_download && !dojo_file.download_started)
+		{
+			dojo_file.download_started = true;
+			std::thread t([&]() {
+				dojo_file.DownloadEntry(dojo_file.entry_name);
+			});
+			t.detach();
+		}
+
+  }
+  windowDragScroll();
 	ImGui::EndChild();
 
 	if (config::Training)
@@ -2468,7 +2491,6 @@ static void gui_display_content()
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(GIT_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 
-/*
 #ifdef _WIN32
 	if (ImGui::Button(GIT_VERSION))
 	{
@@ -2481,9 +2503,8 @@ static void gui_display_content()
 
 	dojo_gui.update_action();
 #else
-*/
 	ImGui::Text(GIT_VERSION);
-//#endif
+#endif
 
     ImGui::End();
     ImGui::PopStyleVar();
