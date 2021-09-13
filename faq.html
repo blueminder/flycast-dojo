@@ -86,6 +86,9 @@ body {
 	<a href="#button-6">When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</a><br />
 	<a href="#analog-joy">How do I map my analog joystick to the directions?</a><br />
 	<a href="#input-latency">What are the optimal settings for the least input latency? / Why is the frame pacing weird on my computer?</a><br />
+	<a href="#training-x">Does game X have a training mode?</a><br />
+	<a href="#training-behavior">Using the internal training mode, why do enemies still attack me/why is my health bar diminishing?</a><br />
+	<a href="#feature-add">When will feature X be added?</a><br />
 	<a href="#match-code-connect">I can't establish a connection using Match Codes, is there anything I can do about this?</a><br />
 	<a href="#can-join-cant-host">Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</a><br />
 	<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
@@ -125,12 +128,28 @@ body {
 
 <p>To improve input latency, and to ensure the correct frame pacing for monitors that run above 60Hz, you can disable VSync in your Flycast video settings and set <code>flycast.exe</code> to be limited to 60FPS either in your video card settings or an FPS limiter like <a href="https://www.guru3d.com/content-page/rivatuner.html">Rivatuner Statistics Server</a>. Just make sure that you and your opponent are operating at approximately 60FPS to ensure proper syncing in netplay. We hope to eventually make this an internal option.</p>
 
-<a name="match-code-connect" /><h3>I can't establish a connection using Match Codes, is there anything I can do about this?</h3>
+<a name="training-x" /><h3>Does game X have a training mode?</h3>
+
+<p>If you're playing a NAOMI or Atomiswave, it's likely not the case by default (Akatsuki Blitzkampf appears to be the exception). If there is a Dreamcast port of the game though, your best bet is finding that version and running it for training.<p>
+
+<p>Flycast Dojo itself has a universal training mode to help you lab in games that may or may not have one built-in, allowing you to switch players on the same controller with a single keystroke, record/play/loop inputs, load RetroArch cheat files and savestates at will. You can access this through the Menu button (TAB by default) or through keyboard/controller mappings. For details on how to use this, check out the <a href="https://github.com/blueminder/flycast-dojo#training-mode">Training Mode section</a> of the <a href="https://github.com/blueminder/flycast-dojo#readme">README</a>.</p>
+
+<a name="training-behavior" /><h3>Using the internal training mode, why do enemies still attack me/why is my health bar diminishing?</h3>
+
+<p>Flycast Dojo's internal universal training mode, being applicable to all games, isn't magical. You need to load the relevant cheat files or savestate for your game to get it to the state you want. If applicable, using it in tandem with a game's existing training mode would give you the largest set of features.</p>
+
+<a name="feature-add" /><h3>When will feature X be added?</h3>
+
+<p>When it's ready.</p>
+	
+<a name="match-code-connect" /><h3>I can't establish a connection using Match Codes/Public IP, is there anything I can do about this?</h3>
 
 <p>In some edge cases, Match Codes don't work out of the box if someone is behind a double NAT or has a noncompliant router. Sometimes this can be resolved by switching who is hosting and who is joining. If that doesn't work, try the following:
 
 <ol>
+	<li>Make sure Windows Firewall isn't blocking any connections to/from Flycast Dojo. The easiest way to determine this is to have you and your opponent temporarily disable Windows Firewall and start a game. If it ends up working, then be sure to <a href="https://www.tenforums.com/tutorials/70903-add-remove-allowed-apps-through-windows-firewall-windows-10-a.html">add a rule</a> to not have it get in your way in the future.</li>
 	<li>Keep Internet Matchmaking enabled and try forwarding UDP Port 19713 to your machine from your router.<br /></li>
+	<li>Disable Internet Matchmaking and try using your opponent's Public IP. Even in setups where routers get in the way, this has been shown to work in some setups.<br /></li>
 	<li>If all else fails, you can disable Internet Matchmaking in the settings and use IP entry over a virtual LAN like Radmin VPN or ZeroTier. This would be a last resort, but should consistently work.</li>
 </ol></p>
 
@@ -176,6 +195,9 @@ body {
 	<li>(Online Games & Replays) Check Windows Firewall.</li>
 	<p>If a session isn't established within Fightcade, the client will automatically close Flycast. The firewall may be the culprit in this instance. To diagnose this, you can either temporarily disable Windows Firewall and try to start a replay or connect with your opponent. If this works, add a rule in Windows Firewall allowing Flycast to use your network.</p>
 
+	<li>Send Breakpad dump.</li>
+	<p>Check your <code>%USERPROFILE%\AppData\Local\Temp</code> directory for a file ending in <code>.dmp</code>. If one exists at the time of the crash, send it over to us in the Flycast Discord so that we can determine the issue. If one isn't available, then it's likely that a crash technically didn't happen, but is still likely unintended behavior.</p>
+	
 	<li>Report crash log.</li>
 	<p>If none of the steps above worked, please run <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/debugview">DebugView</a>, replicate the crash, and send the log to me through the <code>#flycast-emulator</code> channel on the <a href="https://discord.gg/EyERRSg">Fightcade Discord</a> or via a <a href="https://github.com/blueminder/flycast-dojo/issues">GitHub issue</a>. Be sure to include Flycast Dojo version, your hardware specs and OS version.</p>
 </ol></p>
