@@ -551,6 +551,7 @@ extern OptionString GameEntry;
 extern OptionString Quark;
 extern Option<bool> PlayerSwitched;
 extern OptionString NetplayMethod;
+extern OptionString NetSaveBase;
 
 // Maple
 

@@ -20,9 +20,11 @@
 	#include "types.h"
 #endif
 
-#include <dojo/deps/md5/md5.h>
-#include <dojo/deps/json.hpp>
-#include <dojo/deps/StringFix/StringFix.h>
+#include "cfg/option.h"
+
+#include "dojo/deps/md5/md5.h"
+#include "dojo/deps/json.hpp"
+#include "dojo/deps/StringFix/StringFix.h"
 #include "dojo/deps/filesystem.hpp"
 
 #include <version.h>
@@ -64,6 +66,8 @@ public:
 	std::string DownloadFile(std::string download_url, std::string dest_folder);
 	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size);
 
+	std::string DownloadNetSave(std::string rom_name);
+
 	void Update();
 	void DownloadDependencies(std::string rom_path);
 	std::string DownloadEntry(std::string entry_name);
@@ -82,6 +86,9 @@ public:
 	bool start_download;
 	bool download_started;
 	bool download_ended;
+	bool start_save_download;
+	bool save_download_started;
+	bool save_download_ended;
 	std::tuple<std::string, std::string> tag_download;
 
 	size_t total_size;

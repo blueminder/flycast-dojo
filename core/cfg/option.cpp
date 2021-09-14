@@ -163,6 +163,7 @@ OptionString GameEntry("GameEntry", "", "dojo");
 OptionString Quark("Quark", "", "dojo");
 Option<bool> PlayerSwitched("PlayerSwitched", false, "dojo");
 OptionString NetplayMethod("NetplayMethod", "GGPO", "dojo");
+OptionString NetSaveBase("NetSaveBase", "https://github.com/blueminder/flycast-netplay-savestates/raw/main/", "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 

@@ -22,6 +22,10 @@ DojoFile::DojoFile()
 	update_started = false;
 	start_download = false;
 	download_started = false;
+	start_save_download = false;
+	save_download_started = false;
+
+	save_download_ended = false;
 	download_ended = false;
 }
 
@@ -545,19 +549,35 @@ size_t writeFileFunction(const char *p, size_t size, size_t nmemb) {
 	return size * nmemb;
 }
 
+std::string DojoFile::DownloadNetSave(std::string rom_name)
+{
+	auto net_state_base = config::NetSaveBase.get();
+	auto state_file = rom_name + ".state";
+	auto net_state_file = state_file + ".net";
+	auto net_state_url = net_state_base + net_state_file;
+
+	status_text = "Downloading netplay savestate for " + rom_name + ".";
+
+	auto filename = DownloadFile(net_state_url, "data");
+	save_download_ended = true;
+
+	return filename;
+}
+
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
 {
-
 	auto filename = stringfix::split("//", download_url).back();
+	std::string path;
 	if (!dest_folder.empty())
-		filename = dest_folder + "//" + filename;
+		path = dest_folder + "//" + filename;
 
-	of = std::ofstream(filename, std::ofstream::out | std::ofstream::binary);
+	of = std::ofstream(path, std::ofstream::out | std::ofstream::binary);
 
 	total_size = download_size;
 
 	auto curl = curl_easy_init();
 	CURLcode res = CURLE_OK;
+	long response_code = -1;
 	if (curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_URL, download_url.data());
@@ -565,19 +585,43 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, xferinfo);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFileFunction);
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
 		res = curl_easy_perform(curl);
-		if(res != CURLE_OK)
-			fprintf(stderr, "%s\n", curl_easy_strerror(res));
+
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+
+		if (response_code == 404)
+		{
+			res = CURLE_REMOTE_FILE_NOT_FOUND;
+		}
 
 		curl_easy_cleanup(curl);
 	}
 
-	return filename;
+	if (res != CURLE_OK)
+	{
+		fprintf(stderr, "%s\n", curl_easy_strerror(res));
+		if (response_code == 404)
+			status_text = filename + " not found. ";
+		else
+			status_text = "Unable to retrieve " + filename + ".";
+		remove(path.c_str());
+		download_ended = true;
+	}
+
+	of.close();
+	if (ghc::filesystem::file_size(path) == 0)
+		remove(path.c_str());
+	else
+		status_text = filename + " successfully downloaded.";
+
+	return path;
 }
 
 void DojoFile::DownloadDependencies(std::string entry_name)
@@ -642,9 +686,9 @@ std::string DojoFile::DownloadEntry(std::string entry_name)
 	else
 	{
 		DownloadDependencies(entry_name);
-		auto dir_name = "ROMS";
+		auto dir_name = "ROMs";
 		status_text = "Downloading " + filename;
-		filename = DownloadFile(download_url, "ROMS", download_size);
+		filename = DownloadFile(download_url, "ROMs", download_size);
 		CompareFile(filename, entry_name);
 		dojo_file.download_ended = true;
 	}
@@ -664,7 +708,7 @@ void DojoFile::ExtractEntry(std::string entry_name)
 	std::string src = (*entry)["extract_to"][0]["src"];
 	std::string dst = (*entry)["extract_to"][0]["dst"];
 
-	std::string dir_name = "ROMS";
+	std::string dir_name = "ROMs";
 
 	ghc::filesystem::rename("cache/" + src, dir_name + "/" + dst);
 

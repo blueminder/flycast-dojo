@@ -2261,6 +2261,8 @@ static void gui_display_content()
 					bool checksum_calculated = false;
 					bool checksum_same = false;
 
+					bool net_save_download = false;
+
 					std::string popup_name = "Options " + game.path;
 					if (ImGui::BeginPopupContextItem(popup_name.c_str(), 2))
 					{
@@ -2288,6 +2290,16 @@ static void gui_display_content()
 								dojo_gui.current_json_found = false;
 							}
 						}
+						if (ImGui::MenuItem("Download Savestate"))
+						{
+							std::string filename = game.path.substr(game.path.find_last_of("/\\") + 1);
+							std::string short_game_name = stringfix::remove_extension(filename);
+							dojo_file.entry_name = short_game_name;
+							dojo_file.start_save_download = true;
+
+							net_save_download = true;
+						}
+
 						ImGui::EndPopup();
 					}
 
@@ -2363,6 +2375,50 @@ static void gui_display_content()
 
 						ImGui::PopStyleVar();
 						ImGui::EndPopup();
+					}
+
+					if (net_save_download)
+					{
+						ImGui::OpenPopup("Download Save");
+					}
+
+					if (ImGui::BeginPopupModal("Download Save", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+					{
+						ImGui::Text(dojo_file.status_text.data());
+						if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended)
+						{
+							dojo_file.start_save_download = false;
+							dojo_file.save_download_started = false;
+						}
+						else
+						{
+							float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+							char buf[32];
+							sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+							ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+						}
+
+						if (dojo_file.save_download_ended)
+						{
+							if (ImGui::Button("Close"))
+							{
+								dojo_file.entry_name = "";
+								dojo_file.save_download_ended = false;
+								ImGui::CloseCurrentPopup();
+								scanner.refresh();
+							}
+						}
+
+						ImGui::EndPopup();
+					}
+
+					if (dojo_file.start_save_download && !dojo_file.save_download_started)
+					{
+						dojo_file.save_download_started = true;
+						std::thread s([&]() {
+							dojo_file.DownloadNetSave(dojo_file.entry_name);
+						});
+						s.detach();
 					}
 
 					ImGui::PopID();
@@ -2455,7 +2511,6 @@ static void gui_display_content()
 			});
 			t.detach();
 		}
-
   }
   windowDragScroll();
 	ImGui::EndChild();

@@ -2,7 +2,7 @@
 
 #include "dojo/DojoSession.hpp"
 #include "dojo/deps/filesystem.hpp"
-#include <dojo/deps/md5/md5.h>
+#include "dojo/deps/md5/md5.h"
 
 #include "dojo/DojoFile.hpp"
 
