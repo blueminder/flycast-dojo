@@ -478,7 +478,7 @@ void gui_start_game(const std::string& path)
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
-	if (config::DojoEnable)
+	if (config::DojoEnable && !config::GGPOEnable)
 	{
 		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
