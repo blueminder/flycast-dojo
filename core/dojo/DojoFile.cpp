@@ -567,7 +567,7 @@ std::string DojoFile::DownloadNetSave(std::string rom_name)
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
 {
 	auto filename = stringfix::split("//", download_url).back();
-	std::string path;
+	std::string path = filename;
 	if (!dest_folder.empty())
 		path = dest_folder + "//" + filename;
 
