@@ -2236,6 +2236,12 @@ static void gui_display_content()
 				if (filter.PassFilter(game.name.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
+
+					std::string filename = game.path.substr(game.path.find_last_of("/\\") + 1);
+					auto game_name = stringfix::remove_extension(filename);
+
+					if (config::GGPOEnable && !ghc::filesystem::exists("data/" + game_name + ".state.net"))
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 0, 1));
 					if (ImGui::Selectable(game.name.c_str()))
 					{
 						if (gui_state == GuiState::SelectDisk)
@@ -2257,6 +2263,8 @@ static void gui_display_content()
 							scanner.get_mutex().lock();
 						}
 					}
+					if (config::GGPOEnable && !ghc::filesystem::exists("data/" + game_name + ".state.net"))
+						ImGui::PopStyleColor();
 
 					bool checksum_calculated = false;
 					bool checksum_same = false;
