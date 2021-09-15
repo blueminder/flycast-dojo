@@ -2194,9 +2194,21 @@ static void gui_display_content()
 				gui_state = GuiState::Lobby;
 		}
 
+		if (config::GGPOEnable)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
+
+		if (config::GGPOEnable)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
 
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Settings"))

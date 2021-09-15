@@ -982,15 +982,15 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ImGui::SameLine();
 				ShowHelpMarker("Enable Universal Plug & Play for GGPO game sessions.");
 
+				OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
+					"Display network statistics on screen");
+
 				ImGui::Text("Left Thumbstick:");
 				OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
 				ImGui::SameLine();
 				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
 				ImGui::SameLine();
 				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
-
-				OptionCheckbox("Network Statistics", config::NetworkStats,
-					"Display network statistics on screen");
 			}
 		}
 
