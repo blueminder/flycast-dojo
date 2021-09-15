@@ -974,6 +974,26 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		}
 
+		if (config::NetplayMethod.get() == "GGPO")
+		{
+			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				OptionCheckbox("Enable UPnP for GGPO", config::GGPOEnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable Universal Plug & Play for GGPO game sessions.");
+
+				ImGui::Text("Left Thumbstick:");
+				OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
+				ImGui::SameLine();
+				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
+				ImGui::SameLine();
+				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
+
+				OptionCheckbox("Network Statistics", config::NetworkStats,
+					"Display network statistics on screen");
+			}
+		}
+
 		if (config::NetplayMethod.get() == "Delay")
 		{
 			if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1014,13 +1034,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ImGui::SameLine();
 				ShowHelpMarker(PortDescription.c_str());
 				config::DojoServerPort = ServerPort;
-			}
-
-			if (config::NetplayMethod.get() == "GGPO")
-			{
-				OptionCheckbox("Enable UPnP for GGPO", config::GGPOEnableUPnP);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable Universal Plug & Play for GGPO game sessions.");
 			}
 
 			if (!config::EnableLobby)
