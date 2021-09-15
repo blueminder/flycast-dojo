@@ -2436,6 +2436,7 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
 
+		/*
 		if (config::GameName.get().empty())
 		{
 			for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
@@ -2489,7 +2490,9 @@ static void gui_display_content()
 				}
 			}
 		}
+		*/
 
+		/*
 		if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			ImGui::Text(dojo_file.status_text.data());
@@ -2519,6 +2522,7 @@ static void gui_display_content()
 			});
 			t.detach();
 		}
+		*/
   }
   windowDragScroll();
 	ImGui::EndChild();
