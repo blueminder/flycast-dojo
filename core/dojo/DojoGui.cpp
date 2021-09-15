@@ -322,7 +322,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			}
 		}
 
-		ImGui::SliderInt("", (int*)&config::GGPODelay.get(), 1, 20);
+		ImGui::SliderInt("", (int*)&config::GGPODelay.get(), 0, 20);
 
 		if (config::EnableMatchCode)
 		{
