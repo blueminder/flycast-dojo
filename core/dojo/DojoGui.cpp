@@ -1144,6 +1144,12 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			OptionCheckbox("Allow Custom VMUs", config::NetCustomVmu);
 			ImGui::SameLine();
 			ShowHelpMarker("Allows custom VMUs for netplay ending in .bin.net. VMU must match opponent's. Deletes and regenerates blank Dreamcast VMUs for netplay when disabled.");
+
+			char NetSaveBase[256];
+
+			strcpy(NetSaveBase, config::NetSaveBase.get().c_str());
+			ImGui::InputText("Savestate Repository URL", NetSaveBase, sizeof(NetSaveBase), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			config::NetSaveBase = NetSaveBase;
 		}
 
 		if (config::NetplayMethod.get() == "Delay")
