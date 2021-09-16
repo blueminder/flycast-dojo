@@ -552,6 +552,7 @@ extern OptionString Quark;
 extern Option<bool> PlayerSwitched;
 extern OptionString NetplayMethod;
 extern OptionString NetSaveBase;
+extern Option<bool> Offline;
 
 // Maple
 

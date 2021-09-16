@@ -166,7 +166,7 @@ struct maple_sega_controller: maple_base
 				}
 				else
 				{
-					if (config::Training)
+					if (config::Training || config::Offline)
 					{
 						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 							settings.platform.system == DC_PLATFORM_ATOMISWAVE)

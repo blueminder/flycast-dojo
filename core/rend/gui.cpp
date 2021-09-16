@@ -2088,12 +2088,14 @@ static void gui_display_content()
 
 	if (item_current_idx == 0)
 	{
+		config::Offline = true;
 		config::Training = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
 	else if (item_current_idx == 1)
 	{
+		config::Offline = false;
 		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
 		{
@@ -2116,6 +2118,7 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 2)
 	{
+		config::Offline = false;
 		config::DojoActAsServer = false;
 		config::NetworkServer = "";
 		if (config::NetplayMethod.get() == "GGPO")
@@ -2143,6 +2146,7 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 3)
 	{
+		config::Offline = true;
 		config::Training = true;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
