@@ -2240,11 +2240,15 @@ static void gui_display_content()
   {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
-		ImGui::PushID("bios");
-		if (ImGui::Selectable("Dreamcast BIOS"))
+		if (config::Offline && !config::RecordMatches && !config::Training &&
+			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
 		{
-			gui_state = GuiState::Closed;
-			gui_start_game("");
+			ImGui::PushID("bios");
+			if (ImGui::Selectable("Dreamcast BIOS"))
+			{
+				gui_state = GuiState::Closed;
+				gui_start_game("");
+			}
 		}
 
 		ImGui::PopID();

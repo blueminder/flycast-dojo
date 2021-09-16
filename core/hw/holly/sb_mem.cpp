@@ -201,7 +201,7 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (config::DojoEnable || dojo.PlayMatch || config::RecordMatches || config::GGPOEnable)
+	if (!config::Offline || dojo.PlayMatch || config::RecordMatches)
 	{
 		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
 		prod_id = trim_trailing_ws(prod_id);
