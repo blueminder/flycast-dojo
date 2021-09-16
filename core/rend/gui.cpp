@@ -470,6 +470,19 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	if (config::GGPOEnable && !config::ActAsServer)
+	{
+		// switch ports if ggpo guest
+		if (!config::PlayerSwitched)
+			dojo.SwitchPlayer();
+	}
+	else
+	{
+		// otherwise, revert to defaults on game start
+		if (config::PlayerSwitched)
+			dojo.SwitchPlayer();
+	}
+
 	dc_term_game();
 	reset_vmus();
 
@@ -500,6 +513,16 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	if (config::Training)
+	{
+		dojo.ResetTraining();
+	}
+	else
+	{
+		if (config::PlayerSwitched)
+			dojo.SwitchPlayer();
+	}
+
 	if (!commandLineStart)
 	{
 		// Exit to main menu
@@ -586,7 +609,7 @@ static void gui_display_commands()
 		watch_text << "Watching Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
 		{
-			dojo.SwitchPlayer();
+			dojo.TrainingSwitchPlayer();
 		}
 		ImGui::NextColumn();
 		std::ostringstream playback_loop_text;
@@ -657,11 +680,6 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
-		if (config::Training)
-		{
-			dojo.ResetTraining();
-		}
-
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{
 			dojo.disconnect_toggle = true;
@@ -2075,8 +2093,6 @@ static void gui_display_content()
 
 	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
-		if (config::PlayerSwitched)
-			dojo.SwitchPlayer();
 		// set default offline delay to 0
 		config::Delay = 0;
 		// set offline as default action
@@ -2102,8 +2118,6 @@ static void gui_display_content()
 			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = true;
-			if (config::PlayerSwitched)
-				dojo.SwitchPlayer();
 
 			//if (config::EnableMatchCode)
 				//config::MatchCode = "";
@@ -2126,8 +2140,7 @@ static void gui_display_content()
 			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = false;
-			if (!config::PlayerSwitched)
-				dojo.SwitchPlayer();
+
 
 			if (config::EnableMatchCode)
 				config::MatchCode = "";

@@ -68,10 +68,6 @@ static bool jump_state_requested;
 
 void dc_exit()
 {
-	if (config::Training)
-	{
-		dojo.ResetTraining();
-	}
 	if (config::Receiving && !dojo.disconnect_toggle)
 	{
 		gui_state = GuiState::EndSpectate;

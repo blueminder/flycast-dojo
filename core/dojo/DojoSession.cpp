@@ -1365,26 +1365,11 @@ void DojoSession::TrainingSwitchPlayer()
 
 	opponent = player == 0 ? 1 : 0;
 
+	if (player != 0)
+		player_switched = true;
+
 	if (delay == 0)
-	{
-		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
-		{
-			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
-			if (gamepad->name() != "Default Mouse")
-			{
-				if (gamepad->maple_port() == player)
-					gamepad->set_maple_port(opponent);
-				else if (gamepad->maple_port() == opponent)
-					gamepad->set_maple_port(player);
-			}
-		}
-
-		if (player != 0)
-			player_switched = true;
-
-		config::PlayerSwitched.set(!config::PlayerSwitched);
-		cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
-	}
+		SwitchPlayer();
 
 	std::ostringstream NoticeStream;
 	NoticeStream << "Monitoring Player " << record_player + 1;
@@ -1405,27 +1390,15 @@ void DojoSession::SwitchPlayer()
 		}
 	}
 
-	config::PlayerSwitched.set(!config::PlayerSwitched);
+	config::PlayerSwitched = !config::PlayerSwitched.get();
 	cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
 }
 
 
 void DojoSession::ResetTraining()
 {
-	if (delay == 0 && player_switched)
-	{
-		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
-		{
-			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
-			if (gamepad->name() != "Default Mouse")
-			{
-				if (gamepad->maple_port() == player)
-					gamepad->set_maple_port(opponent);
-				else if (gamepad->maple_port() == opponent)
-					gamepad->set_maple_port(player);
-			}
-		}
-	}
+	if (config::PlayerSwitched)
+		SwitchPlayer();
 
 	player_switched = false;
 
