@@ -2556,19 +2556,26 @@ static void gui_display_content()
   windowDragScroll();
 	ImGui::EndChild();
 
-	if (config::Training)
+	if (config::Offline)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
 		ImGui::PushItemWidth(80);
 		int delay_one = 1;
-		ImGui::InputScalar("Offline Delay", ImGuiDataType_S8, &config::Delay.get(), &delay_one, NULL, "%d");
+		int delay = config::Delay.get();
+		ImGui::InputScalar("Offline Delay", ImGuiDataType_S32, &delay, &delay_one, NULL, "%d");
 
-		if (config::Delay < 0)
-			config::Delay = 10;
+		if (delay < 0)
+			delay = 30;
 
-		if (config::Delay > 10)
-			config::Delay = 0;
+		if (delay > 30)
+			delay = 0;
+
+		if (delay != config::Delay.get())
+		{
+			config::Delay = delay;
+			cfgSaveInt("dojo", "Delay", config::Delay);
+		}
 	}
 	else if (config::DojoEnable && !config::Receiving && config::NetplayMethod.get() != "GGPO")
 	{
@@ -2865,7 +2872,7 @@ static void gui_display_loadscreen()
 			}
 			else if ((!config::DojoEnable && !dojo.PlayMatch) || config::Training)
 			{
-				dojo.delay = config::Delay;
+				dojo.delay = (u32)config::Delay.get();
 				if (dojo.delay > 0)
 					dojo.FillDelay(dojo.delay);
 				dojo.LoadOfflineConfig();
