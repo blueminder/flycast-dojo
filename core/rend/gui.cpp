@@ -788,7 +788,8 @@ const DreamcastKey button_keys[] = {
 		DC_BTN_RELOAD, EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT,
 		//DC_CMB_X_Y_A_B, DC_CMB_X_Y_LT, DC_CMB_A_B_RT, DC_CMB_X_A, DC_CMB_Y_B, DC_CMB_LT_RT,
 		//NAOMI_CMB_1_2_3, NAOMI_CMB_4_5_6, NAOMI_CMB_1_4, NAOMI_CMB_2_5, NAOMI_CMB_3_6, NAOMI_CMB_1_2, NAOMI_CMB_2_3, NAOMI_CMB_3_4, NAOMI_CMB_4_5,
-		EMU_BTN_JUMP_STATE, EMU_BTN_QUICK_SAVE, EMU_BTN_SWITCH_PLAYER,
+		//EMU_BTN_JUMP_STATE,
+		EMU_BTN_QUICK_SAVE, EMU_BTN_SWITCH_PLAYER,
 		EMU_BTN_RECORD, EMU_BTN_RECORD_1, EMU_BTN_RECORD_2, EMU_BTN_PLAY, EMU_BTN_PLAY_1, EMU_BTN_PLAY_2
 };
 const char *button_names[] = {
@@ -798,7 +799,8 @@ const char *button_names[] = {
 		"Reload", "Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right",
 		//"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
 		//"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X", "X+Y", "N/A",
-		"Quick Load", "Quick Save", "Switch Player",
+		//"Quick Load",
+		"Quick Save", "Switch Player",
 		"Record 1", "Record 2", "Record 3", "Play 1", "Play 2", "Play 3"
 };
 const char *arcade_button_names[] = {
@@ -808,7 +810,8 @@ const char *arcade_button_names[] = {
 		"Reload", "N/A", "N/A", "N/A", "N/A",
 		//"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		//"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3", "3+4", "4+5",
-		"Quick Load", "Quick Save", "Switch Player",
+		//"Quick Load",
+		"Quick Save", "Switch Player",
 		"Record 1", "Record 2", "Record 3", "Play 1", "Play 2", "Play 3"
 };
 const DreamcastKey axis_keys[] = {
@@ -817,7 +820,8 @@ const DreamcastKey axis_keys[] = {
 		EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT,
 		//EMU_AXIS_CMB_X_Y_A_B, EMU_AXIS_CMB_X_Y_LT, EMU_AXIS_CMB_A_B_RT, EMU_AXIS_CMB_X_A, EMU_AXIS_CMB_Y_B, EMU_AXIS_CMB_LT_RT,
 		//EMU_AXIS_CMB_1_2_3, EMU_AXIS_CMB_4_5_6, EMU_AXIS_CMB_1_4, EMU_AXIS_CMB_2_5, EMU_AXIS_CMB_3_6, EMU_AXIS_CMB_1_2, EMU_AXIS_CMB_2_3, EMU_AXIS_CMB_3_4, EMU_AXIS_CMB_4_5,
-		EMU_AXIS_BTN_JUMP_STATE, EMU_AXIS_BTN_QUICK_SAVE, EMU_AXIS_BTN_SWITCH_PLAYER,
+		//EMU_AXIS_BTN_JUMP_STATE,
+		EMU_AXIS_BTN_QUICK_SAVE, EMU_AXIS_BTN_SWITCH_PLAYER,
 		EMU_AXIS_BTN_RECORD, EMU_AXIS_BTN_RECORD_1, EMU_AXIS_BTN_RECORD_2, EMU_AXIS_BTN_PLAY, EMU_AXIS_BTN_PLAY_1, EMU_AXIS_BTN_PLAY_2
 };
 const char *axis_names[] = {
@@ -826,7 +830,8 @@ const char *axis_names[] = {
 		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A",
 		//"X+Y+A+B", "X+Y+LT", "A+B+RT", "X+A", "Y+B", "LT+RT",
 		//"A+B+X", "N/A", "A+Y", "N/A", "N/A", "A+B", "B+X", "X+Y", "N/A",
-		"Quick Load", "Quick Save", "Switch Player",
+		//"Quick Load",
+		"Quick Save", "Switch Player",
 		"Record 1", "Record 2", "Record 3", "Play 1", "Play 2", "Play 3"
 };
 const char *arcade_axis_names[] = {
@@ -835,7 +840,8 @@ const char *arcade_axis_names[] = {
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
 		//"1+2+3+4", "N/A", "N/A", "1+3", "2+4", "N/A",
 		//"1+2+3", "4+5+6", "1+4", "2+5", "3+6", "1+2", "2+3", "3+4", "4+5",
-		"Quick Load", "Quick Save", "Switch Player",
+		//"Quick Load",
+		"Quick Save", "Switch Player",
 		"Record 1", "Record 2", "Record 3", "Play 1", "Play 2", "Play 3"
 };
 static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");
