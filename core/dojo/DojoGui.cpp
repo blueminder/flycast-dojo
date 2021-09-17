@@ -1081,14 +1081,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			char ServerPort[256];
 			strcpy(ServerPort, config::DojoServerPort.get().c_str());
 
-			if (config::NetplayMethod.get() == "Delay" ||
-				(config::NetplayMethod.get() == "GGPO" && config::EnableMatchCode))
-			{
-				ImGui::InputText(PortTitle.c_str(), ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker(PortDescription.c_str());
-				config::DojoServerPort = ServerPort;
-			}
+			ImGui::InputText(PortTitle.c_str(), ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker(PortDescription.c_str());
+			config::DojoServerPort = ServerPort;
 
 			if (!config::EnableLobby)
 			{
