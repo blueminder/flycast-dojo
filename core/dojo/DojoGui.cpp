@@ -54,6 +54,23 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 				else
 					gui_state = GuiState::Main;
 			}
+			else if (config::GGPOEnable)
+			{
+				if (config::EnableMatchCode)
+				{
+					// use dojo session for match codes & initial handshake
+					dojo.StartDojoSession();
+
+					if (config::ActAsServer)
+						gui_open_host_wait();
+					else
+						gui_open_guest_wait();
+				}
+				else
+				{
+					gui_open_ggpo_join();
+				}
+			}
 			else if (config::DojoActAsServer)
 			{
 				dojo.host_status = 1;
@@ -64,7 +81,9 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 				gui_open_host_wait();
 			}
 			else
+			{
 				gui_open_guest_wait();
+			}
 		}
 
 		/*
