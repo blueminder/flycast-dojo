@@ -105,6 +105,8 @@ void DojoGui::gui_display_host_wait(float scaling)
 	if (config::EnableMatchCode && !config::MatchCode.get().empty())
 	{
 		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
+		ImGui::SameLine();
+		ShowHelpMarker("Match Codes not working?\nTry switching to Direct IP in the settings.");
 		if (ImGui::Button("Copy Match Code"))
 		{
 			SDL_SetClipboardText(config::MatchCode.get().data());
@@ -218,6 +220,13 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    				static char si[128] = "";
    				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+
+					ImGui::SameLine();
+					if (ImGui::Button("Paste"))
+					{
+						char* pasted_txt = SDL_GetClipboardText();
+						memcpy(si, pasted_txt, strlen(pasted_txt));
+					}
 
    				static char sp[128] = "6000";
    				ImGui::InputTextWithHint("Port", "6000", sp, IM_ARRAYSIZE(sp));
@@ -974,6 +983,36 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		}
 
+		if (ImGui::CollapsingHeader("Connection Method", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int cxnMethod;
+			if (!config::EnableMatchCode)
+				cxnMethod = 0;
+			else
+				cxnMethod = 1;
+
+			ImGui::Columns(2, "cxnMethod", false);
+			ImGui::RadioButton("Direct IP", &cxnMethod, 0);
+			ImGui::SameLine();
+			ShowHelpMarker("Connect to IP Address.\nCan either be Public IP or Private IP via LAN.");
+			ImGui::NextColumn();
+			ImGui::RadioButton("Match Codes", &cxnMethod, 1);
+			ImGui::SameLine();
+			ShowHelpMarker("Establishes direct connection via public matchmaking relay.\nWorks with most home routers.");
+			ImGui::NextColumn();
+			ImGui::Columns(1, NULL, false);
+
+			switch (cxnMethod)
+			{
+			case 0:
+				config::EnableMatchCode = false;
+				break;
+			case 1:
+				config::EnableMatchCode = true;
+				break;
+			}
+		}
+
 		if (config::NetplayMethod.get() == "GGPO")
 		{
 			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1038,10 +1077,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			if (!config::EnableLobby)
 			{
-				OptionCheckbox("Enable Internet Matchmaking", config::EnableMatchCode);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable Internet matchmaking. Establishes direct connection via public server relay.");
-
 				if (config::EnableMatchCode)
 				{
 					if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
