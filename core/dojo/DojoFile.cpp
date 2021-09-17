@@ -607,7 +607,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	if (res != CURLE_OK)
 	{
 		fprintf(stderr, "%s\n", curl_easy_strerror(res));
-		if (response_code == 404)
+		if (res == CURLE_REMOTE_FILE_NOT_FOUND || response_code == 404)
 			status_text = filename + " not found. ";
 		else
 			status_text = "Unable to retrieve " + filename + ".";
@@ -617,7 +617,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	}
 
 	of.close();
-	if (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0)
+	if (response_code == 404 || (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0))
 		remove(path.c_str());
 	else
 		status_text = filename + " successfully downloaded.";
