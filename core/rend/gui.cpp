@@ -623,11 +623,24 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 	}
 
+	if (!config::Offline || config::GGPOEnable)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+
 	// Settings
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
 	}
+
+	if (!config::Offline || config::GGPOEnable)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -637,8 +650,11 @@ static void gui_display_commands()
 
 	ImGui::NextColumn();
 
-	if (!config::DojoEnable)
+	if (!config::Offline || config::GGPOEnable)
 	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
 
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
@@ -672,7 +688,11 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 
-	} // if !config::DojoEnable
+	if (!config::Offline || config::GGPOEnable)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
 
 	ImGui::Columns(1, nullptr, false);
 
