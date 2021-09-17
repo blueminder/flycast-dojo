@@ -611,12 +611,13 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 			status_text = filename + " not found. ";
 		else
 			status_text = "Unable to retrieve " + filename + ".";
-		remove(path.c_str());
+		if (file_exists(path.c_str()))
+			remove(path.c_str());
 		download_ended = true;
 	}
 
 	of.close();
-	if (ghc::filesystem::file_size(path) == 0)
+	if (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0)
 		remove(path.c_str());
 	else
 		status_text = filename + " successfully downloaded.";
