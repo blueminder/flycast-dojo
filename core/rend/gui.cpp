@@ -2210,12 +2210,21 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
+#ifdef _WIN32
+    if (config::DojoEnable && config::EnableLobby && !config::Receiving)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
+    else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
+    else if (!config::DojoEnable)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
+#else
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
     else if (!config::DojoEnable)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
+#endif
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
@@ -2237,7 +2246,11 @@ static void gui_display_content()
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 		}
 
+#ifdef _WIN32
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#endif
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
 
@@ -2247,10 +2260,21 @@ static void gui_display_content()
 			ImGui::PopStyleVar();
 		}
 
+#ifdef _WIN32
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
+#else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#endif
 		if (ImGui::Button("Settings"))
 			gui_state = GuiState::Settings;
     }
+
+#ifdef _WIN32
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button("Help"))
+			ShellExecute(0, 0, "http://flycast.dojo.ooo/faq.html", 0, 0 , SW_SHOW );
+#endif
+
     ImGui::PopStyleVar();
 
     scanner.fetch_game_list();
