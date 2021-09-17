@@ -353,6 +353,11 @@ void UDPClient::ClientLoop()
 						opponent_addr.sin_family = AF_INET;
 						opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
 						inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
+
+						host_addr.sin_port = htons((u16)std::stol(opp[1]));
+						inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
+
+						SendPlayerName();
 					}
 					else
 					{
