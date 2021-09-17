@@ -780,8 +780,8 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		ImGui::NewFrame();
 
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - (font_size_1 / 2), 0));
-		ImGui::SetNextWindowSize(ImVec2(font_size_1 + 10, 35));
+		ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - ((font_size_1 + 10) / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size_1 + 25, 35));
 
 		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
 
@@ -806,8 +806,8 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		ImGui::NewFrame();
 
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - (font_size_2 / 2), 0));
-		ImGui::SetNextWindowSize(ImVec2(font_size_2 + 10, 35));
+		ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - ((font_size_2 + 10) / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size_2 + 25, 35));
 
 		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
 
@@ -941,20 +941,16 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 
+		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
+		ImGui::SameLine();
+		ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
 
-		if (config::NetplayMethod.get() == "Delay")
-		{
-			char PlayerName[256] = { 0 };
-			strcpy(PlayerName, config::PlayerName.get().c_str());
-			ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("Name visible to other players");
-			config::PlayerName = std::string(PlayerName, strlen(PlayerName));
-
-			OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
-			ImGui::SameLine();
-			ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");
-		}
+		char PlayerName[256] = { 0 };
+		strcpy(PlayerName, config::PlayerName.get().c_str());
+		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Name visible to other players");
+		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
 		if (ImGui::CollapsingHeader("Netplay Method", ImGuiTreeNodeFlags_DefaultOpen))
 		{

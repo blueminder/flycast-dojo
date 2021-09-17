@@ -2625,7 +2625,7 @@ static void gui_display_content()
 			cfgSaveInt("dojo", "Delay", config::Delay);
 		}
 	}
-	else if (config::DojoEnable && !config::Receiving && config::NetplayMethod.get() != "GGPO")
+	else if (config::DojoEnable && !config::Receiving)
 	{
 		char PlayerName[256] = { 0 };
 		strcpy(PlayerName, config::PlayerName.get().c_str());
