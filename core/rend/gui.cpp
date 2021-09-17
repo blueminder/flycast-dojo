@@ -2860,19 +2860,29 @@ static void gui_display_loadscreen()
 
 			if (config::GGPOEnable)
 			{
-				if (config::EnableMatchCode)
-				{
-					// use dojo session for match codes & initial handshake
-					dojo.StartDojoSession();
+				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
+				dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
 
-					if (config::ActAsServer)
-						gui_open_host_wait();
+				if ((dojo_gui.bios_json_match && dojo_gui.current_json_match) || !config::NetStartVerifyRoms)
+				{
+					if (config::EnableMatchCode)
+					{
+						// use dojo session for match codes & initial handshake
+						dojo.StartDojoSession();
+
+						if (config::ActAsServer)
+							gui_open_host_wait();
+						else
+							gui_open_guest_wait();
+					}
 					else
-						gui_open_guest_wait();
+					{
+						gui_open_ggpo_join();
+					}
 				}
 				else
 				{
-					gui_open_ggpo_join();
+					gui_open_bios_rom_warning();
 				}
 			}
 			else if (config::DojoEnable || dojo.PlayMatch)
@@ -2898,7 +2908,7 @@ static void gui_display_loadscreen()
 				}
 				else
 				{
-					if (dojo_gui.bios_json_match && dojo_gui.current_json_match)
+					if (dojo_gui.bios_json_match && dojo_gui.current_json_match || !config::NetStartVerifyRoms)
 					{
 						if (config::DojoActAsServer)
 						{
