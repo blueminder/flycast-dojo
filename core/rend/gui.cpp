@@ -2640,6 +2640,11 @@ static void gui_display_content()
 		ImGui::SameLine();
 		ShowHelpMarker("Name visible to other players");
 		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
+
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
+		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nRight-click entry to download a new one.");
+		ImGui::PopStyleColor();
 	}
 	else
 	{
