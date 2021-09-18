@@ -2639,7 +2639,13 @@ static void gui_display_content()
 		ImGui::InputText("Player Name", PlayerName, sizeof(PlayerName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 		ImGui::SameLine();
 		ShowHelpMarker("Name visible to other players");
-		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
+
+		auto player_name = std::string(PlayerName, strlen(PlayerName));
+		if (player_name != config::PlayerName.get())
+		{
+			config::PlayerName = player_name;
+			cfgSaveStr("dojo", "PlayerName", config::PlayerName);
+		}
 
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
