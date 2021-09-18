@@ -114,6 +114,7 @@ OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
+Option<int> GGPOPort("GGPOPort", 19713, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");

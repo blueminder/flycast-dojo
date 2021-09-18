@@ -1092,6 +1092,16 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			if (config::NetplayMethod.get() == "GGPO")
+			{
+				int GGPOPort = config::GGPOPort.get();
+				ImGui::InputInt("GGPO Port", &GGPOPort);
+				ImGui::SameLine();
+				ShowHelpMarker("The GGPO server port to listen on");
+				if (GGPOPort != config::GGPOPort.get())
+					config::GGPOPort = GGPOPort;
+			}
+
 			std::string PortTitle;
 			std::string PortDescription;
 
