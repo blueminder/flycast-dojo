@@ -555,6 +555,7 @@ std::string DojoFile::DownloadNetSave(std::string rom_name)
 	auto state_file = rom_name + ".state";
 	auto net_state_file = state_file + ".net";
 	auto net_state_url = net_state_base + net_state_file;
+	stringfix::replace(net_state_url, " ", "%20");
 
 	status_text = "Downloading netplay savestate for " + rom_name + ".";
 
@@ -604,6 +605,8 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		curl_easy_cleanup(curl);
 	}
 
+	stringfix::replace(filename, "%20", " ");
+
 	if (res != CURLE_OK)
 	{
 		fprintf(stderr, "%s\n", curl_easy_strerror(res));
@@ -617,6 +620,14 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	}
 
 	of.close();
+
+	if (file_exists(path.c_str()))
+	{
+		std::string old_path = path;
+		stringfix::replace(path, "%20", " ");
+		rename(old_path.c_str(), path.c_str());
+	}
+
 	if (response_code == 404 || (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0))
 		remove(path.c_str());
 	else
