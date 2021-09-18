@@ -554,6 +554,7 @@ extern OptionString NetplayMethod;
 extern OptionString NetSaveBase;
 extern Option<bool> Offline;
 extern Option<bool> NetStartVerifyRoms;
+extern Option<bool> ShowPublicIP;
 
 // Maple
 

@@ -62,6 +62,7 @@ public:
 	bool bios_json_match = true;
 
 	bool hide_playback_menu = false;
+	std::string current_public_ip = "";
 };
 
 extern DojoGui dojo_gui;

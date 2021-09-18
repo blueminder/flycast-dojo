@@ -329,7 +329,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		static char si[128] = "";
-		std::string detect_address;
+		std::string detect_address = "";
 
 		if (config::EnableMatchCode)
 		{
@@ -338,7 +338,30 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 		else
 		{
-			ImGui::Text("Enter GGPO Opponent Details");
+			if (config::ShowPublicIP)
+			{
+				static char external_ip[128] = "";
+				if (current_public_ip.empty())
+				{
+					current_public_ip = dojo.GetExternalIP();
+					const char* external = current_public_ip.data();
+					memcpy(external_ip, external, strlen(external));
+				}
+
+				ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
+				ImGui::Text("Your Public IP: ");
+				ImGui::SameLine();
+				ImGui::TextDisabled("%s", external_ip);
+				ImGui::PopStyleColor();
+				ImGui::SameLine();
+				ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
+
+				ImGui::SameLine();
+				if (ImGui::Button("Copy"))
+				{
+					SDL_SetClipboardText(current_public_ip.data());
+				}
+			}
 
 			ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 			detect_address = std::string(si);
@@ -1030,6 +1053,11 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (config::NetplayMethod.get() == "GGPO")
 		{
+			if (!config::EnableMatchCode)
+			{
+				OptionCheckbox("Show Public IP on Connection Dialog", config::ShowPublicIP);
+			}
+
 			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				OptionCheckbox("Enable UPnP for GGPO", config::GGPOEnableUPnP);

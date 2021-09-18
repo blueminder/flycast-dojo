@@ -1414,5 +1414,46 @@ void DojoSession::ResetTraining()
 	}
 }
 
+size_t ipWriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
+    data->append((char*) ptr, size * nmemb);
+    return size * nmemb;
+}
+
+std::string DojoSession::GetExternalIP()
+{
+	auto curl = curl_easy_init();
+	std::string response_string = "";
+
+	if (curl) {
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+		curl_easy_setopt(curl, CURLOPT_URL, "https://myexternalip.com/raw");
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+
+		std::string header_string;
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ipWriteFunction);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
+		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header_string);
+
+		char* url;
+		long response_code;
+		double elapsed;
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &elapsed);
+		curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
+
+		curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+		curl = NULL;
+	}
+
+	std::cout << response_string << std::endl;
+	return response_string;
+}
+
 DojoSession dojo;
 

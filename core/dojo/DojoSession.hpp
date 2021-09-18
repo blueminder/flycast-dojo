@@ -32,6 +32,9 @@
 #include "MessageWriter.hpp"
 #include "MessageReader.hpp"
 
+#include <curl/curl.h>
+#include <curl/easy.h>
+
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
 #define HEADER_SIZE 256
@@ -258,6 +261,8 @@ public:
 	MessageWriter replay_msg;
 
 	bool received_player_info;
+
+	std::string GetExternalIP();
 };
 
 extern DojoSession dojo;
