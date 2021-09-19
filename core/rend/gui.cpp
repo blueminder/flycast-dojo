@@ -840,6 +840,8 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },
 	{ EMU_BTN_SWITCH_PLAYER, "Switch Player" },
 	{ EMU_BTN_RECORD, "Record 1" },
@@ -895,6 +897,8 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },
 	{ EMU_BTN_SWITCH_PLAYER, "Switch Player" },
 	{ EMU_BTN_RECORD, "Record 1" },

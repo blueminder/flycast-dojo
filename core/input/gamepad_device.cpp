@@ -29,6 +29,8 @@
 #include <climits>
 #include <fstream>
 
+#include "dojo/DojoSession.hpp"
+
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
 // Gamepads
@@ -42,6 +44,7 @@ u8 lt[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
+bool loading_state;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
@@ -93,7 +96,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
 				break;
 			case EMU_BTN_JUMP_STATE:
-				if (pressed && !loading_state)
+				if (pressed && !loading_state && config::Offline)
 				{
 					loading_state = true;
 					bool dojo_invoke = config::DojoEnable.get();
@@ -102,7 +105,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				}
 				break;
 			case EMU_BTN_QUICK_SAVE:
-				if (pressed && (!config::DojoEnable || config::Training))
+				if (pressed && (config::Offline || config::Training))
 				{
 					dc_savestate();
 				}
