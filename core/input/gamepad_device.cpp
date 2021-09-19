@@ -29,8 +29,6 @@
 #include <climits>
 #include <fstream>
 
-#include "dojo/DojoSession.hpp"
-
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
 // Gamepads
@@ -44,7 +42,6 @@ u8 lt[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
-bool loading_state;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
@@ -56,7 +53,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (_input_detected != nullptr && _detecting_button
 			&& os_GetSeconds() >= _detection_start_time && pressed)
 	{
-		_input_detected(code);
+		_input_detected(code, false, false);
 		_input_detected = nullptr;
 		return true;
 	}
@@ -152,135 +149,30 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 					dojo.TrainingSwitchPlayer();
 				}
 				break;
-			case EMU_BTN_TRIGGER_LEFT:
+			case DC_AXIS_LT:
 				lt[port] = pressed ? 255 : 0;
 				break;
-			case EMU_BTN_TRIGGER_RIGHT:
+			case DC_AXIS_RT:
 				rt[port] = pressed ? 255 : 0;
-				break;
-			case EMU_BTN_ANA_UP:
-			case EMU_BTN_ANA_DOWN:
-				{
-					if (pressed)
-						digitalToAnalogState[port] |= key;
-					else
-						digitalToAnalogState[port] &= ~key;
-					const u32 upDown = digitalToAnalogState[port] & (EMU_BTN_ANA_UP | EMU_BTN_ANA_DOWN);
-					if (upDown == 0 || upDown == (EMU_BTN_ANA_UP | EMU_BTN_ANA_DOWN))
-						joyy[port] = 0;
-					else if (upDown == EMU_BTN_ANA_UP)
-						joyy[port] = -128;
-					else
-						joyy[port] = 127;
-				}
-				break;
-			case EMU_BTN_ANA_LEFT:
-			case EMU_BTN_ANA_RIGHT:
-			{
-				if (pressed)
-					digitalToAnalogState[port] |= key;
-				else
-					digitalToAnalogState[port] &= ~key;
-				const u32 leftRight = digitalToAnalogState[port] & (EMU_BTN_ANA_LEFT | EMU_BTN_ANA_RIGHT);
-				if (leftRight == 0 || leftRight == (EMU_BTN_ANA_LEFT | EMU_BTN_ANA_RIGHT))
-					joyx[port] = 0;
-				else if (leftRight == EMU_BTN_ANA_LEFT)
-					joyx[port] = -128;
-				else
-					joyx[port] = 127;
-			}
-				break;
-			case DC_CMB_X_Y_A_B:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
-				else
-					kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
-				break;
-			case DC_CMB_X_Y_LT:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-				else
-					kcode[port] |= (DC_BTN_X | DC_BTN_Y);
-				lt[port] = pressed ? 255 : 0;
-				break;
-			case DC_CMB_A_B_RT:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-				else
-					kcode[port] |= (DC_BTN_A | DC_BTN_B);
-				rt[port] = pressed ? 255 : 0;
-				break;
-			case DC_CMB_X_A:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
-				else
-					kcode[port] |= (DC_BTN_X | DC_BTN_A);
-				break;
-			case DC_CMB_Y_B:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
-				else
-					kcode[port] |= (DC_BTN_Y | DC_BTN_B);
-				break;
-			case DC_CMB_LT_RT:
-				lt[port] = pressed ? 255 : 0;
-				rt[port] = pressed ? 255 : 0;
-				break;
-			case NAOMI_CMB_1_2_3:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
-				else
-					kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
-				break;
-			case NAOMI_CMB_4_5:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP);
-				else
-					kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP);
-				break;
-			case NAOMI_CMB_4_5_6:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
-				else
-					kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
-				break;
-			case NAOMI_CMB_1_4:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
-				else
-					kcode[port] |= (DC_BTN_A | DC_BTN_Y);
-				break;
-			case NAOMI_CMB_2_5:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
-				else
-					kcode[port] |= (DC_BTN_B | DC_DPAD2_UP);
-				break;
-			case NAOMI_CMB_3_4:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-				else
-					kcode[port] |= (DC_BTN_X | DC_BTN_Y);
 				break;
 
-			case NAOMI_CMB_3_6:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
-				else
-					kcode[port] |= (DC_BTN_X | DC_DPAD2_DOWN);
+			case DC_AXIS_UP:
+			case DC_AXIS_DOWN:
+				buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
 				break;
-			case NAOMI_CMB_1_2:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-				else
-					kcode[port] |= (DC_BTN_A | DC_BTN_B);
+			case DC_AXIS_LEFT:
+			case DC_AXIS_RIGHT:
+				buttonToAnalogInput<DC_AXIS_LEFT, DIGANA_LEFT, DIGANA_RIGHT>(port, key, pressed, joyx[port]);
 				break;
-			case NAOMI_CMB_2_3:
-				if (pressed)
-					kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
-				else
-					kcode[port] |= (DC_BTN_B | DC_BTN_X);
+			case DC_AXIS2_UP:
+			case DC_AXIS2_DOWN:
+				buttonToAnalogInput<DC_AXIS2_UP, DIGANA2_UP, DIGANA2_DOWN>(port, key, pressed, joyry[port]);
 				break;
+			case DC_AXIS2_LEFT:
+			case DC_AXIS2_RIGHT:
+				buttonToAnalogInput<DC_AXIS2_LEFT, DIGANA2_LEFT, DIGANA2_RIGHT>(port, key, pressed, joyrx[port]);
+				break;
+
 			default:
 				return false;
 			}
@@ -309,404 +201,71 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	return rc;
 }
 
+//
+// value must be >= -32768 and <= 32767 for full axes
+// and 0 to 32767 for half axes/triggers
+//
 bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
-	s32 v;
-	if (input_mapper->get_axis_inverted(0, code))
-		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
-	else
-		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... +127 range
-	if (_input_detected != NULL && !_detecting_button
-			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
+	bool positive = value >= 0;
+	if (_input_detected != NULL && _detecting_axis
+			&& os_GetSeconds() >= _detection_start_time && std::abs(value) >= 16384)
 	{
-		_input_detected(code);
-		_input_detected = NULL;
+		_input_detected(code, true, positive);
+		_input_detected = nullptr;
 		return true;
 	}
 	if (!input_mapper || _maple_port < 0 || _maple_port > 4)
 		return false;
 
-	auto handle_axis = [&](u32 port, DreamcastKey key)
+	auto handle_axis = [&](u32 port, DreamcastKey key, int v)
 	{
-		// Combinations
-		if (key == EMU_AXIS_CMB_X_Y_A_B)
+		if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_TRIGGERS)	// Triggers
 		{
-			kcode[port] |= DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B |
-				(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_X_Y_LT)
-		{
-			kcode[port] |= DC_BTN_X | DC_BTN_Y | (DC_BTN_X | DC_BTN_Y << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_X | DC_BTN_Y) << 1);
-				lt[port] = 0;
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-				lt[port] = 255;
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_A_B_RT)
-		{
-			kcode[port] |= DC_BTN_A | DC_BTN_B | (DC_BTN_A | DC_BTN_B << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_A | DC_BTN_B) << 1);
-				rt[port] = 0;
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-				rt[port] = 255;
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_X_A)
-		{
-			kcode[port] |= DC_BTN_X | DC_BTN_A | (DC_BTN_X | DC_BTN_A << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_X | DC_BTN_A) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_Y_B)
-		{
-			kcode[port] |= DC_BTN_Y | DC_BTN_B | (DC_BTN_Y | DC_BTN_B << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_Y | DC_BTN_B) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_LT_RT)
-		{
-			if (v <= -64)
-			{
-				lt[port] = 0;
-				rt[port] = 0;
-			}
-			else if (v >= 64)
-			{
-				lt[port] = 255;
-				rt[port] = 255;
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_1_2_3)
-		{
-			kcode[port] |= DC_BTN_A | DC_BTN_B | DC_BTN_X | (DC_BTN_A | DC_BTN_B | DC_BTN_X << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_A | DC_BTN_B | DC_BTN_X) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_4_5)
-		{
-			kcode[port] |= DC_BTN_Y | DC_DPAD2_UP | (DC_BTN_Y | DC_DPAD2_UP << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_Y | DC_DPAD2_UP ) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_4_5_6)
-		{
-			kcode[port] |= DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN | (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_1_4)
-		{
-			kcode[port] |= DC_BTN_A | DC_BTN_Y | (DC_BTN_A | DC_BTN_Y << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_A | DC_BTN_Y) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_2_5)
-		{
-			kcode[port] |= DC_BTN_B | DC_DPAD2_UP | (DC_BTN_B | DC_DPAD2_UP << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_B | DC_DPAD2_UP) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_3_4)
-		{
-			kcode[port] |= DC_BTN_X | DC_BTN_Y | (DC_BTN_X | DC_BTN_Y << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_X | DC_BTN_Y) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-			}
-			return true;
-		}
-
-
-
-		if (key == EMU_AXIS_CMB_3_6)
-		{
-			kcode[port] |= DC_BTN_X | DC_DPAD2_DOWN | (DC_BTN_X | DC_DPAD2_DOWN << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_X | DC_DPAD2_DOWN) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_1_2)
-		{
-			kcode[port] |= DC_BTN_A | DC_BTN_B | (DC_BTN_A | DC_BTN_B << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_A | DC_BTN_B) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_CMB_2_3)
-		{
-			kcode[port] |= DC_BTN_B | DC_BTN_X | (DC_BTN_B | DC_BTN_X << 1);
-			if (v <= -64)
-			{
-				kcode[port] |= ~((DC_BTN_B | DC_BTN_X) << 1);
-			}
-			else if (v >= 64)
-			{
-				kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_JUMP_STATE)
-		{
-			if (v >= 64)
-			{
-				if (config::Training ||
-					config::DojoEnable && config::EnableSessionQuickLoad ||
-					!config::DojoEnable)
-				{
-					if (!loading_state)
-					{
-						loading_state = true;
-						bool dojo_invoke = config::DojoEnable.get();
-						invoke_jump_state(dojo_invoke);
-						loading_state = false;
-					}
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_QUICK_SAVE)
-		{
-			if (v >= 64)
-			{
-				if (!config::DojoEnable || config::Training)
-				{
-					dc_savestate();
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_PLAY)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.TogglePlayback(0);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_RECORD)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.ToggleRecording(0);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_PLAY_1)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.TogglePlayback(1);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_RECORD_1)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.ToggleRecording(1);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_PLAY_2)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.TogglePlayback(2);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_RECORD_2)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.ToggleRecording(2);
-				}
-			}
-			return true;
-		}
-
-		if (key == EMU_AXIS_BTN_SWITCH_PLAYER)
-		{
-			if (v >= 64)
-			{
-				if (config::Training)
-				{
-					dojo.TrainingSwitchPlayer();
-				}
-			}
-			return true;
-		}
-
-		if ((int)key < 0x10000)
-		{
-			kcode[port] |= key | (key << 1);
-			if (v <= -64)
-				kcode[port] &= ~key;
-			else if (v >= 64)
-				kcode[port] &= ~(key << 1);
-
-			// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
-		}
-		else if (((int)key >> 16) == 1)	// Triggers
-		{
-			//printf("T-AXIS %d Mapped to %d -> %d\n",key, value, v + 128);
-
+			//printf("T-AXIS %d Mapped to %d -> %d\n", key, value, std::min(std::abs(v) >> 7, 255));
 			if (key == DC_AXIS_LT)
-				lt[port] = (u8)(v + 128);
+				lt[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_RT)
-				rt[port] = (u8)(v + 128);
+				rt[port] = std::min(std::abs(v) >> 7, 255);
 			else
 				return false;
 		}
-		else if (((int)key >> 16) == 2) // Analog axes
+		else if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_STICKS) // Analog axes
 		{
 			//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
 			s8 *this_axis;
 			s8 *other_axis;
+			int axisDirection = -1;
 			switch (key)
 			{
-			case DC_AXIS_X:
+			case DC_AXIS_RIGHT:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS_LEFT:
 				this_axis = &joyx[port];
 				other_axis = &joyy[port];
 				break;
 
-			case DC_AXIS_Y:
+			case DC_AXIS_DOWN:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS_UP:
 				this_axis = &joyy[port];
 				other_axis = &joyx[port];
 				break;
 
-			case DC_AXIS_X2:
+			case DC_AXIS2_RIGHT:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS2_LEFT:
 				this_axis = &joyrx[port];
 				other_axis = &joyry[port];
 				break;
 
-			case DC_AXIS_Y2:
+			case DC_AXIS2_DOWN:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS2_UP:
 				this_axis = &joyry[port];
 				other_axis = &joyrx[port];
 				break;
@@ -716,20 +275,31 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
+			v = std::min(127, std::abs(v >> 8));
 			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
 			{
 				*this_axis = 0;
 				*other_axis = 0;
 			}
 			else
-				*this_axis = (s8)v;
+				*this_axis = v * axisDirection;
 		}
-		else if (((int)key >> 16) == 4) // Map triggers to digital buttons
+		else if (key != EMU_BTN_NONE && key <= DC_BTN_RELOAD) // Map triggers to digital buttons
 		{
-			if (v <= -64)
-				kcode[port] |=  (key & ~0x40000); // button released
-			else if (v >= 64)
-				kcode[port] &= ~(key & ~0x40000); // button pressed
+			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
+			// TODO hysteresis?
+			if (std::abs(v) < 16384)
+				kcode[port] |=  key; // button released
+			else
+				kcode[port] &= ~key; // button pressed
+		}
+		else if ((key & DC_BTN_GROUP_MASK) == EMU_BUTTONS) // Map triggers to emu buttons
+		{
+			// TODO hysteresis?
+			if (std::abs(v) < 16384)
+				gamepad_btn_input(key, false); // button released
+			else
+				gamepad_btn_input(key, true); // button pressed
 		}
 		else
 			return false;
@@ -742,39 +312,22 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	{
 		for (u32 port = 0; port < 4; port++)
 		{
-			DreamcastKey key = input_mapper->get_axis_id(port, code);
-			rc = handle_axis(port, key) || rc;
+			DreamcastKey key = input_mapper->get_axis_id(port, code, !positive);
+			handle_axis(port, key, 0);
+			key = input_mapper->get_axis_id(port, code, positive);
+			rc = handle_axis(port, key, value) || rc;
 		}
 	}
 	else
 	{
-		DreamcastKey key = input_mapper->get_axis_id(0, code);
-		rc = handle_axis(_maple_port, key);
+		DreamcastKey key = input_mapper->get_axis_id(0, code, !positive);
+		// Reset opposite axis to 0
+		handle_axis(_maple_port, key, 0);
+		key = input_mapper->get_axis_id(0, code, positive);
+		rc = handle_axis(_maple_port, key, value);
 	}
 
 	return rc;
-}
-
-int GamepadDevice::get_axis_min_value(u32 axis) {
-	auto it = axis_min_values.find(axis);
-	if (it == axis_min_values.end()) {
-		load_axis_min_max(axis);
-		it = axis_min_values.find(axis);
-		if (it == axis_min_values.end())
-			return INT_MIN;
-	}
-	return it->second;
-}
-
-unsigned int GamepadDevice::get_axis_range(u32 axis) {
-	auto it = axis_ranges.find(axis);
-	if (it == axis_ranges.end()) {
-		load_axis_min_max(axis);
-		it = axis_ranges.find(axis);
-		if (it == axis_ranges.end())
-			return UINT_MAX;
-	}
-	return it->second;
 }
 
 std::string GamepadDevice::make_mapping_filename(bool instance)
@@ -798,20 +351,22 @@ std::string GamepadDevice::make_mapping_filename(bool instance)
 
 void GamepadDevice::verify_or_create_system_mappings()
 {
-	std::string dc_name = make_mapping_filename(false);
-	std::string arcade_name = make_mapping_filename(false, DC_PLATFORM_NAOMI);
+	std::string dc_name = make_mapping_filename(false, 0);
+	std::string arcade_name = make_mapping_filename(false, 2);
 
 	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
 	std::string arcade_path = get_readonly_config_path(std::string("mappings/") + arcade_name);
 
 	if (!file_exists(arcade_path))
 	{
-		save_mapping(DC_PLATFORM_NAOMI);
+		resetMappingToDefault(true, true);
+		save_mapping(2);
 		input_mapper->ClearMappings();
 	}
 	if (!file_exists(dc_path))
 	{
-		save_mapping(DC_PLATFORM_DREAMCAST);
+		resetMappingToDefault(false, false);
+		save_mapping(0);
 		input_mapper->ClearMappings();
 	}
 
@@ -855,21 +410,10 @@ bool GamepadDevice::find_mapping(int system)
 	std::string mapping_file;
 	mapping_file = make_mapping_filename(false, system);
 
-	// if legacy dc mapping name is used, rename to default
-	std::string arcade_name = make_mapping_filename(false, 2);
-	size_t postfix_loc = arcade_name.find("_arcade");
-	std::string old_dc_name = arcade_name.substr(0, postfix_loc) + "_dc.cfg";
-
-	std::string old_dc_path = get_readonly_config_path(std::string("mappings/") + old_dc_name);
-	std::string dc_path = get_readonly_config_path(std::string("mappings/") + make_mapping_filename(false));
-
-	if (file_exists(old_dc_path))
-	{
-		if (file_exists(dc_path))
-			remove(dc_path.data());
-
-		rename(old_dc_path.data(), dc_path.data());
-	}
+	// fall back on default flycast mapping filename if system profile not found
+	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+	if (!file_exists(system_mapping_path))
+		mapping_file = make_mapping_filename(false);
 
 	std::shared_ptr<InputMapping> mapper = InputMapping::LoadMapping(mapping_file.c_str());
 
@@ -950,6 +494,7 @@ void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
 {
 	_input_detected = button_pressed;
 	_detecting_button = true;
+	_detecting_axis = false;
 	_detection_start_time = os_GetSeconds() + 0.2;
 }
 
@@ -957,6 +502,15 @@ void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 {
 	_input_detected = axis_moved;
 	_detecting_button = false;
+	_detecting_axis = true;
+	_detection_start_time = os_GetSeconds() + 0.2;
+}
+
+void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
+{
+	_input_detected = input_changed;
+	_detecting_button = true;
+	_detecting_axis = true;
 	_detection_start_time = os_GetSeconds() + 0.2;
 }
 
