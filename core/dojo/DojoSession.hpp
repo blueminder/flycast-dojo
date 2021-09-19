@@ -35,6 +35,8 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "network/miniupnp.h"
+
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
 #define HEADER_SIZE 256
@@ -263,6 +265,11 @@ public:
 	bool received_player_info;
 
 	std::string GetExternalIP();
+
+	MiniUPnP miniupnp;
+	bool upnp_started;
+	void StartUPnP();
+	void StopUPnP();
 };
 
 extern DojoSession dojo;

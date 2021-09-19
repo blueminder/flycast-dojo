@@ -1060,10 +1060,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				OptionCheckbox("Enable UPnP for GGPO", config::GGPOEnableUPnP);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable Universal Plug & Play for GGPO game sessions.");
-
 				OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
 					"Display network statistics on screen");
 
@@ -1092,6 +1088,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			OptionCheckbox("Enable UPnP", config::EnableUPnP);
+			ImGui::SameLine();
+			ShowHelpMarker("Enable Universal Plug & Play for game sessions.");
+
 			if (config::NetplayMethod.get() == "GGPO")
 			{
 				int GGPOPort = config::GGPOPort.get();
@@ -1128,7 +1128,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			{
 				if (config::EnableMatchCode)
 				{
-					if (ImGui::CollapsingHeader("Internet Matchmaking", ImGuiTreeNodeFlags_DefaultOpen))
+					if (ImGui::CollapsingHeader("Match Codes", ImGuiTreeNodeFlags_DefaultOpen))
 					{
 						char MatchmakingServerAddress[256];
 

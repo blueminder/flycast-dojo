@@ -95,6 +95,7 @@ void DojoSession::Init()
 	MessageWriter replay_msg;
 
 	received_player_info = false;
+	upnp_started = false;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
@@ -1453,6 +1454,26 @@ std::string DojoSession::GetExternalIP()
 
 	std::cout << response_string << std::endl;
 	return response_string;
+}
+
+void DojoSession::StartUPnP()
+{
+	if (upnp_started)
+		return;
+
+	miniupnp.Init();
+	miniupnp.AddPortMapping(std::stoi(config::DojoServerPort.get()), false);
+
+	if (config::NetplayMethod.get() == "GGPO")
+		miniupnp.AddPortMapping(config::GGPOPort.get(), false);
+
+	upnp_started = true;
+}
+
+void DojoSession::StopUPnP()
+{
+	if (upnp_started)
+		miniupnp.Term();
 }
 
 DojoSession dojo;

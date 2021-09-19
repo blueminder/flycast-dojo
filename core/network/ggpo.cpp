@@ -54,7 +54,6 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <numeric>
 #include <xxhash.h>
 #include "imgui/imgui.h"
-#include "miniupnp.h"
 
 //#define SYNC_TEST 1
 
@@ -75,7 +74,6 @@ static int msPerFrameIndex;
 static time_point<steady_clock> lastFrameTime;
 static int msPerFrameAvg;
 static bool _endOfFrame;
-static MiniUPnP miniupnp;
 
 struct MemPages
 {
@@ -431,8 +429,6 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
-	if (config::GGPOEnableUPnP)
-		miniupnp.Term();
 	dc_set_network_state(false);
 }
 
@@ -563,12 +559,6 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
-			if (config::GGPOEnableUPnP)
-			{
-				miniupnp.Init();
-				miniupnp.AddPortMapping(config::GGPOPort.get(), false);
-			}
-
 			if (config::ActAsServer)
 				startSession(config::GGPOPort.get(), 0);
 			else

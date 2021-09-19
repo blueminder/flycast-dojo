@@ -492,10 +492,10 @@ extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<bool> EmulateBBA;
+extern Option<bool> EnableUPnP;
 extern Option<bool> GGPOEnable;
 extern Option<int> GGPOPort;
 extern Option<int> GGPODelay;
-extern Option<bool> GGPOEnableUPnP;
 extern Option<bool> NetworkStats;
 extern Option<int> GGPOAnalogAxes;
 

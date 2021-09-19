@@ -97,6 +97,8 @@ static void emuEventCallback(Event event)
 		}
 		break;
 	case Event::Terminate:
+		if (config::EnableUPnP)
+			dojo.StopUPnP();
 		if (!config::DojoEnable && config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
 			dc_savestate(config::SavestateSlot);
 		break;
@@ -272,7 +274,10 @@ void gui_init()
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
 	if (config::TestGame)
+	{
+		config::Offline = true;
 		gui_state = GuiState::TestGame;
+	}
 	else
 		gui_state = GuiState::Main;
 
@@ -471,6 +476,8 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+
+
 	if (config::GGPOEnable && !config::ActAsServer)
 	{
 		// switch ports if ggpo guest
@@ -2875,6 +2882,14 @@ static void gui_display_loadscreen()
 	{
 		try {
 			dc_get_load_status();
+
+			if (!config::Offline && config::EnableUPnP)
+			{
+				std::thread s([&]() {
+						dojo.StartUPnP();
+				});
+				s.detach();
+			}
 
 			if (config::GGPOEnable)
 			{
