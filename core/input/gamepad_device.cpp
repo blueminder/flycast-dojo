@@ -178,46 +178,46 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case EMU_CMB_1_2_3:
 			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_C);
 			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
+				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_C);
 			break;
 		case EMU_CMB_4_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP);
-			else
-				kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP);
-			break;
-		case EMU_CMB_4_5_6:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
-			else
-				kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
-			break;
-		case EMU_CMB_1_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
-			break;
-		case EMU_CMB_2_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
-			else
-				kcode[port] |= (DC_BTN_B | DC_DPAD2_UP);
-			break;
-		case EMU_CMB_3_4:
 			if (pressed && !gui_is_open())
 				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
 			else
 				kcode[port] |= (DC_BTN_X | DC_BTN_Y);
 			break;
+		case EMU_CMB_4_5_6:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_Z);
+			else
+				kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_Z);
+			break;
+		case EMU_CMB_1_4:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_X);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_X);
+			break;
+		case EMU_CMB_2_5:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_B | DC_BTN_Y);
+			else
+				kcode[port] |= (DC_BTN_B | DC_BTN_Y);
+			break;
+		case EMU_CMB_3_4:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_C | DC_BTN_X);
+			else
+				kcode[port] |= (DC_BTN_C | DC_BTN_X);
+			break;
 
 		case EMU_CMB_3_6:
 			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
+				kcode[port] &= ~(DC_BTN_C | DC_BTN_Z);
 			else
-				kcode[port] |= (DC_BTN_X | DC_DPAD2_DOWN);
+				kcode[port] |= (DC_BTN_C | DC_BTN_Z);
 			break;
 		case EMU_CMB_1_2:
 			if (pressed && !gui_is_open())
@@ -227,15 +227,15 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case EMU_CMB_2_3:
 			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
+				kcode[port] &= ~(DC_BTN_B | DC_BTN_C);
 			else
-				kcode[port] |= (DC_BTN_B | DC_BTN_X);
+				kcode[port] |= (DC_BTN_B | DC_BTN_C);
 			break;
 		case EMU_CMB_1_2_4:
 			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_Y);
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
 			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_Y);
+				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
 			break;
 		case DC_AXIS_LT:
 			lt[port] = pressed ? 255 : 0;
