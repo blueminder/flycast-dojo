@@ -64,6 +64,22 @@ button_list[] =
 	{ DC_AXIS_LEFT, "compat", "btn_analog_left" },
 	{ DC_AXIS_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
+	{ EMU_CMB_X_Y_A_B, "emulator", "cmb_x_y_a_b" },
+	{ EMU_CMB_X_Y_LT, "emulator", "cmb_x_y_lt" },
+	{ EMU_CMB_A_B_RT, "emulator", "cmb_a_b_rt" },
+	{ EMU_CMB_X_A, "emulator", "cmb_x_a" },
+	{ EMU_CMB_Y_B, "emulator", "cmb_y_b" },
+	{ EMU_CMB_LT_RT, "emulator", "cmb_lt_rt" },
+	{ EMU_CMB_1_2_3, "emulator", "cmb_1_2_3" },
+	{ EMU_CMB_4_5, "emulator", "cmb_4_5" },
+	{ EMU_CMB_4_5_6, "emulator", "cmb_4_5_6" },
+	{ EMU_CMB_1_4, "emulator", "cmb_1_4" },
+	{ EMU_CMB_2_5, "emulator", "cmb_2_5" },
+	{ EMU_CMB_3_4, "emulator", "cmb_3_4" },
+	{ EMU_CMB_3_6, "emulator", "cmb_3_6" },
+	{ EMU_CMB_1_2, "emulator", "cmb_1_2" },
+	{ EMU_CMB_2_3, "emulator", "cmb_2_3" },
+	{ EMU_CMB_1_2_4, "emulator", "cmb_1_2_4" },
 };
 
 static struct

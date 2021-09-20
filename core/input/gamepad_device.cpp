@@ -140,6 +140,103 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				dojo.TrainingSwitchPlayer();
 			}
 			break;
+		case EMU_CMB_X_Y_A_B:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+			else
+				kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+			break;
+		case EMU_CMB_X_Y_LT:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
+			else
+				kcode[port] |= (DC_BTN_X | DC_BTN_Y);
+			lt[port] = pressed ? 255 : 0;
+			break;
+		case EMU_CMB_A_B_RT:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_B);
+			rt[port] = pressed ? 255 : 0;
+			break;
+		case EMU_CMB_X_A:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
+			else
+				kcode[port] |= (DC_BTN_X | DC_BTN_A);
+			break;
+		case EMU_CMB_Y_B:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
+			else
+				kcode[port] |= (DC_BTN_Y | DC_BTN_B);
+			break;
+		case EMU_CMB_LT_RT:
+			lt[port] = pressed ? 255 : 0;
+			rt[port] = pressed ? 255 : 0;
+			break;
+		case EMU_CMB_1_2_3:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
+			break;
+		case EMU_CMB_4_5:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP);
+			else
+				kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP);
+			break;
+		case EMU_CMB_4_5_6:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
+			else
+				kcode[port] |= (DC_BTN_Y | DC_DPAD2_UP | DC_DPAD2_DOWN);
+			break;
+		case EMU_CMB_1_4:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
+			break;
+		case EMU_CMB_2_5:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_B | DC_DPAD2_UP);
+			else
+				kcode[port] |= (DC_BTN_B | DC_DPAD2_UP);
+			break;
+		case EMU_CMB_3_4:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
+			else
+				kcode[port] |= (DC_BTN_X | DC_BTN_Y);
+			break;
+
+		case EMU_CMB_3_6:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_X | DC_DPAD2_DOWN);
+			else
+				kcode[port] |= (DC_BTN_X | DC_DPAD2_DOWN);
+			break;
+		case EMU_CMB_1_2:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_B);
+			break;
+		case EMU_CMB_2_3:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
+			else
+				kcode[port] |= (DC_BTN_B | DC_BTN_X);
+			break;
+		case EMU_CMB_1_2_4:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_Y);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_Y);
+			break;
 		case DC_AXIS_LT:
 			lt[port] = pressed ? 255 : 0;
 			break;

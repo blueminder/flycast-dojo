@@ -851,6 +851,24 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_PLAY_1, "Play 2" },
 	{ EMU_BTN_PLAY_2, "Play 3" },
 
+	{ EMU_BTN_NONE, "Macros" },
+	{ EMU_CMB_X_Y_A_B, "X+Y+A+B" },
+	{ EMU_CMB_X_Y_LT, "X+Y+LT" },
+	{ EMU_CMB_A_B_RT, "A+B+RT" },
+	{ EMU_CMB_X_A, "X+A" },
+	{ EMU_CMB_Y_B, "Y+B" },
+	{ EMU_CMB_LT_RT, "LT+RT" },
+	{ EMU_CMB_1_2_3, "1+2+3" },
+	{ EMU_CMB_1_2_4, "1+2+4" },
+	{ EMU_CMB_4_5, "4+5" },
+	{ EMU_CMB_4_5_6, "4+5+6" },
+	{ EMU_CMB_1_4, "1+4" },
+	{ EMU_CMB_2_5, "2+5" },
+	{ EMU_CMB_3_4, "3+4" },
+	{ EMU_CMB_3_6, "3+6" },
+	{ EMU_CMB_1_2, "1+2" },
+	{ EMU_CMB_2_3, "2+3" },
+
 	{ EMU_BTN_NONE, nullptr }
 };
 
