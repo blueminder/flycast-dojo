@@ -1296,14 +1296,14 @@ void DojoSession::ToggleRecording(int slot)
 	if (recording)
 	{
 		recording = false;
-		NoticeStream << "Stop Recording Slot" << slot + 1 << "Player " << record_player + 1;
+		NoticeStream << "Stop Recording Slot " << slot + 1 << " Player " << record_player + 1;
 	}
 	else
 	{
 		current_record_slot = slot;
 		record_slot[slot].clear();
 		recording = true;
-		NoticeStream << "Recording Slot" << slot + 1 << "Player " << record_player + 1;
+		NoticeStream << "Recording Slot " << slot + 1 << " Player " << record_player + 1;
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);
 }
