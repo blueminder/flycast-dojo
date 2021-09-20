@@ -333,8 +333,17 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (config::EnableMatchCode)
 		{
-			ImGui::Text(title.data());
 			detect_address = config::NetworkServer.get();
+
+			// if both player names are defaults, hide names
+			if (!(config::PlayerName.get().compare("Player") == 0 &&
+				config::PlayerName.get().compare(config::OpponentName.get()) == 0))
+			{
+				if (config::ActAsServer)
+					ImGui::Text("%s vs %s", config::PlayerName.get().c_str(), config::OpponentName.get().c_str());
+				else
+					ImGui::Text("%s vs %s", config::OpponentName.get().c_str(), config::PlayerName.get().c_str());
+			}
 		}
 		else
 		{

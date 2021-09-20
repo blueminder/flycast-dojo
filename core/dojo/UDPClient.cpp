@@ -200,7 +200,7 @@ void UDPClient::SendDisconnectOK()
 void UDPClient::SendPlayerName()
 {
 	int use_net_save = ghc::filesystem::exists(dojo.net_save_path) && !config::IgnoreNetSave;
-	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(use_net_save), host_addr);
+	SendMsg("NAME " + config::PlayerName.get() + " " + std::to_string(use_net_save), opponent_addr);
 }
 
 void UDPClient::SendNameOK()
@@ -354,8 +354,11 @@ void UDPClient::ClientLoop()
 						opponent_addr.sin_port = htons((u16)std::stol(opp[1]));
 						inet_pton(AF_INET, opp[0].data(), &opponent_addr.sin_addr);
 
-						host_addr.sin_port = htons((u16)std::stol(opp[1]));
-						inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
+						if (!config::ActAsServer.get())
+						{
+							host_addr.sin_port = htons((u16)std::stol(opp[1]));
+							inet_pton(AF_INET, opp[0].data(), &host_addr.sin_addr);
+						}
 
 						SendPlayerName();
 					}
