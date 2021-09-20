@@ -442,6 +442,8 @@ void gui_open_guest_wait()
 void gui_open_ggpo_join()
 {
 	dojo_gui.current_public_ip = "";
+	if (config::EnableMatchCode)
+		dojo.OpponentPing = dojo.DetectGGPODelay(config::NetworkServer.get().data());
 	gui_state = GuiState::GGPOJoin;
 }
 
