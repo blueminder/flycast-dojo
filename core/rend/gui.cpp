@@ -501,11 +501,11 @@ void gui_start_game(const std::string& path)
 	static std::string path_copy;
 	path_copy = path;	// path may be a local var
 
-	if (config::DojoEnable && !config::GGPOEnable)
+	if (config::DojoEnable)
 	{
 		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
-		if (config::EnableMemRestore && settings.platform.system != DC_PLATFORM_DREAMCAST)
+		if (config::EnableMemRestore && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
 			dojo_file.ValidateAndCopyMem(path_copy.c_str());
 	}
 
