@@ -133,6 +133,8 @@ bool IsOnSh4Ram(u32 addr)
 	return false;
 }
 
+void UpdateInputState();
+
 static void maple_DoDma()
 {
 	verify(SB_MDEN &1);
@@ -149,6 +151,7 @@ static void maple_DoDma()
 	}
 #endif
 
+	UpdateInputState();
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
 	{
 		ggpo::setMapleInput(mapleInputState);
