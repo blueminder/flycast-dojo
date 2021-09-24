@@ -113,10 +113,12 @@ public:
 	u8 GetAnalogY(u8* data);
 	u32 GetFrameNumber(u8* data);
 	u32 GetEffectiveFrameNumber(u8* data);
+	u32 GetMapleFrameNumber(u8* data);
 
 	int PayloadSize();
 
 	std::map<u32, std::string> net_inputs[4];
+	std::map<u32, std::vector<u8>> maple_inputs;
 
 	std::atomic<u32> FrameNumber;
 	std::atomic<u32> InputPort;
@@ -270,6 +272,9 @@ public:
 	bool upnp_started;
 	void StartUPnP();
 	void StopUPnP();
+
+	void SetMapleInput(MapleInputState inputState[4]);
+	u32 replay_version;
 };
 
 extern DojoSession dojo;

@@ -19,6 +19,7 @@
 #include "ggpo.h"
 #include "hw/maple/maple_cfg.h"
 #include "input/gamepad_device.h"
+#include <dojo/DojoSession.hpp>
 
 namespace ggpo
 {
@@ -192,6 +193,11 @@ static bool load_game_state(unsigned char *buffer, int len)
 	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
 	int frame = *(u32 *)buffer;
+	if (config::RecordMatches)
+	{
+		dojo.FrameNumber = *(u32 *)buffer;
+		std::cout << "GGPO FRAME " << dojo.FrameNumber << " LOAD" << std::endl;
+	}
 	unsigned usedLen = sizeof(frame);
 	buffer += usedLen;
 	dc_unserialize((void **)&buffer, &usedLen, true);
@@ -489,6 +495,44 @@ void getInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
+
+	if (config::RecordMatches)
+	{
+		dojo.maple_inputs[dojo.FrameNumber] = inputs;
+
+		unsigned char new_frame[FRAME_SIZE] = { 0 };
+		// enter current frame count in next 4 bytes
+		memcpy(new_frame, (unsigned char*)&dojo.FrameNumber, sizeof(unsigned int));
+		memcpy(new_frame + 4, (unsigned char*)inputs.data(), 8);
+		std::string frame_((const char*)new_frame, FRAME_SIZE);
+
+		//std::string current_inputs(inputs.begin(), inputs.end());
+		//std::cout << "INPUT " << dojo.FrameNumber << " " << current_inputs << "SIZE " << current_inputs.size() << " " << inputs.size() << std::endl;
+		std::cout << "INPUT " << dojo.FrameNumber << " " << frame_ << std::endl;
+
+		dojo.AppendToReplayFile(frame_, 2);
+	}
+}
+
+
+void setMapleInput(MapleInputState inputState[4])
+{
+	u32 inputSize = sizeof(u32) + analogAxes;
+	std::vector<u8> inputs = dojo.maple_inputs[dojo.FrameNumber];
+
+	for (int player = 0; player < MAX_PLAYERS; player++)
+	{
+		MapleInputState& state = inputState[player];
+		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
+		//if (analogAxes > 0)
+		//{
+		//	state.fullAxes[PJAI_X1] = dojo.maple_inputs[player * inputSize + 4];
+		//	if (analogAxes >= 2)
+		//		state.fullAxes[PJAI_Y1] = dojo.maple_inputs[player * inputSize + 5];
+		//}
+		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
+	}
 }
 
 bool nextFrame()
@@ -511,6 +555,11 @@ bool nextFrame()
 		return false;
 	// will call save_game_state
 	GGPOErrorCode error = ggpo_advance_frame(ggpoSession);
+	if (config::RecordMatches)
+	{
+		dojo.FrameNumber++;
+		std::cout << "GGPO FRAME " << dojo.FrameNumber << " ADVANCE" << std::endl;
+	}
 
 	// may rollback
 	if (error == GGPO_OK)

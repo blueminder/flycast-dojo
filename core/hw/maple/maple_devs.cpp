@@ -147,30 +147,33 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (config::DojoEnable)
+				if (!config::GGPOEnable || dojo.replay_version == 1)
 				{
-
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
-						settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						dojo.ApplyNetInputs(&pjs, bus_id);
-
-					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+					if (config::DojoEnable)
 					{
-						bool coin_pressed = (pjs.kcode & AWAVE_COIN_KEY) == 0;
-						if (coin_pressed && bus_id == 0)
-						{
-							// player 0 acts as master of the coin
-							dojo.coin_toggled = true;
-						}
-					}
-				}
-				else
-				{
-					if (config::Training || config::Offline)
-					{
+
 						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 							settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-							dojo.ApplyOfflineInputs(&pjs, 0, bus_id);
+							dojo.ApplyNetInputs(&pjs, bus_id);
+
+						if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+						{
+							bool coin_pressed = (pjs.kcode & AWAVE_COIN_KEY) == 0;
+							if (coin_pressed && bus_id == 0)
+							{
+								// player 0 acts as master of the coin
+								dojo.coin_toggled = true;
+							}
+						}
+					}
+					else
+					{
+						if (config::Training || (dojo.PlayMatch && dojo.replay_version == 1) || config::Offline)
+						{
+							if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
+								settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+								dojo.ApplyOfflineInputs(&pjs, 0, bus_id);
+						}
 					}
 				}
 

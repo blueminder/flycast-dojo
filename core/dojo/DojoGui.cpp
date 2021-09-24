@@ -746,7 +746,12 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 		return;
 	}
 
-	unsigned int total = dojo.net_inputs[0].size();
+	unsigned int total;
+	if (dojo.replay_version == 1)
+		total = dojo.net_inputs[0].size();
+	else
+		total = dojo.maple_inputs.size();
+
 	int position = dojo.FrameNumber.load();
 
 	if (!paused)
@@ -768,26 +773,29 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 
 	ImGui::SameLine();
 
-	if (!paused)
+	if (dojo.replay_version == 1)
 	{
-		if (ImGui::Button("Pause"))
+		if (!paused)
 		{
-			TermAudio();
-			gui_state = GuiState::ReplayPause;
-		}
+			if (ImGui::Button("Pause"))
+			{
+				TermAudio();
+				gui_state = GuiState::ReplayPause;
+			}
 
-		ImGui::SameLine();
-		if (ImGui::Button("Hide"))
-		{
-			config::ShowPlaybackControls = false;
+			ImGui::SameLine();
+			if (ImGui::Button("Hide"))
+			{
+				config::ShowPlaybackControls = false;
+			}
 		}
-	}
-	else
-	{
-		if (ImGui::Button("Play"))
+		else
 		{
-			InitAudio();
-			gui_state = GuiState::Closed;
+			if (ImGui::Button("Play"))
+			{
+				InitAudio();
+				gui_state = GuiState::Closed;
+			}
 		}
 	}
 
@@ -1081,18 +1089,15 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (config::NetplayMethod.get() == "Delay")
+		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
-				ImGui::SameLine();
-				ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
+			OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
+			ImGui::SameLine();
+			ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
 
-				OptionCheckbox("Record All Sessions", config::RecordMatches);
-				ImGui::SameLine();
-				ShowHelpMarker("Record all gameplay sessions to a local file");
-			}
+			OptionCheckbox("Record All Sessions", config::RecordMatches);
+			ImGui::SameLine();
+			ShowHelpMarker("Record all gameplay sessions to a local file");
 		}
 
 		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))

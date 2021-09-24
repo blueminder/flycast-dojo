@@ -33,4 +33,5 @@ bool active();
 void displayStats();
 void endOfFrame();
 
+void setMapleInput(MapleInputState inputState[4]);
 }

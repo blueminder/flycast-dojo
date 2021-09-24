@@ -152,6 +152,11 @@ u32 DojoSession::GetEffectiveFrameNumber(u8* data)
 	return GetFrameNumber(data) + GetDelay(data);
 }
 
+u32 DojoSession::GetMapleFrameNumber(u8* data)
+{
+	return (int)(*(u32*)(data));
+}
+
 void DojoSession::AddNetFrame(const char* received_data)
 {
 	const char data[FRAME_SIZE] = { 0 };
@@ -362,9 +367,14 @@ int DojoSession::StartDojoSession()
 	{
 		if (config::TransmitReplays)
 			StartTransmitterThread();
-		FillDelay(1);
 		LoadReplayFile(dojo.ReplayFilename);
-		//resume();
+		// ggpo session
+		if (replay_version == 2)
+			FrameNumber = 3;
+		// delay/offline session
+		else
+			FillDelay(1);
+		resume();
 	}
 	else if (config::Receiving)
 	{
@@ -549,7 +559,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	if (dojo.PlayMatch &&
+	if (dojo.PlayMatch && replay_version == 1 &&
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
@@ -560,6 +570,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		config::AutoSkipFrame = 1;
 		dc_stop();
 	}
+
 /*
 	if (config::Receiving &&
 		dojo.receiver.endSession)
@@ -738,7 +749,8 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 	spectate_start.AppendHeader(1, SPECTATE_START);
 
 	// version
-	spectate_start.AppendInt(1);
+	u32 version = config::GGPOEnable ? 2 : 1;
+	spectate_start.AppendInt(version);
 	if (rom_name == "")
 		spectate_start.AppendString(get_game_name());
 	else
@@ -783,12 +795,15 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		{
 			fout.write(frame.data(), FRAME_SIZE);
 		}
-		else if (version == 1)
+		else
 		{
 			if (replay_frame_count == 0)
 			{
 				replay_msg = MessageWriter();
-				replay_msg.AppendHeader(0, GAME_BUFFER);
+				if (version == 1)
+					replay_msg.AppendHeader(0, GAME_BUFFER);
+				else if (version == 2)
+					replay_msg.AppendHeader(0, MAPLE_BUFFER);
 				replay_msg.AppendInt(FRAME_SIZE);
 			}
 
@@ -801,7 +816,11 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 				fout.write((const char*)&message[0], message.size());
 
 				replay_msg = MessageWriter();
-				replay_msg.AppendHeader(0, GAME_BUFFER);
+				if (version == 1)
+					replay_msg.AppendHeader(0, GAME_BUFFER);
+				else if (version == 2)
+					replay_msg.AppendHeader(0, MAPLE_BUFFER);
+
 				replay_msg.AppendInt(FRAME_SIZE);
 			}
 
@@ -881,6 +900,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string Quark = MessageReader::ReadString((const char*)buffer, offset);
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
 
+		dojo.replay_version = v;
 		dojo.game_name = GameName;
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
@@ -941,6 +961,37 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 				// buffer stream
 				if (dojo.net_inputs[1].size() == config::RxFrameBuffer.get() &&
+					dojo.FrameNumber < dojo.last_consecutive_common_frame)
+					dojo.resume();
+			}
+		}
+	}
+	else if (cmd == MAPLE_BUFFER)
+	{
+		unsigned int frame_size = MessageReader::ReadInt((const char*)buffer, offset);
+
+		// read frames
+		while (*offset < body_size)
+		{
+			std::string frame = MessageReader::ReadContinuousData((const char*)buffer, offset, frame_size);
+
+			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				dojo.receiver_ended = true;
+			}
+			else
+			{
+				u32 frame_num = dojo.GetMapleFrameNumber((u8*)frame.data());
+				std::string maple_input(frame.data() + 4, 8);
+				std::vector<u8> inputs(maple_input.begin(), maple_input.end());
+
+				dojo.maple_inputs[frame_num] = inputs;
+
+				std::cout << "GGPO FRAME " << frame_num << " " << maple_input << std::endl;
+
+				// buffer stream
+				if (dojo.maple_inputs.size() == config::RxFrameBuffer.get() &&
 					dojo.FrameNumber < dojo.last_consecutive_common_frame)
 					dojo.resume();
 			}
@@ -1231,7 +1282,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	if (net_inputs[0].count(FrameNumber + delay) == 1 &&
 		net_inputs[1].count(FrameNumber + delay) == 1)
 	{
-		if (config::RecordMatches)
+		if (config::RecordMatches && !config::GGPOEnable)
 		{
 			AppendToReplayFile(net_inputs[0].at(FrameNumber + delay));
 			AppendToReplayFile(net_inputs[1].at(FrameNumber + delay));

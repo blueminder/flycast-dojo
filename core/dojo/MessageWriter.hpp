@@ -7,6 +7,7 @@
 #define SPECTATE_START 3
 #define SPECTATE_REQUEST 4
 #define PLAYER_INFO 5
+#define MAPLE_BUFFER 6
 
 #define HEADER_LEN 12
 

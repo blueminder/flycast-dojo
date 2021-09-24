@@ -1446,10 +1446,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
-							     config::DojoEnable)
+							if (settings.platform.system == DC_PLATFORM_NAOMI &&
+								(!config::GGPOEnable || dojo.replay_version == 1))
 							{
-								if (config::DojoEnable)
+								if (config::DojoEnable && !config::Offline)
 								{
 									inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
 
@@ -1459,11 +1459,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 											dojo.net_coin_press = true;
 									}
 								}
-							}
 
-							if (settings.platform.system == DC_PLATFORM_NAOMI && (config::Training || config::Offline))
-							{
-								inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+								if (config::Training || (dojo.PlayMatch && dojo.replay_version == 1))
+								{
+									inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+								}
 							}
 
 							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);

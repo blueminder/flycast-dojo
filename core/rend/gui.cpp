@@ -82,7 +82,7 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (config::GGPOEnable)
+		if (config::GGPOEnable || dojo.PlayMatch)
 		{
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
@@ -516,6 +516,12 @@ void gui_start_game(const std::string& path)
 		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
 		if (config::RecordMatches)
 			dojo.CreateReplayFile(rom_name);
+	}
+
+	if (config::GGPOEnable && config::RecordMatches)
+	{
+		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
+		dojo.CreateReplayFile(rom_name);
 	}
 
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());

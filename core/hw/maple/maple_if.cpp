@@ -7,6 +7,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "network/ggpo.h"
 #include "input/gamepad_device.h"
+#include <dojo/DojoSession.hpp>
 
 enum MaplePattern
 {
@@ -148,7 +149,13 @@ static void maple_DoDma()
 	}
 #endif
 
-	ggpo::getInput(mapleInputState);
+	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
+	{
+		ggpo::setMapleInput(mapleInputState);
+		dojo.FrameNumber++;
+	}
+	else
+		ggpo::getInput(mapleInputState);
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
