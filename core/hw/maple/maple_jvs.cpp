@@ -1447,7 +1447,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
 							if (settings.platform.system == DC_PLATFORM_NAOMI &&
-								(!config::GGPOEnable || dojo.replay_version == 1))
+								(!config::GGPOEnable && dojo.replay_version != 2))
 							{
 								if (config::DojoEnable && !config::Offline)
 								{

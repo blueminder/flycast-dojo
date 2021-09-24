@@ -526,9 +526,9 @@ void setMapleInput(MapleInputState inputState[4])
 		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
 		//if (analogAxes > 0)
 		//{
-		//	state.fullAxes[PJAI_X1] = dojo.maple_inputs[player * inputSize + 4];
+		//	state.fullAxes[PJAI_X1] = (*(int8_t *)&dojo.maple_inputs[player * inputSize + 4]);
 		//	if (analogAxes >= 2)
-		//		state.fullAxes[PJAI_Y1] = dojo.maple_inputs[player * inputSize + 5];
+		//		state.fullAxes[PJAI_Y1] = (*(int8_t *)&dojo.maple_inputs[player * inputSize + 5]);
 		//}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;

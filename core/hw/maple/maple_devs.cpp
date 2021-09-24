@@ -147,9 +147,9 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (!config::GGPOEnable || dojo.replay_version == 1)
+				if (!config::GGPOEnable && dojo.replay_version != 2)
 				{
-					if (config::DojoEnable)
+					if (config::DojoEnable && !config::Offline)
 					{
 
 						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
