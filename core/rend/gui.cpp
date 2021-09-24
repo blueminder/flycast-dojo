@@ -3327,6 +3327,17 @@ void gui_display_osd()
 	if (dojo.PlayMatch)
 	{
 		dojo_gui.show_playback_menu(scaling, false);
+
+		if (dojo.replay_version == 2 &&
+			dojo.FrameNumber >= dojo.maple_inputs.size())
+		{
+			if (config::Transmitting)
+				dojo.transmitter_ended = true;
+
+			gui_state = GuiState::EndReplay;
+			config::AutoSkipFrame = 1;
+			dc_stop();
+		}
 	}
 	else
 	{
