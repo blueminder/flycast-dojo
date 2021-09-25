@@ -800,15 +800,12 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		{
 			fout.write(frame.data(), FRAME_SIZE);
 		}
-		else
+		else if (version == 1)
 		{
 			if (replay_frame_count == 0)
 			{
 				replay_msg = MessageWriter();
-				if (version == 1)
-					replay_msg.AppendHeader(0, GAME_BUFFER);
-				else if (version == 2)
-					replay_msg.AppendHeader(0, MAPLE_BUFFER);
+				replay_msg.AppendHeader(0, GAME_BUFFER);
 				replay_msg.AppendInt(FRAME_SIZE);
 			}
 
@@ -821,11 +818,40 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 				fout.write((const char*)&message[0], message.size());
 
 				replay_msg = MessageWriter();
-				if (version == 1)
-					replay_msg.AppendHeader(0, GAME_BUFFER);
-				else if (version == 2)
-					replay_msg.AppendHeader(0, MAPLE_BUFFER);
+				replay_msg.AppendHeader(0, GAME_BUFFER);
 
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
+
+			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			{
+				// send remaining frames
+				if (replay_frame_count % FRAME_BATCH > 0)
+				{
+					std::vector<unsigned char> message = replay_msg.Msg();
+					fout.write((const char*)&message[0], message.size());
+				}
+			}
+		}
+		else if (version == 2)
+		{
+			if (replay_frame_count == 0)
+			{
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, MAPLE_BUFFER);
+				replay_msg.AppendInt(FRAME_SIZE);
+			}
+
+			replay_msg.AppendContinuousData(frame.data(), FRAME_SIZE);
+			replay_frame_count++;
+
+			if (replay_frame_count % FRAME_BATCH == 0)
+			{
+				std::vector<unsigned char> message = replay_msg.Msg();
+				fout.write((const char*)&message[0], message.size());
+
+				replay_msg = MessageWriter();
+				replay_msg.AppendHeader(0, MAPLE_BUFFER);
 				replay_msg.AppendInt(FRAME_SIZE);
 			}
 
