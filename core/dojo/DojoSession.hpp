@@ -43,6 +43,8 @@
 
 #define FRAME_BATCH 120
 
+#define MAPLE_FRAME_SIZE 16
+
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
 #define DEBUG_BACKFILL 3
@@ -275,6 +277,7 @@ public:
 
 	void SetMapleInput(MapleInputState inputState[4]);
 	u32 replay_version;
+	u32 replay_analog;
 };
 
 extern DojoSession dojo;

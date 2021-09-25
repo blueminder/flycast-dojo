@@ -761,6 +761,11 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 	spectate_start.AppendString(config::Quark.get());
 	spectate_start.AppendString(config::MatchCode.get());
 
+	u32 analog = 0;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::GGPOEnable)
+		analog = (u32)config::GGPOAnalogAxes.get();
+	spectate_start.AppendInt(analog);
+
 	std::vector<unsigned char> message = spectate_start.Msg();
 
 	fout.write((const char*)spectate_start.Msg().data(), (std::streamsize)(spectate_start.GetSize() + (unsigned int)HEADER_LEN));
@@ -899,11 +904,17 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string OpponentName = MessageReader::ReadString((const char*)buffer, offset);
 		std::string Quark = MessageReader::ReadString((const char*)buffer, offset);
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
+		unsigned int analog = MessageReader::ReadInt((const char*)buffer, offset);
 
 		dojo.replay_version = v;
 		dojo.game_name = GameName;
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
+
+		if (dojo.replay_version == 2)
+			dojo.replay_analog = analog;
+		else
+			dojo.replay_analog = 0;
 
 		std::cout << "Game: " << GameName << std::endl;
 
