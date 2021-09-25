@@ -73,6 +73,8 @@ static void displayCrosshairs();
 
 GameScanner scanner;
 
+static int item_current_idx = 0;
+
 static void emuEventCallback(Event event)
 {
 	switch (event)
@@ -525,11 +527,28 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	if (!config::MatchCode.get().empty())
+		dojo.MatchCode = "";
+
+	if (!config::NetworkServer.get().empty())
+		config::NetworkServer = "";
+
+	if (!config::DojoServerIP.get().empty())
+		config::DojoServerIP = "";
+
 	if (config::PlayerSwitched)
 		dojo.SwitchPlayer();
 
 	if (config::Training)
 		dojo.ResetTraining();
+
+	if (!config::Offline)
+	{
+		dojo.client.CloseLocalSocket();
+		dojo.client.name_acknowledged = false;
+	}
+
+	item_current_idx = 0;
 
 	if (!commandLineStart)
 	{
@@ -2258,7 +2277,6 @@ static void gui_display_content()
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
 	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
-	static int item_current_idx = 0;
 	static int last_item_current_idx = 4;
 
 	// Here our selection data is an index.

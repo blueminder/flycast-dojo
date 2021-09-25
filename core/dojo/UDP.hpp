@@ -67,5 +67,7 @@ public:
 
 	bool name_acknowledged;
 	bool request_repeat;
+
+	void CloseLocalSocket();
 };
 

@@ -540,6 +540,11 @@ void UDPClient::ClientLoop()
 		SendDisconnect();
 }
 
+void UDPClient::CloseLocalSocket()
+{
+	CloseSocket(local_socket);
+}
+
 void UDPClient::ClientThread()
 {
 	Init(dojo.hosting);
