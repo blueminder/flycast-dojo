@@ -2414,12 +2414,6 @@ static void gui_display_content()
 				gui_state = GuiState::Lobby;
 		}
 
-		if (config::GGPOEnable)
-		{
-			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		}
-
 #ifdef _WIN32
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
@@ -2427,12 +2421,6 @@ static void gui_display_content()
 #endif
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
-
-		if (config::GGPOEnable)
-		{
-			ImGui::PopItemFlag();
-			ImGui::PopStyleVar();
-		}
 
 #ifdef _WIN32
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
