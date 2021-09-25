@@ -500,11 +500,11 @@ void getInput(MapleInputState inputState[4])
 	{
 		dojo.maple_inputs[dojo.FrameNumber] = inputs;
 
-		unsigned char new_frame[FRAME_SIZE] = { 0 };
+		unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
 		// enter current frame count in next 4 bytes
 		memcpy(new_frame, (unsigned char*)&dojo.FrameNumber, sizeof(unsigned int));
-		memcpy(new_frame + 4, (unsigned char*)inputs.data(), 8);
-		std::string frame_((const char*)new_frame, FRAME_SIZE);
+		memcpy(new_frame + 4, (unsigned char*)inputs.data(), 12);
+		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
 
 		//std::string current_inputs(inputs.begin(), inputs.end());
 		//std::cout << "INPUT " << dojo.FrameNumber << " " << current_inputs << "SIZE " << current_inputs.size() << " " << inputs.size() << std::endl;

@@ -833,16 +833,25 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 				}
 			}
 		}
-		else if (version == 2)
+
+		fout.close();
+	}
+	else if (frame.size() == MAPLE_FRAME_SIZE)
+	{
+		// append frame data to replay file
+		std::ofstream fout(replay_filename,
+			std::ios::out | std::ios::binary | std::ios_base::app);
+
+		if (version == 2)
 		{
 			if (replay_frame_count == 0)
 			{
 				replay_msg = MessageWriter();
 				replay_msg.AppendHeader(0, MAPLE_BUFFER);
-				replay_msg.AppendInt(FRAME_SIZE);
+				replay_msg.AppendInt(MAPLE_FRAME_SIZE);
 			}
 
-			replay_msg.AppendContinuousData(frame.data(), FRAME_SIZE);
+			replay_msg.AppendContinuousData(frame.data(), MAPLE_FRAME_SIZE);
 			replay_frame_count++;
 
 			if (replay_frame_count % FRAME_BATCH == 0)
@@ -852,10 +861,10 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 
 				replay_msg = MessageWriter();
 				replay_msg.AppendHeader(0, MAPLE_BUFFER);
-				replay_msg.AppendInt(FRAME_SIZE);
+				replay_msg.AppendInt(MAPLE_FRAME_SIZE);
 			}
 
-			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			if (memcmp(frame.data(), "0000000000000000", MAPLE_FRAME_SIZE) == 0)
 			{
 				// send remaining frames
 				if (replay_frame_count % FRAME_BATCH > 0)
@@ -1020,7 +1029,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 			else
 			{
 				u32 frame_num = dojo.GetMapleFrameNumber((u8*)frame.data());
-				std::string maple_input(frame.data() + 4, 8);
+				std::string maple_input(frame.data() + 4, 12);
 				std::vector<u8> inputs(maple_input.begin(), maple_input.end());
 
 				dojo.maple_inputs[frame_num] = inputs;
