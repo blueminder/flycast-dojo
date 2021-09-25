@@ -548,6 +548,10 @@ void gui_stop_game(const std::string& message)
 		dojo.client.name_acknowledged = false;
 	}
 
+	for (int i = 0; i < 4; i++)
+		dojo.net_inputs[i].clear();
+	dojo.maple_inputs.clear();
+
 	item_current_idx = 0;
 
 	if (!commandLineStart)
