@@ -440,6 +440,8 @@ void DojoGui::gui_display_disconnected( float scaling)
 	ImGui::End();
 
 	config::AutoSkipFrame = 1;
+
+	error_popup();
 }
 
 void DojoGui::gui_display_end_replay( float scaling)

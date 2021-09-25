@@ -90,3 +90,6 @@ extern bool game_started;
 extern void gui_start_game(const std::string& path);
 
 extern void start_ggpo();
+
+extern std::string error_msg;
+extern void error_popup();

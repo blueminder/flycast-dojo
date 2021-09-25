@@ -60,7 +60,7 @@ static bool commandLineStart;
 static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
-static std::string error_msg;
+std::string error_msg;
 static std::string osd_message;
 static double osd_message_end;
 static std::mutex osd_message_mutex;
@@ -736,6 +736,10 @@ static void gui_display_commands()
 			dojo.disconnect_toggle = true;
 			gui_state = GuiState::Closed;
 		}
+		else if (config::GGPOEnable)
+		{
+			gui_state = GuiState::Disconnected;
+		}
 		else
 		{
 			gui_stop_game();
@@ -1296,7 +1300,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	ImGui::PopStyleVar();
 }
 
-static void error_popup()
+void error_popup()
 {
 	if (!error_msg.empty())
 	{
