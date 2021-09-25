@@ -273,6 +273,10 @@ void gui_init()
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
+	// revert to default input ports on startup
+	if (config::PlayerSwitched)
+		dojo.SwitchPlayer();
+
 	if (config::TestGame)
 	{
 		config::Offline = true;
@@ -478,18 +482,10 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
-
-
 	if (config::GGPOEnable && !config::ActAsServer)
 	{
 		// switch ports if ggpo guest
 		if (!config::PlayerSwitched)
-			dojo.SwitchPlayer();
-	}
-	else
-	{
-		// otherwise, revert to defaults on game start
-		if (config::PlayerSwitched)
 			dojo.SwitchPlayer();
 	}
 
@@ -529,15 +525,11 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	if (config::PlayerSwitched)
+		dojo.SwitchPlayer();
+
 	if (config::Training)
-	{
 		dojo.ResetTraining();
-	}
-	else
-	{
-		if (config::PlayerSwitched)
-			dojo.SwitchPlayer();
-	}
 
 	if (!commandLineStart)
 	{
@@ -2325,7 +2317,6 @@ static void gui_display_content()
 			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = false;
-
 
 			if (config::EnableMatchCode)
 				config::MatchCode = "";

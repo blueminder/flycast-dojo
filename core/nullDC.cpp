@@ -68,6 +68,9 @@ static bool jump_state_requested;
 
 void dc_exit()
 {
+	if (config::PlayerSwitched)
+		dojo.SwitchPlayer();
+
 	if (config::Receiving && !dojo.disconnect_toggle)
 	{
 		gui_state = GuiState::EndSpectate;
