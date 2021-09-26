@@ -96,6 +96,8 @@ public:
 
 	std::string entry_name;
 	std::ofstream of;
+	std::string game_path;
+	bool post_save_launch;
 
 	std::string root_path;
 };
