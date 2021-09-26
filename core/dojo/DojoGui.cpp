@@ -1191,44 +1191,41 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (config::NetplayMethod.get() == "Delay")
+		if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
+			OptionCheckbox("Enable Session Transmission", config::Transmitting);
+			ImGui::SameLine();
+			ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
+
+			if (config::Transmitting)
 			{
-				OptionCheckbox("Enable Session Transmission", config::Transmitting);
+				char SpectatorIP[256];
+
+				strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
+				ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
+				ShowHelpMarker("Target Spectator IP Address");
+				config::SpectatorIP = SpectatorIP;
 
-				if (config::Transmitting)
-				{
-					char SpectatorIP[256];
-
-					strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
-					ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("Target Spectator IP Address");
-					config::SpectatorIP = SpectatorIP;
-
-					/*
-					OptionCheckbox("Transmit Replays", config::TransmitReplays);
-					ImGui::SameLine();
-					ShowHelpMarker("Transmit replays to target spectator");
-					*/
-				}
-
-				char SpectatorPort[256];
-
-				strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
-				ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				/*
+				OptionCheckbox("Transmit Replays", config::TransmitReplays);
 				ImGui::SameLine();
-				ShowHelpMarker("Port to send or receive session streams");
-				config::SpectatorPort = SpectatorPort;
-
-				int one = 1;
-				ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
-				ImGui::SameLine();
-				ShowHelpMarker("# of frames to cache before playing received match stream");
+				ShowHelpMarker("Transmit replays to target spectator");
+				*/
 			}
+
+			char SpectatorPort[256];
+
+			strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+			ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker("Port to send or receive session streams");
+			config::SpectatorPort = SpectatorPort;
+
+			int one = 1;
+			ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+			ImGui::SameLine();
+			ShowHelpMarker("# of frames to cache before playing received match stream");
 		}
 
 		if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))

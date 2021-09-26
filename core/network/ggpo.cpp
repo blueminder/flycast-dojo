@@ -498,7 +498,7 @@ void getInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 
-	if (config::RecordMatches)
+	if (config::RecordMatches || dojo.transmitter_started)
 	{
 		dojo.maple_inputs[dojo.FrameNumber] = inputs;
 
@@ -512,7 +512,11 @@ void getInput(MapleInputState inputState[4])
 		//std::cout << "INPUT " << dojo.FrameNumber << " " << current_inputs << "SIZE " << current_inputs.size() << " " << inputs.size() << std::endl;
 		std::cout << "INPUT " << dojo.FrameNumber << " " << frame_ << std::endl;
 
-		dojo.AppendToReplayFile(frame_, 2);
+		if (config::RecordMatches)
+			dojo.AppendToReplayFile(frame_, 2);
+
+		if (dojo.transmitter_started)
+			dojo.transmission_frames.push_back(frame_);
 	}
 }
 

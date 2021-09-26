@@ -3018,6 +3018,9 @@ static void gui_network_start()
 
 void start_ggpo()
 {
+	if (config::Transmitting)
+		dojo.StartTransmitterThread();
+
 	dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;
@@ -3336,7 +3339,7 @@ void gui_display_osd()
 		if (dojo.replay_version == 2 &&
 			dojo.FrameNumber >= dojo.maple_inputs.size())
 		{
-			if (config::Transmitting)
+			if (config::TransmitReplays && config::Transmitting)
 				dojo.transmitter_ended = true;
 
 			gui_state = GuiState::EndReplay;

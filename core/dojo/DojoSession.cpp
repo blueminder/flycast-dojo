@@ -1189,13 +1189,19 @@ void DojoSession::transmitter_thread()
 
 		spectate_start.AppendHeader(1, 3);
 
-		spectate_start.AppendInt(1);
+		if (config::GGPOEnable)
+			spectate_start.AppendInt(2);
+		else
+			spectate_start.AppendInt(1);
 		spectate_start.AppendString(get_game_name());
 		spectate_start.AppendString(config::PlayerName.get());
 		spectate_start.AppendString(config::OpponentName.get());
 
 		spectate_start.AppendString(config::Quark.get());
 		spectate_start.AppendString(config::MatchCode.get());
+
+		// ggpo analog settings
+		spectate_start.AppendInt((u32)config::GGPOAnalogAxes.get());
 
 		std::vector<unsigned char> message = spectate_start.Msg();
 		asio::write(socket, asio::buffer(message));
@@ -1209,7 +1215,10 @@ void DojoSession::transmitter_thread()
 
 		// start with individual frame size
 		// (body_size % data_size == 0)
-		frame_msg.AppendInt(FRAME_SIZE);
+		if (config::GGPOEnable)
+			frame_msg.AppendInt(MAPLE_FRAME_SIZE);
+		else
+			frame_msg.AppendInt(FRAME_SIZE);
 
 		for (;;)
 		{
@@ -1220,7 +1229,10 @@ void DojoSession::transmitter_thread()
 				current_frame = transmission_frames.front();
 				//u32 frame_num = GetFrameNumber((u8*)current_frame.data());
 
-				frame_msg.AppendContinuousData(current_frame.data(), FRAME_SIZE);
+				if (config::GGPOEnable)
+					frame_msg.AppendContinuousData(current_frame.data(), MAPLE_FRAME_SIZE);
+				else
+					frame_msg.AppendContinuousData(current_frame.data(), FRAME_SIZE);
 
 				transmission_frames.pop_front();
 				sent_frame_count++;
@@ -1236,7 +1248,10 @@ void DojoSession::transmitter_thread()
 
 					// start with individual frame size
 					// (body_size % data_size == 0)
-					frame_msg.AppendInt(FRAME_SIZE);
+					if (config::GGPOEnable)
+						frame_msg.AppendInt(MAPLE_FRAME_SIZE);
+					else
+						frame_msg.AppendInt(FRAME_SIZE);
 				}
 			}
 
@@ -1252,7 +1267,10 @@ void DojoSession::transmitter_thread()
 
 				MessageWriter disconnect_msg;
 				disconnect_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
-				disconnect_msg.AppendData("000000000000", FRAME_SIZE);
+				if (config::GGPOEnable)
+					disconnect_msg.AppendData("0000000000000000", MAPLE_FRAME_SIZE);
+				else
+					disconnect_msg.AppendData("000000000000", FRAME_SIZE);
 				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
 				std::cout << "Transmission Ended" << std::endl;
 				break;
