@@ -1029,7 +1029,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 			else
 			{
 				u32 frame_num = dojo.GetMapleFrameNumber((u8*)frame.data());
-				std::string maple_input(frame.data() + 4, 12);
+				std::string maple_input(frame.data() + 4, (MAPLE_FRAME_SIZE - 4));
 				std::vector<u8> inputs(maple_input.begin(), maple_input.end());
 
 				dojo.maple_inputs[frame_num] = inputs;

@@ -43,7 +43,7 @@
 
 #define FRAME_BATCH 120
 
-#define MAPLE_FRAME_SIZE 16
+#define MAPLE_FRAME_SIZE 20
 
 #define DEBUG_APPLY 1
 #define DEBUG_RECV 2
