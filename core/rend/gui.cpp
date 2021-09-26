@@ -2547,12 +2547,7 @@ static void gui_display_content()
 						}
 						if (ImGui::MenuItem("Download Savestate"))
 						{
-							std::string filename = game.path.substr(game.path.find_last_of("/\\") + 1);
-							std::string short_game_name = stringfix::remove_extension(filename);
-							dojo_file.entry_name = short_game_name;
-							dojo_file.start_save_download = true;
-
-							net_save_download = true;
+							invoke_download_save_popup(game.path, &net_save_download);
 						}
 
 						ImGui::EndPopup();
@@ -2637,35 +2632,7 @@ static void gui_display_content()
 						ImGui::OpenPopup("Download Save");
 					}
 
-					if (ImGui::BeginPopupModal("Download Save", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
-					{
-						ImGui::Text(dojo_file.status_text.data());
-						if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended)
-						{
-							dojo_file.start_save_download = false;
-							dojo_file.save_download_started = false;
-						}
-						else
-						{
-							float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-							char buf[32];
-							sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-							ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
-						}
-
-						if (dojo_file.save_download_ended)
-						{
-							if (ImGui::Button("Close"))
-							{
-								dojo_file.entry_name = "";
-								dojo_file.save_download_ended = false;
-								ImGui::CloseCurrentPopup();
-								scanner.refresh();
-							}
-						}
-
-						ImGui::EndPopup();
-					}
+					download_save_popup();
 
 					if (dojo_file.start_save_download && !dojo_file.save_download_started)
 					{
@@ -3547,3 +3514,45 @@ static void term_vmus()
 	}
 }
 
+void invoke_download_save_popup(std::string game_path, bool* net_save_download)
+{
+	std::string filename = game_path.substr(game_path.find_last_of("/\\") + 1);
+	std::string short_game_name = stringfix::remove_extension(filename);
+	dojo_file.entry_name = short_game_name;
+	dojo_file.start_save_download = true;
+
+	*net_save_download = true;
+}
+
+void download_save_popup()
+{
+	if (ImGui::BeginPopupModal("Download Save", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::Text(dojo_file.status_text.data());
+		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended)
+		{
+			dojo_file.start_save_download = false;
+			dojo_file.save_download_started = false;
+		}
+		else
+		{
+			float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+			char buf[32];
+			sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+		}
+
+		if (dojo_file.save_download_ended)
+		{
+			if (ImGui::Button("Close"))
+			{
+				dojo_file.entry_name = "";
+				dojo_file.save_download_ended = false;
+				ImGui::CloseCurrentPopup();
+				scanner.refresh();
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+}
