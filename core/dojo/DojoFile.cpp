@@ -27,6 +27,7 @@ DojoFile::DojoFile()
 
 	save_download_ended = false;
 	download_ended = false;
+	post_save_launch = false;
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
