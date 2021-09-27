@@ -39,6 +39,7 @@ static int window_width = WINDOW_WIDTH;
 static int window_height = WINDOW_HEIGHT;
 static bool gameRunning;
 static bool mouseCaptured;
+bool shouldResize = false;
 
 static void sdl_open_joystick(int index)
 {
@@ -254,12 +255,7 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
-#ifdef USE_VULKAN
-                	theVulkanContext.SetResized();
-#endif
-#ifdef _WIN32
-               		theDXContext.resize();
-#endif
+					shouldResize = true;
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
 				{
