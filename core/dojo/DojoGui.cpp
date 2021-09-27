@@ -347,42 +347,47 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 		else
 		{
-			if (config::ShowPublicIP)
+			if (config::NetworkServer.get().empty())
 			{
-				static char external_ip[128] = "";
-				if (current_public_ip.empty())
+				if (config::ShowPublicIP)
 				{
-					current_public_ip = dojo.GetExternalIP();
-					const char* external = current_public_ip.data();
-					memcpy(external_ip, external, strlen(external));
+					static char external_ip[128] = "";
+					if (current_public_ip.empty())
+					{
+						current_public_ip = dojo.GetExternalIP();
+						const char* external = current_public_ip.data();
+						memcpy(external_ip, external, strlen(external));
+					}
+
+					ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
+					ImGui::Text("Your Public IP: ");
+					ImGui::SameLine();
+					ImGui::TextDisabled("%s", external_ip);
+					ImGui::PopStyleColor();
+					ImGui::SameLine();
+					ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
+
+					ImGui::SameLine();
+					if (ImGui::Button("Copy"))
+					{
+						SDL_SetClipboardText(current_public_ip.data());
+					}
 				}
 
-				ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
-				ImGui::Text("Your Public IP: ");
+				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
+				detect_address = std::string(si);
 				ImGui::SameLine();
-				ImGui::TextDisabled("%s", external_ip);
-				ImGui::PopStyleColor();
-				ImGui::SameLine();
-				ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
-
-				ImGui::SameLine();
-				if (ImGui::Button("Copy"))
+				if (ImGui::Button("Paste"))
 				{
-					SDL_SetClipboardText(current_public_ip.data());
+					char* pasted_txt = SDL_GetClipboardText();
+					memcpy(si, pasted_txt, strlen(pasted_txt));
 				}
-			}
-
-			ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
-			detect_address = std::string(si);
-			ImGui::SameLine();
-			if (ImGui::Button("Paste"))
-			{
-				char* pasted_txt = SDL_GetClipboardText();
-				memcpy(si, pasted_txt, strlen(pasted_txt));
 			}
 		}
 
 		ImGui::SliderInt("", (int*)&config::GGPODelay.get(), 0, 20);
+		ImGui::SameLine();
+		ImGui::Text("Delay");
 
 		if (config::EnableMatchCode)
 		{
