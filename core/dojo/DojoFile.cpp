@@ -56,6 +56,24 @@ nlohmann::json DojoFile::FindEntryByFile(std::string filename)
 	return nullptr;
 }
 
+std::string DojoFile::GetFileWiki(std::string file_path)
+{
+	try
+	{
+		std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
+		nlohmann::json entry = FindEntryByFile(current_filename);
+		if (entry == nullptr)
+			return "";
+
+		std::string entry_wiki = entry.at("wiki_url");
+		return entry_wiki;
+	}
+	catch (...)
+	{
+		return "";
+	}
+}
+
 std::string DojoFile::GetEntryPath(std::string entry_name)
 {
 	if (!LoadedFileDefinitions.contains(entry_name) &&

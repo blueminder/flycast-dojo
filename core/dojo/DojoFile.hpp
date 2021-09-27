@@ -77,6 +77,7 @@ public:
 
 	nlohmann::json FindEntryByFile(std::string filename);
 	std::string GetEntryPath(std::string entry_name);
+	std::string GetFileWiki(std::string file_path);
 
 	std::unordered_map<std::string, std::string> game_descriptions;
 
