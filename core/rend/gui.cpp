@@ -2561,11 +2561,14 @@ static void gui_display_content()
 							invoke_download_save_popup(game.path, &net_save_download, false);
 						}
 #ifdef _WIN32
-						std::string game_wiki = dojo_file.GetFileWiki(game.path);
-						if (!game_wiki.empty())
+						std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(game.path);
+						if (!game_links.empty())
 						{
-							if (ImGui::MenuItem("Open Wiki"))
-								ShellExecute(0, 0, game_wiki.data(), 0, 0 , SW_SHOW );
+							for (std::pair<std::string, std::string> link: game_links)
+							{
+								if (ImGui::MenuItem(std::string("Open " + link.first).data()))
+									ShellExecute(0, 0, link.second.data(), 0, 0, SW_SHOW);
+							}
 						}
 #endif
 						ImGui::EndPopup();
