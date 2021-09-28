@@ -8,6 +8,7 @@
 #include "p2p.h"
 #include <chrono>
 #include <thread>
+#include <dojo/DojoSession.hpp>
 
 static const int RECOMMENDATION_INTERVAL           = 240;
 static const int DEFAULT_DISCONNECT_TIMEOUT        = 5000;
@@ -128,7 +129,7 @@ Peer2PeerBackend::DoPoll(int timeout)
          Log("last confirmed frame in p2p backend is %d.\n", total_min_confirmed);
          if (total_min_confirmed >= 0) {
             ASSERT(total_min_confirmed != INT_MAX);
-            if (_num_spectators > 0) {
+            if (_num_spectators > 0 || config::RecordMatches) {
                while (_next_spectator_frame <= total_min_confirmed) {
                   Log("pushing frame %d to spectators.\n", _next_spectator_frame);
    
@@ -139,6 +140,8 @@ Peer2PeerBackend::DoPoll(int timeout)
                   for (int i = 0; i < _num_spectators; i++) {
                      _spectators[i].SendInput(input);
                   }
+                  if (config::RecordMatches)
+                    AddToReplay(input);
                   _next_spectator_frame++;
                }
             }
@@ -626,4 +629,42 @@ Peer2PeerBackend::CheckInitialSync()
       _callbacks.on_event(&info);
       _synchronizing = false;
    }
+}
+
+void
+Peer2PeerBackend::AddToReplay(GameInput input)
+{
+	if (config::RecordMatches || dojo.transmitter_started)
+	{
+		u32 frame_num = (u32)input.frame;
+    std::vector<u8> m_inputs;
+
+    std::cout << "FRAME " << frame_num << " ";
+
+    for (int i = 0; i < input.size; i++)
+    {
+      m_inputs.push_back((u8)input.bits[i]);
+
+      std::bitset<8> b(input.bits[i]);
+      std::cout << b.to_string();
+    }
+
+    std::cout << std::endl;
+
+    dojo.maple_inputs[frame_num] = m_inputs;
+
+    // create frame container for export
+		unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
+		memcpy(new_frame, (unsigned char*)&frame_num, sizeof(unsigned int));
+		memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), MAPLE_FRAME_SIZE - 4);
+		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
+
+		if (config::RecordMatches) 
+			dojo.AppendToReplayFile(frame_, 2);
+ 
+    /*
+		if (dojo.transmitter_started)
+			dojo.transmission_frames.push_back(frame_);
+    */
+	}
 }

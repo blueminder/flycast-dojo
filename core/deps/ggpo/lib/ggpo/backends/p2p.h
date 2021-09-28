@@ -53,6 +53,8 @@ protected:
    virtual void OnUdpProtocolPeerEvent(UdpProtocol::Event &e, int queue);
    virtual void OnUdpProtocolSpectatorEvent(UdpProtocol::Event &e, int queue);
 
+   void AddToReplay(GameInput input);
+
 protected:
    GGPOSessionCallbacks  _callbacks;
    Poll                  _poll;

@@ -25,7 +25,11 @@ void DojoSession::Init()
 
 	session_started = false;
 
-	FrameNumber = 2;
+	if (config::GGPOEnable)
+		FrameNumber = 0;
+	else
+		FrameNumber = 2;
+
 	isPaused = true;
 
 	MaxPlayers = 2;
@@ -370,7 +374,7 @@ int DojoSession::StartDojoSession()
 		LoadReplayFile(dojo.ReplayFilename);
 		// ggpo session
 		if (replay_version == 2)
-			FrameNumber = 3;
+			FrameNumber = 0;
 		// delay/offline session
 		else
 			FillDelay(1);

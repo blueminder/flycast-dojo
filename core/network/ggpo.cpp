@@ -199,11 +199,6 @@ static bool load_game_state(unsigned char *buffer, int len)
 	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
 	int frame = *(u32 *)buffer;
-	if (config::RecordMatches)
-	{
-		dojo.FrameNumber = *(u32 *)buffer;
-		std::cout << "GGPO FRAME " << dojo.FrameNumber << " LOAD" << std::endl;
-	}
 	unsigned usedLen = sizeof(frame);
 	buffer += usedLen;
 	dc_unserialize((void **)&buffer, &usedLen, true);
@@ -509,27 +504,6 @@ void getInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
-
-	if (config::RecordMatches || dojo.transmitter_started)
-	{
-		dojo.maple_inputs[dojo.FrameNumber] = inputs;
-
-		unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
-		// enter current frame count in next 4 bytes
-		memcpy(new_frame, (unsigned char*)&dojo.FrameNumber, sizeof(unsigned int));
-		memcpy(new_frame + 4, (unsigned char*)inputs.data(), (MAPLE_FRAME_SIZE - 4));
-		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
-
-		//std::string current_inputs(inputs.begin(), inputs.end());
-		//std::cout << "INPUT " << dojo.FrameNumber << " " << current_inputs << "SIZE " << current_inputs.size() << " " << inputs.size() << std::endl;
-		std::cout << "INPUT " << dojo.FrameNumber << " " << frame_ << std::endl;
-
-		if (config::RecordMatches)
-			dojo.AppendToReplayFile(frame_, 2);
-
-		if (dojo.transmitter_started)
-			dojo.transmission_frames.push_back(frame_);
-	}
 }
 
 
@@ -576,11 +550,6 @@ bool nextFrame()
 		return false;
 	// will call save_game_state
 	GGPOErrorCode error = ggpo_advance_frame(ggpoSession);
-	if (config::RecordMatches)
-	{
-		dojo.FrameNumber++;
-		std::cout << "GGPO FRAME " << dojo.FrameNumber << " ADVANCE" << std::endl;
-	}
 
 	// may rollback
 	if (error == GGPO_OK)
