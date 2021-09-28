@@ -634,7 +634,11 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	{
 		fprintf(stderr, "%s\n", curl_easy_strerror(res));
 		if (res == CURLE_REMOTE_FILE_NOT_FOUND || response_code == 404)
+		{
 			status_text = filename + " not found. ";
+			if (stringfix::get_extension(filename) == "net")
+				status_text += "\n\nIt is recommended that you create a savestate\nto share with your opponent.";
+		}
 		else
 			status_text = "Unable to retrieve " + filename + ".";
 		if (file_exists(path.c_str()))
