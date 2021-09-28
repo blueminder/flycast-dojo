@@ -374,7 +374,10 @@ int DojoSession::StartDojoSession()
 		LoadReplayFile(dojo.ReplayFilename);
 		// ggpo session
 		if (replay_version == 2)
+		{
+			config::GGPOEnable = true;
 			FrameNumber = 0;
+		}
 
 		// delay/offline session
 		else

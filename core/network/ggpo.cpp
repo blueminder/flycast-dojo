@@ -542,87 +542,95 @@ void setMapleInput(MapleInputState inputState[4])
 
 bool nextFrame()
 {
-	if (!_endOfFrame)
-		return false;
-	_endOfFrame = false;
-	auto now = std::chrono::steady_clock::now();
-	if (lastFrameTime != time_point<steady_clock>())
+	if (dojo.PlayMatch)
+		return true;
+	else
 	{
-		msPerFrame[msPerFrameIndex++] = duration_cast<milliseconds>(now - lastFrameTime).count();
-		if (msPerFrameIndex >= (int)msPerFrame.size())
-			msPerFrameIndex = 0;
-		msPerFrameAvg = std::accumulate(msPerFrame.begin(), msPerFrame.end(), 0) / msPerFrame.size();
-	}
-	lastFrameTime = now;
-
-	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
-	if (ggpoSession == nullptr)
-		return false;
-	// will call save_game_state
-	GGPOErrorCode error = ggpo_advance_frame(ggpoSession);
-
-	// may rollback
-	if (error == GGPO_OK)
-		error = ggpo_idle(ggpoSession, 0);
-	if (error != GGPO_OK)
-	{
-		stopSession();
-		if (error == GGPO_ERRORCODE_INPUT_SIZE_DIFF)
-			throw FlycastException("GGPO analog settings are different from peer");
-		else if (error != GGPO_OK)
-			throw FlycastException("GGPO error");
-	}
-
-	// may call save_game_state
-	do {
-		u32 input = ~kcode[localPlayerNum];
-		if (rt[localPlayerNum] >= 64)
-			input |= BTN_TRIGGER_RIGHT;
-		else
-			input &= ~BTN_TRIGGER_RIGHT;
-		if (lt[localPlayerNum] >= 64)
-			input |= BTN_TRIGGER_LEFT;
-		else
-			input &= ~BTN_TRIGGER_LEFT;
-		u32 inputSize = sizeof(input) + analogAxes + (int)absPointerPos * 4;
-		std::vector<u8> allInput(inputSize);
-		*(u32 *)&allInput[0] = input;
-		if (analogAxes > 0)
+		if (!_endOfFrame)
+			return false;
+		_endOfFrame = false;
+		auto now = std::chrono::steady_clock::now();
+		if (lastFrameTime != time_point<steady_clock>())
 		{
-			allInput[4] = joyx[localPlayerNum];
-			if (analogAxes >= 2)
-				allInput[5] = joyy[localPlayerNum];
+			msPerFrame[msPerFrameIndex++] = duration_cast<milliseconds>(now - lastFrameTime).count();
+			if (msPerFrameIndex >= (int)msPerFrame.size())
+				msPerFrameIndex = 0;
+			msPerFrameAvg = std::accumulate(msPerFrame.begin(), msPerFrame.end(), 0) / msPerFrame.size();
 		}
-		else if (absPointerPos)
+		lastFrameTime = now;
+
+		std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+		if (ggpoSession == nullptr)
+			return false;
+		// will call save_game_state
+		GGPOErrorCode error = ggpo_advance_frame(ggpoSession);
+
+		// may rollback
+		if (error == GGPO_OK)
+			error = ggpo_idle(ggpoSession, 0);
+		if (error != GGPO_OK)
 		{
-			*(s16 *)&allInput[4] = mo_x_abs[localPlayerNum];
-			*(s16 *)&allInput[6] = mo_y_abs[localPlayerNum];
-		}
-		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
-		if (result == GGPO_OK)
-			break;
-		if (result != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
-		{
-			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
 			stopSession();
-			throw FlycastException("GGPO error");
+			if (error == GGPO_ERRORCODE_INPUT_SIZE_DIFF)
+				throw FlycastException("GGPO analog settings are different from peer");
+			else if (error != GGPO_OK)
+				throw FlycastException("GGPO error");
 		}
-		DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		ggpo_idle(ggpoSession, 0);
-	} while (active());
+
+		// may call save_game_state
+		do {
+			u32 input = ~kcode[localPlayerNum];
+			if (rt[localPlayerNum] >= 64)
+				input |= BTN_TRIGGER_RIGHT;
+			else
+				input &= ~BTN_TRIGGER_RIGHT;
+			if (lt[localPlayerNum] >= 64)
+				input |= BTN_TRIGGER_LEFT;
+			else
+				input &= ~BTN_TRIGGER_LEFT;
+			u32 inputSize = sizeof(input) + analogAxes + (int)absPointerPos * 4;
+			std::vector<u8> allInput(inputSize);
+			*(u32*)&allInput[0] = input;
+			if (analogAxes > 0)
+			{
+				allInput[4] = joyx[localPlayerNum];
+				if (analogAxes >= 2)
+					allInput[5] = joyy[localPlayerNum];
+			}
+			else if (absPointerPos)
+			{
+				*(s16*)&allInput[4] = mo_x_abs[localPlayerNum];
+				*(s16*)&allInput[6] = mo_y_abs[localPlayerNum];
+			}
+			GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
+			if (result == GGPO_OK)
+				break;
+			if (result != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
+			{
+				WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
+				stopSession();
+				throw FlycastException("GGPO error");
+			}
+			DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			ggpo_idle(ggpoSession, 0);
+		} while (active());
 #ifdef SYNC_TEST
-	u32 input = ~kcode[1 - localPlayerNum];
-	GGPOErrorCode result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
-	if (result != GGPO_OK)
-		WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
+		u32 input = ~kcode[1 - localPlayerNum];
+		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
+		if (result != GGPO_OK)
+			WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
 #endif
-	return active();
+		return active();
+	}
 }
 
 bool active()
 {
-	return ggpoSession != nullptr;
+	if (dojo.PlayMatch)
+		return true;
+	else
+		return ggpoSession != nullptr;
 }
 
 std::future<bool> startNetwork()
@@ -728,6 +736,7 @@ void endOfFrame()
 {
 	if (active())
 	{
+		dojo.FrameNumber++;
 		_endOfFrame = true;
 		sh4_cpu.Stop();
 	}

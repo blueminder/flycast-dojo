@@ -3096,6 +3096,7 @@ static void gui_display_loadscreen()
 
 				if (dojo.PlayMatch)
 				{
+					config::GGPOEnable = true;
 					config::DojoEnable = true;
 					gui_state = GuiState::Closed;
 					ImGui::Text("LOADING REPLAY...");

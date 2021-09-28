@@ -152,10 +152,7 @@ static void maple_DoDma()
 #endif
 
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
-	{
 		ggpo::setMapleInput(mapleInputState);
-		dojo.FrameNumber++;
-	}
 	else
 		ggpo::getInput(mapleInputState);
 
