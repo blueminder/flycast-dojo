@@ -528,6 +528,16 @@ void setMapleInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
+
+	std::cout << "FRAME " << dojo.FrameNumber << " ";
+
+  for (int i = 0; i < (MAPLE_FRAME_SIZE - 4); i++)
+  {
+    std::bitset<8> b(inputs[i]);
+    std::cout << b.to_string();
+  }
+
+  std::cout << std::endl;
 }
 
 bool nextFrame()

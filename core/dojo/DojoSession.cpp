@@ -375,6 +375,7 @@ int DojoSession::StartDojoSession()
 		// ggpo session
 		if (replay_version == 2)
 			FrameNumber = 0;
+
 		// delay/offline session
 		else
 			FillDelay(1);
@@ -1038,7 +1039,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 				dojo.maple_inputs[frame_num] = inputs;
 
-				std::cout << "GGPO FRAME " << frame_num << " " << maple_input << std::endl;
+				//std::cout << "GGPO FRAME " << frame_num << " " << maple_input << std::endl;
 
 				// buffer stream
 				if (dojo.maple_inputs.size() == config::RxFrameBuffer.get() &&

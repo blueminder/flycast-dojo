@@ -659,12 +659,10 @@ Peer2PeerBackend::AddToReplay(GameInput input)
 		memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), MAPLE_FRAME_SIZE - 4);
 		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
 
-		if (config::RecordMatches) 
-			dojo.AppendToReplayFile(frame_, 2);
- 
-    /*
-		if (dojo.transmitter_started)
-			dojo.transmission_frames.push_back(frame_);
-    */
+    if (config::RecordMatches)
+      dojo.AppendToReplayFile(frame_, 2);
+
+    if (dojo.transmitter_started)
+      dojo.transmission_frames.push_back(frame_);
 	}
 }

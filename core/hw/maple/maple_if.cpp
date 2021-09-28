@@ -151,7 +151,6 @@ static void maple_DoDma()
 	}
 #endif
 
-	UpdateInputState();
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
 	{
 		ggpo::setMapleInput(mapleInputState);
@@ -159,6 +158,8 @@ static void maple_DoDma()
 	}
 	else
 		ggpo::getInput(mapleInputState);
+
+	UpdateInputState();
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
