@@ -474,14 +474,18 @@ void DojoFile::OverwriteDataFolder(std::string new_root)
 
 void DojoFile::CopyNewFlycast(std::string new_root)
 {
-   if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe",
-		ghc::filesystem::copy_options::overwrite_existing))
-   {
-	   remove("flycast_old.exe");
-	   rename("flycast.exe", "flycast_old.exe");
-	   rename("flycast_new.exe", "flycast.exe");
-	   //exit(0);
-   }
+	if (ghc::filesystem::copy_file(new_root + "/flycast.exe", "flycast_new.exe",
+	 ghc::filesystem::copy_options::overwrite_existing))
+	{
+		remove("flycast_old.exe");
+		rename("flycast.exe", "flycast_old.exe");
+		rename("flycast_new.exe", "flycast.exe");
+
+		// copy new game definitions
+		ghc::filesystem::copy_file(new_root + "/flycast_roms.json", "flycast_roms.json",
+			ghc::filesystem::copy_options::overwrite_existing);
+		//exit(0);
+	}
 }
 
 size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
