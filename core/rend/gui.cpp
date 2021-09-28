@@ -2801,7 +2801,7 @@ static void gui_display_content()
 
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
-		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nRight-click entry to download a new one.");
+		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nIf one is available, it will be downloaded upon game launch.");
 		ImGui::PopStyleColor();
 	}
 	else
