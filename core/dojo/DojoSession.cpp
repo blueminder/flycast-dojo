@@ -267,7 +267,7 @@ void DojoSession::resume()
 
 void DojoSession::StartSession(int session_delay, int session_ppf, int session_num_bf)
 {
-	if (config::RecordMatches && !dojo.PlayMatch)
+	if (config::RecordMatches && !dojo.PlayMatch && !config::Receiving)
 		CreateReplayFile();
 
 	FillDelay(session_delay);

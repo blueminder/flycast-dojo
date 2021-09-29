@@ -516,7 +516,7 @@ void gui_start_game(const std::string& path)
 			dojo.CreateReplayFile(rom_name);
 	}
 
-	if (config::GGPOEnable && config::RecordMatches)
+	if (config::GGPOEnable && config::RecordMatches && !config::Receiving)
 	{
 		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
 		dojo.CreateReplayFile(rom_name);
