@@ -84,7 +84,7 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (config::GGPOEnable || dojo.PlayMatch)
+		if (config::GGPOEnable || config::Receiving || dojo.PlayMatch)
 		{
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
