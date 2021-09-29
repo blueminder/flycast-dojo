@@ -3314,7 +3314,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats && !dojo.PlayMatch))
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -3335,7 +3335,7 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(settings.display.width, settings.display.height);
-		if (ggpo::active() && config::NetworkStats)
+		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
 			ggpo::displayStats();
 
 		ImGui::Render();
