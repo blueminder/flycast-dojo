@@ -25,10 +25,18 @@ void DojoSession::Init()
 
 	session_started = false;
 
-	if (config::GGPOEnable || config::Receiving)
+	//if (config::GGPOEnable || config::Receiving)
+	//{
 		FrameNumber = 0;
+		last_consecutive_common_frame = 0;
+	//}
+	/*
 	else
+	{
 		FrameNumber = 2;
+		last_consecutive_common_frame = 2;
+	}
+	*/
 
 	isPaused = true;
 
@@ -41,7 +49,6 @@ void DojoSession::Init()
 	DojoLobby presence;
 
 	client_input_authority = true;
-	last_consecutive_common_frame = 2;
 	started = false;
 
 	spectating = false;
@@ -1145,6 +1152,7 @@ void DojoSession::receiver_thread()
 
 void DojoSession::receiver_client_thread()
 {
+	std::cout << "START FRAME " << dojo.FrameNumber << std::endl;
 	try
 	{
 		receiver_ended = false;
