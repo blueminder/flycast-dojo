@@ -36,8 +36,7 @@ void UpdateInputState();
 bool mainui_rend_frame()
 {
 	os_DoEvents();
-	if (gui_is_open())
-		UpdateInputState();
+	UpdateInputState();
 
 	// moved resizing outside of input_sdl_handle on DMA
 	// credit to RossenX for the tip

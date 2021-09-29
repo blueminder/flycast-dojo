@@ -133,8 +133,6 @@ bool IsOnSh4Ram(u32 addr)
 	return false;
 }
 
-void UpdateInputState();
-
 static void maple_DoDma()
 {
 	verify(SB_MDEN &1);
@@ -158,8 +156,6 @@ static void maple_DoDma()
 		ggpo::setMapleInput(mapleInputState);
 	else
 		ggpo::getInput(mapleInputState);
-
-	UpdateInputState();
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
