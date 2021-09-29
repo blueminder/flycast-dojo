@@ -723,7 +723,7 @@ void VulkanContext::BeginRenderPass()
 {
 	if (!IsValid())
 		return;
-	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
+	const vk::ClearValue clear_colors[] = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
 			vk::SubpassContents::eInline);
@@ -787,22 +787,6 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 		{ { -1,  1, 0 }, { 0, 1 } },
 		{ {  1,  1, 0 }, { 1, 1 } },
 	};
-	if (config::Rotate90)
-	{
-		float marginWidth = ((float)extent.width / extent.height * width / height - 1.f) / 2.f;
-		vtx[0].uv[1] = 0 - marginWidth;
-		vtx[1].uv[1] = 0 - marginWidth;
-		vtx[2].uv[1] = 1 + marginWidth;
-		vtx[3].uv[1] = 1 + marginWidth;
-	}
-	else
-	{
-		float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
-		vtx[0].uv[0] = 0 - marginWidth;
-		vtx[1].uv[0] = 1 + marginWidth;
-		vtx[2].uv[0] = 0 - marginWidth;
-		vtx[3].uv[0] = 1 + marginWidth;
-	}
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
 	if (config::Rotate90)
@@ -813,9 +797,14 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 	commandBuffer.setBlendConstants(blendConstants);
 
-	vk::Viewport viewport(0, 0, width, height);
+	float marginWidth;
+	if (config::Rotate90)
+		marginWidth = ((float)width - (float)extent.height / extent.width * height) / 2.f;
+	else
+		marginWidth = ((float)width - (float)extent.width / extent.height * height) / 2.f;
+	vk::Viewport viewport(marginWidth, 0, width - marginWidth * 2.f, height);
 	commandBuffer.setViewport(0, 1, &viewport);
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(marginWidth, 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
 	else
@@ -1040,7 +1029,7 @@ void VulkanContext::DoSwapAutomation()
 			u8* img = (u8*)device->mapMemory(*deviceMemory, 0, VK_WHOLE_SIZE);
 			img += subresourceLayout.offset;
 
-			u8 *end = img + screen_width * screen_height * 4;
+			u8 *end = img + settings.display.width * settings.display.height * 4;
 			if (!supportsBlit && colorFormat == vk::Format::eB8G8R8A8Unorm)
 			{
 				for (u8 *p = img; p < end; p += 4)
@@ -1056,7 +1045,7 @@ void VulkanContext::DoSwapAutomation()
 				for (u8 *p = img; p < end; p += 4)
 					p[3] = 0xff;
 			}
-			dump_screenshot(img, screen_width, screen_height, true, subresourceLayout.rowPitch, false);
+			dump_screenshot(img, settings.display.width, settings.display.height, true, subresourceLayout.rowPitch, false);
 
 			device->unmapMemory(*deviceMemory);
 		}
@@ -1100,10 +1089,10 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 		// In this case, the context becomes invalid but we keep the previous
 		// dimensions to not confuse the renderer and imgui
 		if (width != 0)
-			screen_width = width;
+			settings.display.width = width;
 
 		if (height != 0)
-			screen_height = height;
+			settings.display.height = height;
 
 		SetResized();
 	}

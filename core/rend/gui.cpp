@@ -273,7 +273,7 @@ void gui_init()
 
     // TODO Linux, iOS, ...
 #endif
-    INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
+    INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
 	// revert to default input ports on startup
 	if (config::PlayerSwitched)
@@ -333,8 +333,8 @@ void ImGui_Impl_NewFrame()
 	else if (config::RendererType.isDirectX())
 		ImGui_ImplDX9_NewFrame();
 #endif
-	ImGui::GetIO().DisplaySize.x = screen_width;
-	ImGui::GetIO().DisplaySize.y = screen_height;
+	ImGui::GetIO().DisplaySize.x = settings.display.width;
+	ImGui::GetIO().DisplaySize.y = settings.display.height;
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -353,7 +353,7 @@ void ImGui_Impl_NewFrame()
 			if (kb_key[port][i] != 0)
 				io.KeysDown[kb_key[port][i]] = true;
 	}
-	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
+	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(mouseX, mouseY);
@@ -478,7 +478,7 @@ void gui_open_settings()
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
-		dc_resume();
+		emu.start();
 	}
 }
 
@@ -491,7 +491,7 @@ void gui_start_game(const std::string& path)
 			dojo.SwitchPlayer();
 	}
 
-	dc_term_game();
+	emu.unloadGame();
 	reset_vmus();
 
 	scanner.stop();
@@ -557,7 +557,7 @@ void gui_stop_game(const std::string& message)
 	if (!commandLineStart)
 	{
 		// Exit to main menu
-		dc_term_game();
+		emu.unloadGame();
 		gui_state = GuiState::Main;
 		game_started = false;
 		settings.imgread.ImagePath[0] = '\0';
@@ -574,8 +574,7 @@ void gui_stop_game(const std::string& message)
 
 static void gui_display_commands()
 {
-	if (dc_is_running())
-		dc_stop();
+	emu.stop();
 
    	display_vmus();
 
@@ -2122,6 +2121,8 @@ static void gui_display_settings()
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
 	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
 	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
+	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+	            		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
@@ -3276,7 +3277,7 @@ void gui_display_ui()
     ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 
 	if (gui_state == GuiState::Closed)
-		dc_resume();
+		emu.start();
 }
 
 static float LastFPSTime;
@@ -3331,7 +3332,7 @@ void gui_display_osd()
 		displayCrosshairs();
 		if (config::FloatVMUs)
 			display_vmus();
-//		gui_plot_render_time(screen_width, screen_height);
+//		gui_plot_render_time(settings.display.width, settings.display.height);
 		if (ggpo::active() && config::NetworkStats)
 			ggpo::displayStats();
 
@@ -3487,10 +3488,10 @@ std::pair<float, float> getCrosshairPosition(int playerNum)
 		fx = t;
 		std::swap(width, height);
 	}
-	float scale = height / screen_height;
+	float scale = height / settings.display.height;
 	fy /= scale;
 	scale /= config::ScreenStretching / 100.f;
-	fx = fx / scale + (screen_width - width / scale) / 2.f;
+	fx = fx / scale + (settings.display.width - width / scale) / 2.f;
 
 	return std::make_pair(fx, fy);
 }

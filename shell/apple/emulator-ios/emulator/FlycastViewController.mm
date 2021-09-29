@@ -66,7 +66,6 @@ void common_linux_setup();
 
 @end
 
-extern int screen_width,screen_height;
 extern int screen_dpi;
 
 @implementation FlycastViewController
@@ -180,10 +179,10 @@ extern int screen_dpi;
     self.iCadeReader.active = YES;
 	// TODO iCade handlers
 	
-	screen_width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
-    screen_height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
-	if (screen_width < screen_height)
-		std::swap(screen_width, screen_height);
+	settings.display.width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
+    settings.display.height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
+	if (settings.display.width < settings.display.height)
+		std::swap(settings.display.width, settings.display.height);
 	float scale = 1;
 	if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
 	  scale = [[UIScreen mainScreen] scale];
@@ -289,9 +288,9 @@ extern int screen_dpi;
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
 #if !TARGET_OS_TV
-	if (dc_is_running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
+	if (emu.running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
-		if (dc_is_running())
+		if (emu.running())
 			[self.padController showController:self.view];
 		else
 			[self.padController hideController];

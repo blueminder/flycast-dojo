@@ -22,6 +22,8 @@
 #include "input/gamepad_device.h"
 #include <dojo/DojoSession.hpp>
 
+void UpdateInputState();
+
 namespace ggpo
 {
 
@@ -84,6 +86,7 @@ static int msPerFrameAvg;
 static bool _endOfFrame;
 static int analogAxes;
 static bool absPointerPos;
+static bool inRollback;
 
 struct MemPages
 {
@@ -173,12 +176,14 @@ static bool advance_frame(int)
 	INFO_LOG(NETWORK, "advance_frame");
 	settings.aica.muteAudio = true;
 	settings.disableRenderer = true;
+	inRollback = true;
 
-	dc_run();
+	emu.run();
 	ggpo_advance_frame(ggpoSession);
 
 	settings.aica.muteAudio = false;
 	settings.disableRenderer = false;
+	inRollback = false;
 	_endOfFrame = false;
 
 	return true;
@@ -462,7 +467,7 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
-	dc_set_network_state(false);
+	emu.setNetworkState(false);
 }
 
 void getInput(MapleInputState inputState[4])
@@ -637,7 +642,7 @@ std::future<bool> startNetwork()
 			getInput(k);
 		}
 #endif
-		dc_set_network_state(active());
+		emu.setNetworkState(active());
 		return active();
 	});
 }

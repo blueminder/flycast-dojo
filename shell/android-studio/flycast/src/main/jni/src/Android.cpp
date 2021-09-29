@@ -85,8 +85,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(
     screen_dpi = screenDpi;
 }
 
-extern int screen_width,screen_height;
-
 std::shared_ptr<AndroidMouse> mouse;
 
 float vjoy_pos[15][8];
@@ -256,9 +254,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri
         env->ReleaseStringUTFChars(fileName, file_path);
         // TODO game paused/settings/...
         if (game_started) {
-            dc_stop();
+            emu.unloadGame();
             gui_state = GuiState::Main;
-       		dc_reset(true);
         }
     }
 }
@@ -288,7 +285,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 {
     if (game_started)
     {
-        dc_stop();
+        emu.stop();
         game_started = true; // restart when resumed
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
@@ -298,24 +295,19 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
     if (game_started)
-        dc_resume();
+        emu.start();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (dc_is_running()) {
-        dc_stop();
+    if (emu.running()) {
+        emu.stop();
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
     }
-    dc_term_game();
+    emu.unloadGame();
     gui_state = GuiState::Main;
     settings.imgread.ImagePath[0] = '\0';
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
-{
-    dc_term();
 }
 
 static void *render_thread_func(void *)
@@ -348,8 +340,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNa
 		}
 		else
 		{
-		    screen_width = width;
-		    screen_height = height;
+			settings.display.width = width;
+			settings.display.height = height;
 		    mainui_reinit();
 		}
 	}
@@ -579,7 +571,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDevi
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
-	mouse->setAbsPos(xpos, ypos, screen_width, screen_height);
+	mouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
 	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
 	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);

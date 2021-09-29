@@ -324,8 +324,6 @@ void main()
 GLCache glcache;
 gl_ctx gl;
 
-int screen_width;
-int screen_height;
 GLuint fogTextureId;
 GLuint paletteTextureId;
 
@@ -1014,14 +1012,14 @@ void OSD_DRAW(bool clear_screen)
 	if (gl.OSD_SHADER.osd_tex != 0)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
+		glViewport(0, 0, settings.display.width, settings.display.height);
 
 		if (clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			render_output_framebuffer();
-			glViewport(0, 0, screen_width, screen_height);
+			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
 #ifndef GLES2
@@ -1036,12 +1034,12 @@ void OSD_DRAW(bool clear_screen)
 		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
-		float scale_h = screen_height / 480.f;
-		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
+		float scale_h = settings.display.height / 480.f;
+		float offs_x = (settings.display.width - scale_h * 640.f) / 2.f;
 		float scale[4];
-		scale[0] = 2.f / (screen_width / scale_h);
+		scale[0] = 2.f / (settings.display.width / scale_h);
 		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / screen_width;
+		scale[2]= 1.f - 2.f * offs_x / settings.display.width;
 		scale[3]= -1.f;
 		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
 
@@ -1235,6 +1233,8 @@ bool RenderFrame(int width, int height)
 	glStencilMask(0xFF); glCheck();
     glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+	if (!is_rtt)
+		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
 
 	//move vertex to gpu
 
@@ -1287,7 +1287,6 @@ bool RenderFrame(int width, int height)
 				{
 					float scaled_offs_x = matrices.GetSidebarWidth();
 
-					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
 					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)height);
 					glClear(GL_COLOR_BUFFER_BIT);
@@ -1331,7 +1330,6 @@ bool RenderFrame(int width, int height)
 	}
 	else
 	{
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer();
 	}
