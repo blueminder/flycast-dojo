@@ -149,8 +149,16 @@ static void maple_DoDma()
 	}
 #endif
 
-	if (config::Receiving)
-		while (dojo.maple_inputs.size() < config::RxFrameBuffer.get());
+	if (config::Receiving && config::GGPOEnable)
+	{
+		if (dojo.maple_inputs.size() < config::RxFrameBuffer.get())
+			dojo.pause();
+
+		if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
+			gui_state = GuiState::EndSpectate;
+
+		while (dojo.isPaused && !dojo.disconnect_toggle);
+	}
 
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
 		ggpo::setMapleInput(mapleInputState);

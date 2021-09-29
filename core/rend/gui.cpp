@@ -3101,10 +3101,12 @@ static void gui_display_loadscreen()
 					config::GGPOEnable = true;
 					config::DojoEnable = true;
 					gui_state = GuiState::Closed;
-					if (dojo.PlayMatch)
-						ImGui::Text("LOADING REPLAY...");
-					else
+					if (config::Receiving)
+					{
 						ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
+					}
+					else
+						ImGui::Text("LOADING REPLAY...");
 				}
 				else
 				{

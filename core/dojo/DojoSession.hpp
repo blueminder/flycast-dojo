@@ -60,7 +60,6 @@ private:
 	std::string host_ip;
 	u32 host_port;
 
-	volatile bool isPaused;
 
 	std::string last_sent;
 	std::deque<std::string> last_inputs;
@@ -77,6 +76,8 @@ private:
 public:
 	DojoSession();
 	void Init();
+
+	volatile bool isPaused;
 
 	asio::ip::tcp::socket* tcp_client_socket_;
 

@@ -25,18 +25,8 @@ void DojoSession::Init()
 
 	session_started = false;
 
-	//if (config::GGPOEnable || config::Receiving)
-	//{
-		FrameNumber = 0;
-		last_consecutive_common_frame = 0;
-	//}
-	/*
-	else
-	{
-		FrameNumber = 2;
-		last_consecutive_common_frame = 2;
-	}
-	*/
+	FrameNumber = 2;
+	last_consecutive_common_frame = 2;
 
 	isPaused = true;
 
@@ -965,15 +955,16 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
 
-		if (dojo.replay_version == 2)
+		if (replay_version == 2)
 		{
-			replay_analog = 0;
-			//dojo.replay_analog = analog;
-			//last_consecutive_common_frame = 0;
-			//FrameNumber = 0;
+			replay_analog = analog;
+			last_consecutive_common_frame = 0;
+			FrameNumber = 0;
 		}
 		else
-			dojo.replay_analog = 0;
+			replay_analog = 0;
+
+		std::cout << "REPLAY VERSION " << replay_version << "ANALOG " << replay_analog << std::endl;
 
 		std::cout << "Game: " << GameName << std::endl;
 
@@ -1195,6 +1186,11 @@ void DojoSession::receiver_client_thread()
 			offset = 0;
 
 			dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
+
+			if (maple_inputs.size() > config::RxFrameBuffer.get())
+			{
+				resume();
+			}
 		}
 	}
 	catch (std::exception& e)
