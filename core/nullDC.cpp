@@ -270,7 +270,7 @@ void jump_state()
 	{
 		dc_loadstate(config::SavestateSlot);
 	}
-	dc_resume();
+	emu.start();
 }
 
 void dc_loadstate(int index)

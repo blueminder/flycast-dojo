@@ -578,7 +578,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 		gui_state = GuiState::EndReplay;
 		config::AutoSkipFrame = 1;
-		dc_stop();
+		emu.term();
 	}
 
 /*

@@ -175,7 +175,7 @@ Listener::Listener(asio::io_context& io_context,
 
 void Listener::do_receive()
 {
-	if (dojo.host_status != 0 || dc_is_running())
+	if (dojo.host_status != 0 || emu.render())
 		return;
 
 	socket_.async_receive_from(

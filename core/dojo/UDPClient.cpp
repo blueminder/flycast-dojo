@@ -211,7 +211,7 @@ void UDPClient::SendNameOK()
 void UDPClient::EndSession()
 {
 	gui_open_disconnected();
-	dc_stop();
+	emu.term();
 	CloseSocket(local_socket);
 #ifdef _WIN32
 	WSACleanup();

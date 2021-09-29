@@ -112,9 +112,9 @@ void DojoGui::gui_open_host_delay()
 
 void DojoGui::gui_display_host_wait(float scaling)
 {
-	//dc_stop();
+	//emu.term();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##host_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -177,12 +177,12 @@ void DojoGui::gui_display_host_wait(float scaling)
 
 void DojoGui::gui_display_guest_wait(float scaling)
 {
-	//dc_stop();
+	//emu.term();
 
 	if (!config::GGPOEnable)
 		dojo.pause();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##guest_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -432,7 +432,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 void DojoGui::gui_display_disconnected( float scaling)
 {
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##disconnected", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -451,7 +451,7 @@ void DojoGui::gui_display_disconnected( float scaling)
 
 void DojoGui::gui_display_end_replay( float scaling)
 {
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##end_replay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -464,9 +464,9 @@ void DojoGui::gui_display_end_replay( float scaling)
 void DojoGui::gui_display_end_spectate( float scaling)
 
 {
-	dc_stop();
+	emu.term();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##end_spectate", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -479,11 +479,11 @@ void DojoGui::gui_display_end_spectate( float scaling)
 void DojoGui::gui_display_host_delay( float scaling)
 
 {
-	//dc_stop();
+	//emu.term();
 
 	dojo.pause();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(360 * scaling, 0));
 
 	ImGui::Begin("##host_delay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -534,9 +534,9 @@ void DojoGui::gui_display_host_delay( float scaling)
 void DojoGui::gui_display_test_game( float scaling)
 
 {
-	dc_stop();
+	emu.term();
 
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
 	ImGui::Begin("##test_game", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -611,7 +611,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImVec2(settings.display.width, settings.display.height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	ImGui::Begin("Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -768,7 +768,7 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 
 	ImGui::SetNextWindowBgAlpha(0.6f);
-	ImGui::SetNextWindowPos(ImVec2((screen_width / 2) - 220, screen_height - 45));
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - 220, settings.display.height - 45));
 	ImGui::SetNextWindowSize(ImVec2(440, 40));
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
@@ -846,7 +846,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		ImGui::NewFrame();
 
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2((screen_width / 4) - ((font_size_1 + 10) / 2), 0));
+		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size_1 + 10) / 2), 0));
 		ImGui::SetNextWindowSize(ImVec2(font_size_1 + 25, 35));
 
 		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
@@ -872,7 +872,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		ImGui::NewFrame();
 
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2(((screen_width / 4) * 3) - ((font_size_2 + 10) / 2), 0));
+		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size_2 + 10) / 2), 0));
 		ImGui::SetNextWindowSize(ImVec2(font_size_2 + 25, 35));
 
 		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
@@ -898,7 +898,7 @@ void DojoGui::gui_display_paused(float scaling)
 void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_list)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImVec2(settings.display.width, settings.display.height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	ImGui::Begin("Replays", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);

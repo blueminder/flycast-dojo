@@ -3353,7 +3353,7 @@ void gui_display_osd()
 
 			gui_state = GuiState::EndReplay;
 			config::AutoSkipFrame = 1;
-			dc_stop();
+			emu.term();
 		}
 	}
 	else
