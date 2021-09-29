@@ -151,7 +151,7 @@ OptionString MatchCode("MatchCode", "", "dojo");
 OptionString GameName("GameName", "", "dojo");
 Option<bool> EnableMemRestore("EnableMemRestore", true, "dojo");
 OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
-Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
+Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", false, "dojo");
 Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
 Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
