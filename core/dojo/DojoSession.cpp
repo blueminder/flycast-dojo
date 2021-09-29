@@ -1042,7 +1042,15 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 				dojo.maple_inputs[frame_num] = inputs;
 
-				//std::cout << "GGPO FRAME " << frame_num << " " << maple_input << std::endl;
+				std::cout << "GGPO FRAME " << frame_num << " ";
+
+				for (int i = 0; i < (MAPLE_FRAME_SIZE - 4); i++)
+				{
+				  std::bitset<8> b(inputs[i]);
+				  std::cout << b.to_string();
+				}
+
+				std::cout << std::endl;
 
 				// buffer stream
 				if (dojo.maple_inputs.size() == config::RxFrameBuffer.get() &&
