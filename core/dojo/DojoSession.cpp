@@ -25,7 +25,7 @@ void DojoSession::Init()
 
 	session_started = false;
 
-	if (config::GGPOEnable)
+	if (config::GGPOEnable || config::Receiving)
 		FrameNumber = 0;
 	else
 		FrameNumber = 2;
@@ -386,9 +386,9 @@ int DojoSession::StartDojoSession()
 	}
 	else if (config::Receiving)
 	{
-		dojo.last_consecutive_common_frame = 2;
-		dojo.FrameNumber = 2;
-		dojo.FillDelay(2);
+		//dojo.last_consecutive_common_frame = 2;
+		//dojo.FrameNumber = 2;
+		//dojo.FillDelay(2);
 
 		if (!receiver_started)
 		{
@@ -405,6 +405,8 @@ int DojoSession::StartDojoSession()
 
 			receiver_started = true;
 		}
+
+
 	}
 	else
 	{
@@ -447,7 +449,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 
 	if (FrameNumber == 2)
 	{
-		if (dojo.PlayMatch)
+		if (dojo.PlayMatch && !config::GGPOEnable)
 		{
 			resume();
 		}
@@ -476,7 +478,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	}
 
 
-	if (FrameNumber == 3)
+	if (FrameNumber == 3 && !config::GGPOEnable)
 	{
 		std::string net_save_path = get_net_savestate_file_path(false);
 		if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
@@ -567,7 +569,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	if (dojo.PlayMatch && replay_version == 1 &&
+	if (dojo.PlayMatch && !config::Receiving && replay_version == 1 &&
 		(FrameNumber >= net_input_keys[0].size() ||
 			FrameNumber >= net_input_keys[1].size()))
 	{
@@ -633,11 +635,13 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 				NOTICE_LOG(NETWORK, "DOJO: > frame timeout, ending receiver");
 			}
 
+			/*
 			if (config::Receiving &&
 				FrameNumber >= last_consecutive_common_frame)
 			{
 				pause();
 			}
+			*/
 
 		};
 	}
@@ -955,7 +959,12 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		config::MatchCode = MatchCode;
 
 		if (dojo.replay_version == 2)
-			dojo.replay_analog = analog;
+		{
+			replay_analog = 0;
+			//dojo.replay_analog = analog;
+			//last_consecutive_common_frame = 0;
+			//FrameNumber = 0;
+		}
 		else
 			dojo.replay_analog = 0;
 
@@ -1053,9 +1062,11 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 				std::cout << std::endl;
 
 				// buffer stream
+				/*
 				if (dojo.maple_inputs.size() == config::RxFrameBuffer.get() &&
 					dojo.FrameNumber < dojo.last_consecutive_common_frame)
 					dojo.resume();
+					*/
 			}
 		}
 	}
@@ -1148,7 +1159,7 @@ void DojoSession::receiver_client_thread()
 
 		MessageWriter spectate_request;
 
-		spectate_request.AppendHeader(1, 4);
+		spectate_request.AppendHeader(1, SPECTATE_REQUEST);
 
 		spectate_request.AppendString(config::Quark.get());
 		spectate_request.AppendString(config::MatchCode.get());

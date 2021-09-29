@@ -3094,20 +3094,16 @@ static void gui_display_loadscreen()
 
 				dojo.StartDojoSession();
 
-				if (dojo.PlayMatch)
+				if (dojo.PlayMatch || config::Receiving)
 				{
+					dojo.PlayMatch = true;
 					config::GGPOEnable = true;
 					config::DojoEnable = true;
 					gui_state = GuiState::Closed;
-					ImGui::Text("LOADING REPLAY...");
-				}
-				else if (config::Receiving)
-				{
-					std::string net_save_path = get_net_savestate_file_path(false);
-					remove(net_save_path.data());
-
-					gui_state = GuiState::Closed;
-					ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
+					if (dojo.PlayMatch)
+						ImGui::Text("LOADING REPLAY...");
+					else
+						ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
 				}
 				else
 				{
@@ -3345,7 +3341,8 @@ void gui_display_osd()
 
 	if (dojo.PlayMatch)
 	{
-		dojo_gui.show_playback_menu(scaling, false);
+		if (!config::Receiving)
+			dojo_gui.show_playback_menu(scaling, false);
 
 		if (dojo.replay_version == 2 &&
 			dojo.FrameNumber >= dojo.maple_inputs.size())
