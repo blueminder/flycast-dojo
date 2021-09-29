@@ -29,7 +29,6 @@
 bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
-extern bool shouldResize;
 
 void UpdateInputState();
 
@@ -37,19 +36,6 @@ bool mainui_rend_frame()
 {
 	os_DoEvents();
 	UpdateInputState();
-
-	// moved resizing outside of input_sdl_handle on DMA
-	// credit to RossenX for the tip
-	if (shouldResize)
-	{
-#ifdef USE_VULKAN
-		theVulkanContext.SetResized();
-#endif
-#ifdef _WIN32
-		theDXContext.resize();
-#endif
-		shouldResize = false;
-	}
 
 	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
 	{
