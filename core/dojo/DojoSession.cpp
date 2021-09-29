@@ -964,7 +964,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		else
 			replay_analog = 0;
 
-		std::cout << "REPLAY VERSION " << replay_version << "ANALOG " << replay_analog << std::endl;
+		//std::cout << "REPLAY VERSION " << replay_version << "ANALOG " << replay_analog << std::endl;
 
 		std::cout << "Game: " << GameName << std::endl;
 
@@ -1049,6 +1049,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 				dojo.maple_inputs[frame_num] = inputs;
 
+				/*
 				std::cout << "GGPO FRAME " << frame_num << " ";
 
 				for (int i = 0; i < (MAPLE_FRAME_SIZE - 4); i++)
@@ -1058,6 +1059,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 				}
 
 				std::cout << std::endl;
+				*/
 
 				// buffer stream
 				/*
@@ -1143,7 +1145,7 @@ void DojoSession::receiver_thread()
 
 void DojoSession::receiver_client_thread()
 {
-	std::cout << "START FRAME " << dojo.FrameNumber << std::endl;
+	//std::cout << "START FRAME " << dojo.FrameNumber << std::endl;
 	try
 	{
 		receiver_ended = false;

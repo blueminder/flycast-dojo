@@ -725,13 +725,13 @@ void setMapleInput(MapleInputState inputState[4])
 	u32 inputSize = sizeof(u32) + analogAxes;
 	std::vector<u8> inputs = dojo.maple_inputs[dojo.FrameNumber];
 
-	std::cout << "INPUT SIZE " << inputSize << std::endl;
+	//std::cout << "INPUT SIZE " << inputSize << std::endl;
 
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
 		MapleInputState& state = inputState[player];
 		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
-		std::cout << "PLAYER " << player << " INPUT " << ~state.kcode << std::endl;
+		//std::cout << "PLAYER " << player << " INPUT " << ~state.kcode << std::endl;
 		if (analogAxes > 0)
 		{
 			state.fullAxes[PJAI_X1] = (*(int8_t *)&inputs[player * inputSize + 4]);
@@ -742,6 +742,7 @@ void setMapleInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 
+	/*
 	std::cout << "FRAME " << dojo.FrameNumber << " ";
 
   for (int i = 0; i < (MAPLE_FRAME_SIZE - 4); i++)
@@ -751,6 +752,7 @@ void setMapleInput(MapleInputState inputState[4])
   }
 
   std::cout << std::endl;
+	*/
 }
 
 }

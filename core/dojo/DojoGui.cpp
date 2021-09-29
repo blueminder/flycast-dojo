@@ -757,7 +757,7 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	if (dojo.replay_version == 1)
 		total = dojo.net_inputs[0].size();
 	else
-		total = dojo.maple_inputs.size();
+		total = dojo.maple_inputs.size() - 1;
 
 	int position = dojo.FrameNumber.load();
 
