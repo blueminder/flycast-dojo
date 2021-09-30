@@ -620,8 +620,13 @@ std::future<bool> startNetwork()
 			if (config::ActAsServer)
 				startSession(config::GGPOPort.get(), 0);
 			else
-				// Use config::GGPOPort.get()-1 as local port if connecting to ourselves
-				startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? config::GGPOPort.get() - 1 : config::GGPOPort.get(), 1);
+			{
+				// default port behavior, decrement on localhost
+				if (config::GGPOPort == 19713)
+					startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? config::GGPOPort.get() - 1 : config::GGPOPort.get(), 1);
+				else
+					startSession(config::GGPOPort.get(), 1);
+			}
 #endif
 		}
 		while (!synchronized && active())
