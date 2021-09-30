@@ -527,30 +527,7 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
-	if (!config::MatchCode.get().empty())
-		dojo.MatchCode = "";
-
-	if (!config::NetworkServer.get().empty())
-		config::NetworkServer = "";
-
-	if (!config::DojoServerIP.get().empty())
-		config::DojoServerIP = "";
-
-	if (config::PlayerSwitched)
-		dojo.SwitchPlayer();
-
-	if (config::Training)
-		dojo.ResetTraining();
-
-	if (!config::Offline)
-	{
-		dojo.client.CloseLocalSocket();
-		dojo.client.name_acknowledged = false;
-	}
-
-	for (int i = 0; i < 4; i++)
-		dojo.net_inputs[i].clear();
-	dojo.maple_inputs.clear();
+	dojo.CleanUp();
 
 	item_current_idx = 0;
 

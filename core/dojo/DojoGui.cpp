@@ -446,6 +446,8 @@ void DojoGui::gui_display_disconnected( float scaling)
 
 	config::AutoSkipFrame = 1;
 
+	dojo.CleanUp();
+
 	error_popup();
 }
 

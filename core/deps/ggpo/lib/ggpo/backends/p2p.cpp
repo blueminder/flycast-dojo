@@ -639,17 +639,16 @@ Peer2PeerBackend::AddToReplay(GameInput input)
 		u32 frame_num = (u32)input.frame;
     std::vector<u8> m_inputs;
 
-    std::cout << "FRAME " << frame_num << " ";
+    //std::cout << "FRAME " << frame_num << " ";
 
     for (int i = 0; i < input.size; i++)
     {
       m_inputs.push_back((u8)input.bits[i]);
-
-      std::bitset<8> b(input.bits[i]);
-      std::cout << b.to_string();
+      //std::bitset<8> b(input.bits[i]);
+      //std::cout << b.to_string();
     }
 
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
     dojo.maple_inputs[frame_num] = m_inputs;
 

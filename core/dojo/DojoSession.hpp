@@ -279,6 +279,8 @@ public:
 	void SetMapleInput(MapleInputState inputState[4]);
 	u32 replay_version;
 	u32 replay_analog;
+
+	void CleanUp();
 };
 
 extern DojoSession dojo;

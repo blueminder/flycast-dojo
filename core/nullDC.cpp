@@ -63,8 +63,7 @@ static bool jump_state_requested;
 
 void dc_exit()
 {
-	if (config::PlayerSwitched)
-		dojo.SwitchPlayer();
+	dojo.CleanUp();
 
 	if (config::Receiving && !dojo.disconnect_toggle)
 	{
@@ -72,19 +71,9 @@ void dc_exit()
 	}
 	if (config::DojoEnable &&
 		!dojo.disconnect_toggle &&
-		gui_state != GuiState::Main &&
-		gui_state != GuiState::Lobby &&
-		gui_state != GuiState::Replays &&
-		gui_state != GuiState::EndReplay &&
-		gui_state != GuiState::TestGame &&
-		gui_state != GuiState::Settings &&
-		gui_state != GuiState::Onboarding &&
-		gui_state != GuiState::Loading &&
+		gui_state != GuiState::Closed &&
 		!dojo.PlayMatch)
 	{
-		if (config::IgnoreNetSave)
-			remove(dojo.net_save_path.data());
-
 		dojo.disconnect_toggle = true;
 	}
 	else

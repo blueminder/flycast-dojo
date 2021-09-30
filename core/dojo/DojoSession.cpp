@@ -99,6 +99,34 @@ void DojoSession::Init()
 	upnp_started = false;
 }
 
+void DojoSession::CleanUp()
+{
+	if (!config::MatchCode.get().empty())
+		dojo.MatchCode = "";
+
+	if (!config::NetworkServer.get().empty())
+		config::NetworkServer = "";
+
+	if (!config::DojoServerIP.get().empty())
+		config::DojoServerIP = "";
+
+	if (config::PlayerSwitched)
+		dojo.SwitchPlayer();
+
+	if (config::Training)
+		dojo.ResetTraining();
+
+	if (!config::Offline)
+	{
+		dojo.client.CloseLocalSocket();
+		dojo.client.name_acknowledged = false;
+	}
+
+	for (int i = 0; i < 4; i++)
+		dojo.net_inputs[i].clear();
+	dojo.maple_inputs.clear();
+}
+
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
 {
 	uint64_t avg_ping_ms = client.GetOpponentAvgPing();
@@ -1541,6 +1569,7 @@ void DojoSession::SwitchPlayer()
 
 	config::PlayerSwitched = !config::PlayerSwitched.get();
 	cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
+	std::cout << "Player Switched " << config::PlayerSwitched.get() << std::endl;
 }
 
 

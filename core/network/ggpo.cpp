@@ -468,6 +468,7 @@ void stopSession()
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
 	emu.setNetworkState(false);
+	gui_state = GuiState::Disconnected;
 }
 
 void getInput(MapleInputState inputState[4])
