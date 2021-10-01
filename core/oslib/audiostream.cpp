@@ -1,6 +1,5 @@
 #include "audiostream.h"
 #include <memory>
-#include <mutex>
 
 struct SoundFrame { s16 l; s16 r; };
 
@@ -12,8 +11,6 @@ static std::unique_ptr<std::vector<audiobackend_t *>> audiobackends;	// Using a 
 
 static bool audio_recording_started;
 static bool eight_khz;
-
-static std::mutex audio_mtx;
 
 u32 GetAudioBackendCount()
 {
@@ -91,20 +88,11 @@ void WriteSample(s16 r, s16 l)
 			audiobackend_current->push(Buffer, SAMPLE_COUNT, config::LimitFPS);
 		writePtr = 0;
 	}
-	audio_mtx.unlock();
 }
 
 void InitAudio()
 {
-	audio_mtx.lock();
-	if (cfgLoadInt("audio", "disable", 0)) {
-		INFO_LOG(AUDIO, "WARNING: Audio disabled in config!");
-		return;
-	}
-
-	cfgSaveInt("audio", "disable", 0);
-
-	verify(audiobackend_current == nullptr);
+	TermAudio();
 
 	SortAudioBackends();
 
@@ -123,12 +111,10 @@ void InitAudio()
 		audio_recording_started = false;
 		StartAudioRecording(eight_khz);
 	}
-	audio_mtx.unlock();
 }
 
 void TermAudio()
 {
-	audio_mtx.lock();
 	if (audiobackend_current != nullptr) {
 		// Save recording state before stopping
 		bool rec_started = audio_recording_started;
@@ -138,7 +124,6 @@ void TermAudio()
 		INFO_LOG(AUDIO, "Terminating audio backend \"%s\" (%s)...", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		audiobackend_current = nullptr;
 	}
-	audio_mtx.unlock();
 }
 
 void StartAudioRecording(bool eight_khz)

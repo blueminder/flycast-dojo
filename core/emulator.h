@@ -19,10 +19,12 @@
     along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "types.h"
 #include <atomic>
 #include <map>
 #include <vector>
 #include <future>
+#include <string>
 
 void loadGameSpecificSettings();
 void SaveSettings();
@@ -41,7 +43,7 @@ void dc_loadstate(std::string filename);
 void dc_loadstate(int index, std::string filename);
 bool dc_loadstate(const void **data, unsigned size);
 
-void dc_load_game(const char *path);
+void dc_load_game(const std::string& path);
 bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
@@ -148,6 +150,10 @@ public:
 	 * Called internally to reset the emulator.
 	 */
 	void requestReset();
+	/**
+	 * Called internally on vblank.
+	 */
+	void vblank();
 
 private:
 	bool checkStatus();
@@ -165,5 +171,7 @@ private:
 	std::shared_future<void> threadResult;
 	bool resetRequested = false;
 	bool singleStep = false;
+	u64 startTime = 0;
+	bool renderTimeout = false;
 };
 extern Emulator emu;

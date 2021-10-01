@@ -418,8 +418,8 @@ static const char *getKeyName(DreamcastKey key)
 		if (key == axis_list[i].id)
 			return axis_list[i].option.c_str();
 	ERROR_LOG(INPUT, "Invalid key %x", key);
-	die("Invalid key");
-	return "?";
+
+	return nullptr;
 }
 
 bool InputMapping::save(const char *name)
@@ -450,6 +450,8 @@ bool InputMapping::save(const char *name)
 			if (pair.second == EMU_BTN_NONE)
 				continue;
 			const char *keyName = getKeyName(pair.second);
+			if (keyName == nullptr)
+				continue;
 			std::string option;
 			if (port == 0)
 				option = keyName;
@@ -467,6 +469,8 @@ bool InputMapping::save(const char *name)
 			if (pair.second == EMU_BTN_NONE)
 				continue;
 			const char *keyName = getKeyName(pair.second);
+			if (keyName == nullptr)
+				continue;
 			std::string option;
 			if (port == 0)
 				option = keyName;

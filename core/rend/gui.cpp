@@ -91,9 +91,9 @@ static void emuEventCallback(Event event)
 			if (ghc::filesystem::exists(net_save_path))
 				dc_loadstate(net_save_path);
 		}
-		else if (!config::DojoEnable && config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
+		else if (!config::DojoEnable && config::AutoLoadState && !settings.content.path.empty())
 		{
-			if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
+			if (config::AutoLoadState && !settings.content.path.empty())
 				// TODO don't load state if using naomi networking
 				dc_loadstate(config::SavestateSlot);
 		}
@@ -101,7 +101,7 @@ static void emuEventCallback(Event event)
 	case Event::Terminate:
 		if (config::EnableUPnP)
 			dojo.StopUPnP();
-		if (!config::DojoEnable && config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
+		if (!config::DojoEnable && config::AutoSaveState && !settings.content.path.empty())
 			dc_savestate(config::SavestateSlot);
 		break;
 	default:
@@ -464,6 +464,7 @@ void gui_open_settings()
 	{
 		gui_state = GuiState::Commands;
 		HideOSD();
+		emu.stop();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
@@ -496,33 +497,31 @@ void gui_start_game(const std::string& path)
 
 	scanner.stop();
 	gui_state = GuiState::Loading;
-	static std::string path_copy;
-	path_copy = path;	// path may be a local var
 
 	if (config::DojoEnable)
 	{
 		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
 		if (config::EnableMemRestore && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
-			dojo_file.ValidateAndCopyMem(path_copy.c_str());
+			dojo_file.ValidateAndCopyMem(path.c_str());
 	}
 
 	if (!config::DojoEnable && !dojo.PlayMatch)
 	{
 		cfgSaveInt("dojo", "Delay", config::Delay);
 		config::OpponentName = "";
-		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
+		std::string rom_name = dojo.GetRomNamePrefix(path);
 		if (config::RecordMatches)
 			dojo.CreateReplayFile(rom_name);
 	}
 
 	if (config::GGPOEnable && config::RecordMatches && !config::Receiving)
 	{
-		std::string rom_name = dojo.GetRomNamePrefix(path_copy);
+		std::string rom_name = dojo.GetRomNamePrefix(path);
 		dojo.CreateReplayFile(rom_name);
 	}
 
-	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+	dc_load_game(path);
 }
 
 void gui_stop_game(const std::string& message)
@@ -537,13 +536,14 @@ void gui_stop_game(const std::string& message)
 		emu.unloadGame();
 		gui_state = GuiState::Main;
 		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
 		reset_vmus();
 		if (!message.empty())
 			error_msg = "Flycast has stopped.\n\n" + message;
 	}
 	else
 	{
+		if (!message.empty())
+			ERROR_LOG(COMMON, "Flycast has stopped: %s", message.c_str());
 		// Exit emulator
 		dc_exit();
 	}
@@ -551,8 +551,6 @@ void gui_stop_game(const std::string& message)
 
 static void gui_display_commands()
 {
-	emu.stop();
-
    	display_vmus();
 
     centerNextWindow();
@@ -563,7 +561,7 @@ static void gui_display_commands()
 	if (!config::DojoEnable)
 	{
 
-    bool loadSaveStateDisabled = settings.imgread.ImagePath[0] == '\0' || settings.online;
+    bool loadSaveStateDisabled = settings.content.path.empty() || settings.online;
 	if (loadSaveStateDisabled)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -2066,8 +2064,6 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Spacing();
 		    	header("Dynarec Options");
-		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
-		    			"Do not optimize integer division. Not recommended");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
 	    	ImGui::Spacing();
@@ -2476,9 +2472,9 @@ static void gui_display_content()
 					{
 						if (gui_state == GuiState::SelectDisk)
 						{
-							strcpy(settings.imgread.ImagePath, game.path.c_str());
+							settings.content.path = game.path;
 							try {
-								DiscSwap();
+								DiscSwap(game.path);
 								gui_state = GuiState::Closed;
 							} catch (const FlycastException& e) {
 								error_msg = e.what();
@@ -2963,15 +2959,22 @@ static void gui_network_start()
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
-		if (networkStatus.get())
-		{
-			gui_state = GuiState::Closed;
-			ImGui::Text("STARTING...");
-		}
-		else
-		{
+		try {
+			if (networkStatus.get())
+			{
+				gui_state = GuiState::Closed;
+				ImGui::Text("STARTING...");
+			}
+			else
+			{
+				gui_state = GuiState::Main;
+				emu.unloadGame();
+			}
+		} catch (const FlycastException& e) {
+			NetworkHandshake::instance->stop();
 			gui_state = GuiState::Main;
-			settings.imgread.ImagePath[0] = '\0';
+			emu.unloadGame();
+			error_msg = e.what();
 		}
 	}
 	else
@@ -2992,9 +2995,12 @@ static void gui_network_start()
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
 		NetworkHandshake::instance->stop();
-		networkStatus.get();
+		try {
+			networkStatus.get();
+		} catch (const FlycastException& e) {
+		}
 		gui_state = GuiState::Main;
-		settings.imgread.ImagePath[0] = '\0';
+		emu.unloadGame();
 	}
 	ImGui::PopStyleVar();
 
@@ -3127,8 +3133,8 @@ static void gui_display_loadscreen()
 #ifdef TEST_AUTOMATION
 			die("Game load failed");
 #endif
+			emu.unloadGame();
 			gui_state = GuiState::Main;
-			settings.imgread.ImagePath[0] = '\0';
 			config::GameEntry = "";
 		}
 	}
@@ -3158,13 +3164,12 @@ void gui_display_ui()
 		return;
 	if (gui_state == GuiState::Main)
 	{
-		std::string game_file = settings.imgread.ImagePath;
-		if (!game_file.empty())
+		if (!settings.content.path.empty())
 		{
 #ifndef __ANDROID__
 			commandLineStart = true;
 #endif
-			gui_start_game(game_file);
+			gui_start_game(settings.content.path);
 			return;
 		}
 	}

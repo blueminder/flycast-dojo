@@ -20,6 +20,7 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
+#include "cfg/option.h"
 #include <dojo/DojoSession.hpp>
 
 void UpdateInputState();
@@ -27,11 +28,10 @@ void UpdateInputState();
 namespace ggpo
 {
 
-constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
-constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
-
 static void getLocalInput(MapleInputState inputState[4])
 {
+	if (!config::ThreadedRendering)
+		UpdateInputState();
 	for (int player = 0; player < 4; player++)
 	{
 		MapleInputState& state = inputState[player];
@@ -71,7 +71,11 @@ namespace ggpo
 {
 using namespace std::chrono;
 
+constexpr int ProtocolVersion = 1;
 constexpr int MAX_PLAYERS = 2;
+
+constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
+constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
 
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
@@ -367,12 +371,12 @@ void startSession(int localPort, int localPlayerNum)
 	cb.log_game_state  = log_game_state;
 
 #ifdef SYNC_TEST
-	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
+	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
 		ggpoSession = nullptr;
-		return;
+		throw FlycastException("GGPO start sync session failed");
 	}
 	ggpo_idle(ggpoSession, 0);
 	ggpo::localPlayerNum = localPlayerNum;
@@ -405,12 +409,13 @@ void startSession(int localPort, int localPlayerNum)
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
+			&ProtocolVersion, sizeof(ProtocolVersion));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
 		ggpoSession = nullptr;
-		return;
+		throw FlycastException("GGPO network initialization failed");
 	}
 
 	// automatically disconnect clients after 3000 ms and start our count-down timer
@@ -426,7 +431,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add local player: %d", result);
 		stopSession();
-		return;
+		throw FlycastException("GGPO cannot add local player");
 	}
 	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
@@ -455,6 +460,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
 		stopSession();
+		throw FlycastException("GGPO cannot add remote player");
 	}
 	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
@@ -618,15 +624,20 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
-			if (config::ActAsServer)
-				startSession(config::GGPOPort.get(), 0);
-			else
-			{
-				// default port behavior, decrement on localhost
-				if (config::GGPOPort == 19713)
-					startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? config::GGPOPort.get() - 1 : config::GGPOPort.get(), 1);
+			try {
+				if (config::ActAsServer)
+					startSession(config::GGPOPort.get(), 0);
 				else
-					startSession(config::GGPOPort.get(), 1);
+				{
+					// default port behavior, decrement on localhost
+					if (config::GGPOPort == 19713)
+						startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? config::GGPOPort.get() - 1 : config::GGPOPort.get(), 1);
+					else
+						startSession(config::GGPOPort.get(), 1);
+				}
+			} catch (...) {
+				//miniupnp.Term();
+				throw;
 			}
 #endif
 		}
@@ -636,7 +647,14 @@ std::future<bool> startNetwork()
 				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 				if (ggpoSession == nullptr)
 					break;
-				ggpo_idle(ggpoSession, 0);
+				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
+				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
+					throw FlycastException("Peer verification failed");
+				else if (result != GGPO_OK)
+				{
+					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
+					throw FlycastException("GGPO error");
+				}
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		}
@@ -644,8 +662,8 @@ std::future<bool> startNetwork()
 		// save initial state (frame 0)
 		if (active())
 		{
-			u32 k[4];
-			getInput(k);
+			MapleInputState state[4];
+			getInput(state);
 		}
 #endif
 		emu.setNetworkState(active());

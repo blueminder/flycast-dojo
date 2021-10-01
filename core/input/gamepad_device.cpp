@@ -638,7 +638,7 @@ static FILE *get_record_input(bool write)
 		return NULL;
 	if (!write && !cfgLoadBool("record", "replay_input", false))
 		return NULL;
-	std::string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.content.path;
 	size_t slash = game_dir.find_last_of("/");
 	size_t dot = game_dir.find_last_of(".");
 	std::string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
@@ -691,7 +691,7 @@ void Mouse::setAbsPos(int x, int y, int width, int height) {
 	SetMousePosition(x, y, width, height, maple_port());
 }
 
-void Mouse::setRelPos(int deltax, int deltay) {
+void Mouse::setRelPos(float deltax, float deltay) {
 	SetRelativeMousePosition(deltax, deltay, maple_port());
 }
 

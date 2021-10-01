@@ -152,7 +152,7 @@ static void init_disk_control_interface();
 static bool read_m3u(const char *file);
 void UpdateInputState();
 
-static char *game_data;
+static std::string game_data;
 static char g_base_name[128];
 static char game_dir[1024];
 char game_dir_no_slash[1024];
@@ -865,11 +865,11 @@ void retro_run()
 		is_dupe = true;
 }
 
-static bool loadGame(const char *path)
+static bool loadGame()
 {
 	mute_messages = true;
 	try {
-		emu.loadGame(path);
+		emu.loadGame(game_data.c_str());
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		mute_messages = false;
@@ -888,7 +888,7 @@ void retro_reset()
 	emu.unloadGame();
 
 	config::ScreenStretching = 100;
-	loadGame(settings.imgread.ImagePath);
+	loadGame();
 	if (rotate_game)
 		config::Widescreen.override(false);
 	config::Rotate90 = false;
@@ -1571,7 +1571,7 @@ bool retro_load_game(const struct retro_game_info *game)
 		boot_to_bios = false;
 
 	if (boot_to_bios)
-		game_data = nullptr;
+		game_data.clear();
 	// if an m3u file was loaded, disk_paths will already be populated so load the game from there
 	else if (disk_paths.size() > 0)
 	{
@@ -1584,7 +1584,7 @@ bool retro_load_game(const struct retro_game_info *game)
 				&& disk_paths[disk_initial_index].compare(disk_initial_path) == 0)
 			disk_index = disk_initial_index;
 
-		game_data = strdup(disk_paths[disk_index].c_str());
+		game_data = disk_paths[disk_index];
 	}
 	else
 	{
@@ -1596,7 +1596,7 @@ bool retro_load_game(const struct retro_game_info *game)
 		fill_short_pathname_representation(disk_label, game->path, sizeof(disk_label));
 		disk_labels.push_back(disk_label);
 
-		game_data = strdup(game->path);
+		game_data = game->path;
 	}
 
 	{
@@ -1670,7 +1670,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	}
 
 	config::ScreenStretching = 100;
-	if (!loadGame(game_data))
+	if (!loadGame())
 		return false;
 
 	rotate_game = config::Rotate90;
@@ -1698,8 +1698,7 @@ void retro_unload_game()
 	frontend_clear_thread_waits_cb(1, nullptr);
 	emu.stop();
 	frontend_clear_thread_waits_cb(0, nullptr);
-	free(game_data);
-	game_data = nullptr;
+	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
 	blankVmus();
@@ -1923,13 +1922,6 @@ void retro_rend_present()
 	}
 }
 
-void retro_rend_vblank()
-{
-	// Time out if a frame hasn't been rendered for 50 ms
-	if (!config::ThreadedRendering && is_dupe && sh4_sched_now64() - startTime > 10000000)
-		sh4_cpu.Stop();
-}
-
 static uint32_t get_time_ms()
 {
    return (uint32_t)(os_GetSeconds() * 1000.0);
@@ -2087,9 +2079,9 @@ static void updateMouseState(u32 port)
 	  mo_buttons[port] |= 1 << 1;
    btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
    if (btn_state)
-	  mo_buttons[port] &= ~(1 << 0);
+	  mo_buttons[port] &= ~(1 << 3);
    else
-	  mo_buttons[port] |= 1 << 0;
+	  mo_buttons[port] |= 1 << 3;
    if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
 	  mo_wheel_delta[port] -= 10;
    else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
@@ -2719,7 +2711,7 @@ static bool retro_set_eject_state(bool ejected)
 	else
 	{
 		try {
-			return DiscSwap();
+			return DiscSwap(disk_paths[disk_index]);
 		} catch (const FlycastException& e) {
 			ERROR_LOG(GDROM, "%s", e.what());
 			return false;
@@ -2743,17 +2735,16 @@ static bool retro_set_image_index(unsigned index)
 	if (disk_index >= disk_paths.size())
 	{
 		// No disk in drive
-		settings.imgread.ImagePath[0] = '\0';
+		settings.content.path.clear();
 		return true;
 	}
-	strncpy(settings.imgread.ImagePath, disk_paths[index].c_str(), sizeof(settings.imgread.ImagePath));
-	settings.imgread.ImagePath[sizeof(settings.imgread.ImagePath) - 1] = '\0';
+	settings.content.path = disk_paths[index];
 
 	if (disc_tray_open)
 		return true;
 
 	try {
-		return DiscSwap();
+		return DiscSwap(settings.content.path);
 	} catch (const FlycastException& e) {
 		ERROR_LOG(GDROM, "%s", e.what());
 		return false;
