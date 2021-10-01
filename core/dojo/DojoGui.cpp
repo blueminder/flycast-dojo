@@ -10,7 +10,7 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		current_bios = "awbios.zip";
 
-	std::string file_path = settings.imgread.ImagePath;
+	std::string file_path = settings.content.path;
 	std::string current_filename = file_path.substr(file_path.find_last_of("/\\") + 1);
 
 	std::string designation, start_msg, file_d;
@@ -49,8 +49,8 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 		{
 			if (config::TestGame)
 			{
-				if (strlen(settings.imgread.ImagePath) > 0)
-					gui_start_game(settings.imgread.ImagePath);
+				if (strlen(settings.content.path.data()) > 0)
+					gui_start_game(settings.content.path);
 				else
 					gui_state = GuiState::Main;
 			}
@@ -95,7 +95,7 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 			// Exit to main menu
 			gui_state = GuiState::Main;
 			game_started = false;
-			settings.imgread.ImagePath[0] = '\0';
+			settings.content.path = "";
 			dc_reset(true);
 		}
 		*/
@@ -141,7 +141,7 @@ void DojoGui::gui_display_host_wait(float scaling)
 		// Exit to main menu
 		gui_state = GuiState::Main;
 		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
+		settings.content.path = "";
 		dc_reset(true);
 	}
 	*/
@@ -222,7 +222,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 					// Exit to main menu
 					gui_state = GuiState::Main;
 					game_started = false;
-					settings.imgread.ImagePath[0] = '\0';
+					settings.content.path = "";
 					dc_reset(true);
 				}
 				*/
@@ -270,7 +270,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 					// Exit to main menu
 					gui_state = GuiState::Main;
 					game_started = false;
-					settings.imgread.ImagePath[0] = '\0';
+					settings.content.path = "";
 					dc_reset(true);
 
 					config::DojoServerIP = "";
@@ -294,7 +294,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				// Exit to main menu
 				gui_state = GuiState::Main;
 				game_started = false;
-				settings.imgread.ImagePath[0] = '\0';
+				settings.content.path = "";
 				dc_reset(true);
 
 				config::DojoServerIP = "";
@@ -420,7 +420,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		    // Exit to main menu
 		    gui_state = GuiState::Main;
 		    game_started = false;
-		    settings.imgread.ImagePath[0] = '\0';
+		    settings.content.path = "";
 		    dc_reset(true);
 
 		    config::NetworkServer.set("");
@@ -557,13 +557,13 @@ void DojoGui::gui_display_test_game( float scaling)
 		{
 			try {
 				std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
-				strcpy(settings.imgread.ImagePath, entry_path.c_str());
+				settings.content.path = entry_path;
 			}
 			catch (...) { }
 		}
-		if (strlen(settings.imgread.ImagePath) > 0)
+		if (strlen(settings.content.path.data()) > 0)
 		{
-			std::string extension = get_file_extension(settings.imgread.ImagePath);
+			std::string extension = get_file_extension(settings.content.path);
 			// dreamcast games use built-in bios by default
 			if (extension == "chd" || extension == "gdi" || extension == "cdi")
 			{
@@ -572,17 +572,17 @@ void DojoGui::gui_display_test_game( float scaling)
 			}
 			else
 			{
-				int platform = naomi_cart_GetPlatform(settings.imgread.ImagePath);
+				int platform = naomi_cart_GetPlatform(settings.content.path.data());
 				settings.platform.system = platform;
 				dojo_gui.bios_json_match = dojo_file.CompareBIOS(platform);
 			}
 
-			dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
+			dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
 
 			if (!dojo_gui.bios_json_match || !dojo_gui.current_json_match)
 				gui_state = GuiState::BiosRomWarning;
 			else
-				gui_start_game(settings.imgread.ImagePath);
+				gui_start_game(settings.content.path);
 		}
 		else
 		{

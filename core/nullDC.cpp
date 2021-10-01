@@ -103,7 +103,7 @@ void dc_term()
 
 std::string get_game_name()
 {
-	std::string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.content.path;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');
@@ -130,7 +130,7 @@ std::string get_net_savestate_file_path(bool writable)
 
 std::string get_savestate_file_path(int index, bool writable)
 {
-	std::string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.content.path;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');

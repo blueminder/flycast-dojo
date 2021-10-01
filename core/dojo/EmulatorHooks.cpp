@@ -360,7 +360,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 std::string DojoSession::GetRomNamePrefix()
 {
-	std::string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.content.path;
 	return GetRomNamePrefix(state_file);
 }
 

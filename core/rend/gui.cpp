@@ -2890,7 +2890,7 @@ static void gui_display_content()
 
 		if(!found_path.empty())
 		{
-			strcpy(settings.imgread.ImagePath, found_path.data());
+			settings.content.path = found_path;
 			if (config::LaunchReplay)
 			{
 				config::DojoEnable = true;
@@ -2898,7 +2898,7 @@ static void gui_display_content()
 				dojo.PlayMatch = true;
 			}
 
-			gui_start_game(settings.imgread.ImagePath);
+			gui_start_game(settings.content.path);
 		}
 	}
 }
@@ -3047,7 +3047,7 @@ static void gui_display_loadscreen()
 			if (config::GGPOEnable)
 			{
 				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
-				dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
+				dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
 
 				if ((dojo_gui.bios_json_match && dojo_gui.current_json_match) || !config::NetStartVerifyRoms)
 				{
@@ -3074,7 +3074,7 @@ static void gui_display_loadscreen()
 			else if (config::DojoEnable || dojo.PlayMatch)
 			{
 				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
-				dojo_gui.current_json_match = dojo_file.CompareRom(settings.imgread.ImagePath);
+				dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
 
 				dojo.StartDojoSession();
 
