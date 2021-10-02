@@ -22,6 +22,7 @@
 #include "input/gamepad_device.h"
 #include "cfg/option.h"
 #include <dojo/DojoSession.hpp>
+#include "version.h"
 
 void UpdateInputState();
 
@@ -73,6 +74,7 @@ using namespace std::chrono;
 
 struct sync_data {
 	const int ProtocolVersion = 1;
+	char BuildVersion[128] = { 0 };
 	char GameMD5[32] = { 0 };
 } SyncData;
 
@@ -413,6 +415,7 @@ void startSession(int localPort, int localPlayerNum)
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
+	strcpy(SyncData.BuildVersion, GIT_VERSION);
 	strcpy(SyncData.GameMD5, dojo.game_checksum.c_str());
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
 			&SyncData, sizeof(SyncData));
