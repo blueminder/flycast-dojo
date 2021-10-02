@@ -281,6 +281,7 @@ public:
 	u32 replay_analog;
 
 	void CleanUp();
+	std::string game_checksum;
 };
 
 extern DojoSession dojo;

@@ -492,6 +492,12 @@ void gui_start_game(const std::string& path)
 			dojo.SwitchPlayer();
 	}
 
+	if (config::GGPOEnable)
+	{
+		std::FILE* file = std::fopen(path.c_str(), "rb");
+		dojo.game_checksum = md5file(file);
+	}
+
 	emu.unloadGame();
 	reset_vmus();
 
