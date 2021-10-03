@@ -42,6 +42,7 @@ struct UdpMsg
          uint32      random_request;  /* please reply back with this random data */
          uint16      remote_magic;
          uint8       remote_endpoint;
+         char        player_name[21];
          uint8       verification[MAX_VERIFICATION_SIZE];
       } sync_request;
       

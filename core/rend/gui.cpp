@@ -3359,7 +3359,7 @@ void gui_display_osd()
 	else
 	{
 		if ((config::DojoEnable && config::EnablePlayerNameOverlay) ||
-			(config::EnableMatchCode && config::GGPOEnable && config::EnablePlayerNameOverlay))
+			(config::GGPOEnable && config::EnablePlayerNameOverlay))
 		{
 			if (!config::Receiving ||
 				(config::Receiving && dojo.receiver_header_read))
