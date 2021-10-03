@@ -11,6 +11,7 @@
 #include "bitvector.h"
 
 #include "cfg/option.h"
+#include <dojo/DojoSession.hpp>
 
 static const int UDP_HEADER_SIZE = 28;     /* Size of IP + UDP headers */
 static const int NUM_SYNC_PACKETS = 5;
@@ -505,6 +506,11 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    if (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS && msg->hdr.sequence_number == 0) {
       Log("Sync request 0 received... Re-queueing sync packet.\n");
       SendSyncRequest();
+   }
+
+   if (config::RecordMatches && !config::Receiving)
+   {
+     dojo.CreateReplayFile(dojo.game_name);
    }
 
    reply->u.sync_reply.verification_failure = 0;

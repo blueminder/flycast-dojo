@@ -485,6 +485,10 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	std::string filename = path.substr(path.find_last_of("/\\") + 1);
+	auto game_name = stringfix::remove_extension(filename);
+	dojo.game_name = game_name;
+
 	if (config::GGPOEnable && !config::ActAsServer)
 	{
 		// switch ports if ggpo guest
@@ -496,9 +500,6 @@ void gui_start_game(const std::string& path)
 	{
 		std::FILE* file = std::fopen(path.c_str(), "rb");
 		dojo.game_checksum = md5file(file);
-
-		std::string filename = path.substr(path.find_last_of("/\\") + 1);
-		auto game_name = stringfix::remove_extension(filename);
 
 		std::string net_save_path = "data/" + game_name + ".state.net";
 		if(ghc::filesystem::exists(net_save_path))
@@ -529,12 +530,6 @@ void gui_start_game(const std::string& path)
 		std::string rom_name = dojo.GetRomNamePrefix(path);
 		if (config::RecordMatches)
 			dojo.CreateReplayFile(rom_name);
-	}
-
-	if (config::GGPOEnable && config::RecordMatches && !config::Receiving)
-	{
-		std::string rom_name = dojo.GetRomNamePrefix(path);
-		dojo.CreateReplayFile(rom_name);
 	}
 
 	dc_load_game(path);
