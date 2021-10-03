@@ -1118,11 +1118,19 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			if (config::NetplayMethod.get() == "GGPO")
 			{
 				int GGPOPort = config::GGPOPort.get();
-				ImGui::InputInt("GGPO Port", &GGPOPort);
+				ImGui::InputInt("GGPO Local Port", &GGPOPort);
 				ImGui::SameLine();
-				ShowHelpMarker("The GGPO server port to listen on");
+				ShowHelpMarker("The GGPO port to listen on");
 				if (GGPOPort != config::GGPOPort.get())
 					config::GGPOPort = GGPOPort;
+
+				int GGPORemotePort = config::GGPORemotePort.get();
+				ImGui::InputInt("GGPO Remote Port", &GGPORemotePort);
+				ImGui::SameLine();
+				ShowHelpMarker("The GGPO destination port to transmit to");
+				if (GGPORemotePort != config::GGPORemotePort.get())
+					config::GGPORemotePort = GGPORemotePort;
+
 			}
 
 			std::string PortTitle;

@@ -445,22 +445,10 @@ void startSession(int localPort, int localPlayerNum)
 	}
 	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
-	size_t colon = config::NetworkServer.get().find(':');
-	std::string peerIp = config::NetworkServer.get().substr(0, colon);
+	std::string peerIp = config::NetworkServer.get();
 	if (peerIp.empty())
 		peerIp = "127.0.0.1";
-	u32 peerPort;
-	if (colon == std::string::npos)
-	{
-		if (peerIp == "127.0.0.1")
-			peerPort = localPort ^ 1;
-		else
-			peerPort = config::GGPOPort.get();
-	}
-	else
-	{
-		peerPort = atoi(config::NetworkServer.get().substr(colon + 1).c_str());
-	}
+	u32 peerPort = config::GGPORemotePort.get();
 	player.type = GGPO_PLAYERTYPE_REMOTE;
 	strcpy(player.u.remote.ip_address, peerIp.c_str());
 	player.u.remote.port = peerPort;
@@ -638,13 +626,7 @@ std::future<bool> startNetwork()
 				if (config::ActAsServer)
 					startSession(config::GGPOPort.get(), 0);
 				else
-				{
-					// default port behavior, decrement on localhost
-					if (config::GGPOPort == 19713)
-						startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? config::GGPOPort.get() - 1 : config::GGPOPort.get(), 1);
-					else
-						startSession(config::GGPOPort.get(), 1);
-				}
+					startSession(config::GGPOPort.get(), 1);
 			} catch (...) {
 				//miniupnp.Term();
 				throw;
