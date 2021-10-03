@@ -595,6 +595,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	if (!dest_folder.empty())
 		path = dest_folder + "//" + filename;
 
+	// if file already exists, delete before starting new download
+	if (file_exists(path.c_str()))
+		remove(path.c_str());
+
 	of = std::ofstream(path, std::ofstream::out | std::ofstream::binary);
 
 	total_size = download_size;
