@@ -496,6 +496,16 @@ void gui_start_game(const std::string& path)
 	{
 		std::FILE* file = std::fopen(path.c_str(), "rb");
 		dojo.game_checksum = md5file(file);
+
+		std::string filename = path.substr(path.find_last_of("/\\") + 1);
+		auto game_name = stringfix::remove_extension(filename);
+
+		std::string net_save_path = "data/" + game_name + ".state.net";
+		if(ghc::filesystem::exists(net_save_path))
+		{
+			std::FILE* save_file = std::fopen(net_save_path.c_str(), "rb");
+			dojo.save_checksum = md5file(save_file);
+		}
 	}
 
 	emu.unloadGame();

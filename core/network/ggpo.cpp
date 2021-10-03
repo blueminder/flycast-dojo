@@ -74,8 +74,9 @@ using namespace std::chrono;
 
 struct sync_data {
 	const int ProtocolVersion = 1;
+	char GameMD5[33] = { 0 };
+	char SaveMD5[33] = { 0 };
 	char BuildVersion[128] = { 0 };
-	char GameMD5[32] = { 0 };
 } SyncData;
 
 constexpr int MAX_PLAYERS = 2;
@@ -415,8 +416,9 @@ void startSession(int localPort, int localPlayerNum)
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
-	strcpy(SyncData.BuildVersion, GIT_VERSION);
 	strcpy(SyncData.GameMD5, dojo.game_checksum.c_str());
+	strcpy(SyncData.SaveMD5, dojo.save_checksum.c_str());
+	strcpy(SyncData.BuildVersion, GIT_VERSION);
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
 			&SyncData, sizeof(SyncData));
 	if (result != GGPO_OK)

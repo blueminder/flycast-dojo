@@ -282,6 +282,7 @@ public:
 
 	void CleanUp();
 	std::string game_checksum;
+	std::string save_checksum;
 };
 
 extern DojoSession dojo;
