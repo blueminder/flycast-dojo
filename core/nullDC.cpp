@@ -72,6 +72,7 @@ void dc_exit()
 	if (config::DojoEnable &&
 		!dojo.disconnect_toggle &&
 		gui_state != GuiState::Closed &&
+		gui_state != GuiState::Main &&
 		!dojo.PlayMatch)
 	{
 		dojo.disconnect_toggle = true;
