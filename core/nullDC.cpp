@@ -1,7 +1,5 @@
 #ifndef LIBRETRO
 #include "types.h"
-#include <future>
-
 #include "emulator.h"
 #include "hw/mem/_vmem.h"
 #include "cfg/cfg.h"
@@ -9,16 +7,14 @@
 #include "log/LogManager.h"
 #include "rend/gui.h"
 #include "oslib/oslib.h"
-#include "hw/sh4/sh4_if.h"
 #include "debug/gdb_server.h"
 #include "archive/rzip.h"
 #include "rend/mainui.h"
 #include "input/gamepad_device.h"
+#include "lua/lua.h"
 
 #include "dojo/DojoSession.hpp"
 #include "dojo/deps/filesystem.hpp"
-
-static std::future<void> loadingDone;
 
 int flycast_init(int argc, char* argv[])
 {
@@ -55,6 +51,7 @@ int flycast_init(int argc, char* argv[])
 	os_SetupInput();
 
 	debugger::init();
+	lua::init();
 
 	return 0;
 }
@@ -79,7 +76,7 @@ void dc_exit()
 	}
 	else
 	{
-	emu.term();
+	emu.stop();
 	mainui_stop();
 	}
 }
@@ -95,11 +92,11 @@ void SaveSettings()
 #endif
 }
 
-void dc_term()
+void flycast_term()
 {
-	dc_cancel_load();
+	gui_cancel_load();
+	lua::term();
 	emu.term();
-	SaveSettings();
 }
 
 std::string get_game_name()
@@ -340,38 +337,4 @@ void dc_loadstate(int index, std::string filename)
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
-void dc_load_game(const std::string& path)
-{
-	loading_canceled = false;
-
-	loadingDone = std::async(std::launch::async, [path] {
-		emu.loadGame(path.c_str());
-	});
-}
-
-bool dc_is_load_done()
-{
-	if (!loadingDone.valid())
-		return true;
-	if (loadingDone.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-		return true;
-	return false;
-}
-
-void dc_cancel_load()
-{
-	if (loadingDone.valid())
-	{
-		loading_canceled = true;
-		loadingDone.get();
-	}
-	settings.content.path.clear();
-}
-
-void dc_get_load_status()
-{
-	if (loadingDone.valid())
-		loadingDone.get();
-}
 #endif
-

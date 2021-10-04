@@ -41,6 +41,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "lua/lua.h"
 
 #include "dojo/DojoGui.hpp"
 #include "dojo/DojoFile.hpp"
@@ -72,6 +73,7 @@ static void term_vmus();
 static void displayCrosshairs();
 
 GameScanner scanner;
+static BackgroundGameLoader gameLoader;
 
 static int item_current_idx = 0;
 
@@ -472,7 +474,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Loading)
 	{
-		dc_cancel_load();
+		gameLoader.cancel();
 		gui_state = GuiState::Main;
 	}
 	else if (gui_state == GuiState::Commands)
@@ -532,7 +534,7 @@ void gui_start_game(const std::string& path)
 			dojo.CreateReplayFile(rom_name);
 	}
 
-	dc_load_game(path);
+	gameLoader.load(path);
 }
 
 void gui_stop_game(const std::string& message)
@@ -2448,10 +2450,7 @@ static void gui_display_content()
 		{
 			ImGui::PushID("bios");
 			if (ImGui::Selectable("Dreamcast BIOS"))
-			{
-				gui_state = GuiState::Closed;
 				gui_start_game("");
-			}
 		}
 
 		ImGui::PopID();
@@ -2502,7 +2501,6 @@ static void gui_display_content()
 							}
 							else
 							{
-								gui_state = GuiState::Closed;
 								gui_start_game(gamePath);
 							}
 							scanner.get_mutex().lock();
@@ -2974,7 +2972,7 @@ static void gui_network_start()
 			if (networkStatus.get())
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("STARTING...");
+				ImGui::Text("Starting...");
 			}
 			else
 			{
@@ -2990,7 +2988,7 @@ static void gui_network_start()
 	}
 	else
 	{
-		ImGui::Text("STARTING NETWORK...");
+		ImGui::Text("Starting Network...");
 		if (NetworkHandshake::instance->canStartNow() && !config::GGPOEnable)
 			ImGui::Text("Press Start to start the game now.");
 	}
@@ -3042,10 +3040,9 @@ static void gui_display_loadscreen()
   ImGui::AlignTextToFramePadding();
   ImGui::SetCursorPosX(20.f * scaling);
 
-	if (dc_is_load_done())
-	{
-		try {
-			dc_get_load_status();
+	try {
+		if (gameLoader.ready())
+		{
 
 			if (!config::Offline && config::EnableUPnP)
 			{
@@ -3136,33 +3133,37 @@ static void gui_display_loadscreen()
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("STARTING...");
+				ImGui::Text("Starting...");
 			}
-		} catch (const FlycastException& ex) {
-			ERROR_LOG(BOOT, "%s", ex.what());
-			error_msg = ex.what();
-#ifdef TEST_AUTOMATION
-			die("Game load failed");
-#endif
-			emu.unloadGame();
-			gui_state = GuiState::Main;
 			config::GameEntry = "";
 		}
-	}
-	else
-	{
-		ImGui::Text("LOADING... ");
-		ImGui::SameLine();
-		ImGui::Text("%s", get_notification().c_str());
-
-		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		ImGui::SetCursorPosY(126.f * scaling);
-		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+		else
 		{
-			dc_cancel_load();
-			gui_state = GuiState::Main;
+			const char *label = gameLoader.getProgress().label;
+			if (label == nullptr)
+				label = "Loading...";
+			ImGui::Text("%s", label);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::PopStyleColor();
+
+			float currentwidth = ImGui::GetContentRegionAvail().x;
+			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(126.f * scaling);
+			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+			{
+				gameLoader.cancel();
+				gui_state = GuiState::Main;
+			}
 		}
+	} catch (const FlycastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.what());
+		error_msg = ex.what();
+#ifdef TEST_AUTOMATION
+		die("Game load failed");
+#endif
+		emu.unloadGame();
+		gui_state = GuiState::Main;
 	}
 	ImGui::PopStyleVar();
 
@@ -3307,7 +3308,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats && !dojo.PlayMatch))
+//	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats && !dojo.PlayMatch))
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -3330,6 +3331,7 @@ void gui_display_osd()
 //		gui_plot_render_time(settings.display.width, settings.display.height);
 		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
 			ggpo::displayStats();
+		lua::overlay();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
@@ -3370,6 +3372,11 @@ void gui_open_onboarding()
 	gui_state = GuiState::Onboarding;
 }
 
+void gui_cancel_load()
+{
+	gameLoader.cancel();
+}
+
 void gui_term()
 {
 	if (inited)
@@ -3380,6 +3387,8 @@ void gui_term()
 			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
+	    EventManager::unlisten(Event::Start, emuEventCallback);
+	    EventManager::unlisten(Event::Terminate, emuEventCallback);
 	}
 }
 

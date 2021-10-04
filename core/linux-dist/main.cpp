@@ -405,7 +405,7 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-	emu.term();
+	flycast_term();
 
 	os_UninstallFaultHandler();
 

@@ -261,6 +261,14 @@ if(NOT LIBRETRO)
 	    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
 	endif()
+	
+	find_package(Lua)
+	if(LUA_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LUA)
+	    target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
+	    list(TRANSFORM LUA_LIBRARIES REPLACE "\.dll" "")
+	    target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
+	endif()
 endif()
 
 execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
@@ -844,7 +852,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiostream.h
         core/oslib/directory.h
         core/oslib/host_context.h
-        core/oslib/oslib.h)
+        core/oslib/oslib.h
+        core/lua/lua.cpp
+        core/lua/lua.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/profiler/profiler.cpp

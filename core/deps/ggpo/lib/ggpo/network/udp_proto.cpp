@@ -78,8 +78,11 @@ UdpProtocol::Init(Udp *udp,
    _local_connect_status = status;
 
    _peer_addr.sin_family = AF_INET;
-   _peer_addr.sin_port = htons(port);
-   inet_pton(AF_INET, ip, &_peer_addr.sin_addr.s_addr);
+   if (ip != nullptr && ip[0] != '\0')
+   {
+	   _peer_addr.sin_port = htons(port);
+	   inet_pton(AF_INET, ip, &_peer_addr.sin_addr.s_addr);
+   }
 
    do {
       _magic_number = (uint16)rand();
@@ -196,7 +199,7 @@ UdpProtocol::OnLoopPoll(void *cookie)
    switch (_current_state) {
    case Syncing:
       next_interval = (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS) ? SYNC_FIRST_RETRY_INTERVAL : SYNC_RETRY_INTERVAL;
-      if (_last_send_time && _last_send_time + next_interval < now) {
+      if (_last_send_time && _last_send_time + next_interval < now && _peer_addr.sin_addr.s_addr != 0) {
          Log("No luck syncing after %d ms... Re-queueing sync packet.\n", next_interval);
          SendSyncRequest();
       }
@@ -305,13 +308,14 @@ UdpProtocol::HandlesMsg(sockaddr_in &from,
    if (!_udp) {
       return false;
    }
-#ifdef _WIN32
-   return _peer_addr.sin_addr.S_un.S_addr == from.sin_addr.S_un.S_addr &&
-          _peer_addr.sin_port == from.sin_port;
-#else
+   if (_peer_addr.sin_addr.s_addr == 0)
+   {
+	   _peer_addr.sin_addr.s_addr = from.sin_addr.s_addr;
+	   _peer_addr.sin_port = from.sin_port;
+	   return true;
+   }
    return _peer_addr.sin_addr.s_addr == from.sin_addr.s_addr &&
           _peer_addr.sin_port == from.sin_port;
-#endif
 }
 
 void
@@ -403,7 +407,8 @@ UdpProtocol::Synchronize()
    if (_udp) {
       _current_state = Syncing;
       _state.sync.roundtrips_remaining = NUM_SYNC_PACKETS;
-      SendSyncRequest();
+      if (_peer_addr.sin_addr.s_addr != 0)
+    	  SendSyncRequest();
    }
 }
 

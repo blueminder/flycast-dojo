@@ -37,9 +37,10 @@
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
+#include "rend/gui.h"
+#include "lua/lua.h"
 #include <chrono>
 
-std::atomic<bool> loading_canceled;
 settings_t settings;
 
 static void loadSpecialSettings()
@@ -396,7 +397,7 @@ static int getGamePlatform(const char *path)
 	return DC_PLATFORM_DREAMCAST;
 }
 
-void Emulator::loadGame(const char *path)
+void Emulator::loadGame(const char *path, LoadProgress *progress)
 {
 	init();
 	try {
@@ -458,9 +459,7 @@ void Emulator::loadGame(const char *path)
 		else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
 			LoadRomFiles();
-			naomi_cart_LoadRom(path);
-			if (loading_canceled)
-				return;
+			naomi_cart_LoadRom(path, progress);
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
@@ -641,7 +640,8 @@ bool dc_loadstate(const void **data, u32 size)
 
 void Emulator::setNetworkState(bool online)
 {
-	DEBUG_LOG(NETWORK, "Network state %d", online);
+	if (settings.online != online)
+		DEBUG_LOG(NETWORK, "Network state %d", online);
 	settings.online = online;
 	settings.input.fastForwardMode &= !online;
 }
@@ -779,6 +779,7 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
+	lua::vblank();
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;

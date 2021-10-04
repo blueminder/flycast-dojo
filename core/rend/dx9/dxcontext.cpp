@@ -64,6 +64,7 @@ void DXContext::Term()
 {
 	overlay.term();
 	ImGui_ImplDX9_Shutdown();
+	gui_term();
 	pDevice.reset();
 	pD3D.reset();
 }
