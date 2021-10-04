@@ -241,7 +241,7 @@ void invoke_jump_state(bool dojo_invoke)
 	else
 	{
 		jump_state_requested = true;
-		sh4_cpu.Stop();
+		emu.stop();
 	}
 }
 
