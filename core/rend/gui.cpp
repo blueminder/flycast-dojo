@@ -2816,6 +2816,8 @@ static void gui_display_content()
 	error_popup();
     contentpath_warning_popup();
 
+	// ensure command line settings are loaded
+	config::Settings::instance().load(false);
 	bool net_save_download = false;
 	if (!config::GameEntry.get().empty())
 	{

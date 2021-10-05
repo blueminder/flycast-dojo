@@ -635,6 +635,9 @@ std::future<bool> startNetwork()
 			startSession(0, 0);
 #else
 			try {
+				// ensure command line settings are loaded
+				config::Settings::instance().load(false);
+				std::cout << "Server " << config::ActAsServer.get() << " " << config::NetworkServer.get() << std::endl;
 				if (config::ActAsServer)
 					startSession(config::GGPOPort.get(), 0);
 				else
