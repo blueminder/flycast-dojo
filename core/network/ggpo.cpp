@@ -72,12 +72,14 @@ namespace ggpo
 {
 using namespace std::chrono;
 
+#pragma pack(push, 1)
 struct sync_data {
 	const int ProtocolVersion = 1;
 	char GameMD5[33] = { 0 };
 	char SaveMD5[33] = { 0 };
 	char BuildVersion[128] = { 0 };
 } SyncData;
+#pragma pack(pop)
 
 constexpr int MAX_PLAYERS = 2;
 
