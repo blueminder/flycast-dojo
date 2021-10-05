@@ -2829,9 +2829,11 @@ static void gui_display_content()
 			if (file_exists(entry_path))
 			{
 				std::string net_state_path = get_writable_data_path(game_name + ".state.net");
-				if (cfgLoadBool("network", "GGPO", false) && !file_exists(net_state_path))
+				if (cfgLoadBool("network", "GGPO", false) &&
+					(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended))
 				{
-					invoke_download_save_popup(entry_path, &net_save_download, true);
+					if (!dojo_file.start_save_download)
+						invoke_download_save_popup(entry_path, &net_save_download, true);
 				}
 				else
 				{
