@@ -77,7 +77,6 @@ struct sync_data {
 	const int ProtocolVersion = 1;
 	char GameMD5[33] = { 0 };
 	char SaveMD5[33] = { 0 };
-	char BuildVersion[128] = { 0 };
 } SyncData;
 #pragma pack(pop)
 
@@ -420,9 +419,8 @@ void startSession(int localPort, int localPlayerNum)
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
 	strcpy(SyncData.GameMD5, dojo.game_checksum.c_str());
 	strcpy(SyncData.SaveMD5, dojo.save_checksum.c_str());
-	strcpy(SyncData.BuildVersion, GIT_VERSION);
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
-			&SyncData, sizeof(SyncData));
+			&SyncData, 0);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);

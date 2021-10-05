@@ -497,16 +497,20 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    strcpy(opponent_name, (char *)(&msg->u.sync_request.player_name[0]));
    config::OpponentName = std::string(opponent_name);
 
-   int msgVerifSize = len - msg->PacketSize();
-
-   if (msgVerifSize != (int)verification.size()
-		   || (msgVerifSize != 0 && memcmp(&msg->u.sync_request.verification[0], &verification[0], msgVerifSize)))
+   if (verification.size() != 0)
    {
-	   Log("Verification mismatch: size received %d expected %d", msgVerifSize, (int)verification.size());
-	   reply->u.sync_reply.verification_failure = 1;
-	   SendMsg(reply);
-	   throw GGPOException("Verification mismatch", GGPO_ERRORCODE_VERIFICATION_ERROR);
+     int msgVerifSize = len - msg->PacketSize();
+
+     if (msgVerifSize != (int)verification.size()
+       || (msgVerifSize != 0 && memcmp(&msg->u.sync_request.verification[0], &verification[0], msgVerifSize)))
+     {
+       Log("Verification mismatch: size received %d expected %d", msgVerifSize, (int)verification.size());
+       reply->u.sync_reply.verification_failure = 1;
+       SendMsg(reply);
+       throw GGPOException("Verification mismatch", GGPO_ERRORCODE_VERIFICATION_ERROR);
+     }
    }
+
    // FIXME
    if (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS && msg->hdr.sequence_number == 0) {
       Log("Sync request 0 received... Re-queueing sync packet.\n");
