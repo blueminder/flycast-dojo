@@ -116,7 +116,7 @@ Option<bool> EnableUPnP("EnableUPnP", false, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPOPort("GGPOPort", 19713, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
-Option<bool> NetworkStats("Stats", true, "network");
+Option<bool> NetworkStats("Stats", false, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<int> GGPORemotePort("GGPORemotePort", 19713, "network");
 
@@ -151,7 +151,7 @@ OptionString MatchCode("MatchCode", "", "dojo");
 OptionString GameName("GameName", "", "dojo");
 Option<bool> EnableMemRestore("EnableMemRestore", true, "dojo");
 OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
-Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", false, "dojo");
+Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
 Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
 Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
