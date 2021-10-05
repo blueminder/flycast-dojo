@@ -448,7 +448,19 @@ void startSession(int localPort, int localPlayerNum)
 	std::string peerIp = config::NetworkServer.get();
 	if (peerIp.empty())
 		peerIp = "127.0.0.1";
-	u32 peerPort = config::GGPORemotePort.get();
+
+	u32 peerPort;
+	if (peerIp == "127.0.0.1" && config::GGPOPort.get() == config::GGPORemotePort.get())
+	{
+		if (config::ActAsServer)
+			peerPort = config::GGPORemotePort.get() - 1;
+		else
+			peerPort = config::GGPORemotePort.get();
+	}
+	else
+	{
+		peerPort = config::GGPORemotePort.get();
+	}
 	player.type = GGPO_PLAYERTYPE_REMOTE;
 	strcpy(player.u.remote.ip_address, peerIp.c_str());
 	player.u.remote.port = peerPort;
@@ -626,7 +638,13 @@ std::future<bool> startNetwork()
 				if (config::ActAsServer)
 					startSession(config::GGPOPort.get(), 0);
 				else
-					startSession(config::GGPOPort.get(), 1);
+				{
+					if ((config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1") &&
+							config::GGPOPort.get() == config::GGPORemotePort.get())
+						startSession(config::GGPOPort.get() - 1, 1);
+					else
+						startSession(config::GGPOPort.get(), 1);
+				}
 			} catch (...) {
 				//miniupnp.Term();
 				throw;
