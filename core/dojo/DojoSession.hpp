@@ -283,6 +283,10 @@ public:
 	void CleanUp();
 	std::string game_checksum;
 	std::string save_checksum;
+
+	std::string player_1;
+	std::string player_2;
+	void AssignNames();
 };
 
 extern DojoSession dojo;

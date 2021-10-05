@@ -824,76 +824,55 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
 	// if both player names are defaults, hide overlay
-	if (strcmp(config::PlayerName.get().data(), "Player") == 0 &&
-		strcmp(config::PlayerName.get().data(), config::OpponentName.get().data()) == 0)
+	if (strcmp(dojo.player_1.data(), "Player") == 0 &&
+		strcmp(dojo.player_1.data(), dojo.player_2.data()) == 0)
 	{
 		return;
 	}
 
-	std::string player_1;
-	std::string player_2;
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
-	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
+	if (dojo.player_1.length() > 1)
 	{
-		player_1 = config::PlayerName;
-		player_2 = config::OpponentName;
-	}
-	else
-	{
-		player_1 = config::OpponentName;
-		player_2 = config::PlayerName;
-	}
+		float font_size = ImGui::GetFontSize() * dojo.player_2.size() / 2;
 
-	if (player_1.length() > 1)
-	{
-		float font_size_1 = ImGui::GetFontSize() * player_1.size() / 2;
-
-		//ImGui_Impl_NewFrame();
-		ImGui::NewFrame();
-
+		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size + 15) / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size_1 + 10) / 2), 0));
-		ImGui::SetNextWindowSize(ImVec2(font_size_1 + 25, 35));
-
-		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
+		ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
 		ImGui::SameLine(
 			ImGui::GetWindowSize().x / 2 -
-			font_size_1 + (font_size_1 / 2) + 5
+			font_size + (font_size / 2) + 5
 		);
 
-		ImGui::Text(player_1.c_str());
+		ImGui::Text(dojo.player_1.c_str());
 
 		ImGui::End();
-		ImGui::Render();
-		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
 
-
-	if (player_2.length() > 1)
+	if (dojo.player_2.length() > 1)
 	{
-		float font_size_2 = ImGui::GetFontSize() * player_2.size() / 2;
+		float font_size = ImGui::GetFontSize() * dojo.player_2.size() / 2;
 
-		//ImGui_Impl_NewFrame();
-		ImGui::NewFrame();
-
+		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size + 15) / 2), 0));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
 		ImGui::SetNextWindowBgAlpha(0.5f);
-		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size_2 + 10) / 2), 0));
-		ImGui::SetNextWindowSize(ImVec2(font_size_2 + 25, 35));
-
-		ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
+		ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
 		ImGui::SameLine(
 			ImGui::GetWindowSize().x / 2 -
-			font_size_2 + (font_size_2 / 2) + 5
+			font_size + (font_size / 2) + 5
 		);
 
-		ImGui::Text(player_2.c_str());
-
+		ImGui::Text(dojo.player_2.c_str());
 		ImGui::End();
-		ImGui::Render();
-		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
 }
 
 void DojoGui::gui_display_paused(float scaling)

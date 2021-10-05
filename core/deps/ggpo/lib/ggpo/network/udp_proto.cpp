@@ -497,6 +497,8 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    strcpy(opponent_name, (char *)(&msg->u.sync_request.player_name[0]));
    config::OpponentName = std::string(opponent_name);
 
+   dojo.AssignNames();
+
    if (verification.size() != 0)
    {
      int msgVerifSize = len - msg->PacketSize();

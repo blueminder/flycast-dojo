@@ -3333,6 +3333,10 @@ void gui_display_osd()
 //		gui_plot_render_time(settings.display.width, settings.display.height);
 		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
 			ggpo::displayStats();
+
+		if (ggpo::active() && config::EnablePlayerNameOverlay)
+			dojo_gui.show_player_name_overlay(scaling, false);
+
 		lua::overlay();
 
 		ImGui::Render();

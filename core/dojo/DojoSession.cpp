@@ -931,6 +931,7 @@ void DojoSession::LoadReplayFileV0(std::string path)
 	std::vector<std::string> name_info = stringfix::split(":", ppath);
 	config::PlayerName = name_info[3];
 	config::OpponentName = name_info[4];
+	AssignNames();
 
 	// add string in increments of FRAME_SIZE to net_inputs
 	std::ifstream fin(path, 
@@ -977,6 +978,8 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string Quark = MessageReader::ReadString((const char*)buffer, offset);
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
 		unsigned int analog = MessageReader::ReadInt((const char*)buffer, offset);
+
+		AssignNames();
 
 		dojo.replay_version = v;
 		dojo.game_name = GameName;
@@ -1651,6 +1654,20 @@ void DojoSession::StopUPnP()
 {
 	if (upnp_started)
 		miniupnp.Term();
+}
+
+void DojoSession::AssignNames()
+{
+	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
+	{
+		player_1 = config::PlayerName.get();
+		player_2 = config::OpponentName.get();
+	}
+	else
+	{
+		player_1 = config::OpponentName.get();
+		player_2 = config::PlayerName.get();
+	}
 }
 
 DojoSession dojo;
