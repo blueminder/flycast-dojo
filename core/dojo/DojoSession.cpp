@@ -979,8 +979,6 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
 		unsigned int analog = MessageReader::ReadInt((const char*)buffer, offset);
 
-		AssignNames();
-
 		dojo.replay_version = v;
 		dojo.game_name = GameName;
 		config::Quark = Quark;
@@ -1003,6 +1001,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		{
 			config::PlayerName = PlayerName;
 			config::OpponentName = OpponentName;
+			AssignNames();
 			std::cout << "Player: " << PlayerName << std::endl;
 			std::cout << "Opponent: " << OpponentName << std::endl;
 		}
