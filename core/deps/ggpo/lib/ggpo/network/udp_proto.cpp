@@ -495,9 +495,12 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    // assign player name
    char opponent_name[21];
    strcpy(opponent_name, (char *)(&msg->u.sync_request.player_name[0]));
-   config::OpponentName = std::string(opponent_name);
 
-   dojo.AssignNames();
+   if (!dojo.received_player_info)
+   {
+      config::OpponentName = std::string(opponent_name);
+      dojo.AssignNames();
+   }
 
    if (verification.size() != 0)
    {

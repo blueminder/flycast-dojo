@@ -1020,13 +1020,14 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		auto player_name = p1_info[0];
 		auto opponent_name = p2_info[0];
 
-		received_player_info = true;
-
 		std::cout << "P1: " << player_name << std::endl;
 		std::cout << "P2: " << opponent_name << std::endl;
 
 		config::PlayerName = player_name;
 		config::OpponentName = opponent_name;
+
+		received_player_info = true;
+		AssignNames();
 	}
 	else if (cmd == GAME_BUFFER)
 	{
