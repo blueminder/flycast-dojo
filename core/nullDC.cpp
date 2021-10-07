@@ -62,15 +62,8 @@ void dc_exit()
 {
 	dojo.CleanUp();
 
-	if (config::Receiving && !dojo.disconnect_toggle)
-	{
-		gui_state = GuiState::EndSpectate;
-	}
-	else
-	{
 	emu.stop();
 	mainui_stop();
-	}
 }
 
 void SaveSettings()

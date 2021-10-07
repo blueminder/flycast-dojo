@@ -154,9 +154,6 @@ static void maple_DoDma()
 		if (dojo.maple_inputs.size() < config::RxFrameBuffer.get())
 			dojo.pause();
 
-		if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
-			gui_state = GuiState::EndSpectate;
-
 		while (dojo.isPaused && !dojo.disconnect_toggle);
 	}
 
