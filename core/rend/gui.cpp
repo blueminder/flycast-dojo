@@ -3093,7 +3093,9 @@ static void gui_display_loadscreen()
 				if (dojo.PlayMatch || config::Receiving)
 				{
 					dojo.PlayMatch = true;
-					config::GGPOEnable = true;
+					if (dojo.replay_version == 2)
+						config::GGPOEnable = true;
+
 					config::DojoEnable = true;
 					gui_state = GuiState::Closed;
 					if (config::Receiving)
@@ -3350,15 +3352,28 @@ void gui_display_osd()
 		if (!config::Receiving)
 			dojo_gui.show_playback_menu(scaling, false);
 
-		if (dojo.replay_version == 2 &&
-			dojo.FrameNumber >= dojo.maple_inputs.size())
+		if (dojo.replay_version == 2)
 		{
-			if (config::TransmitReplays && config::Transmitting)
-				dojo.transmitter_ended = true;
+			if(dojo.FrameNumber >= dojo.maple_inputs.size())
+			{
+				if (config::TransmitReplays && config::Transmitting)
+					dojo.transmitter_ended = true;
 
-			gui_state = GuiState::EndReplay;
-			config::AutoSkipFrame = 1;
-			emu.term();
+				gui_state = GuiState::EndReplay;
+				config::AutoSkipFrame = 1;
+				emu.term();
+			}
+		}
+		else
+		{
+			if (dojo.FrameNumber >= dojo.net_inputs[0].size() ||
+				dojo.FrameNumber >= dojo.net_inputs[1].size())
+			{
+				if (config::TransmitReplays && config::Transmitting)
+					dojo.transmitter_ended = true;
+
+				gui_state = GuiState::EndReplay;
+			}
 		}
 	}
 	else

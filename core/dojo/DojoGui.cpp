@@ -824,7 +824,8 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
 	// if both player names are defaults, hide overlay
-	if (strcmp(dojo.player_1.data(), "Player") == 0 &&
+	if (dojo.player_2.length() <= 1 ||
+		strcmp(dojo.player_1.data(), "Player") == 0 &&
 		strcmp(dojo.player_1.data(), dojo.player_2.data()) == 0)
 	{
 		return;

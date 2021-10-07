@@ -594,18 +594,6 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	// inputs captured and synced in client thread
 	std::string this_frame = "";
 
-	if (dojo.PlayMatch && !config::Receiving && replay_version == 1 &&
-		(FrameNumber >= net_input_keys[0].size() ||
-			FrameNumber >= net_input_keys[1].size()))
-	{
-		if (config::Transmitting)
-			transmitter_ended = true;
-
-		gui_state = GuiState::EndReplay;
-		config::AutoSkipFrame = 1;
-		emu.term();
-	}
-
 /*
 	if (config::Receiving &&
 		dojo.receiver.endSession)
