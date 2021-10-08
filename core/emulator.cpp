@@ -41,6 +41,8 @@
 #include "lua/lua.h"
 #include <chrono>
 
+#include "dojo/DojoSession.hpp"
+
 settings_t settings;
 
 static void loadSpecialSettings()
@@ -505,6 +507,13 @@ void Emulator::runInternal()
 				dc_reset(false);
 			}
 		} while (resetRequested);
+
+		while (jump_state_requested && !settings.online)
+		{
+			jump_state_requested = false;
+			jump_state();
+			sh4_cpu.Run();
+		}
 	}
 }
 
@@ -565,6 +574,17 @@ void Emulator::stop() {
 	}
 	SaveRomFiles();
 	EventManager::event(Event::Pause);
+}
+
+void Emulator::invoke_jump_state(bool dojo_invoke)
+{
+	if (dojo_invoke)
+		dojo.jump_state_requested = true;
+	else
+	{
+		jump_state_requested = true;
+		sh4_cpu.Stop();
+	}
 }
 
 // Called on the emulator thread for soft reset

@@ -502,8 +502,8 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 		}
 	}
 
-
-	if (FrameNumber == 3 && !config::GGPOEnable)
+	/*
+	if (FrameNumber == 3 && !config::GGPOEnable && !settings.online)
 	{
 		std::string net_save_path = get_net_savestate_file_path(false);
 		if (dojo.net_save_present && ghc::filesystem::exists(net_save_path))
@@ -511,6 +511,7 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 			jump_state_requested = true;
 		}
 	}
+	*/
 
 	if (config::Receiving &&
 		receiver_ended &&

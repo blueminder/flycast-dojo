@@ -45,6 +45,7 @@ u8 lt[4];
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
 bool loading_state;
+bool loadSaveStateDisabled;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
@@ -84,11 +85,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
 			break;
 		case EMU_BTN_JUMP_STATE:
-			if (pressed && !loading_state && config::Offline)
+			loadSaveStateDisabled = settings.content.path.empty() || settings.online;
+			if (pressed && !gui_is_open() && !loadSaveStateDisabled)
 			{
 				loading_state = true;
 				bool dojo_invoke = config::DojoEnable.get();
-				invoke_jump_state(dojo_invoke);
+				emu.invoke_jump_state(dojo_invoke);
 				loading_state = false;
 			}
 			break;

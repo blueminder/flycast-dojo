@@ -162,6 +162,8 @@ public:
 	 */
 	void vblank();
 
+	void invoke_jump_state(bool dojo_invoke);
+
 private:
 	bool checkStatus();
 	void runInternal();
@@ -177,6 +179,7 @@ private:
 	State state = Uninitialized;
 	std::shared_future<void> threadResult;
 	bool resetRequested = false;
+	bool jump_state_requested = false;
 	bool singleStep = false;
 	u64 startTime = 0;
 	bool renderTimeout = false;

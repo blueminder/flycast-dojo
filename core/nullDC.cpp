@@ -219,20 +219,9 @@ void dc_savestate(int index, std::string filename)
 	gui_display_notification("State saved", 1000);
 }
 
-void invoke_jump_state(bool dojo_invoke)
-{
-	if (dojo_invoke)
-		dojo.jump_state_requested = true;
-	else
-	{
-		jump_state_requested = true;
-		emu.stop();
-	}
-}
-
 void jump_state()
 {
-	if (config::DojoEnable)
+	if (dojo.PlayMatch && dojo.replay_version < 2)
 	{
 		std::string net_save_path = get_savestate_file_path(0, false);
 		net_save_path.append(".net");

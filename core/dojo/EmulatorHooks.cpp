@@ -137,7 +137,7 @@ u16 DojoSession::TranslateFrameDataToInput(u8 data[FRAME_SIZE], PlainJoystickSta
 		data[10] == 254 &&
 		data[11] == 254)
 	{
-		invoke_jump_state(false);
+		emu.invoke_jump_state(false);
 		return 0;
 	}
 	else if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
