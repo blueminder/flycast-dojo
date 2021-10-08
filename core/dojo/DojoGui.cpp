@@ -752,10 +752,11 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
 {
+	if (config::EnablePlayerNameOverlay)
+		show_player_name_overlay(scaling, true);
+
 	if (!config::ShowPlaybackControls)
 	{
-		if (config::EnablePlayerNameOverlay)
-			show_player_name_overlay(scaling, true);
 		return;
 	}
 
@@ -774,11 +775,10 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 
 	ImGui::SetNextWindowBgAlpha(0.6f);
-	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - 220, settings.display.height - 45));
-	ImGui::SetNextWindowSize(ImVec2(440, 40));
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - 150, settings.display.height - 45));
+	ImGui::SetNextWindowSize(ImVec2(350, 40));
 
 	ImGui::Begin("##fn", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration );
-
 
 	ImGui::SliderInt("", &position, 0, total);
 	ImGui::SameLine();
@@ -786,6 +786,7 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 
 	ImGui::SameLine();
 
+	/*
 	if (dojo.replay_version == 1)
 	{
 		if (!paused)
@@ -811,6 +812,7 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 			}
 		}
 	}
+	*/
 
 	ImGui::End();
 
@@ -1084,9 +1086,9 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			OptionCheckbox("Show Playback Controls", config::ShowPlaybackControls);
+			OptionCheckbox("Show Frame Position", config::ShowPlaybackControls);
 			ImGui::SameLine();
-			ShowHelpMarker("Shows current position and controls on playback. Hides player name overlay while on screen.");
+			ShowHelpMarker("Shows current frame position on playback.");
 
 			OptionCheckbox("Record All Sessions", config::RecordMatches);
 			ImGui::SameLine();
