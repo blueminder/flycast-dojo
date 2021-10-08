@@ -86,7 +86,7 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (config::GGPOEnable || config::Receiving || dojo.PlayMatch)
+		if (config::GGPOEnable || (config::Receiving || dojo.PlayMatch) && dojo.replay_version >= 2)
 		{
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
@@ -3340,7 +3340,7 @@ void gui_display_osd()
 		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
 			ggpo::displayStats();
 
-		if (ggpo::active() && config::EnablePlayerNameOverlay)
+		if ((ggpo::active() || config::Receiving) && config::EnablePlayerNameOverlay)
 			dojo_gui.show_player_name_overlay(scaling, false);
 
 		lua::overlay();
@@ -3380,14 +3380,9 @@ void gui_display_osd()
 	}
 	else
 	{
-		if ((config::DojoEnable && config::EnablePlayerNameOverlay) ||
-			(config::GGPOEnable && config::EnablePlayerNameOverlay))
+		if (config::EnablePlayerNameOverlay || config::Receiving)
 		{
-			if (!config::Receiving ||
-				(config::Receiving && dojo.receiver_header_read))
-			{
-				dojo_gui.show_player_name_overlay(scaling, false);
-			}
+			dojo_gui.show_player_name_overlay(scaling, false);
 		}
 	}
 }

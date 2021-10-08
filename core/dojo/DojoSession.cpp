@@ -1016,6 +1016,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		config::OpponentName = opponent_name;
 
 		received_player_info = true;
+
 		AssignNames();
 	}
 	else if (cmd == GAME_BUFFER)
