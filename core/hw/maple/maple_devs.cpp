@@ -147,9 +147,9 @@ struct maple_sega_controller: maple_base
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
 
-				if (!config::GGPOEnable && dojo.replay_version != 2)
+				if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 				{
-					if (config::DojoEnable && !config::Offline)
+					if (config::DojoEnable)
 					{
 
 						if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
@@ -168,7 +168,7 @@ struct maple_sega_controller: maple_base
 					}
 					else
 					{
-						if (config::Training || (dojo.PlayMatch && dojo.replay_version == 1) || config::Offline)
+						if (config::Training || config::Offline)
 						{
 							if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 								settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -404,8 +404,9 @@ struct maple_sega_vmu: maple_base
 		memset(lcd_data, 0, sizeof(lcd_data));
 		
 		std::string apath = hostfs::getVmuPath(logical_port);
-		if (config::DojoEnable)
-			apath = apath + ".net";
+		if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
+			if (config::DojoEnable)
+				apath = apath + ".net";
 
 		file = nowide::fopen(apath.c_str(), "rb+");
 		if (file == nullptr)

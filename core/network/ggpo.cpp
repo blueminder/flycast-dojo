@@ -530,7 +530,7 @@ void getInput(MapleInputState inputState[4])
 
 bool nextFrame()
 {
-	if (dojo.PlayMatch)
+	if (dojo.PlayMatch && dojo.replay_version == 2)
 		return true;
 	else
 	{
@@ -619,7 +619,7 @@ bool nextFrame()
 
 bool active()
 {
-	if (dojo.PlayMatch)
+	if (dojo.PlayMatch && dojo.replay_version == 2)
 		return true;
 	else
 		return ggpoSession != nullptr;

@@ -1446,21 +1446,24 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							if (settings.platform.system == DC_PLATFORM_NAOMI &&
-								(!config::GGPOEnable && dojo.replay_version != 2))
+							if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 							{
-								if (config::DojoEnable && !config::Offline)
+								if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
+								     config::DojoEnable)
 								{
-									inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
-
-									if (player == 0)
+									if (config::DojoEnable)
 									{
-										if (inputs[0] & 1)
-											dojo.net_coin_press = true;
+										inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
+
+										if (player == 0)
+										{
+											if (inputs[0] & 1)
+												dojo.net_coin_press = true;
+										}
 									}
 								}
 
-								if (config::Training || (dojo.PlayMatch && dojo.replay_version == 1))
+								if (settings.platform.system == DC_PLATFORM_NAOMI && (config::Training || config::Offline))
 								{
 									inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
 								}
@@ -1485,14 +1488,17 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
 							bool coin_chute = false;
-							if (((buttons[first_player + slot] & NAOMI_COIN_KEY) && !config::DojoEnable) ||
-								(dojo.net_coin_press && config::DojoEnable))
+							if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 							{
-								coin_chute = true;
-								if (!old_coin_chute[first_player + slot])
-									coin_count[first_player + slot] += 1;
-								if (dojo.net_coin_press)
-									dojo.net_coin_press = false;
+								if (((buttons[first_player + slot] & NAOMI_COIN_KEY) && !config::DojoEnable) ||
+									(dojo.net_coin_press && config::DojoEnable))
+								{
+									coin_chute = true;
+									if (!old_coin_chute[first_player + slot])
+										coin_count[first_player + slot] += 1;
+									if (dojo.net_coin_press)
+										dojo.net_coin_press = false;
+								}
 							}
 							old_coin_chute[first_player + slot] = coin_chute;
 
