@@ -534,6 +534,9 @@ void gui_start_game(const std::string& path)
 			dojo.CreateReplayFile(rom_name);
 	}
 
+	if (config::Receiving)
+		dojo.LaunchReceiver();
+
 	gameLoader.load(path);
 }
 

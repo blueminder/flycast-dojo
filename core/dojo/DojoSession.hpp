@@ -242,7 +242,7 @@ public:
 	bool SetDojoDevicesByPath(std::string path);
 
 	std::string game_name;
-	bool receiver_header_read;
+	volatile bool receiver_header_read = false;
 	bool receiver_start_read;
 
 	bool recording;
@@ -287,6 +287,8 @@ public:
 	std::string player_1;
 	std::string player_2;
 	void AssignNames();
+
+	void LaunchReceiver();
 };
 
 extern DojoSession dojo;

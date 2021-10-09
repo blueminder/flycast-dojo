@@ -379,6 +379,27 @@ void DojoSession::StartTransmitterThread()
 	}
 }
 
+void DojoSession::LaunchReceiver()
+{
+	if (!receiver_started)
+	{
+		if (config::DojoActAsServer)
+		{
+			std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
+			t5.detach();
+		}
+		else
+		{
+			std::thread t5(&DojoSession::receiver_client_thread, std::ref(dojo));
+			t5.detach();
+		}
+
+		receiver_started = true;
+	}
+
+	while(!receiver_header_read);
+}
+
 int DojoSession::StartDojoSession()
 {
 	net_save_path = get_net_savestate_file_path(false);
@@ -409,31 +430,7 @@ int DojoSession::StartDojoSession()
 			FillDelay(1);
 		resume();
 	}
-	else if (config::Receiving)
-	{
-		//dojo.last_consecutive_common_frame = 2;
-		//dojo.FrameNumber = 2;
-		//dojo.FillDelay(2);
-
-		if (!receiver_started)
-		{
-			if (config::DojoActAsServer)
-			{
-				std::thread t5(&DojoSession::receiver_thread, std::ref(dojo));
-				t5.detach();
-			}
-			else
-			{
-				std::thread t5(&DojoSession::receiver_client_thread, std::ref(dojo));
-				t5.detach();
-			}
-
-			receiver_started = true;
-		}
-
-
-	}
-	else
+	else if (!config::Receiving)
 	{
 		LoadNetConfig();
 
