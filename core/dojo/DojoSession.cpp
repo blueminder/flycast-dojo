@@ -965,10 +965,12 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::string MatchCode = MessageReader::ReadString((const char*)buffer, offset);
 		unsigned int analog = MessageReader::ReadInt((const char*)buffer, offset);
 
-		dojo.replay_version = v;
-		dojo.game_name = GameName;
+		replay_version = v;
+		game_name = GameName;
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
+
+		std::cout << "Replay Version: " << replay_version << std::endl;
 
 		if (replay_version == 2)
 		{
