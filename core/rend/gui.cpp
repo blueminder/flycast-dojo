@@ -3371,8 +3371,8 @@ void gui_display_osd()
 		}
 		else
 		{
-			if (dojo.FrameNumber >= dojo.net_inputs[0].size() ||
-				dojo.FrameNumber >= dojo.net_inputs[1].size())
+			if (dojo.FrameNumber >= dojo.net_inputs[0].size() - 1 ||
+				dojo.FrameNumber >= dojo.net_inputs[1].size() - 1)
 			{
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
