@@ -972,6 +972,9 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 				gui_state = GuiState::Closed;
 				//dojo.StartDojoSession();
 
+				if (guest_player.empty())
+					dojo.offline_replay = true;
+
 				config::DojoEnable = true;
 				gui_start_game(game_path);
 			}
@@ -980,6 +983,7 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 			std::string players = host_player;
 			if (!guest_player.empty())
 				players += " vs " + guest_player;
+
 			ImGui::Text(players.c_str());  ImGui::NextColumn();
 			ImGui::Text(game_name.c_str());  ImGui::NextColumn();
 		}

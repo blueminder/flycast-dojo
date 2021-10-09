@@ -60,7 +60,6 @@ private:
 	std::string host_ip;
 	u32 host_port;
 
-
 	std::string last_sent;
 	std::deque<std::string> last_inputs;
 
@@ -103,8 +102,6 @@ public:
 	int StartDojoSession();
 	void StartSession(int session_delay, int session_ppf, int session_num_bf);
 	void StartGGPOSession();
-
-	void StartTransmitterThread();
 
 	// frame data extraction methods
 	int GetPlayer(u8* data);
@@ -289,6 +286,9 @@ public:
 	void AssignNames();
 
 	void LaunchReceiver();
+	bool offline_replay = false;
+
+	void StartTransmitterThread();
 };
 
 extern DojoSession dojo;

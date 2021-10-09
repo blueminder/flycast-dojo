@@ -86,7 +86,9 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (config::GGPOEnable || (config::Receiving || dojo.PlayMatch) && dojo.replay_version >= 2)
+		if (config::GGPOEnable ||
+			config::Receiving && dojo.replay_version >= 2 ||
+			dojo.PlayMatch && dojo.replay_version >=2 && !dojo.offline_replay)
 		{
 			std::string net_save_path = get_savestate_file_path(0, false);
 			net_save_path.append(".net");
@@ -536,6 +538,31 @@ void gui_start_game(const std::string& path)
 
 	if (config::Receiving)
 		dojo.LaunchReceiver();
+	else
+	{
+		if (dojo.PlayMatch)
+		{
+			if (config::TransmitReplays)
+				dojo.StartTransmitterThread();
+
+			dojo.LoadReplayFile(dojo.ReplayFilename);
+			// ggpo session
+			if (dojo.replay_version == 2)
+			{
+				config::GGPOEnable = true;
+				dojo.FrameNumber = 0;
+			}
+			// delay/offline session
+			else
+			{
+				dojo.FillDelay(1);
+				dojo.FrameNumber = 1;
+			}
+		}
+	}
+
+	if (config::Receiving || dojo.PlayMatch && !dojo.offline_replay)
+		while(!dojo.receiver_header_read);
 
 	gameLoader.load(path);
 }

@@ -397,7 +397,6 @@ void DojoSession::LaunchReceiver()
 		receiver_started = true;
 	}
 
-	while(!receiver_header_read);
 }
 
 int DojoSession::StartDojoSession()
@@ -415,19 +414,6 @@ int DojoSession::StartDojoSession()
 
 	if (dojo.PlayMatch)
 	{
-		if (config::TransmitReplays)
-			StartTransmitterThread();
-		LoadReplayFile(dojo.ReplayFilename);
-		// ggpo session
-		if (replay_version == 2)
-		{
-			config::GGPOEnable = true;
-			FrameNumber = 0;
-		}
-
-		// delay/offline session
-		else
-			FillDelay(1);
 		resume();
 	}
 	else if (!config::Receiving)
