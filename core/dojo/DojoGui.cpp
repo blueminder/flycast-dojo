@@ -1021,7 +1021,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ImGui::Columns(2, "netplayMethod", false);
 			ImGui::RadioButton("Delay", &netplayMethod, 0);
 			ImGui::NextColumn();
-			ImGui::RadioButton("GGPO (experimental)", &netplayMethod, 1);
+			ImGui::RadioButton("GGPO", &netplayMethod, 1);
 			ImGui::NextColumn();
 			ImGui::Columns(1, NULL, false);
 
