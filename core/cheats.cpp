@@ -380,7 +380,7 @@ void CheatManager::reset(const std::string& gameId)
 		active = false;
 		this->gameId = gameId;
 #ifndef LIBRETRO
-		if (!config::DojoEnable || config::Training)
+		if (!settings.online || config::Training)
 		{
 			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
 			if (!cheatFile.empty())
@@ -388,6 +388,12 @@ void CheatManager::reset(const std::string& gameId)
 		}
 #endif
 	}
+
+	// disable all loaded cheats outside of training mode
+	if (!config::Training)
+		for (size_t i = 0; i < cheatManager.cheatCount(); i++)
+			cheatManager.enableCheat(i, false);
+
 	widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)
 		return;
