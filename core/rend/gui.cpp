@@ -2848,11 +2848,12 @@ static void gui_display_content()
 	error_popup();
     contentpath_warning_popup();
 
-	// ensure command line settings are loaded
-	config::Settings::instance().load(false);
 	bool net_save_download = false;
 	if (!config::GameEntry.get().empty())
 	{
+		// ensure command line settings are loaded
+		config::Settings::instance().load(false);
+
 		try {
 			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
 			std::string filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
