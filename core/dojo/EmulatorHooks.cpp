@@ -355,6 +355,60 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 	std::sprintf(&output[0], format, prefix, effective_frame, frame, delay, player,
 		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
 
+	if (player == 0)
+	{
+		std::string dc_buttons[18] = {"C", "B", "A", "Start", "Up", "Down", "Left", "Right", "Z", "Y", "X", "D", "", "", "", "", "LT", "RT"};
+		std::string aw_buttons[18] = {"3", "2", "1", "Start", "Up", "Down", "Left", "Right", "", "5", "4", "", "", "", "", "", "LT", "RT"};
+		std::string naomi_buttons[18] = {"", "", "", "", "6", "5", "4", "3", "2", "1", "Right", "Left", "Down", "Up", "", "Start", "", ""};
+
+		// tracks buttons & triggers in single digital bitset
+		std::bitset<18> bt_bitset;
+
+		for (size_t i = 0; i<input_bitset.size(); i++)
+			if (input_bitset.test(i))
+				bt_bitset.set(i);
+
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		{
+			if (triggerl > 0)
+				bt_bitset.set(16);
+
+			if (triggerr > 0)
+				bt_bitset.set(17);
+		}
+
+		std::stringstream ss("");
+		if(bt_bitset.count() > 0)
+		{ 
+			for (size_t i = 0; i<bt_bitset.size(); i++)
+			{
+				if (bt_bitset.test(i))
+				{
+					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+						ss << " " << dc_buttons[i];
+					else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+						ss << " " << aw_buttons[i];
+					else if (settings.platform.system == DC_PLATFORM_NAOMI)
+						ss << " " << naomi_buttons[i];
+				}
+			}
+
+		}
+		ss.flush();
+		std::cout << effective_frame << ": " << ss.str() << std::endl;
+			//displayed_inputs[effective_frame] = bt_bitset;
+		if (last_held_input != ss.str())
+		{
+			last_held_input = ss.str();
+			displayed_inputs[effective_frame] = last_held_input;
+			displayed_inputs_duration[effective_frame] = 1;
+		}
+
+			//if (displayed_inputs.size() > 20)
+				//displayed_inputs.erase(displayed_inputs.begin());
+		//}
+	}
+
 	return output;
 }
 

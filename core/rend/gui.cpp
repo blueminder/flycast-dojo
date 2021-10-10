@@ -3530,6 +3530,9 @@ void gui_display_osd()
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
 			dojo_gui.show_player_name_overlay(scaling, false);
 		}
+
+		dojo_gui.show_last_inputs_overlay();
+
 		lua::overlay();
 
 		ImGui::Render();

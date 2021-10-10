@@ -63,6 +63,8 @@ public:
 
 	bool hide_playback_menu = false;
 	std::string current_public_ip = "";
+
+	void show_last_inputs_overlay();
 };
 
 extern DojoGui dojo_gui;

@@ -1389,10 +1389,20 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	if (net_inputs[0].count(FrameNumber + delay) == 1 &&
 		net_inputs[1].count(FrameNumber + delay) == 1)
 	{
+		std::string p1_frame = net_inputs[0].at(FrameNumber + delay);
+		std::string p2_frame = net_inputs[1].at(FrameNumber + delay);
+
 		if (config::RecordMatches && !config::GGPOEnable)
 		{
-			AppendToReplayFile(net_inputs[0].at(FrameNumber + delay));
-			AppendToReplayFile(net_inputs[1].at(FrameNumber + delay));
+			AppendToReplayFile(p1_frame);
+			AppendToReplayFile(p2_frame);
+		}
+
+		{
+			std::string current_p1_frame_data = dojo.PrintFrameData("CURRENT", (u8*)p1_frame.data());
+			//std::cout << FrameNumber + delay << " " << current_p1_frame_data << std::endl;
+			std::string current_p2_frame_data = dojo.PrintFrameData("CURRENT", (u8*)p2_frame.data());
+			//std::cout << FrameNumber + delay << " " << current_p2_frame_data << std::endl;
 		}
 
 		FrameNumber++;

@@ -899,6 +899,39 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 }
 
+void DojoGui::show_last_inputs_overlay()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+	ImGui::SetNextWindowPos(ImVec2(10, 60));
+	ImGui::SetNextWindowSize(ImVec2(230, 330));
+	ImGui::SetNextWindowBgAlpha(0.4f);
+	ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	if (!dojo.displayed_inputs.empty())
+	{
+		std::map<u32, std::string>::reverse_iterator it = dojo.displayed_inputs.rbegin();
+
+		u32 input_frame_num = it->first;
+		u32 input_duration = dojo.FrameNumber - input_frame_num;
+
+		ImGui::Text("%u: %s", input_duration, it->second.c_str());
+		dojo.displayed_inputs_duration[input_frame_num] = input_duration;
+
+		for(auto rit = std::prev(dojo.displayed_inputs.rbegin()); rit != dojo.displayed_inputs.rend(); ++rit)
+		{
+			ImGui::Text("%u: %s", dojo.displayed_inputs_duration[rit->first], rit->second.c_str());
+		}
+	}
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+}
+
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
 	// if both player names are defaults, hide overlay

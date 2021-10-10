@@ -292,6 +292,11 @@ public:
 	int current_delay = 0;
 
 	bool commandLineStart = false;
+
+	//std::map<u32, std::bitset<18>> displayed_inputs;
+	std::map<u32, std::string> displayed_inputs;
+	std::map<u32, u32> displayed_inputs_duration;
+	std::string last_held_input;
 };
 
 extern DojoSession dojo;
