@@ -134,7 +134,7 @@ Peer2PeerBackend::DoPoll(int timeout)
          Log("last confirmed frame in p2p backend is %d.\n", total_min_confirmed);
          if (total_min_confirmed >= 0) {
             ASSERT(total_min_confirmed != INT_MAX);
-            if (_num_spectators > 0 || config::RecordMatches) {
+            if (_num_spectators > 0 || config::RecordMatches || dojo.transmitter_started) {
                while (_next_spectator_frame <= total_min_confirmed) {
                   Log("pushing frame %d to spectators.\n", _next_spectator_frame);
    
@@ -145,7 +145,7 @@ Peer2PeerBackend::DoPoll(int timeout)
                   for (int i = 0; i < _num_spectators; i++) {
                      _spectators[i].SendInput(input);
                   }
-                  if (config::RecordMatches)
+                  if (config::RecordMatches || dojo.transmitter_started)
                     AddToReplay(input);
                   _next_spectator_frame++;
                }
