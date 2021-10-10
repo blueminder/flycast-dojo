@@ -1043,7 +1043,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 			std::string frame = MessageReader::ReadContinuousData((const char*)buffer, offset, frame_size);
 
 			//if (memcmp(frame.data(), { 0 }, FRAME_SIZE) == 0)
-			if (memcmp(frame.data(), "000000000000", FRAME_SIZE) == 0)
+			if (memcmp(frame.data(), "00000000000000000000", MAPLE_FRAME_SIZE) == 0)
 			{
 				dojo.receiver_ended = true;
 			}
@@ -1250,7 +1250,10 @@ void DojoSession::transmitter_thread()
 		unsigned int sent_frame_count = 0;
 
 		MessageWriter frame_msg;
-		frame_msg.AppendHeader(0, GAME_BUFFER);
+		if (config::GGPOEnable)
+			frame_msg.AppendHeader(0, MAPLE_BUFFER);
+		else
+			frame_msg.AppendHeader(0, GAME_BUFFER);
 
 		// start with individual frame size
 		// (body_size % data_size == 0)
@@ -1283,7 +1286,10 @@ void DojoSession::transmitter_thread()
 					asio::write(socket, asio::buffer(message));
 
 					frame_msg = MessageWriter();
-					frame_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
+					if (config::GGPOEnable)
+						frame_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
+					else
+						frame_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
 
 					// start with individual frame size
 					// (body_size % data_size == 0)
@@ -1305,11 +1311,16 @@ void DojoSession::transmitter_thread()
 				}
 
 				MessageWriter disconnect_msg;
-				disconnect_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
 				if (config::GGPOEnable)
+				{
+					disconnect_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
 					disconnect_msg.AppendData("0000000000000000", MAPLE_FRAME_SIZE);
+				}
 				else
+				{
+					disconnect_msg.AppendHeader(sent_frame_count + 1, GAME_BUFFER);
 					disconnect_msg.AppendData("000000000000", FRAME_SIZE);
+				}
 				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
 				std::cout << "Transmission Ended" << std::endl;
 				break;
