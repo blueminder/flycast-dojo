@@ -388,7 +388,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			}
 		}
 
-		ImGui::SliderInt("", (int*)&config::GGPODelay.get(), 0, 20);
+		ImGui::SliderInt("", (int*)&dojo.current_delay, 0, 20);
 		ImGui::SameLine();
 		ImGui::Text("Delay");
 
@@ -406,10 +406,14 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
+			if (dojo.current_delay != config::GGPODelay.get())
+				config::GGPODelay.set(dojo.current_delay);
+
 			if (!config::EnableMatchCode)
 			{
 				config::NetworkServer.set(std::string(si, strlen(si)));
 				cfgSaveStr("network", "server", config::NetworkServer.get());
+
 				config::DojoEnable = false;
 			}
 			ImGui::CloseCurrentPopup();

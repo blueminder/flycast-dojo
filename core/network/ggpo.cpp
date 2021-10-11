@@ -640,7 +640,9 @@ std::future<bool> startNetwork()
 					// ensure command line settings are loaded
 					config::Settings::instance().load(false);
 				}
+				config::GGPODelay = dojo.current_delay;
 				std::cout << "Server " << config::ActAsServer.get() << " " << config::NetworkServer.get() << std::endl;
+				std::cout << "GGPO Delay " << config::GGPODelay.get() << std::endl; 
 				if (config::ActAsServer)
 					startSession(config::GGPOPort.get(), 0);
 				else

@@ -289,6 +289,7 @@ public:
 	bool offline_replay = false;
 
 	void StartTransmitterThread();
+	int current_delay = 0;
 };
 
 extern DojoSession dojo;

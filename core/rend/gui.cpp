@@ -492,6 +492,7 @@ void gui_start_game(const std::string& path)
 	std::string filename = path.substr(path.find_last_of("/\\") + 1);
 	auto game_name = stringfix::remove_extension(filename);
 	dojo.game_name = game_name;
+	dojo.current_delay = config::GGPODelay.get();
 
 	if (config::GGPOEnable && !config::ActAsServer)
 	{
