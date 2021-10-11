@@ -2862,7 +2862,7 @@ static void gui_display_content()
 			if (file_exists(entry_path))
 			{
 				std::string net_state_path = get_writable_data_path(game_name + ".state.net");
-				if (cfgLoadBool("network", "GGPO", false) &&
+				if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
 					(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended))
 				{
 					if (!dojo_file.start_save_download)
