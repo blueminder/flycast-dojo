@@ -363,6 +363,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 		// tracks buttons & triggers in single digital bitset
 		std::bitset<18> bt_bitset;
+		std::vector<bool> dir_bits { false, false, false, false };
 
 		for (size_t i = 0; i<input_bitset.size(); i++)
 			if (input_bitset.test(i))
@@ -384,6 +385,24 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 			{
 				if (bt_bitset.test(i))
 				{
+					// assign direction bitset
+					// U D L R
+					if (settings.platform.system == DC_PLATFORM_DREAMCAST || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+					{
+						if (i <= 4 && i >= 7)
+						{
+							dir_bits[i - 4] = true;
+						}
+					}
+					else if (settings.platform.system == DC_PLATFORM_NAOMI)
+					{
+						if (i <= 10 && i >= 13)
+						{
+							dir_bits[i - 10] = true;
+						}
+						std::reverse(dir_bits.begin(), dir_bits.end());
+					}
+
 					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 						ss << " " << dc_buttons[i];
 					else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -401,6 +420,8 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 		{
 			last_held_input = ss.str();
 			displayed_inputs[effective_frame] = last_held_input;
+			last_held_dir = dir_bits;
+			displayed_dirs[effective_frame] = dir_bits;
 			displayed_inputs_duration[effective_frame] = 1;
 		}
 

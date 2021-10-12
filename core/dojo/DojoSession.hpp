@@ -297,6 +297,8 @@ public:
 	std::map<u32, std::string> displayed_inputs;
 	std::map<u32, u32> displayed_inputs_duration;
 	std::string last_held_input;
+	std::vector<bool> last_held_dir;
+	std::map<u32, std::vector<bool>> displayed_dirs;
 };
 
 extern DojoSession dojo;
