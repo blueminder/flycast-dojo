@@ -293,10 +293,11 @@ public:
 
 	bool commandLineStart = false;
 
-	//std::map<u32, std::bitset<18>> displayed_inputs;
-	std::map<u32, std::string> displayed_inputs;
+	std::map<u32, std::bitset<18>> displayed_inputs;
+	std::map<u32, std::string> displayed_inputs_str;
+	std::map<u32, std::string> displayed_dirs_str;
 	std::map<u32, u32> displayed_inputs_duration;
-	std::string last_held_input;
+	std::bitset<18> last_held_input;
 	std::vector<bool> last_held_dir;
 	std::map<u32, std::vector<bool>> displayed_dirs;
 };

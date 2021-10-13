@@ -359,7 +359,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 	{
 		std::string dc_buttons[18] = {"C", "B", "A", "Start", "Up", "Down", "Left", "Right", "Z", "Y", "X", "D", "", "", "", "", "LT", "RT"};
 		std::string aw_buttons[18] = {"3", "2", "1", "Start", "Up", "Down", "Left", "Right", "", "5", "4", "", "", "", "", "", "LT", "RT"};
-		std::string naomi_buttons[18] = {"", "", "", "", "6", "5", "4", "3", "2", "1", "Right", "Left", "Down", "Up", "", "Start", "", ""};
+		std::string naomi_buttons[18] = {"", "", "8", "7", "6", "5", "4", "3", "2", "1", "Right", "Left", "Down", "Up", "", "Start", "", ""};
 
 		// tracks buttons & triggers in single digital bitset
 		std::bitset<18> bt_bitset;
@@ -379,6 +379,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 		}
 
 		std::stringstream ss("");
+		std::stringstream dir_ss("");
 		if(bt_bitset.count() > 0)
 		{ 
 			for (size_t i = 0; i<bt_bitset.size(); i++)
@@ -389,37 +390,74 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 					// U D L R
 					if (settings.platform.system == DC_PLATFORM_DREAMCAST || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 					{
-						if (i <= 4 && i >= 7)
+						if (i >= 4 && i <= 7)
 						{
 							dir_bits[i - 4] = true;
+						}
+						else
+						{
+							if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+							{
+								if (!dc_buttons[i].empty())
+									ss << " " << dc_buttons[i];
+							}
+							else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+							{
+								if (!aw_buttons[i].empty())
+									ss << " " << aw_buttons[i];
+							}
 						}
 					}
 					else if (settings.platform.system == DC_PLATFORM_NAOMI)
 					{
-						if (i <= 10 && i >= 13)
+						if (i >= 10 && i <= 13)
 						{
 							dir_bits[i - 10] = true;
 						}
+						else
+						{
+							if (!naomi_buttons[i].empty())
+								ss << " " << naomi_buttons[i];
+						}
 						std::reverse(dir_bits.begin(), dir_bits.end());
 					}
-
-					if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-						ss << " " << dc_buttons[i];
-					else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						ss << " " << aw_buttons[i];
-					else if (settings.platform.system == DC_PLATFORM_NAOMI)
-						ss << " " << naomi_buttons[i];
 				}
 			}
 
 		}
 		ss.flush();
-		std::cout << effective_frame << ": " << ss.str() << std::endl;
-			//displayed_inputs[effective_frame] = bt_bitset;
-		if (last_held_input != ss.str())
+
+		for (int i = 0; i < 4; i++)
 		{
-			last_held_input = ss.str();
-			displayed_inputs[effective_frame] = last_held_input;
+			if(dir_bits[i])
+			{
+				switch(i)
+				{
+					case 0:
+						dir_ss << "U";
+						break;
+					case 1:
+						dir_ss << "D";
+						break;
+					case 2:
+						dir_ss << "L";
+						break;
+					case 3:
+						dir_ss << "R";
+						break;
+				}
+			}
+		}
+		dir_ss.flush();
+
+		std::cout << effective_frame << ": " << dir_ss.str() << " " << ss.str() << std::endl;
+			//displayed_inputs[effective_frame] = bt_bitset;
+		if (last_held_input != bt_bitset)
+		{
+			last_held_input = bt_bitset;
+			displayed_inputs[effective_frame] = bt_bitset;
+			displayed_inputs_str[effective_frame] = ss.str();
+			displayed_dirs_str[effective_frame] = dir_ss.str();
 			last_held_dir = dir_bits;
 			displayed_dirs[effective_frame] = dir_bits;
 			displayed_inputs_duration[effective_frame] = 1;

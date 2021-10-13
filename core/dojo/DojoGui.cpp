@@ -901,35 +901,51 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 
 void DojoGui::show_last_inputs_overlay()
 {
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-
-	ImGui::SetNextWindowPos(ImVec2(10, 60));
-	ImGui::SetNextWindowSize(ImVec2(230, 330));
-	ImGui::SetNextWindowBgAlpha(0.4f);
-	ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-
 	if (!dojo.displayed_inputs.empty())
 	{
-		std::map<u32, std::string>::reverse_iterator it = dojo.displayed_inputs.rbegin();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+		ImGui::SetNextWindowPos(ImVec2(10, 100));
+		ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetContentRegionAvail().y - 120));
+		ImGui::SetNextWindowBgAlpha(0.4f);
+		ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+		std::map<u32, std::bitset<18>>::reverse_iterator it = dojo.displayed_inputs.rbegin();
 
 		u32 input_frame_num = it->first;
 		u32 input_duration = dojo.FrameNumber - input_frame_num;
 
-		ImGui::Text("%u: %s", input_duration, it->second.c_str());
+		// dir
+		std::vector<bool> current_dirs = dojo.displayed_dirs[input_frame_num];
+
+		ImGui::Text("%03u", input_duration);
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+		ImGui::Text("%6s", dojo.displayed_dirs_str[input_frame_num].c_str());
+		ImGui::PopStyleColor();
+		ImGui::SameLine();
+		ImGui::Text("%s", dojo.displayed_inputs_str[input_frame_num].c_str());
 		dojo.displayed_inputs_duration[input_frame_num] = input_duration;
 
 		for(auto rit = std::prev(dojo.displayed_inputs.rbegin()); rit != dojo.displayed_inputs.rend(); ++rit)
 		{
-			ImGui::Text("%u: %s", dojo.displayed_inputs_duration[rit->first], rit->second.c_str());
+			//ImGui::Text("%u: %s", dojo.displayed_inputs_duration[rit->first], rit->second.c_str());
+			ImGui::Text("%03u", dojo.displayed_inputs_duration[rit->first], dojo.displayed_dirs_str[rit->first].c_str(), dojo.displayed_inputs_str[rit->first].c_str());
+			ImGui::SameLine();
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+			ImGui::Text("%6s", dojo.displayed_dirs_str[rit->first].c_str(), dojo.displayed_inputs_str[rit->first].c_str());
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::Text("%s", dojo.displayed_inputs_str[rit->first].c_str());
 		}
+
+		ImGui::End();
+
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(2);
 	}
-
-	ImGui::End();
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar(2);
 }
 
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
