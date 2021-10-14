@@ -601,6 +601,27 @@ void DojoGui::gui_display_test_game( float scaling)
 		}
 
 	}
+#ifdef _WIN32
+	if (!config::GameEntry.get().empty())
+	{
+		try {
+			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+			settings.content.path = entry_path;
+		}
+		catch (...) { }
+	}
+
+	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
+	if (!game_links.empty())
+	{
+		for (std::pair<std::string, std::string> link: game_links)
+		{
+			ImGui::NextColumn();
+			if (ImGui::Button(std::string("Open " + link.first).data(), ImVec2(150 * scaling, 50 * scaling)))
+				ShellExecute(0, 0, link.second.data(), 0, 0, SW_SHOW);
+		}
+	}
+#endif
 
 	ImGui::End();
 }
