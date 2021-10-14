@@ -582,15 +582,18 @@ void DojoGui::gui_display_test_game( float scaling)
 			{
 				int platform = naomi_cart_GetPlatform(settings.content.path.data());
 				settings.platform.system = platform;
-				dojo_gui.bios_json_match = dojo_file.CompareBIOS(platform);
+				//dojo_gui.bios_json_match = dojo_file.CompareBIOS(platform);
 			}
 
+			/*
 			dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
 
 			if (!dojo_gui.bios_json_match || !dojo_gui.current_json_match)
 				gui_state = GuiState::BiosRomWarning;
 			else
-				gui_start_game(settings.content.path);
+			*/
+
+			gui_start_game(settings.content.path);
 		}
 		else
 		{
