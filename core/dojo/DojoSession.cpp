@@ -1547,13 +1547,10 @@ void DojoSession::SwitchPlayer()
 	for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
-		if (gamepad->name() != "Default Mouse")
-		{
-			if (gamepad->maple_port() == 0)
-				gamepad->set_maple_port(1);
-			else if (gamepad->maple_port() == 1)
-				gamepad->set_maple_port(0);
-		}
+		if (gamepad->maple_port() == 0)
+			gamepad->set_maple_port(1);
+		else if (gamepad->maple_port() == 1)
+			gamepad->set_maple_port(0);
 	}
 
 	config::PlayerSwitched = !config::PlayerSwitched.get();
