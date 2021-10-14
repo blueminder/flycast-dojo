@@ -227,6 +227,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			else
 				kcode[port] |= (DC_BTN_A | DC_BTN_B);
 			break;
+		case EMU_CMB_1_3:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_C);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_C);
+			break;
 		case EMU_CMB_2_3:
 			if (pressed && !gui_is_open())
 				kcode[port] &= ~(DC_BTN_B | DC_BTN_C);
