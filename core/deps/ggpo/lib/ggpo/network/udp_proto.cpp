@@ -491,7 +491,8 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    }
    UdpMsg *reply = new UdpMsg(UdpMsg::SyncReply);
    reply->u.sync_reply.random_reply = msg->u.sync_request.random_request;
-
+   // Calculate incoming verif data size
+   msg->verification_size = 0;
    // assign player name
    char opponent_name[21];
    strcpy(opponent_name, (char *)(&msg->u.sync_request.player_name[0]));
