@@ -2869,6 +2869,9 @@ static void gui_display_content()
 
 		try {
 			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+			if (entry_path.empty())
+				throw std::runtime_error("File not found.");
+
 			std::string filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
 			auto game_name = stringfix::remove_extension(filename);
 

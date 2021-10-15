@@ -105,15 +105,22 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 		filename.append(".zip");
 	}
 
-	// check if destination filename exists, return if so
-	std::string target;
-	if (nested_dir.empty())
-		target = root_path + dir_name + "/" + filename;
-	else
-		target = root_path + dir_name + "/" + nested_dir + "/" + filename;
+	auto rom_paths = config::ContentPath.get();
 
-	if (ghc::filesystem::exists(target))
-		return target;
+	for(int i = 0; i < rom_paths.size(); i++)
+	{
+		// check if destination filename exists, return if so
+		std::string target;
+		if (nested_dir.empty())
+			target = rom_paths[i] + "/" + filename;
+		else
+			target = rom_paths[i] + "/" + nested_dir + "/" + filename;
+
+		NOTICE_LOG(NETWORK, "looking for ", target);
+
+		if (ghc::filesystem::exists(target))
+			return target;
+	}
 
 	return "";
 }
