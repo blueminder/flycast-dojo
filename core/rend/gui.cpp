@@ -2867,12 +2867,14 @@ static void gui_display_content()
 		// ensure command line settings are loaded
 		config::Settings::instance().load(false);
 
+		std::string filename;
+
 		try {
 			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+			filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
+
 			if (entry_path.empty())
 				throw std::runtime_error("File not found.");
-
-			std::string filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
 			auto game_name = stringfix::remove_extension(filename);
 
 			if (file_exists(entry_path))
@@ -2895,7 +2897,12 @@ static void gui_display_content()
 		}
 		catch (...)
 		{
-			error_msg = "Entry " + config::GameEntry.get() + " not found.";
+			std::string file_notice = "";
+			filename = dojo_file.GetEntryFilename(config::GameEntry.get());
+			if (!filename.empty())
+				file_notice = "\nMake sure you have " + filename + " in your Content Path.";
+
+			error_msg = "Entry " + config::GameEntry.get() + " not found." + file_notice;
 		}
 		config::GameEntry = "";
 	}
