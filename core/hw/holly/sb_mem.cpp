@@ -20,7 +20,7 @@
 #include "oslib/oslib.h"
 
 MemChip *sys_rom;
-MemChip *sys_nvmem;
+WritableChip *sys_nvmem;
 
 extern bool bios_loaded;
 
@@ -106,7 +106,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 	}
 }
 
-void FixUpFlash()
+static void fixUpDCFlash()
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -179,8 +179,16 @@ static bool nvmem_load()
 			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem.net");
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+		fixUpDCFlash();
+		if (config::GGPOEnable)
+			sys_nvmem->digest(settings.network.md5.nvmem);
+	
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		{
 			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2.net");
+			if (config::GGPOEnable)
+				sys_nvmem->digest(settings.network.md5.nvmem2);
+		}
 	}
 	else
 	{
@@ -190,9 +198,18 @@ static bool nvmem_load()
 			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+		fixUpDCFlash();
+		if (config::GGPOEnable)
+			sys_nvmem->digest(settings.network.md5.nvmem);
 	
 		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		{
 			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
+			if (config::GGPOEnable)
+				sys_nvmem->digest(settings.network.md5.nvmem2);
+		}
+	}
+
 	}
 
 	return true;
@@ -213,14 +230,17 @@ bool LoadRomFiles()
 		bool real_boot = std::find(std::begin(dc_exceptions), std::end(dc_exceptions), prod_id) != std::end(dc_exceptions);
 
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
-		{
-			// ignore official dc bios for netplay
-			// keeps boot times consistent between players
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
+			// ignore official dc bios for netplayLATFREAMCAST && !real_boot)
 				return false;
-			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
-				bios_loaded = true;
+			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%
+			{
+				if (config::GGPOEnable)
+					sys_rom->digest(settings.network.md5.bios);boot.bin.bin;%bios.bin;%
+			}
+			else if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
+				return false;
 		}
+}
 
 		return true;
 	}
@@ -241,16 +261,12 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
-	// make no changes to delay netplay memory
-	//if (!config::DojoEnable)
-	//{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-			sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
-		else
-			sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
-		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-			sys_rom->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
-	//}
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
+	else
+		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
+	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
 }
 
 bool LoadHle()
@@ -270,9 +286,9 @@ static u32 ReadBios(u32 addr, u32 sz)
 {
 	return sys_rom->Read(addr, sz);
 }
-static void WriteBios(u32 addr, u32 data, u32 sz)
+static void WriteAWBios(u32 addr, u32 data, u32 sz)
 {
-	sys_rom->Write(addr, data, sz);
+	((WritableChip *)sys_rom)->Write(addr, data, sz);
 }
 
 //Area 0 mem map
@@ -410,7 +426,7 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 			{
 				if (addr < 0x20000)
 				{
-					WriteBios(addr, data, sz);
+					WriteAWBios(addr, data, sz);
 					return;
 				}
 			}

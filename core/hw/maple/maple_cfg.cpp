@@ -5,6 +5,7 @@
 #include "input/gamepad_device.h"
 #include "dojo/DojoSession.hpp"
 #include "cfg/option.h"
+#include "stdclass.h"
 
 MapleInputState mapleInputState[4];
 
@@ -205,7 +206,7 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 	MapleDevices[bus][port] = dev;
 }
 
-void mcfg_CreateNAOMIJamma()
+static void createNaomiDevices()
 {
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
@@ -222,7 +223,7 @@ void mcfg_CreateNAOMIJamma()
 	}
 }
 
-void mcfg_CreateAtomisWaveControllers()
+static void createAtomiswaveDevices()
 {
 	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
@@ -259,7 +260,7 @@ void mcfg_CreateAtomisWaveControllers()
 	}
 }
 
-void mcfg_CreateDevices()
+static void createDreamcastDevices()
 {
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
@@ -307,6 +308,46 @@ void mcfg_CreateDevices()
 			break;
 		}
 	}
+}
+
+static void vmuDigest()
+{
+	if (!config::GGPOEnable)
+		return;
+	MD5Sum md5;
+	for (int i = 0; i < MAPLE_PORTS; i++)
+		for (int j = 0; j < 6; j++)
+		{
+			const maple_device* device = MapleDevices[i][j];
+			if (device != nullptr)
+			{
+				size_t size;
+				const void *data = device->getData(size);
+				if (data != nullptr)
+					md5.add(data, size);
+			}
+		}
+	md5.getDigest(settings.network.md5.vmu);
+}
+
+void mcfg_CreateDevices()
+{
+	switch (settings.platform.system)
+	{
+	case DC_PLATFORM_DREAMCAST:
+		createDreamcastDevices();
+		break;
+	case DC_PLATFORM_NAOMI:
+		createNaomiDevices();
+		break;
+	case DC_PLATFORM_ATOMISWAVE:
+		createAtomiswaveDevices();
+		break;
+	default:
+		die("Unknown system");
+		break;
+	}
+	vmuDigest();
 }
 
 void mcfg_DestroyDevices()

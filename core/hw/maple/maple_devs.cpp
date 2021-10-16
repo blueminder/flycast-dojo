@@ -747,6 +747,12 @@ struct maple_sega_vmu: maple_base
 			return MDRE_UnknownCmd;
 		}
 	}
+
+	const void *getData(size_t& size) const override
+	{
+		size = sizeof(flash_data);
+		return flash_data;
+	}
 };
 
 
