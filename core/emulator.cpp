@@ -538,7 +538,7 @@ void Emulator::runInternal()
 			}
 		} while (resetRequested);
 
-		while (jump_state_requested && !settings.online)
+		while (jump_state_requested && !settings.network.online)
 		{
 			jump_state_requested = false;
 			jump_state();

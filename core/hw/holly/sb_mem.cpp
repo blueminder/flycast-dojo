@@ -210,15 +210,13 @@ static bool nvmem_load()
 		}
 	}
 
-	}
-
 	return true;
 }
 
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (!config::Offline || dojo.PlayMatch || config::RecordMatches)
+	if (settings.network.online || dojo.PlayMatch || config::RecordMatches)
 	{
 		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
 		prod_id = trim_trailing_ws(prod_id);
@@ -230,17 +228,18 @@ bool LoadRomFiles()
 		bool real_boot = std::find(std::begin(dc_exceptions), std::end(dc_exceptions), prod_id) != std::end(dc_exceptions);
 
 		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
-			// ignore official dc bios for netplayLATFREAMCAST && !real_boot)
+		{
+			// ignore official dc bios for netplay
+			// keeps boot times consistent between players
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
 				return false;
-			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%
+			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 			{
 				if (config::GGPOEnable)
-					sys_rom->digest(settings.network.md5.bios);boot.bin.bin;%bios.bin;%
+					sys_rom->digest(settings.network.md5.bios);
+				bios_loaded = true;
 			}
-			else if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
-				return false;
 		}
-}
 
 		return true;
 	}

@@ -361,7 +361,7 @@ void CheatManager::reset(const std::string& gameId)
 		active = false;
 		this->gameId = gameId;
 #ifndef LIBRETRO
-		if (!settings.online || config::Training)
+		if (!settings.network.online || config::Training)
 		{
 			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
 			if (!cheatFile.empty())

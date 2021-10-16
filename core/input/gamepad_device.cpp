@@ -85,7 +85,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online;
 			break;
 		case EMU_BTN_JUMP_STATE:
-			loadSaveStateDisabled = settings.content.path.empty() || settings.online;
+			loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
 			if (pressed && !gui_is_open() && !loadSaveStateDisabled)
 			{
 				loading_state = true;
@@ -95,7 +95,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			}
 			break;
 		case EMU_BTN_QUICK_SAVE:
-			if (pressed && !gui_is_open() && (config::Offline || config::Training))
+			if (pressed && !gui_is_open() && (!settings.network.online || config::Training))
 			{
 				dc_savestate();
 			}

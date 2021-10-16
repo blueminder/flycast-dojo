@@ -168,7 +168,7 @@ struct maple_sega_controller: maple_base
 					}
 					else
 					{
-						if (!settings.online && !config::Receiving)
+						if (!settings.network.online && !config::Receiving)
 						{
 							if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 								settings.platform.system == DC_PLATFORM_ATOMISWAVE)

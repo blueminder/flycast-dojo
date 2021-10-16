@@ -116,7 +116,7 @@ void DojoSession::CleanUp()
 	if (config::Training)
 		dojo.ResetTraining();
 
-	if (!config::Offline)
+	if (settings.network.online)
 	{
 		dojo.client.CloseLocalSocket();
 		dojo.client.name_acknowledged = false;

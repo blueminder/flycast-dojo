@@ -1469,7 +1469,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									}
 								}
 
-								if (settings.platform.system == DC_PLATFORM_NAOMI && !settings.online && !config::Receiving)
+								if (settings.platform.system == DC_PLATFORM_NAOMI && !settings.network.online && !config::Receiving)
 								{
 									inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
 								}

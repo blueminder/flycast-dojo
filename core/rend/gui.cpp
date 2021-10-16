@@ -278,7 +278,7 @@ void gui_init()
 
 	if (config::TestGame)
 	{
-		config::Offline = true;
+		settings.network.online = false;
 		gui_state = GuiState::TestGame;
 	}
 	else
@@ -664,7 +664,7 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 	}
 
-	if (!config::Offline || config::GGPOEnable)
+	if (settings.network.online || config::GGPOEnable)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
@@ -676,7 +676,7 @@ static void gui_display_commands()
 		gui_state = GuiState::Settings;
 	}
 
-	if (!config::Offline || config::GGPOEnable)
+	if (settings.network.online || config::GGPOEnable)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
@@ -691,7 +691,7 @@ static void gui_display_commands()
 
 	ImGui::NextColumn();
 
-	if (!config::Offline || config::GGPOEnable)
+	if (settings.network.online || config::GGPOEnable)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
@@ -729,7 +729,7 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 
-	if (!config::Offline || config::GGPOEnable)
+	if (settings.network.online || config::GGPOEnable)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
@@ -2331,14 +2331,12 @@ static void gui_display_content()
 
 	if (item_current_idx == 0)
 	{
-		config::Offline = true;
 		config::Training = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
 	else if (item_current_idx == 1)
 	{
-		config::Offline = false;
 		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
 		{
@@ -2359,7 +2357,6 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 2)
 	{
-		config::Offline = false;
 		config::DojoActAsServer = false;
 		config::NetworkServer = "";
 		if (config::NetplayMethod.get() == "GGPO")
@@ -2385,7 +2382,6 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 3)
 	{
-		config::Offline = true;
 		config::Training = true;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
@@ -2478,7 +2474,7 @@ static void gui_display_content()
   {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
-		if (config::Offline && !config::RecordMatches && !config::Training &&
+		if (!settings.network.online && !config::RecordMatches && !config::Training &&
 			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
 		{
 			ImGui::PushID("bios");
@@ -3109,7 +3105,7 @@ static void gui_display_loadscreen()
 		if (gameLoader.ready())
 		{
 
-			if (!config::Offline && config::EnableUPnP)
+			if (settings.network.online && config::EnableUPnP)
 			{
 				std::thread s([&]() {
 						dojo.StartUPnP();
