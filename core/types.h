@@ -373,6 +373,12 @@ struct settings_t
 			u8 vmu[16];
 		} md5;
 	} network;
+
+	struct
+	{
+		std::string GameEntry;
+	} dojo;
+
 	bool disableRenderer;
 };
 

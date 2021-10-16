@@ -652,7 +652,7 @@ std::future<bool> startNetwork()
 			startSession(0, 0);
 #else
 			try {
-				if (!config::EnableMatchCode || !config::GameEntry.get().empty())
+				if (!config::EnableMatchCode || !settings.dojo.GameEntry.empty())
 				{
 					// ensure command line settings are loaded
 					config::Settings::instance().load(false);

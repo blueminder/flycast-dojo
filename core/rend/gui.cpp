@@ -2774,7 +2774,7 @@ static void gui_display_content()
   windowDragScroll();
 	ImGui::EndChild();
 
-	if (config::Offline)
+	if (!settings.network.online)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
@@ -2845,7 +2845,8 @@ static void gui_display_content()
     contentpath_warning_popup();
 
 	bool net_save_download = false;
-	if (!config::GameEntry.get().empty())
+	settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
+	if (!settings.dojo.GameEntry.empty())
 	{
 		// ensure command line settings are loaded
 		config::Settings::instance().load(false);
@@ -2853,7 +2854,7 @@ static void gui_display_content()
 		std::string filename;
 
 		try {
-			std::string entry_path = dojo_file.GetEntryPath(config::GameEntry.get());
+			std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
 			filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
 
 			if (entry_path.empty())
@@ -2881,13 +2882,13 @@ static void gui_display_content()
 		catch (...)
 		{
 			std::string file_notice = "";
-			filename = dojo_file.GetEntryFilename(config::GameEntry.get());
+			filename = dojo_file.GetEntryFilename(settings.dojo.GameEntry);
 			if (!filename.empty())
 				file_notice = "\nMake sure you have " + filename + " in your Content Path.";
 
-			error_msg = "Entry " + config::GameEntry.get() + " not found." + file_notice;
+			error_msg = "Entry " + settings.dojo.GameEntry + " not found." + file_notice;
 		}
-		config::GameEntry = "";
+		settings.dojo.GameEntry = "";
 	}
 
 	if (net_save_download)
@@ -3198,7 +3199,7 @@ static void gui_display_loadscreen()
 				gui_state = GuiState::Closed;
 				ImGui::Text("Starting...");
 			}
-			config::GameEntry = "";
+			settings.dojo.GameEntry = "";
 		}
 		else
 		{

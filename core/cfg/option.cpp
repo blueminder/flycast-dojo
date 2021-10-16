@@ -160,7 +160,6 @@ Option<bool> LaunchReplay("LaunchReplay", false, "dojo");
 Option<bool> TransmitReplays("TransmitReplays", false, "dojo");
 Option<bool> Training("Training", false, "dojo");
 Option<bool> EnableSessionQuickLoad("EnableSessionQuickLoad", false, "dojo");
-OptionString GameEntry("GameEntry", "", "dojo");
 OptionString Quark("Quark", "", "dojo");
 Option<bool> PlayerSwitched("PlayerSwitched", false, "dojo");
 OptionString NetplayMethod("NetplayMethod", "GGPO", "dojo");
