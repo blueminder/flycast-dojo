@@ -652,11 +652,6 @@ std::future<bool> startNetwork()
 			startSession(0, 0);
 #else
 			try {
-				if (!config::EnableMatchCode || !settings.dojo.GameEntry.empty())
-				{
-					// ensure command line settings are loaded
-					config::Settings::instance().load(false);
-				}
 				config::GGPODelay = dojo.current_delay;
 				std::cout << "Server " << config::ActAsServer.get() << " " << config::NetworkServer.get() << std::endl;
 				std::cout << "GGPO Delay " << config::GGPODelay.get() << std::endl; 
