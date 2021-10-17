@@ -486,14 +486,14 @@ void gui_start_game(const std::string& path)
 	dojo.game_name = game_name;
 	dojo.current_delay = config::GGPODelay.get();
 
-	if (config::GGPOEnable && !config::ActAsServer)
+	if (cfgLoadBool("network", "GGPO", false) && !cfgLoadBool("network", "ActAsServer", false))
 	{
 		// switch ports if ggpo guest
-		if (!config::PlayerSwitched)
+		if (!cfgLoadBool("dojo", "PlayerSwitched", false))
 			dojo.SwitchPlayer();
 	}
 
-	if (config::GGPOEnable)
+	if (cfgLoadBool("network", "GGPO", false))
 	{
 		std::FILE* file = std::fopen(path.c_str(), "rb");
 		dojo.game_checksum = md5file(file);
@@ -512,15 +512,15 @@ void gui_start_game(const std::string& path)
 	scanner.stop();
 	gui_state = GuiState::Loading;
 
-	if (config::DojoEnable)
+	if (cfgLoadBool("dojo", "Enable", false))
 	{
 		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
 
-		if (config::EnableMemRestore && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
+		if (cfgLoadBool("dojo", "EnableMemRestore", true) && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
 			dojo_file.ValidateAndCopyMem(path.c_str());
 	}
 
-	if (!config::DojoEnable && !dojo.PlayMatch)
+	if (!cfgLoadBool("dojo", "Enable", false) && !dojo.PlayMatch)
 	{
 		cfgSaveInt("dojo", "Delay", config::Delay);
 		config::OpponentName = "";
@@ -529,13 +529,13 @@ void gui_start_game(const std::string& path)
 			dojo.CreateReplayFile(rom_name);
 	}
 
-	if (config::Receiving)
+	if (cfgLoadBool("dojo", "Receiving", false))
 		dojo.LaunchReceiver();
 	else
 	{
 		if (dojo.PlayMatch)
 		{
-			if (config::TransmitReplays)
+			if (cfgLoadBool("dojo", "TransmitReplays", false))
 				dojo.StartTransmitterThread();
 
 			dojo.LoadReplayFile(dojo.ReplayFilename);
@@ -554,7 +554,7 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
-	if (config::Receiving || dojo.PlayMatch && !dojo.offline_replay)
+	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
 		while(!dojo.receiver_header_read);
 
 	gameLoader.load(path);
@@ -2848,9 +2848,6 @@ static void gui_display_content()
 	settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
 	if (!settings.dojo.GameEntry.empty())
 	{
-		// ensure command line settings are loaded
-		config::Settings::instance().load(false);
-
 		std::string filename;
 
 		try {

@@ -1555,7 +1555,7 @@ void DojoSession::SwitchPlayer()
 
 	config::PlayerSwitched = !config::PlayerSwitched.get();
 	cfgSaveBool("dojo", "PlayerSwitched", config::PlayerSwitched);
-	std::cout << "Player Switched " << config::PlayerSwitched.get() << std::endl;
+	std::cout << "Player Switched " << cfgLoadBool("dojo", "PlayerSwitched", false) << std::endl;
 }
 
 
