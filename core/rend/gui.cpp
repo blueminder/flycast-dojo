@@ -279,6 +279,15 @@ void gui_init()
 	if (config::TestGame)
 	{
 		settings.network.online = false;
+		settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
+		if (!settings.dojo.GameEntry.empty())
+		{
+			try {
+				std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
+				settings.content.path = entry_path;
+			}
+			catch (...) { }
+		}
 		gui_state = GuiState::TestGame;
 	}
 	else

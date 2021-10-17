@@ -561,14 +561,6 @@ void DojoGui::gui_display_test_game( float scaling)
 	{
 		gui_state = GuiState::Closed;
 
-		if (!settings.dojo.GameEntry.empty())
-		{
-			try {
-				std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
-				settings.content.path = entry_path;
-			}
-			catch (...) { }
-		}
 		if (strlen(settings.content.path.data()) > 0)
 		{
 			std::string extension = get_file_extension(settings.content.path);
@@ -602,15 +594,6 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	}
 #ifdef _WIN32
-	if (!settings.dojo.GameEntry.empty())
-	{
-		try {
-			std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
-			settings.content.path = entry_path;
-		}
-		catch (...) { }
-	}
-
 	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
 	if (!game_links.empty())
 	{
