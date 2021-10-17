@@ -653,7 +653,7 @@ static void gui_display_commands()
 
 	ImGui::Columns(2, "buttons", false);
 
-	if (config::Training)
+	if (settings.dojo.training)
 	{
 		std::ostringstream watch_text;
 		watch_text << "Watching Player " << dojo.record_player + 1;
@@ -2340,7 +2340,7 @@ static void gui_display_content()
 
 	if (item_current_idx == 0)
 	{
-		config::Training = false;
+		settings.dojo.training = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
@@ -2361,7 +2361,7 @@ static void gui_display_content()
 		{
 			config::DojoEnable = true;
 			config::Receiving = false;
-			config::Training = false;
+			settings.dojo.training = false;
 		}
 	}
 	else if (item_current_idx == 2)
@@ -2382,7 +2382,7 @@ static void gui_display_content()
 		{
 			config::DojoEnable = true;
 			config::Receiving = false;
-			config::Training = false;
+			settings.dojo.training = false;
 
 			if (config::EnableMatchCode)
 				config::MatchCode = "";
@@ -2391,7 +2391,7 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 3)
 	{
-		config::Training = true;
+		settings.dojo.training = true;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
@@ -2403,14 +2403,14 @@ static void gui_display_content()
 		config::DojoActAsServer = true;
 		config::Receiving = true;
 		config::Transmitting = false;
-		config::Training = false;
+		settings.dojo.training = false;
 
 		config::DojoServerIP = "";
 	}*/
 	else if (item_current_idx == 4)
 	{
 		config::DojoEnable = false;
-		config::Training = false;
+		settings.dojo.training = false;
 	}
 
 	if (item_current_idx != last_item_current_idx)
@@ -2483,7 +2483,7 @@ static void gui_display_content()
   {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
-		if (!settings.network.online && !config::RecordMatches && !config::Training &&
+		if (!settings.network.online && !config::RecordMatches && !settings.dojo.training &&
 			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
 		{
 			ImGui::PushID("bios");
@@ -3191,7 +3191,7 @@ static void gui_display_loadscreen()
 					}
 				}
 			}
-			else if ((!config::DojoEnable && !dojo.PlayMatch) || config::Training)
+			else if ((!config::DojoEnable && !dojo.PlayMatch) || settings.dojo.training)
 			{
 				dojo.delay = (u32)config::Delay.get();
 				if (dojo.delay > 0)

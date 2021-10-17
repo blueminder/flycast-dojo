@@ -377,6 +377,7 @@ struct settings_t
 	struct
 	{
 		std::string GameEntry;
+		bool training;
 	} dojo;
 
 	bool disableRenderer;

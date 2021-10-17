@@ -16,7 +16,7 @@ void DojoSession::Init()
 	host_port = 7777;
 	delay = 1;
 
-	if (config::Training)
+	if (settings.dojo.training)
 		player = 0;
 	else
 		player = config::DojoActAsServer ? 0 : 1;
@@ -113,7 +113,7 @@ void DojoSession::CleanUp()
 	if (config::PlayerSwitched)
 		dojo.SwitchPlayer();
 
-	if (config::Training)
+	if (settings.dojo.training)
 		dojo.ResetTraining();
 
 	if (settings.network.online)
@@ -1361,7 +1361,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 
 	AddNetFrame(current_frame_data.data());
 
-	if (config::Training)
+	if (settings.dojo.training)
 	{
 		if (recording && GetPlayer((u8*)current_frame_data.data()) == record_player)
 			record_slot[current_record_slot].push_back(current_frame_data);
@@ -1374,7 +1374,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		}
 	}
 
-	if (delay > 0 || config::Training)
+	if (delay > 0 || settings.dojo.training)
 	{
 		std::string this_frame;
 		while(this_frame.empty())

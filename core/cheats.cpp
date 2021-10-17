@@ -361,7 +361,7 @@ void CheatManager::reset(const std::string& gameId)
 		active = false;
 		this->gameId = gameId;
 #ifndef LIBRETRO
-		if (!settings.network.online || config::Training)
+		if (!settings.network.online || settings.dojo.training)
 		{
 			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
 			if (!cheatFile.empty())
@@ -371,7 +371,7 @@ void CheatManager::reset(const std::string& gameId)
 	}
 
 	// disable all loaded cheats outside of training mode
-	if (!config::Training)
+	if (!settings.dojo.training)
 		for (size_t i = 0; i < cheatManager.cheatCount(); i++)
 			cheatManager.enableCheat(i, false);
 
