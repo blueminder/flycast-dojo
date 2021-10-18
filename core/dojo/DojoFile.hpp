@@ -102,6 +102,8 @@ public:
 	bool post_save_launch;
 
 	std::string root_path;
+
+	std::string get_savestate_commit(std::string filename);
 };
 
 extern DojoFile dojo_file;

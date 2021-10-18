@@ -378,6 +378,8 @@ struct settings_t
 	{
 		std::string GameEntry;
 		bool training;
+		std::string state_md5;
+		std::string state_commit;
 	} dojo;
 
 	bool disableRenderer;
