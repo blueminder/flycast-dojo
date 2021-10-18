@@ -1,3 +1,4 @@
+#include <cpr/cpr.h>
 #include "DojoFile.hpp"
 
 DojoFile dojo_file;
@@ -608,6 +609,12 @@ std::string DojoFile::DownloadNetSave(std::string rom_name)
 	auto filename = DownloadFile(net_state_url, "data");
 	save_download_ended = true;
 
+	std::FILE* file = std::fopen(filename.data(), "rb");
+	settings.dojo.state_md5 = md5file(file);
+
+	std::string commit_str = get_savestate_commit(filename);
+	settings.dojo.state_commit = commit_str;
+
 	return filename;
 }
 
@@ -812,3 +819,25 @@ void DojoFile::Update()
 	ghc::filesystem::remove_all(dirname);
 }
 
+std::string DojoFile::get_savestate_commit(std::string filename)
+{
+	std::string github_base = "https://github.com/";
+	size_t repo_pos = config::NetSaveBase.get().find(github_base);
+	if (repo_pos == std::string::npos)
+		return "";
+
+	size_t repo_end = config::NetSaveBase.get().find("/raw/main/");
+	std::string repo_name = config::NetSaveBase.get().substr(repo_pos + github_base.length(), repo_end - github_base.length());
+
+	auto r = cpr::Get(cpr::Url{ "https://api.github.com/repos/" + repo_name + "/commits/main" });
+	nlohmann::json j = nlohmann::json::parse(r.text);
+
+	std::ofstream commit_file;
+	commit_file.open(filename + ".commit");
+
+	std::string sha = j["sha"].get<std::string>();
+	commit_file << sha << std::endl;
+	commit_file.close();
+
+	return sha;
+}
