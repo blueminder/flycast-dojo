@@ -542,7 +542,6 @@ void DojoGui::gui_display_host_delay( float scaling)
 }
 
 void DojoGui::gui_display_test_game( float scaling)
-
 {
 	emu.term();
 
@@ -630,6 +629,17 @@ void DojoGui::gui_display_test_game( float scaling)
 			gui_state = GuiState::Main;
 		}
 
+	}
+	ImGui::NextColumn();
+	if (ImGui::Button("Delete Savestate", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
+		std::string game_name = stringfix::remove_extension(filename);
+		std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+		if(ghc::filesystem::exists(net_state_path))
+			ghc::filesystem::remove(net_state_path);
+
+		gui_state = GuiState::Closed;
 	}
 #ifdef _WIN32
 	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
