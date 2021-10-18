@@ -631,15 +631,29 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	}
 	ImGui::NextColumn();
+
+	std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
+	std::string game_name = stringfix::remove_extension(filename);
+	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
+	if(!ghc::filesystem::exists(net_state_path))
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+
 	if (ImGui::Button("Delete Savestate", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
-		std::string game_name = stringfix::remove_extension(filename);
-		std::string net_state_path = get_writable_data_path(game_name + ".state.net");
 		if(ghc::filesystem::exists(net_state_path))
 			ghc::filesystem::remove(net_state_path);
 
 		gui_state = GuiState::Closed;
+	}
+
+	if(!ghc::filesystem::exists(net_state_path))
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
 	}
 #ifdef _WIN32
 	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
