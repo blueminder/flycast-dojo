@@ -59,10 +59,13 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 
 	if (key <= DC_BTN_RELOAD)
 	{
-		if (pressed)
-			kcode[port] &= ~key;
-		else
-			kcode[port] |= key;
+		if (port >= 0)
+		{
+			if (pressed)
+				kcode[port] &= ~key;
+			else
+				kcode[port] |= key;
+		}
 #ifdef TEST_AUTOMATION
 		if (record_input != NULL)
 			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
@@ -264,10 +267,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
 			break;
 		case DC_AXIS_LT:
-			lt[port] = pressed ? 255 : 0;
+			if (port >= 0)
+				lt[port] = pressed ? 255 : 0;
 			break;
 		case DC_AXIS_RT:
-			rt[port] = pressed ? 255 : 0;
+			if (port >= 0)
+				rt[port] = pressed ? 255 : 0;
 			break;
 
 		case DC_AXIS_UP:
@@ -291,7 +296,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			return false;
 		}
 	}
-	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, kcode[port]);
+	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
 
 	return true;
 }
@@ -305,7 +310,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = nullptr;
 		return true;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port > (int)ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port > (int)ARRAY_SIZE(kcode))
 		return false;
 
 	bool rc = false;
@@ -717,7 +722,7 @@ void Mouse::setButton(Button button, bool pressed)
 		else
 			mo_buttons[maple_port()] |= 1 << (int)button;
 	}
-	if (gui_is_open() && !is_detecting_input())
+	if ((gui_is_open() || gui_mouse_captured()) && !is_detecting_input())
 		// Don't register mouse clicks as gamepad presses when gui is open
 		// This makes the gamepad presses to be handled first and the mouse position to be ignored
 		return;

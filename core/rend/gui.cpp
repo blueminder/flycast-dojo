@@ -42,6 +42,7 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "lua/lua.h"
+#include "gui_chat.h"
 
 #include "dojo/DojoGui.hpp"
 #include "dojo/DojoFile.hpp"
@@ -76,6 +77,7 @@ void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
+static Chat chat;
 
 static int item_current_idx = 0;
 
@@ -295,6 +297,7 @@ void gui_init()
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
+    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
 void gui_keyboard_input(u16 wc)
@@ -309,6 +312,18 @@ void gui_keyboard_inputUTF8(const std::string& s)
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard)
 		io.AddInputCharactersUTF8(s.c_str());
+}
+
+bool gui_keyboard_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureKeyboard;
+}
+
+bool gui_mouse_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureMouse;
 }
 
 void gui_set_mouse_position(int x, int y)
@@ -467,9 +482,14 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		gui_state = GuiState::Commands;
-		HideOSD();
-		emu.stop();
+		if (!ggpo::active())
+		{
+			gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
+		else
+			chat.toggle();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
@@ -517,6 +537,7 @@ void gui_start_game(const std::string& path)
 
 	emu.unloadGame();
 	reset_vmus();
+    chat.reset();
 
 	scanner.stop();
 	gui_state = GuiState::Loading;
@@ -3401,12 +3422,15 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(settings.display.width, settings.display.height);
-		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
-			ggpo::displayStats();
+		if (ggpo::active() && !dojo.PlayMatch)
+		{
+			if (config::NetworkStats)
+				ggpo::displayStats();
+			chat.display();
+		}
 
 		if ((ggpo::active() || config::Receiving) && config::EnablePlayerNameOverlay)
 			dojo_gui.show_player_name_overlay(scaling, false);
-
 		lua::overlay();
 
 		ImGui::Render();
