@@ -1158,6 +1158,8 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
 				ImGui::SameLine();
 				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
+
+				OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
 			}
 		}
 
