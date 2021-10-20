@@ -46,6 +46,8 @@
 #include "dojo/DojoGui.hpp"
 #include "dojo/DojoFile.hpp"
 
+#include <fstream>
+
 bool game_started;
 
 extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
@@ -512,6 +514,28 @@ void gui_start_game(const std::string& path)
 		{
 			std::FILE* save_file = std::fopen(net_save_path.c_str(), "rb");
 			dojo.save_checksum = md5file(save_file);
+			settings.dojo.state_md5 = md5file(save_file);
+
+			if(ghc::filesystem::exists(net_save_path + ".commit"))
+			{
+				std::fstream commit_file;
+				commit_file.open(net_save_path + ".commit");
+				if (commit_file.is_open())
+				{
+					std::string commit_sha;
+					getline(commit_file, commit_sha);
+					settings.dojo.state_commit = commit_sha;
+				}
+			}
+			else
+			{
+				settings.dojo.state_commit = "";
+			}
+		}
+		else
+		{
+				settings.dojo.state_md5 = "";
+				settings.dojo.state_commit = "";
 		}
 	}
 
@@ -549,7 +573,7 @@ void gui_start_game(const std::string& path)
 
 			dojo.LoadReplayFile(dojo.ReplayFilename);
 			// ggpo session
-			if (dojo.replay_version == 2)
+			if (dojo.replay_version >= 2)
 			{
 				config::GGPOEnable = true;
 				dojo.FrameNumber = 0;
@@ -564,7 +588,17 @@ void gui_start_game(const std::string& path)
 	}
 
 	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
+	{
 		while(!dojo.receiver_header_read);
+
+		if (dojo.replay_version == 3)
+		{
+			if (dojo.save_checksum != settings.dojo.state_md5)
+			{
+				//return;
+			}
+		}
+	}
 
 	gameLoader.load(path);
 }
@@ -2680,7 +2714,10 @@ static void gui_display_content()
 					{
 						dojo_file.save_download_started = true;
 						std::thread s([&]() {
-							dojo_file.DownloadNetSave(dojo_file.entry_name);
+							if (config::Receiving && !settings.dojo.state_commit.empty())
+								dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit);
+							else
+								dojo_file.DownloadNetSave(dojo_file.entry_name);
 						});
 						s.detach();
 					}
@@ -3157,7 +3194,7 @@ static void gui_display_loadscreen()
 				if (dojo.PlayMatch || config::Receiving)
 				{
 					dojo.PlayMatch = true;
-					if (dojo.replay_version == 2)
+					if (dojo.replay_version >= 2)
 						config::GGPOEnable = true;
 
 					config::DojoEnable = true;
@@ -3418,7 +3455,7 @@ void gui_display_osd()
 		if (!config::Receiving)
 			dojo_gui.show_playback_menu(scaling, false);
 
-		if (dojo.replay_version == 2)
+		if (dojo.replay_version >= 2)
 		{
 			if(dojo.FrameNumber >= dojo.maple_inputs.size())
 			{

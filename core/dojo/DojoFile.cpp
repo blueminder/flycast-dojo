@@ -1,6 +1,8 @@
 #include <cpr/cpr.h>
 #include "DojoFile.hpp"
 
+#include <iostream>
+
 DojoFile dojo_file;
 
 DojoFile::DojoFile()
@@ -598,7 +600,17 @@ size_t writeFileFunction(const char *p, size_t size, size_t nmemb) {
 
 std::string DojoFile::DownloadNetSave(std::string rom_name)
 {
+	return DownloadNetSave(rom_name, "");
+}
+
+std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
+{
 	auto net_state_base = config::NetSaveBase.get();
+	if (!commit.empty())
+		stringfix::replace(net_state_base, "main", commit);
+
+	std::cout << net_state_base << std::endl;
+
 	auto state_file = rom_name + ".state";
 	auto net_state_file = state_file + ".net";
 	auto net_state_url = net_state_base + net_state_file;
@@ -612,8 +624,11 @@ std::string DojoFile::DownloadNetSave(std::string rom_name)
 	std::FILE* file = std::fopen(filename.data(), "rb");
 	settings.dojo.state_md5 = md5file(file);
 
-	std::string commit_str = get_savestate_commit(filename);
-	settings.dojo.state_commit = commit_str;
+	//if (commit.empty())
+	//{
+		std::string commit_str = get_savestate_commit(filename);
+		//settings.dojo.state_commit = commit_str;
+	//}
 
 	return filename;
 }

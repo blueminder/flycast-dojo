@@ -732,7 +732,7 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 
 	if (version == 0)
 		filename.append(".flyreplay");
-	else if (version == 1)
+	else if (version >= 1)
 		filename.append(".flyr");
 
 	// create replay file itself
@@ -742,7 +742,7 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 	dojo.ReplayFilename = filename;
 	dojo.replay_filename = filename;
 
-	if (version == 1)
+	if (version > 0)
 		AppendHeaderToReplayFile(rom_name);
 
 	return filename;
@@ -758,7 +758,7 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 	spectate_start.AppendHeader(1, SPECTATE_START);
 
 	// version
-	u32 version = config::GGPOEnable ? 2 : 1;
+	u32 version = config::GGPOEnable ? 3 : 1;
 	spectate_start.AppendInt(version);
 	if (rom_name == "")
 		spectate_start.AppendString(get_game_name());
@@ -774,6 +774,12 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::GGPOEnable)
 		analog = (u32)config::GGPOAnalogAxes.get();
 	spectate_start.AppendInt(analog);
+
+	if (version == 3)
+	{
+		spectate_start.AppendString(settings.dojo.state_md5);
+		spectate_start.AppendString(settings.dojo.state_commit);
+	}
 
 	std::vector<unsigned char> message = spectate_start.Msg();
 
@@ -851,7 +857,7 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 		std::ofstream fout(replay_filename,
 			std::ios::out | std::ios::binary | std::ios_base::app);
 
-		if (version == 2)
+		if (version >= 2)
 		{
 			if (replay_frame_count == 0)
 			{
@@ -956,9 +962,15 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
 
+		if (replay_version == 3)
+		{
+			settings.dojo.state_md5 = MessageReader::ReadString((const char*)buffer, offset);
+			settings.dojo.state_commit = MessageReader::ReadString((const char*)buffer, offset);
+		}
+
 		std::cout << "Replay Version: " << replay_version << std::endl;
 
-		if (replay_version == 2)
+		if (replay_version >= 2)
 		{
 			replay_analog = analog;
 			last_consecutive_common_frame = 0;
@@ -982,6 +994,12 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 		std::cout << "Quark: " << Quark << std::endl;
 		std::cout << "Match Code: " << MatchCode << std::endl;
+
+		if (replay_version == 3)
+		{
+			std::cout << "Savestate MD5: " << settings.dojo.state_md5 << std::endl;
+			std::cout << "Savestate Commit SHA: " << settings.dojo.state_commit << std::endl;
+		}
 
 		dojo.receiver_header_read = true;
 		dojo.receiver_start_read = true;

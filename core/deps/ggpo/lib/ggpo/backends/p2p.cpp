@@ -693,7 +693,7 @@ Peer2PeerBackend::AddToReplay(GameInput input)
 		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
 
     if (config::RecordMatches)
-      dojo.AppendToReplayFile(frame_, 2);
+      dojo.AppendToReplayFile(frame_, 3);
 
     if (dojo.transmitter_started)
       dojo.transmission_frames.push_back(frame_);

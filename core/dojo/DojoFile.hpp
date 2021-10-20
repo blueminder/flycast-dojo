@@ -67,6 +67,7 @@ public:
 	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size);
 
 	std::string DownloadNetSave(std::string rom_name);
+	std::string DownloadNetSave(std::string rom_name, std::string commit);
 
 	void Update();
 	void DownloadDependencies(std::string rom_path);
