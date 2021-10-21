@@ -648,22 +648,6 @@ Peer2PeerBackend::CheckInitialSync()
       _synchronizing = false;
    }
 }
-GGPOErrorCode Peer2PeerBackend::SendMessage(const void *msg, int len, bool spectators)
-{
-	if (_synchronizing)
-		return GGPO_ERRORCODE_NOT_SYNCHRONIZED;
-	if (len > MAX_APPDATA_SIZE)
-		return GGPO_ERRORCODE_INVALID_REQUEST;
-	for (int i = 0; i < _num_players; i++)
-        if (_endpoints[i].IsInitialized())
-           _endpoints[i].SendAppData(msg, len, spectators);
-	if (spectators)
-		for (int i = 0; i < _num_spectators; i++)
-	        if (_spectators[i].IsInitialized())
-	        	_spectators[i].SendAppData(msg, len, spectators);
-
-	return GGPO_ERRORCODE_SUCCESS;
-}
 
 GGPOErrorCode Peer2PeerBackend::SendMessage(const void *msg, int len, bool spectators)
 {

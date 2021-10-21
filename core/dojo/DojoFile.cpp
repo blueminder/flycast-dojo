@@ -628,11 +628,25 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	auto filename = DownloadFile(net_state_url, "data");
 	save_download_ended = true;
 
+	// if not latest, append savestate filename with commit
+	if (!commit.empty())
+	{
+		net_state_file = net_state_file + "." + commit;
+		ghc::filesystem::rename(filename, "data/" + net_state_file);
+	}
+
 	std::FILE* file = std::fopen(filename.data(), "rb");
 	settings.dojo.state_md5 = md5file(file);
 
-	std::string commit_str = get_savestate_commit(filename);
-	settings.dojo.state_commit = commit_str;
+	if (commit.empty())
+	{
+		std::string commit_str = get_savestate_commit(filename);
+		settings.dojo.state_commit = commit_str;
+	}
+	else
+	{
+		settings.dojo.state_commit = commit;
+	}
 
 	return filename;
 }
@@ -855,6 +869,7 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 	commit_file.open(filename + ".commit");
 
 	std::string sha = j["sha"].get<std::string>();
+	cfgSaveStr("dojo", "LatestStateCommit", sha);
 	commit_file << sha << std::endl;
 	commit_file.close();
 

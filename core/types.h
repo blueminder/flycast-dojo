@@ -377,6 +377,7 @@ struct settings_t
 	struct
 	{
 		std::string GameEntry;
+		std::string LatestStateCommit;
 		bool training;
 		std::string state_md5;
 		std::string state_commit;
