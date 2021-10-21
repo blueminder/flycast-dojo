@@ -2919,6 +2919,7 @@ static void gui_display_content()
 	settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
 	if (!settings.dojo.GameEntry.empty())
 	{
+		dojo.commandLineStart = true;
 		std::string filename;
 
 		try {

@@ -290,6 +290,8 @@ public:
 
 	void StartTransmitterThread();
 	int current_delay = 0;
+
+	bool commandLineStart = false;
 };
 
 extern DojoSession dojo;
