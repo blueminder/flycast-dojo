@@ -766,7 +766,9 @@ if(NOT LIBRETRO)
 	        core/input/gamepad_device.h
 	        core/input/keyboard_device.h
 	        core/input/mapping.cpp
-	        core/input/mapping.h)
+	        core/input/mapping.h
+	        core/input/mouse.cpp
+	        core/input/mouse.h)
 endif()
 
 if(WIN32)
@@ -943,10 +945,12 @@ if(NOT LIBRETRO)
 	        core/rend/gui.h
 	        core/rend/gui_android.cpp
 	        core/rend/gui_android.h
+	        core/rend/gui_chat.h
 	        core/rend/gui_cheats.cpp
 	        core/rend/gui_util.cpp
 	        core/rend/gui_util.h
-	        core/rend/mainui.cpp)
+	        core/rend/mainui.cpp
+	        core/rend/mainui.h)
 endif()
 
 if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))

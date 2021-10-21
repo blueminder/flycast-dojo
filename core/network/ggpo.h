@@ -32,6 +32,9 @@ bool nextFrame();
 bool active();
 void displayStats();
 void endOfFrame();
+void sendChatMessage(int playerNum, const std::string& msg);
+void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg));
 
 void setMapleInput(MapleInputState inputState[4]);
+
 }

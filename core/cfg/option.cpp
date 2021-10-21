@@ -119,6 +119,7 @@ Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", false, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<int> GGPORemotePort("GGPORemotePort", 19713, "network");
+Option<bool> GGPOChat("GGPOChat", true, "network");
 
 // Dojo
 

@@ -31,6 +31,7 @@
 #include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
@@ -42,6 +43,7 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "lua/lua.h"
+#include "gui_chat.h"
 
 #include "dojo/DojoGui.hpp"
 #include "dojo/DojoFile.hpp"
@@ -49,9 +51,6 @@
 #include <fstream>
 
 bool game_started;
-
-extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
-extern u8 kb_key[MAPLE_PORTS][6];		// normal keys pressed
 
 int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -78,6 +77,7 @@ void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
+static Chat chat;
 
 static int item_current_idx = 0;
 
@@ -297,6 +297,7 @@ void gui_init()
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
+    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
 void gui_keyboard_input(u16 wc)
@@ -311,6 +312,28 @@ void gui_keyboard_inputUTF8(const std::string& s)
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard)
 		io.AddInputCharactersUTF8(s.c_str());
+}
+
+void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
+{
+	if (!inited)
+		return;
+	ImGuiIO& io = ImGui::GetIO();
+	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
+	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
+	io.KeysDown[keyCode] = pressed;
+}
+
+bool gui_keyboard_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureKeyboard;
+}
+
+bool gui_mouse_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureMouse;
 }
 
 void gui_set_mouse_position(int x, int y)
@@ -345,21 +368,6 @@ void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	// Read keyboard modifiers inputs
-	io.KeyCtrl = 0;
-	io.KeyShift = 0;
-	io.KeyAlt = false;
-	io.KeySuper = false;
-	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int port = 0; port < 4; port++)
-	{
-		io.KeyCtrl |= (kb_shift[port] & (0x01 | 0x10)) != 0;
-		io.KeyShift |= (kb_shift[port] & (0x02 | 0x20)) != 0;
-
-		for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
-			if (kb_key[port][i] != 0)
-				io.KeysDown[kb_key[port][i]] = true;
-	}
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
@@ -469,9 +477,14 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		gui_state = GuiState::Commands;
-		HideOSD();
-		emu.stop();
+		if (!ggpo::active())
+		{
+			gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
+		else
+			chat.toggle();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
@@ -532,6 +545,21 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
+	emu.unloadGame();
+	reset_vmus();
+    chat.reset();
+
+	scanner.stop();
+	gui_state = GuiState::Loading;
+
+	if (cfgLoadBool("dojo", "Enable", false))
+	{
+		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
+
+		if (cfgLoadBool("dojo", "EnableMemRestore", true) && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
+			dojo_file.ValidateAndCopyMem(path.c_str());
+	}
+
 	if (!cfgLoadBool("dojo", "Enable", false) && !dojo.PlayMatch)
 	{
 		cfgSaveInt("dojo", "Delay", config::Delay);
@@ -570,20 +598,6 @@ void gui_start_game(const std::string& path)
 
 	if (config::Transmitting)
 		dojo.StartTransmitterThread();
-
-	emu.unloadGame();
-	reset_vmus();
-
-	scanner.stop();
-	gui_state = GuiState::Loading;
-
-	if (cfgLoadBool("dojo", "Enable", false))
-	{
-		cfgSaveStr("dojo", "PlayerName", config::PlayerName.get().c_str());
-
-		if (cfgLoadBool("dojo", "EnableMemRestore", true) && settings.platform.system != DC_PLATFORM_DREAMCAST && !config::GGPOEnable)
-			dojo_file.ValidateAndCopyMem(path.c_str());
-	}
 
 
 	gameLoader.load(path);
@@ -3448,12 +3462,15 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(settings.display.width, settings.display.height);
-		if (ggpo::active() && config::NetworkStats && !dojo.PlayMatch)
-			ggpo::displayStats();
+		if (ggpo::active() && !dojo.PlayMatch)
+		{
+			if (config::NetworkStats)
+				ggpo::displayStats();
+			chat.display();
+		}
 
 		if ((ggpo::active() || config::Receiving) && config::EnablePlayerNameOverlay)
 			dojo_gui.show_player_name_overlay(scaling, false);
-
 		lua::overlay();
 
 		ImGui::Render();

@@ -41,6 +41,9 @@ s8 joyrx[4];
 s8 joyry[4];
 u8 rt[4];
 u8 lt[4];
+// Keyboards
+u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
+u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
@@ -59,10 +62,13 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 
 	if (key <= DC_BTN_RELOAD)
 	{
-		if (pressed)
-			kcode[port] &= ~key;
-		else
-			kcode[port] |= key;
+		if (port >= 0)
+		{
+			if (pressed)
+				kcode[port] &= ~key;
+			else
+				kcode[port] |= key;
+		}
 #ifdef TEST_AUTOMATION
 		if (record_input != NULL)
 			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
@@ -264,10 +270,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
 			break;
 		case DC_AXIS_LT:
-			lt[port] = pressed ? 255 : 0;
+			if (port >= 0)
+				lt[port] = pressed ? 255 : 0;
 			break;
 		case DC_AXIS_RT:
-			rt[port] = pressed ? 255 : 0;
+			if (port >= 0)
+				rt[port] = pressed ? 255 : 0;
 			break;
 
 		case DC_AXIS_UP:
@@ -291,7 +299,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			return false;
 		}
 	}
-	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, kcode[port]);
+	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
 
 	return true;
 }
@@ -305,7 +313,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = nullptr;
 		return true;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port > (int)ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port > (int)ARRAY_SIZE(kcode))
 		return false;
 
 	bool rc = false;
@@ -604,7 +612,7 @@ void GamepadDevice::save_mapping(int system)
 	InputMapping::SaveMapping(filename.c_str(), input_mapper);
 }
 
-void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)
+static void updateVibration(u32 port, float power, float inclination, u32 duration_ms)
 {
 	int i = GamepadDevice::GetGamepadCount() - 1;
 	for ( ; i >= 0; i--)
@@ -671,6 +679,7 @@ void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 	_gamepads_mutex.lock();
 	_gamepads.push_back(gamepad);
 	_gamepads_mutex.unlock();
+	MapleConfigMap::UpdateVibration = updateVibration;
 }
 
 void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)
@@ -693,54 +702,6 @@ void GamepadDevice::SaveMaplePorts()
 		if (gamepad != NULL && !gamepad->unique_id().empty())
 			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
-}
-
-void Mouse::setAbsPos(int x, int y, int width, int height) {
-	SetMousePosition(x, y, width, height, maple_port());
-}
-
-void Mouse::setRelPos(float deltax, float deltay) {
-	SetRelativeMousePosition(deltax, deltay, maple_port());
-}
-
-void Mouse::setWheel(int delta) {
-	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_wheel_delta))
-		mo_wheel_delta[maple_port()] += delta;
-}
-
-void Mouse::setButton(Button button, bool pressed)
-{
-	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_buttons))
-	{
-		if (pressed)
-			mo_buttons[maple_port()] &= ~(1 << (int)button);
-		else
-			mo_buttons[maple_port()] |= 1 << (int)button;
-	}
-	if (gui_is_open() && !is_detecting_input())
-		// Don't register mouse clicks as gamepad presses when gui is open
-		// This makes the gamepad presses to be handled first and the mouse position to be ignored
-		return;
-	gamepad_btn_input(button, pressed);
-}
-
-
-void SystemMouse::setAbsPos(int x, int y, int width, int height) {
-	gui_set_mouse_position(x, y);
-	Mouse::setAbsPos(x, y, width, height);
-}
-
-void SystemMouse::setButton(Button button, bool pressed) {
-	int uiBtn = (int)button - 1;
-	if (uiBtn < 2)
-		uiBtn ^= 1;
-	gui_set_mouse_button(uiBtn, pressed);
-	Mouse::setButton(button, pressed);
-}
-
-void SystemMouse::setWheel(int delta) {
-	gui_set_mouse_wheel(delta * 35);
-	Mouse::setWheel(delta);
 }
 
 #ifdef TEST_AUTOMATION

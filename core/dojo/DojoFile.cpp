@@ -631,11 +631,8 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	std::FILE* file = std::fopen(filename.data(), "rb");
 	settings.dojo.state_md5 = md5file(file);
 
-	//if (commit.empty())
-	//{
-		std::string commit_str = get_savestate_commit(filename);
-		//settings.dojo.state_commit = commit_str;
-	//}
+	std::string commit_str = get_savestate_commit(filename);
+	settings.dojo.state_commit = commit_str;
 
 	return filename;
 }

@@ -32,6 +32,9 @@ void gui_refresh_files();
 void gui_cheats();
 void gui_keyboard_input(u16 wc);
 void gui_keyboard_inputUTF8(const std::string& s);
+void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers);
+bool gui_keyboard_captured();
+bool gui_mouse_captured();
 void gui_set_mouse_position(int x, int y);
 // 0: left, 1: right, 2: middle/wheel, 3: button 4
 void gui_set_mouse_button(int button, bool pressed);
