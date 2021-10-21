@@ -497,13 +497,6 @@ void gui_start_game(const std::string& path)
 	dojo.game_name = game_name;
 	dojo.current_delay = config::GGPODelay.get();
 
-	if (cfgLoadBool("network", "GGPO", false) && !cfgLoadBool("network", "ActAsServer", false))
-	{
-		// switch ports if ggpo guest
-		if (!cfgLoadBool("dojo", "PlayerSwitched", false))
-			dojo.SwitchPlayer();
-	}
-
 	if (cfgLoadBool("network", "GGPO", false))
 	{
 		std::FILE* file = std::fopen(path.c_str(), "rb");
@@ -539,6 +532,45 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
+	if (!cfgLoadBool("dojo", "Enable", false) && !dojo.PlayMatch)
+	{
+		cfgSaveInt("dojo", "Delay", config::Delay);
+		config::OpponentName = "";
+		std::string rom_name = dojo.GetRomNamePrefix(path);
+		if (config::RecordMatches)
+			dojo.CreateReplayFile(rom_name);
+	}
+
+	if (dojo.PlayMatch && !config::Receiving)
+	{
+		if (cfgLoadBool("dojo", "TransmitReplays", false))
+			dojo.StartTransmitterThread();
+
+		dojo.LoadReplayFile(dojo.ReplayFilename);
+		// ggpo session
+		if (dojo.replay_version >= 2)
+		{
+			config::GGPOEnable = true;
+			dojo.FrameNumber = 0;
+		}
+		// delay/offline session
+		else
+		{
+			dojo.FillDelay(1);
+			dojo.FrameNumber = 1;
+		}
+	}
+
+	if (cfgLoadBool("network", "GGPO", false) && !cfgLoadBool("network", "ActAsServer", false))
+	{
+		// switch ports if ggpo guest
+		if (!cfgLoadBool("dojo", "PlayerSwitched", false))
+			dojo.SwitchPlayer();
+	}
+
+	if (config::Transmitting)
+		dojo.StartTransmitterThread();
+
 	emu.unloadGame();
 	reset_vmus();
 
@@ -553,52 +585,6 @@ void gui_start_game(const std::string& path)
 			dojo_file.ValidateAndCopyMem(path.c_str());
 	}
 
-	if (!cfgLoadBool("dojo", "Enable", false) && !dojo.PlayMatch)
-	{
-		cfgSaveInt("dojo", "Delay", config::Delay);
-		config::OpponentName = "";
-		std::string rom_name = dojo.GetRomNamePrefix(path);
-		if (config::RecordMatches)
-			dojo.CreateReplayFile(rom_name);
-	}
-
-	if (cfgLoadBool("dojo", "Receiving", false))
-		dojo.LaunchReceiver();
-	else
-	{
-		if (dojo.PlayMatch)
-		{
-			if (cfgLoadBool("dojo", "TransmitReplays", false))
-				dojo.StartTransmitterThread();
-
-			dojo.LoadReplayFile(dojo.ReplayFilename);
-			// ggpo session
-			if (dojo.replay_version >= 2)
-			{
-				config::GGPOEnable = true;
-				dojo.FrameNumber = 0;
-			}
-			// delay/offline session
-			else
-			{
-				dojo.FillDelay(1);
-				dojo.FrameNumber = 1;
-			}
-		}
-	}
-
-	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
-	{
-		while(!dojo.receiver_header_read);
-
-		if (dojo.replay_version == 3)
-		{
-			if (dojo.save_checksum != settings.dojo.state_md5)
-			{
-				//return;
-			}
-		}
-	}
 
 	gameLoader.load(path);
 }
@@ -2714,8 +2700,18 @@ static void gui_display_content()
 					{
 						dojo_file.save_download_started = true;
 						std::thread s([&]() {
-							if (config::Receiving && !settings.dojo.state_commit.empty())
-								dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit);
+							if (config::Receiving)
+							{
+								if (dojo.replay_version == 2)
+									dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8");
+								else if (!settings.dojo.state_commit.empty())
+								{
+									std::cout << "state commit: " << settings.dojo.state_commit << std::endl;
+									dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit);
+								}
+								else
+									dojo_file.DownloadNetSave(dojo_file.entry_name);
+							}
 							else
 								dojo_file.DownloadNetSave(dojo_file.entry_name);
 						});
@@ -2906,7 +2902,24 @@ static void gui_display_content()
 
 			if (file_exists(entry_path))
 			{
+				if (cfgLoadBool("dojo", "Receiving", false))
+					dojo.LaunchReceiver();
+
 				std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
+				if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
+				{
+					while(!dojo.receiver_header_read);
+
+					if (dojo.replay_version == 3)
+					{
+						if (dojo.save_checksum != settings.dojo.state_md5)
+						{
+							//ghc::filesystem::remove(net_state_path);
+						}
+					}
+				}
+
 				if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
 					(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended))
 				{
@@ -3126,9 +3139,6 @@ static void gui_network_start()
 
 void start_ggpo()
 {
-	if (config::Transmitting)
-		dojo.StartTransmitterThread();
-
 	dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;

@@ -607,14 +607,21 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 {
 	auto net_state_base = config::NetSaveBase.get();
 	if (!commit.empty())
-		stringfix::replace(net_state_base, "main", commit);
-
-	std::cout << net_state_base << std::endl;
-
+	{
+		commit.erase(std::remove_if(commit.begin(), commit.end(),
+			[](char c) {
+			    return (c == ' ' || c == '\n' || c == '\r' ||
+			            c == '\t' || c == '\v' || c == '\f');
+			}),
+			commit.end());
+		stringfix::replace(net_state_base, "main", std::string(commit.data()));
+	}
 	auto state_file = rom_name + ".state";
 	auto net_state_file = state_file + ".net";
 	auto net_state_url = net_state_base + net_state_file;
 	stringfix::replace(net_state_url, " ", "%20");
+
+	NOTICE_LOG(NETWORK, "save url: %s", net_state_url.data());
 
 	status_text = "Downloading netplay savestate for " + rom_name + ".";
 

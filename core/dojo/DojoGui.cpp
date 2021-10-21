@@ -1428,4 +1428,3 @@ void DojoGui::update_action()
 }
 
 DojoGui dojo_gui;
-
