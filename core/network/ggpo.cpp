@@ -521,7 +521,7 @@ void startSession(int localPort, int localPlayerNum)
 	}
 
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
-			&verif, 0);
+			&verif, sizeof(verif));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
