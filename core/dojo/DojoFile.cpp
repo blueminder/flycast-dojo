@@ -126,6 +126,9 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 
 	auto rom_paths = config::ContentPath.get();
 
+	if (std::find(rom_paths.begin(), rom_paths.end(), "ROMs") == rom_paths.end())
+		rom_paths.push_back("ROMs");
+
 	for(int i = 0; i < rom_paths.size(); i++)
 	{
 		// check if destination filename exists, return if so
