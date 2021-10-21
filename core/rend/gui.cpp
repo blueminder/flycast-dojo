@@ -566,7 +566,7 @@ void gui_start_game(const std::string& path)
 	if (!cfgLoadBool("dojo", "Enable", false) && !dojo.PlayMatch)
 	{
 		cfgSaveInt("dojo", "Delay", config::Delay);
-		config::OpponentName = "";
+		settings.dojo.OpponentName = "";
 		std::string rom_name = dojo.GetRomNamePrefix(path);
 		if (config::RecordMatches)
 			dojo.CreateReplayFile(rom_name);
@@ -2994,8 +2994,8 @@ static void gui_display_content()
 		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
 	#endif
 
-		config::PlayerName = replay_entry[2];
-		config::OpponentName = replay_entry[3];
+		settings.dojo.PlayerName = replay_entry[2];
+		settings.dojo.OpponentName = replay_entry[3];
 
 		config::GameName = game_name;
 	}
@@ -3156,6 +3156,7 @@ static void gui_network_start()
 
 void start_ggpo()
 {
+	settings.dojo.PlayerName = config::PlayerName.get();
 	dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;
@@ -3473,7 +3474,11 @@ void gui_display_osd()
 		}
 
 		if ((ggpo::active() || config::Receiving) && config::EnablePlayerNameOverlay)
+		{
+			if (!config::Receiving)
+				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
 			dojo_gui.show_player_name_overlay(scaling, false);
+		}
 		lua::overlay();
 
 		ImGui::Render();

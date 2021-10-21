@@ -907,8 +907,8 @@ void DojoSession::LoadReplayFileV0(std::string path)
 	std::string ppath = path;
 	stringfix::replace(ppath, "__", ":");
 	std::vector<std::string> name_info = stringfix::split(":", ppath);
-	config::PlayerName = name_info[3];
-	config::OpponentName = name_info[4];
+	settings.dojo.PlayerName = name_info[3];
+	settings.dojo.OpponentName = name_info[4];
 	AssignNames();
 
 	// add string in increments of FRAME_SIZE to net_inputs
@@ -985,8 +985,8 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 		if (!received_player_info)
 		{
-			config::PlayerName = PlayerName;
-			config::OpponentName = OpponentName;
+			settings.dojo.PlayerName = PlayerName;
+			settings.dojo.OpponentName = OpponentName;
 			AssignNames();
 			std::cout << "Player: " << PlayerName << std::endl;
 			std::cout << "Opponent: " << OpponentName << std::endl;
@@ -1015,8 +1015,8 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::cout << "P1: " << player_name << std::endl;
 		std::cout << "P2: " << opponent_name << std::endl;
 
-		config::PlayerName = player_name;
-		config::OpponentName = opponent_name;
+		settings.dojo.PlayerName = player_name;
+		settings.dojo.OpponentName = opponent_name;
 
 		received_player_info = true;
 
@@ -1661,13 +1661,13 @@ void DojoSession::AssignNames()
 {
 	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
 	{
-		player_1 = config::PlayerName.get();
-		player_2 = config::OpponentName.get();
+		player_1 = settings.dojo.PlayerName;
+		player_2 = settings.dojo.OpponentName;
 	}
 	else
 	{
-		player_1 = config::OpponentName.get();
-		player_2 = config::PlayerName.get();
+		player_1 = settings.dojo.OpponentName;
+		player_2 = settings.dojo.PlayerName;
 	}
 }
 

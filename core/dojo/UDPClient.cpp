@@ -399,12 +399,12 @@ void UDPClient::ClientLoop()
 
 			if (memcmp("NAME", buffer, 4) == 0)
 			{
-				config::OpponentName = std::string(buffer + 5, strlen(buffer + 5));
+				settings.dojo.OpponentName = std::string(buffer + 5, strlen(buffer + 5));
 
 				std::string buffer_str(buffer + 5, strlen(buffer + 5));
 				auto tokens = stringfix::split(" ", buffer_str);
 
-				config::OpponentName = tokens[0];
+				settings.dojo.OpponentName = tokens[0];
 				dojo.net_save_present = (bool)atoi(tokens[1].data());
 				dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
 
@@ -494,7 +494,7 @@ void UDPClient::ClientLoop()
 					dojo.net_save_present = (bool)atoi(tokens[4].data());
 					dojo.net_save_present = dojo.net_save_present && !config::IgnoreNetSave;
 
-					config::OpponentName = op;
+					settings.dojo.OpponentName = op;
 
 					if (!dojo.session_started)
 					{

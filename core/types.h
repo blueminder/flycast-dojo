@@ -378,6 +378,8 @@ struct settings_t
 	{
 		std::string GameEntry;
 		std::string LatestStateCommit;
+		std::string PlayerName;
+		std::string OpponentName;
 		bool training;
 		std::string state_md5;
 		std::string state_commit;
