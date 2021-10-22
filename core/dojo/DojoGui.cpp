@@ -662,7 +662,7 @@ void DojoGui::gui_display_test_game( float scaling)
 		for (std::pair<std::string, std::string> link: game_links)
 		{
 			ImGui::NextColumn();
-			if (ImGui::Button(std::string("Open " + link.first).data(), ImVec2(150 * scaling, 50 * scaling)))
+			if (ImGui::Button(std::string("Open\n" + link.first).data(), ImVec2(150 * scaling, 50 * scaling)))
 				ShellExecute(0, 0, link.second.data(), 0, 0, SW_SHOW);
 		}
 	}
