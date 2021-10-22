@@ -525,7 +525,9 @@ void gui_start_game(const std::string& path)
 	dojo.game_name = game_name;
 	dojo.current_delay = config::GGPODelay.get();
 
-	if (cfgLoadBool("network", "GGPO", false))
+	if (cfgLoadBool("network", "GGPO", false)
+		&& !config::Receiving
+		&& (config::RecordMatches || config::Transmitting))
 	{
 		std::FILE* file = std::fopen(path.c_str(), "rb");
 		dojo.game_checksum = md5file(file);
