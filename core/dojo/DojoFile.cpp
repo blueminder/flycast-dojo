@@ -138,8 +138,6 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 		else
 			target = rom_paths[i] + "/" + nested_dir + "/" + filename;
 
-		NOTICE_LOG(NETWORK, "looking for ", target);
-
 		if (ghc::filesystem::exists(target))
 			return target;
 	}
