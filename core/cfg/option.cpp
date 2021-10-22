@@ -166,7 +166,7 @@ Option<bool> PlayerSwitched("PlayerSwitched", false, "dojo");
 OptionString NetplayMethod("NetplayMethod", "GGPO", "dojo");
 OptionString NetSaveBase("NetSaveBase", "https://github.com/blueminder/flycast-netplay-savestates/raw/main/", "dojo");
 Option<bool> NetStartVerifyRoms("NetStartVerifyRoms", false, "dojo");
-Option<bool> ShowPublicIP("ShowPublicIP", true, "dojo");
+Option<bool> ShowPublicIP("ShowPublicIP", false, "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 
