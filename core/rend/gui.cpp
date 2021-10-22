@@ -1394,10 +1394,19 @@ void error_popup()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+			if (dojo.commandLineStart)
 			{
-				error_msg.clear();
-				ImGui::CloseCurrentPopup();
+				if (ImGui::Button("Exit", ImVec2(80.f * scaling, 0.f)))
+					dc_exit();
+
+			}
+			else
+			{
+				if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+				{
+					error_msg.clear();
+					ImGui::CloseCurrentPopup();
+				}
 			}
 			ImGui::SetItemDefaultFocus();
 			ImGui::PopStyleVar();

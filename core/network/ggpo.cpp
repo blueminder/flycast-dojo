@@ -793,7 +793,11 @@ std::future<bool> startNetwork()
 					break;
 				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
 				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
-					throw FlycastException("Peer verification failed");
+				{
+					error_msg = "Peer verification failed.\n\nMake sure you have the same savestate as your opponent.\nIf in doubt, delete your existing one in the Test Game menu.\nA new one will be downloaded the next time you join a match.";
+					gui_state = GuiState::Disconnected;
+					//throw FlycastException("Peer verification failed");
+				}
 				else if (result != GGPO_OK)
 				{
 					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
