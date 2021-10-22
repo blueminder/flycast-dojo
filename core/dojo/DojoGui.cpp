@@ -636,7 +636,11 @@ void DojoGui::gui_display_test_game( float scaling)
 	std::string game_name = stringfix::remove_extension(filename);
 	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
 
-	if(!ghc::filesystem::exists(net_state_path))
+	bool save_exists = false;
+	if(ghc::filesystem::exists(net_state_path))
+		save_exists = true;
+
+	if(!save_exists)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
@@ -646,15 +650,14 @@ void DojoGui::gui_display_test_game( float scaling)
 	{
 		if(ghc::filesystem::exists(net_state_path))
 			ghc::filesystem::remove(net_state_path);
-
-		gui_state = GuiState::Closed;
 	}
 
-	if(!ghc::filesystem::exists(net_state_path))
+	if(!save_exists)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
+
 #ifdef _WIN32
 	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
 	if (!game_links.empty())
