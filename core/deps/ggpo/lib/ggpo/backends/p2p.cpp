@@ -669,35 +669,35 @@ GGPOErrorCode Peer2PeerBackend::SendMessage(const void *msg, int len, bool spect
 void
 Peer2PeerBackend::AddToReplay(GameInput input)
 {
-	if (config::RecordMatches || dojo.transmitter_started)
-	{
-		u32 frame_num = (u32)input.frame;
-    std::vector<u8> m_inputs;
+   if (config::RecordMatches || dojo.transmitter_started)
+   {
+      u32 frame_num = (u32)input.frame;
+      std::vector<u8> m_inputs;
 
-    //std::cout << "FRAME " << frame_num << " ";
+      //std::cout << "FRAME " << frame_num << " ";
 
-    for (int i = 0; i < input.size; i++)
-    {
-      m_inputs.push_back((u8)input.bits[i]);
-      //std::bitset<8> b(input.bits[i]);
-      //std::cout << b.to_string();
-    }
+      for (int i = 0; i < input.size; i++)
+      {
+         m_inputs.push_back((u8)input.bits[i]);
+         //std::bitset<8> b(input.bits[i]);
+         //std::cout << b.to_string();
+      }
 
-    //std::cout << std::endl;
+      //std::cout << std::endl;
 
-    dojo.maple_inputs[frame_num] = m_inputs;
+      dojo.maple_inputs[frame_num] = m_inputs;
 
-    // create frame container for export
-		unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
-		memcpy(new_frame, (unsigned char*)&frame_num, sizeof(unsigned int));
-		memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), MAPLE_FRAME_SIZE - 4);
-		std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
+      // create frame container for export
+      unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
+      memcpy(new_frame, (unsigned char*)&frame_num, sizeof(unsigned int));
+      memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), MAPLE_FRAME_SIZE - 4);
+      std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
 
-    if (config::RecordMatches)
-      dojo.AppendToReplayFile(frame_, 3);
+      if (config::RecordMatches)
+         dojo.AppendToReplayFile(frame_, 3);
 
-    if (dojo.transmitter_started)
-      dojo.transmission_frames.push_back(frame_);
-	}
+      if (dojo.transmitter_started)
+         dojo.transmission_frames.push_back(frame_);
+   }
 }
 
