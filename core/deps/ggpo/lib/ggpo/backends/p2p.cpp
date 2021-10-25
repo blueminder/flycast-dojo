@@ -672,7 +672,7 @@ Peer2PeerBackend::AddToReplay(GameInput input)
    if (config::RecordMatches || dojo.transmitter_started)
    {
       u32 frame_num = (u32)input.frame;
-      std::vector<u8> m_inputs;
+      std::vector<u8> m_inputs(MAPLE_FRAME_SIZE - 4);
 
       //std::cout << "FRAME " << frame_num << " ";
 
