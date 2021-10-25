@@ -1,4 +1,4 @@
-<p align="center"><img src="FlycastDojoFoxlum.png" alt="Flycast Dojo Logo" ><br /><i>Logo Credit: <a href="https://github.com/Foxlum">@Foxlum</a></i></p>
+<p align="center"><img src="FlycastDojoFoxlum.png" alt="Flycast Dojo Logo" width="243" height="283"><br /><i>Logo Credit: <a href="https://github.com/Foxlum">@Foxlum</a></i></p>
 <h1 align="center">Flycast Dojo</h1>
  
 **Flycast Dojo** is a fork of [**Flycast**](https://github.com/flyinghead/flycast), a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**Reicast**](https://reicast.com/), with a focus on netplay features and replay. We intend to keep **Flycast Dojo** updated with the latest downstream changes made to the parent project.
@@ -57,13 +57,13 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 # Visual Aids
 
 ## Match Code Quick Start
-![Match Code Quick Start](match-code-qs-kofxi.gif)
+<img src="match-code-qs-kofxi.gif" alt="Match Code Quick Start" width="945" height="387">
 
 ## Fightcade Quick Start
-[![Fightcade Quick Start](http://img.youtube.com/vi/47oJOUoGYmI/0.jpg)](https://www.youtube.com/watch?v=47oJOUoGYmI)
+<a href="https://www.youtube.com/watch?v=47oJOUoGYmI"><img src="http://img.youtube.com/vi/47oJOUoGYmI/0.jpg" alt="Fightcade Quick Start" width="480" height="360"></a>
 
 ## LAN Lobby Quick Start
-[![LAN Lobby Quick Start](http://img.youtube.com/vi/VcalBJpbjxA/0.jpg)](https://www.youtube.com/watch?v=VcalBJpbjxA)
+<a href="https://www.youtube.com/watch?v=VcalBJpbjxA"><img src="http://img.youtube.com/vi/VcalBJpbjxA/0.jpg" alt="LAN Lobby Quick Start" width="480" height="360"></a>
 
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.226** romset.
@@ -76,7 +76,7 @@ For the BIOS, be sure to add `awbios.zip` for Atomiswave games or `naomi.zip` fo
 
 For more information on verifying your BIOS files, you can head to the [Flycast wiki page](https://github.com/TheArcadeStriker/flycast-wiki/wiki/Verifying-your-BIOS-and-Arcade-ROMs) on the topic.
 
-![Content Location / Home Directory Settings](contentsettings.png)
+<img src="contentsettings.png" alt="Content Location / Home Directory Settings" width="642" height="512">
 
 # Setting Controls
 To set up your controls in Flycast, launch the emulator and head to **Settings -> Controls**. Set your controller of choice to **Port A**. From there, press **Map** to open the **Controller Mapping** menu.
@@ -85,18 +85,18 @@ Select the **Arcade button names** checkbox to show the arcade button mapping. I
 
 The following is a sample mapping for XInput (XBOX 360) Controllers created by **pokeshark** on the [Official Fightcade Discord](https://discord.com/invite/EyERRSg). Note that the triggers are on the right hand side of the screen, corresponding with analog axes.
 
-<img alt="CvS2 Sample Mapping for XInput Controllers" src="CVS2_Sample_Mapping_for_XInput_Controllers.png" width="640">
+<img alt="CvS2 Sample Mapping for XInput Controllers" src="CVS2_Sample_Mapping_for_XInput_Controllers.png" width="640" height="506">
 
 # Starting a Netplay Session
 
 ## Netplay Settings
 You can find the Netplay settings under the **Dojo** section of the emulator's settings:
 
-![Dojo Options](dojo_settings.png)
+<img alt="Dojo Options" src="dojo_settings.png" width="642" height="576">
 
 Match Codes are enabled by default, pointing to the default matchmaking relay. To use the LAN Lobby or Manual Operation (i.e., Command Line or External Lobbies) just disable the checkbox from **Enable Internet Matchmaking**, or pass `dojo:EnableMatchCode=no` to the command line options.
 
-![Dojo Options - Match Codes Disabled](dojo_settings_sans_match.png)
+<img alt="Dojo Options - Match Codes Disabled" src="dojo_settings_sans_match.png" width="642" height="512">
 
 ## Match Code Quick Start
 Using Match Codes, Flycast Dojo can start a P2P game session behind firewalls, so that you can play against others without the need of Radmin or Fightcade. No need to sign up for any accounts or download additional software than Flycast Dojo itself. You should be able to play any games supported by Flycast, so long as you and your opponent have the same ROM.
@@ -106,25 +106,25 @@ The methods used by this feature should work with most consumer routers, but you
 ### As Host
 You can set yourself as a host by making sure __HOST__ is selected in the drop-down box on the left, then click on the game to begin.
 
-![Flycast Dojo Default Screen](match-code-1.png)
+<img alt="Flycast Dojo Default Screen" src="match-code-1.png" width="642" height="512">
 
 This will contact the default matchmaking relay and give you a code to send to your opponent. To make code transfer easier, press the __Copy Match Code__ button to add the code to your clipboard to paste to your opponent.
 
-![Host Match Code Screen](match-code-2.png)
+<img alt="Host Match Code Screen" src="match-code-2.png" width="642" height="511">
 
 #### Set Delay
 When a guest joins a session, the host can set the delay according to packet round trip time by pressing **"Detect Delay"**. Use the slider to adjust the game to your liking, and press "Start Game" to begin your session.
 
 Depending on the connection between you and your opponent and the tendency for network spikes, you may have to bump delay up to make your game smoother. The best course of action is to start low, and go higher until both you and your opponent have a smooth framerate.
 
-![Host Delay Selection](hostdelay-1.png)
+<img alt="Host Delay Selection" src="hostdelay-1.png" width="642" height="511">
 
 ### As Guest
 To join a game, click on the dropdown on the left and select __JOIN__ then select the game of your choice. It will prompt you for the match code. If you have copied the Match Code from your opponent, you can press the __Paste__ button, otherwise, you can enter in the match code manually.
 
 Once you are done, you can press __Start Session__.
 
-![Host Match Code Screen](match-code-3.png)
+<img alt="Guest Match Code Screen" src="match-code-3.png" width="642" height="511">
 
 ### Match Code Troubleshooting
 
@@ -145,15 +145,15 @@ If you are connected to your opponents on a shared LAN or are using software tha
 ### As Guest
 * On the Lobby screen, click on any entries with the status of "Hosting, Waiting" to launch a game. The game will load, and the session will start once the host has selected delay.
 
-![Lobby - Entry Select](lobby3.png)
+<img alt="Lobby - Entry Select" src="lobby3.png" width="642" height="512">
 
 ### As Host
 * In the Lobby screen, click "Host Game" and select your game of choice.
 
-![Lobby](lobby1.png)
+<img alt="Lobby" src="lobby1.png" width="641" height="508">
 > Empty lobby with "Host Game" button highlighted
 
-![Host Game Selection](lobby2.png)
+<img alt="Host Game Selection" src="lobby2.png" width="641" height="508">
 > Host game selection menu with search filter
 
 #### Set Delay
@@ -161,7 +161,7 @@ When a guest joins a session, the host can set the delay according to packet rou
 
 Depending on the connection between you and your opponent and the tendency for network spikes, you may have to bump delay up to make your game smoother. The best course of action is to start low, and go higher until both you and your opponent have a smooth framerate.
 
-![Host Delay Selection](hostdelay.png)
+<img alt="Host Delay Selection" src="hostdelay.png" width="642" height="512">
 
 ### As Spectator
 To spectate a match in your lobby, you will need to make a spectate request before a second player joins a match. Before spectating, make sure that you also have the same ROM as the players do.
@@ -170,7 +170,7 @@ Just right-click on any lobby game with the status of "Hosting, Waiting" and cli
 
 As of right now, spectating is limited to one person at a time. This should be handy for running tournaments online.
 
-![Lobby Spectating](spectate1.png)
+<img alt="Lobby Spectating" src="spectate1.png" width="642" height="512">
 
 # Manual Operation
 
@@ -203,7 +203,7 @@ If you are hosting, you must start the game first, then have your opponent join 
 ### Transmitting
 To transmit your current game session or replays, go into the **Dojo** settings tab and press the checkbox by **Enable TCP Transmission**. You can edit your target spectator IP Address and Port.
 
-![TCP Transmission Settings](enable_tcp_transmission.png)
+<img alt="TCP Transmission Settings" src="enable_tcp_transmission.png" width="626" height="132">
 
 If you wish to enable transmitting when launching via the Command Line, just add ```-config dojo:Transmitting=yes -config dojo:SpectatorIP=<IP> -config dojo:SpectatorPort=7000``` to your command.
 
@@ -220,7 +220,7 @@ To record your netplay sessions, just check the box that says "Record All Sessio
 
 To play the replay file, just click on the corresponding entry, and the replay data will played back in its corresponding game.
 
-![Replay](replay1.png)
+<img alt="Replay" src="replay1.png" width="642" height="512">
 
 ## Public Replay Servers & Transmitting Game Sessions
 
@@ -230,11 +230,11 @@ There is currently an experimental public replay server available at **match.doj
 
 **Transmitting to Replay Server**
 
-![Transmitting to Replay Server](transmission-replay-server.png)
+<img alt="Transmitting to Replay Server" src="transmission-replay-server.png" width="655" height="159">
 
 **Replay Server Search Interface**
 
-![Replay Server Search Interface](replay-server-search.png)
+<img alt="Replay Server Search Interface" src="replay-server-search.png" width="806" height="92">
 
 Once some code cleanup and quality checks are done, the replay server will be made available in its own repository for anyone to be able to host themselves.
 
@@ -244,33 +244,34 @@ During a netplay match, if a custom savestate is present, you can "jump" to a st
 ## Custom Savestates
 To use custom savestates, you must first disable **Ignore Netplay Savestates** in the **Memory Management** section of your Dojo settings.
 
-![Memory Management - Disabled Ignore Netplay Savestates](mm-disable-ignore-savestate.png)
+<img alt="Memory Management - Disabled Ignore Netplay Savestates" src="mm-disable-ignore-savestate.png" width="673" height="130">
 
 From here, you must rename your desired game savestate to be `[ROM Name].state.net` and replace the existing file in your `data/` folder. Be sure you and your opponent have the same files when you start a session, or else you will be looking at different game states entirely.
 
 # MD5 Checksum Calculation & Validation
 In order for netplay to work, both you and your opponent must have the same ROM on both computers. Players using different ROM variants can lead to desyncing. Oftentimes, verifying the validity of ROMs can be a pain, leading folks to reacquire them unnecessarily in a game of guess and check. To solve this issue,  MD5 checksum calculation and validation has been made available.
 
-![MD5 Checksum Window](validation-1.png)
+<img alt="MD5 Checksum Window" src="validation-1.png" width="538" height="429">
 
 To access this, just right click on any ROM name, and click "Calculate MD5 Checksum". A dialog will pop up showing the MD5 checksum of the selected ROM, and a button to easily copy it to the clipboard to share with your opponent.
 
-![MD5 Checksum Context Menu](validation-2.png)
+<img alt="MD5 Checksum Context Menu" src="validation-2.png" width="642" height="511">
 
 To verify that you have the same ROM as your opponent, just copy the MD5 checksum given to you, and click the "Paste & Verify" button. If your ROMs match, you'll see a green "Verified!" by the Close button. If the hashes do not match, it will say "Mismatch." in red.
 
-![MD5 Checksum Window - Verified!](validation-3.png)
+<img alt="MD5 Checksum Window - Verified!" src="validation-3.png" width="538" height="429">
 
 If a `flycast_roms.json` file is found, it should contain a listing of MD5 checksums for approved ROMs between users. This format is intended for communities to share common ROM metadata between users to ensure that everyone has the same files.
 
 If your ROM is found in this file, the MD5 Checksum window will say *"Validation File Match"*. So long as you see this, you should be good to go!
 
-![MD5 Checksum Window - Verified!](validation-4.png)
+<img alt="MD5 Checksum Window - Validation File Match" src="validation-4.png" width="626" height="511">
+
 # Training Mode
 
 With the new Training Mode, you can enable game cheats while playing offline using RetroArch's `.cht` file format to adjust game parameters, quickly load states, save states, record, and play back user inputs for practice on any supported Dreamcast, NAOMI, or Atomiswave game. You can enter Training mode by selecting the **TRAIN** option in the drop-down menu on the top left of the Flycast main menu.
 
-![Open Training Mode Menu](training-menu.png)
+<img alt="Open Training Mode Menu" src="training-menu.png" width="642" height="512">
 
 To target a specific player port or set playback loop settings, just press the **F7** key, or hit the **Menu** button (**TAB** by default) and click on the corresponding button to switch. Player 1 corresponds with Port A, while Player 2 corresponds with Port B. You can also switch players by pressing **F9** by default.
 
@@ -287,7 +288,7 @@ Defaults:
 * **F8** Quick Save
 * **F9** Quick Load
 
-![Training Mode Controller Mapping](training-mode-map.png)
+<img alt="Training Mode Controller Mapping" src="training-mode-map.png" width="642" height="512">
 
 # Linux Build
 Flycast Dojo is currently available as a `tar.gz` archive containing a 64-bit x86 binary `flycast.elf`. It can run self-contained from the same directory, with all user configurations and relevant game metadata kept in the same place. It has been tested to run on **Ubuntu 20.10**, as well as **Arch Linux 2021.04.01**. So long as you have the dependencies installed, you should be able to run `tar zxvf flycast-dojo-*.tar.gz`, enter the directory, and start using it immediately.
@@ -336,16 +337,16 @@ _append to server arguments_
 
 # Video Demos
 ## Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS
-[![Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS](http://img.youtube.com/vi/zZoonpVJRjI/0.jpg)](http://www.youtube.com/watch?v=zZoonpVJRjI "Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS")
+<a href="http://www.youtube.com/watch?v=zZoonpVJRjI"><img alt="Flycast Netplay Testing - Capcom vs SNK 2 (NAOMI) VS" src="http://img.youtube.com/vi/zZoonpVJRjI/0.jpg" width="480" height="360"></a>
 
 ## Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS
-[![Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS](http://img.youtube.com/vi/s0MXenZPLiU/0.jpg)](http://www.youtube.com/watch?v=s0MXenZPLiU "Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS")
+<a href="http://www.youtube.com/watch?v=s0MXenZPLiU"><img alt="Flycast Netplay Testing - Akatsuki Blitzkampf Ausf Achse (NAOMI) VS" src="http://img.youtube.com/vi/s0MXenZPLiU/0.jpg" width="480" height="360"></a>
 
 ## Flycast Dojo - Spectating / TCP Transmission - Test 1
-[![Flycast Dojo - Spectating / TCP Transmission - Test 1](https://img.youtube.com/vi/AmRf7MwOrQA/0.jpg)](https://www.youtube.com/watch?v=AmRf7MwOrQA)
+<a href="https://www.youtube.com/watch?v=AmRf7MwOrQA"><img alt="Flycast Dojo - Spectating / TCP Transmission - Test 1" src="https://img.youtube.com/vi/AmRf7MwOrQA/0.jpg" width="480" height="360"></a>
 
 ## Flycast Dojo - The Rumble Fish 2 (Atomiswave) - LAN Lobby Spectating Test 1
-[![Flycast Dojo - The Rumble Fish 2 - LAN Lobby Spectating Test 1](https://img.youtube.com/vi/U9Nexso4lpo/0.jpg)](https://www.youtube.com/watch?v=U9Nexso4lpo)
+<a href="https://www.youtube.com/watch?v=U9Nexso4lpo"><img alt="Flycast Dojo - The Rumble Fish 2 - LAN Lobby Spectating Test 1" src="https://img.youtube.com/vi/U9Nexso4lpo/0.jpg" width="480" height="360"></a>
 
 # Roadmap
 - [x] UDP Delay Netplay
@@ -358,4 +359,4 @@ _append to server arguments_
 - [x] Training Mode
 - [x] Native Linux Support
 - [ ] Native Mac OS Support
-- [ ] Lua Scripting
+- [x] Lua Scripting (Introduced upstream)
