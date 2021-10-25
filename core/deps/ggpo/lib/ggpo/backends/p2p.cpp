@@ -672,7 +672,7 @@ Peer2PeerBackend::AddToReplay(GameInput input)
    if (config::RecordMatches || dojo.transmitter_started)
    {
       u32 frame_num = (u32)input.frame;
-      std::vector<u8> m_inputs(MAPLE_FRAME_SIZE - 4);
+      std::vector<u8> m_inputs;
 
       //std::cout << "FRAME " << frame_num << " ";
 
@@ -690,7 +690,7 @@ Peer2PeerBackend::AddToReplay(GameInput input)
       // create frame container for export
       unsigned char new_frame[MAPLE_FRAME_SIZE] = { 0 };
       memcpy(new_frame, (unsigned char*)&frame_num, sizeof(unsigned int));
-      memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), MAPLE_FRAME_SIZE - 4);
+      memcpy(new_frame + 4, (unsigned char*)m_inputs.data(), m_inputs.size());
       std::string frame_((const char*)new_frame, MAPLE_FRAME_SIZE);
 
       if (config::RecordMatches)
