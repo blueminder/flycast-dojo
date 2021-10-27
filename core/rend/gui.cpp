@@ -606,16 +606,8 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
-	if (cfgLoadBool("network", "GGPO", false) && !cfgLoadBool("network", "ActAsServer", false))
-	{
-		// switch ports if ggpo guest
-		if (!cfgLoadBool("dojo", "PlayerSwitched", false))
-			dojo.SwitchPlayer();
-	}
-
 	if (config::Transmitting)
 		dojo.StartTransmitterThread();
-
 
 	gameLoader.load(path);
 }
