@@ -355,7 +355,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 	std::sprintf(&output[0], format, prefix, effective_frame, frame, delay, player,
 		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
 
-	if (player == 0)
+	if (player == 0 || player == 1)
 	{
 		std::string dc_buttons[18] = {"C", "B", "A", "Start", "Up", "Down", "Left", "Right", "Z", "Y", "X", "D", "", "", "", "", "LT", "RT"};
 		std::string aw_buttons[18] = {"3", "2", "1", "Start", "Up", "Down", "Left", "Right", "", "5", "4", "", "", "", "", "", "LT", "RT"};
@@ -452,15 +452,15 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 		std::cout << effective_frame << ": " << dir_ss.str() << " " << ss.str() << std::endl;
 			//displayed_inputs[effective_frame] = bt_bitset;
-		if (last_held_input != bt_bitset)
+		if (last_held_input[player] != bt_bitset)
 		{
-			last_held_input = bt_bitset;
-			displayed_inputs[effective_frame] = bt_bitset;
-			displayed_inputs_str[effective_frame] = ss.str();
-			displayed_dirs_str[effective_frame] = dir_ss.str();
-			last_held_dir = dir_bits;
-			displayed_dirs[effective_frame] = dir_bits;
-			displayed_inputs_duration[effective_frame] = 1;
+			last_held_input[player] = bt_bitset;
+			displayed_inputs[player][effective_frame] = bt_bitset;
+			displayed_inputs_str[player][effective_frame] = ss.str();
+			displayed_dirs_str[player][effective_frame] = dir_ss.str();
+			last_held_dir[player] = dir_bits;
+			displayed_dirs[player][effective_frame] = dir_bits;
+			displayed_inputs_duration[player][effective_frame] = 1;
 		}
 
 			//if (displayed_inputs.size() > 20)

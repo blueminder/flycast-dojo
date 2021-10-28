@@ -293,13 +293,13 @@ public:
 
 	bool commandLineStart = false;
 
-	std::map<u32, std::bitset<18>> displayed_inputs;
-	std::map<u32, std::string> displayed_inputs_str;
-	std::map<u32, std::string> displayed_dirs_str;
-	std::map<u32, u32> displayed_inputs_duration;
-	std::bitset<18> last_held_input;
-	std::vector<bool> last_held_dir;
-	std::map<u32, std::vector<bool>> displayed_dirs;
+	std::array<std::map<u32, std::bitset<18>>, 2> displayed_inputs;
+	std::array<std::map<u32, std::string>, 2> displayed_inputs_str;
+	std::array<std::map<u32, std::string>, 2> displayed_dirs_str;
+	std::array<std::map<u32, u32>, 2> displayed_inputs_duration;
+	std::array<std::bitset<18>, 2> last_held_input;
+	std::array<std::vector<bool>, 2> last_held_dir;
+	std::array<std::map<u32, std::vector<bool>>, 2> displayed_dirs;
 };
 
 extern DojoSession dojo;
