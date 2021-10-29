@@ -923,7 +923,10 @@ void DojoGui::show_last_inputs_overlay()
 		ImGui::Text("%03u", input_duration);
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-		ImGui::Text("%6s", dojo.displayed_dirs_str[0][input_frame_num].c_str());
+		if (config::UseAnimeInputNotation)
+			ImGui::Text("%d", dojo.displayed_num_dirs[0][input_frame_num]);
+		else
+			ImGui::Text("%6s", dojo.displayed_dirs_str[0][input_frame_num].c_str());
 		ImGui::PopStyleColor();
 		ImGui::SameLine();
 		ImGui::Text("%s", dojo.displayed_inputs_str[0][input_frame_num].c_str());
@@ -931,11 +934,13 @@ void DojoGui::show_last_inputs_overlay()
 
 		for(auto rit = std::prev(dojo.displayed_inputs[0].rbegin()); rit != dojo.displayed_inputs[0].rend(); ++rit)
 		{
-			//ImGui::Text("%u: %s", dojo.displayed_inputs_duration[rit->first], rit->second.c_str());
 			ImGui::Text("%03u", dojo.displayed_inputs_duration[0][rit->first], dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
 			ImGui::SameLine();
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-			ImGui::Text("%6s", dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
+			if (config::UseAnimeInputNotation)
+				ImGui::Text("%d", dojo.displayed_num_dirs[0][input_frame_num]);
+			else
+				ImGui::Text("%6s", dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
 			ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
@@ -969,7 +974,10 @@ void DojoGui::show_last_inputs_overlay()
 		ImGui::Text("%03u", input_duration);
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-		ImGui::Text("%6s", dojo.displayed_dirs_str[1][input_frame_num].c_str());
+		if (config::UseAnimeInputNotation)
+			ImGui::Text("%d", dojo.displayed_num_dirs[1][input_frame_num]);
+		else
+			ImGui::Text("%6s", dojo.displayed_dirs_str[1][input_frame_num].c_str());
 		ImGui::PopStyleColor();
 		ImGui::SameLine();
 		ImGui::Text("%s", dojo.displayed_inputs_str[1][input_frame_num].c_str());
@@ -977,11 +985,13 @@ void DojoGui::show_last_inputs_overlay()
 
 		for(auto rit = std::prev(dojo.displayed_inputs[1].rbegin()); rit != dojo.displayed_inputs[1].rend(); ++rit)
 		{
-			//ImGui::Text("%u: %s", dojo.displayed_inputs_duration[rit->first], rit->second.c_str());
 			ImGui::Text("%03u", dojo.displayed_inputs_duration[1][rit->first], dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
 			ImGui::SameLine();
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-			ImGui::Text("%6s", dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
+			if (config::UseAnimeInputNotation)
+				ImGui::Text("%d", dojo.displayed_num_dirs[1][input_frame_num]);
+			else
+				ImGui::Text("%6s", dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
 			ImGui::Text("%s", dojo.displayed_inputs_str[1][rit->first].c_str());

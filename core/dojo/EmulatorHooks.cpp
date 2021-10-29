@@ -378,7 +378,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 				bt_bitset.set(17);
 		}
 
-		int num_dir_notation;
+		int num_dir_notation = 5;
 
 		std::stringstream ss("");
 		std::stringstream dir_ss("");
@@ -402,8 +402,6 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 					num_dir_notation = 4;
 				else if (bt_bitset.test(7))
 					num_dir_notation = 6;
-				else
-					num_dir_notation = 5;
 
 				if (player == 1)
 				{
@@ -439,8 +437,6 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 					num_dir_notation = 4;
 				else if (bt_bitset.test(10))
 					num_dir_notation = 6;
-				else
-					num_dir_notation = 5;
 			}
 
 			std::cout << "num notation " << num_dir_notation << std::endl;
@@ -524,6 +520,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 			last_held_dir[player] = dir_bits;
 			displayed_dirs[player][effective_frame] = dir_bits;
 			displayed_inputs_duration[player][effective_frame] = 1;
+			displayed_num_dirs[player][effective_frame] = num_dir_notation;
 		}
 
 			//if (displayed_inputs.size() > 20)
