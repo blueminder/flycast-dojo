@@ -378,10 +378,73 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 				bt_bitset.set(17);
 		}
 
+		int num_dir_notation;
+
 		std::stringstream ss("");
 		std::stringstream dir_ss("");
 		if(bt_bitset.count() > 0)
 		{ 
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+			{
+				if (bt_bitset.test(4) && bt_bitset.test(6))
+					num_dir_notation = 7;
+				else if (bt_bitset.test(4) && bt_bitset.test(7))
+					num_dir_notation = 9;
+				else if (bt_bitset.test(5) && bt_bitset.test(6))
+					num_dir_notation = 1;
+				else if (bt_bitset.test(5) && bt_bitset.test(7))
+					num_dir_notation = 3;
+				else if (bt_bitset.test(4))
+					num_dir_notation = 8;
+				else if (bt_bitset.test(5))
+					num_dir_notation = 2;
+				else if (bt_bitset.test(6))
+					num_dir_notation = 4;
+				else if (bt_bitset.test(7))
+					num_dir_notation = 6;
+				else
+					num_dir_notation = 5;
+
+				if (player == 1)
+				{
+					if (num_dir_notation == 1)
+						num_dir_notation = 3;
+					else if (num_dir_notation == 3)
+						num_dir_notation = 1;
+					else if (num_dir_notation == 4)
+						num_dir_notation = 6;
+					else if (num_dir_notation == 6)
+						num_dir_notation = 4;
+					else if (num_dir_notation == 7)
+						num_dir_notation = 9;
+					else if (num_dir_notation == 9)
+						num_dir_notation = 7;
+				}
+			}
+			else if (settings.platform.system == DC_PLATFORM_NAOMI)
+			{
+				if (bt_bitset.test(11) && bt_bitset.test(13))
+					num_dir_notation = 7;
+				else if (bt_bitset.test(10) && bt_bitset.test(13))
+					num_dir_notation = 9;
+				else if (bt_bitset.test(11) && bt_bitset.test(12))
+					num_dir_notation = 1;
+				else if (bt_bitset.test(10) && bt_bitset.test(12))
+					num_dir_notation = 3;
+				else if (bt_bitset.test(13))
+					num_dir_notation = 8;
+				else if (bt_bitset.test(12))
+					num_dir_notation = 2;
+				else if (bt_bitset.test(11))
+					num_dir_notation = 4;
+				else if (bt_bitset.test(10))
+					num_dir_notation = 6;
+				else
+					num_dir_notation = 5;
+			}
+
+			std::cout << "num notation " << num_dir_notation << std::endl;
+
 			for (size_t i = 0; i<bt_bitset.size(); i++)
 			{
 				if (bt_bitset.test(i))
