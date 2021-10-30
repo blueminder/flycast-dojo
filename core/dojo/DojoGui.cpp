@@ -899,6 +899,111 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 }
 
+void DojoGui::display_input_str(std::string input_str)
+{
+	bool any_found = false;
+	// arcade inputs
+	if (input_str.find("1") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 255, 0, 1), "A");
+		any_found = true;
+	}
+	if (input_str.find("2") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0, 255, 0, 1), "B");
+		any_found = true;
+	}
+	if (input_str.find("3") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 175, 0, 1), "C");
+		any_found = true;
+	}
+	if (input_str.find("4") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 0, 0, 1), "D");
+		any_found = true;
+	}
+	if (input_str.find("5") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0, 175, 255, 1), "E");
+		any_found = true;
+	}
+	if (input_str.find("6") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 95, 255, 1), "F");
+		any_found = true;
+	}
+	// dc inputs
+	if (input_str.find("X") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 255, 0, 1), "X");
+		any_found = true;
+	}
+	if (input_str.find("Y") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0, 255, 0, 1), "Y");
+		any_found = true;
+	}
+	if (input_str.find("LT") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 175, 0, 1), "LT");
+		any_found = true;
+	}
+	if (input_str.find("A") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 0, 0, 1), "A");
+		any_found = true;
+	}
+	if (input_str.find("B") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(0, 175, 255, 1), "B");
+		any_found = true;
+	}
+	if (input_str.find("RT") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(255, 95, 255, 1), "RT");
+		any_found = true;
+	}
+	if (input_str.find("C") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::Text("C");
+		any_found = true;
+	}
+	if (input_str.find("Z") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::Text("Z");
+		any_found = true;
+	}
+	if (input_str.find("D") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::Text("D");
+		any_found = true;
+	}
+	if (input_str.find("Start") != std::string::npos)
+	{
+		ImGui::SameLine();
+		ImGui::Text("Start");
+		any_found = true;
+	}
+	if (!any_found)
+		ImGui::Text("");
+}
+
 void DojoGui::show_last_inputs_overlay()
 {
 	if (!dojo.displayed_inputs[0].empty())
@@ -929,7 +1034,9 @@ void DojoGui::show_last_inputs_overlay()
 			ImGui::Text("%6s", dojo.displayed_dirs_str[0][input_frame_num].c_str());
 		ImGui::PopStyleColor();
 		ImGui::SameLine();
-		ImGui::Text("%s", dojo.displayed_inputs_str[0][input_frame_num].c_str());
+		display_input_str(dojo.displayed_inputs_str[0][input_frame_num]);
+		//ImGui::SameLine();
+		//ImGui::Text("%s", dojo.displayed_inputs_str[0][input_frame_num].c_str());
 		dojo.displayed_inputs_duration[0][input_frame_num] = input_duration;
 
 		for(auto rit = std::prev(dojo.displayed_inputs[0].rbegin()); rit != dojo.displayed_inputs[0].rend(); ++rit)
@@ -943,7 +1050,8 @@ void DojoGui::show_last_inputs_overlay()
 				ImGui::Text("%6s", dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
-			ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
+			display_input_str(dojo.displayed_inputs_str[0][rit->first]);
+			//ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
 		}
 
 		ImGui::End();
@@ -980,7 +1088,9 @@ void DojoGui::show_last_inputs_overlay()
 			ImGui::Text("%6s", dojo.displayed_dirs_str[1][input_frame_num].c_str());
 		ImGui::PopStyleColor();
 		ImGui::SameLine();
-		ImGui::Text("%s", dojo.displayed_inputs_str[1][input_frame_num].c_str());
+		display_input_str(dojo.displayed_inputs_str[1][input_frame_num]);
+		//ImGui::SameLine();
+		//ImGui::Text("%s", dojo.displayed_inputs_str[1][input_frame_num].c_str());
 		dojo.displayed_inputs_duration[1][input_frame_num] = input_duration;
 
 		for(auto rit = std::prev(dojo.displayed_inputs[1].rbegin()); rit != dojo.displayed_inputs[1].rend(); ++rit)
@@ -994,7 +1104,8 @@ void DojoGui::show_last_inputs_overlay()
 				ImGui::Text("%6s", dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
-			ImGui::Text("%s", dojo.displayed_inputs_str[1][rit->first].c_str());
+			display_input_str(dojo.displayed_inputs_str[1][rit->first]);
+			//ImGui::Text("%s", dojo.displayed_inputs_str[1][rit->first].c_str());
 		}
 
 		ImGui::End();
