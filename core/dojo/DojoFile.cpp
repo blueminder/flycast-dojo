@@ -633,11 +633,11 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	if (!commit.empty())
 	{
 		net_state_file = net_state_file + "." + commit;
-		ghc::filesystem::rename(filename, "data/" + net_state_file);
+		ghc::filesystem::copy(filename, "data/" + net_state_file);
 	}
 
-	std::FILE* file = std::fopen(filename.data(), "rb");
-	settings.dojo.state_md5 = md5file(file);
+	//std::FILE* file = std::fopen(filename.data(), "rb");
+	//settings.dojo.state_md5 = md5file(file);
 
 	if (commit.empty())
 	{
