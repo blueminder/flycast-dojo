@@ -546,7 +546,6 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 			displayed_inputs[player][effective_frame] = bt_bitset;
 			displayed_inputs_str[player][effective_frame] = ss.str();
 			displayed_dirs_str[player][effective_frame] = dir_ss.str();
-			last_held_dir[player] = dir_bits;
 			displayed_dirs[player][effective_frame] = dir_bits;
 			displayed_inputs_duration[player][effective_frame] = 1;
 			displayed_num_dirs[player][effective_frame] = num_dir_notation;

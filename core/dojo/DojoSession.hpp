@@ -298,7 +298,6 @@ public:
 	std::array<std::map<u32, std::string>, 2> displayed_dirs_str;
 	std::array<std::map<u32, u32>, 2> displayed_inputs_duration;
 	std::array<std::bitset<18>, 2> last_held_input;
-	std::array<std::vector<bool>, 2> last_held_dir;
 	std::array<std::map<u32, std::vector<bool>>, 2> displayed_dirs;
 	std::array<std::map<u32, int>, 2> displayed_num_dirs;
 
