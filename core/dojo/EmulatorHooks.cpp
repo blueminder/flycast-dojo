@@ -327,7 +327,6 @@ void DojoSession::CaptureAndSendLocalFrame(PlainJoystickState* pjs, u16 buttons)
 	}
 }
 
-
 std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 {
 	int player = GetPlayer(data);
@@ -353,6 +352,36 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 
 	std::string output(size + 1, '\0');
 	std::sprintf(&output[0], format, prefix, effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	return output;
+}
+
+std::string DojoSession::AddToInputDisplay(u8 * data)
+{
+	int player = GetPlayer(data);
+	int delay = GetDelay(data);
+	u16 input = GetInputData(data);
+	u32 frame = GetFrameNumber(data);
+	u32 effective_frame = GetEffectiveFrameNumber(data);
+
+	u32 triggerr = GetTriggerR(data);
+	u32 triggerl = GetTriggerL(data);
+
+	u32 analogx = GetAnalogX(data);
+	u32 analogy = GetAnalogY(data);
+
+	std::bitset<16> input_bitset(input);
+
+	auto format = "%-8s: %u: Frame %u Delay %d, Player %d, Input %s %u %u %u %u";
+	auto size = std::snprintf(nullptr, 0, format, "DISP", effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	INFO_LOG(NETWORK, format, "DISP", effective_frame, frame, delay, player,
+		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
+
+	std::string output(size + 1, '\0');
+	std::sprintf(&output[0], format, "DISP", effective_frame, frame, delay, player,
 		input_bitset.to_string().c_str(), triggerr, triggerl, analogx, analogy);
 
 	if (player == 0 || player == 1)

@@ -301,6 +301,8 @@ public:
 	std::array<std::vector<bool>, 2> last_held_dir;
 	std::array<std::map<u32, std::vector<bool>>, 2> displayed_dirs;
 	std::array<std::map<u32, int>, 2> displayed_num_dirs;
+
+	std::string AddToInputDisplay(u8 * data);
 };
 
 extern DojoSession dojo;

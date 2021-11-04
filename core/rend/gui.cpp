@@ -3531,7 +3531,9 @@ void gui_display_osd()
 			dojo_gui.show_player_name_overlay(scaling, false);
 		}
 
-		dojo_gui.show_last_inputs_overlay();
+
+		if (settings.dojo.training)
+			dojo_gui.show_last_inputs_overlay();
 
 		lua::overlay();
 

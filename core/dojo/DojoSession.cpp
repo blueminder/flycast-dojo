@@ -1398,11 +1398,10 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 			AppendToReplayFile(p2_frame);
 		}
 
+		if (settings.dojo.training)
 		{
-			std::string current_p1_frame_data = dojo.PrintFrameData("CURRENT", (u8*)p1_frame.data());
-			//std::cout << FrameNumber + delay << " " << current_p1_frame_data << std::endl;
-			std::string current_p2_frame_data = dojo.PrintFrameData("CURRENT", (u8*)p2_frame.data());
-			//std::cout << FrameNumber + delay << " " << current_p2_frame_data << std::endl;
+			std::string current_p1_frame_data = dojo.AddToInputDisplay((u8*)p1_frame.data());
+			std::string current_p2_frame_data = dojo.AddToInputDisplay((u8*)p2_frame.data());
 		}
 
 		FrameNumber++;
