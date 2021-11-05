@@ -235,7 +235,7 @@ if(NOT LIBRETRO)
 	endif()
 	
 	if((APPLE AND NOT IOS) OR WIN32)
-	    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
+		find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/lib/cmake/SDL2")
 	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
 	endif()
@@ -441,6 +441,7 @@ if(WIN32)
 endif()
 
 include(FetchContent)
+
 FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG f4622efcb59d84071ae11404ae61bd821c1c344b) # the commit hash for 1.6.2
 FetchContent_MakeAvailable(cpr)
 target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)

@@ -10,14 +10,14 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
+          # - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "Xcode", destDir: osx, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
       - name: Set up build environment (macos-latest)
         run: |
-          brew install ccache libao libomp pulseaudio zlib ldid asio
+          brew install ccache libao libomp pulseaudio zlib ldid asio gnutls lua
           curl https://sdk.lunarg.com/sdk/download/1.2.189.0/mac/vulkansdk-macos-1.2.189.0.dmg --output vulkansdk-macos-1.2.189.0.dmg
           hdiutil attach ./vulkansdk-macos-1.2.189.0.dmg
           pushd /Volumes/vulkansdk-macos-1.2.189.0
