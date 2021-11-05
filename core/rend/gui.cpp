@@ -760,6 +760,21 @@ static void gui_display_commands()
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
+
+	if (settings.dojo.training)
+	{
+		std::ostringstream input_display_text;
+		input_display_text << "Input Display ";
+		input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
+		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		{
+			config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
+		}
+	}
+
+	if (!settings.dojo.training)
+	{
+
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
 	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
@@ -773,6 +788,8 @@ static void gui_display_commands()
 			DiscOpenLid();
 			gui_state = GuiState::Closed;
 		}
+	}
+
 	}
 	ImGui::NextColumn();
 
@@ -3532,7 +3549,7 @@ void gui_display_osd()
 		}
 
 
-		if (settings.dojo.training)
+		if (settings.dojo.training && config::ShowInputDisplay)
 			dojo_gui.show_last_inputs_overlay();
 
 		lua::overlay();

@@ -1384,6 +1384,20 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
+		if (ImGui::CollapsingHeader("Training Mode", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			OptionCheckbox("Show Input Display", config::ShowInputDisplay);
+			ImGui::SameLine();
+			ShowHelpMarker("Shows controller input history in Training Mode");
+
+			if (config::ShowInputDisplay)
+			{
+				OptionCheckbox("Use Numpad Notation", config::UseAnimeInputNotation);
+				ImGui::SameLine();
+				ShowHelpMarker("Show inputs using Numpad/Anime Notation for Directions");
+			}
+		}
+
 		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			OptionCheckbox("Show Frame Position", config::ShowPlaybackControls);
