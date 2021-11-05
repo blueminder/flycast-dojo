@@ -10,19 +10,14 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, buildType: Release}
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
-          - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
-          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
-          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
       - name: Set up build environment (macos-latest)
         run: |
-          brew install ccache libao libomp pulseaudio zlib ldid
+          brew install ccache libao libomp pulseaudio zlib ldid asio
           curl https://sdk.lunarg.com/sdk/download/1.2.189.0/mac/vulkansdk-macos-1.2.189.0.dmg --output vulkansdk-macos-1.2.189.0.dmg
           hdiutil attach ./vulkansdk-macos-1.2.189.0.dmg
           pushd /Volumes/vulkansdk-macos-1.2.189.0
@@ -36,7 +31,7 @@ jobs:
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev libasio-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
@@ -74,7 +69,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua mingw-w64-x86_64-asio
         if: matrix.config.os == 'windows-latest'
 
       - uses: actions/checkout@v2
@@ -106,13 +101,13 @@ jobs:
           cmake --build build --config Release --parallel 2
         if: matrix.config.os == 'windows-latest'
 
-      - name: Unit Tests
-        run: |
-          mkdir -p build/tests
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
-          ./build/tests/flycast
-        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+      # - name: Unit Tests
+      #   run: |
+      #     mkdir -p build/tests
+      #     cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+      #     cmake --build build --config Release --parallel 2
+      #     ./build/tests/flycast
+      #   if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Dump symbols
         shell: msys2 {0}
