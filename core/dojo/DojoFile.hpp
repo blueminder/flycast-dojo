@@ -12,7 +12,6 @@
 #ifdef _WIN32
     #include <io.h>
 	#include <direct.h>
-	#include "sdl/sdl.h"
 #elif __linux__
 	#include <libgen.h>         // dirname
 	#include <unistd.h>         // readlink

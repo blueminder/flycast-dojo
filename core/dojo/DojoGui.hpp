@@ -17,6 +17,8 @@
 #include <oslib/audiostream.h>
 #include <hw/naomi/naomi_cart.h>
 
+#include "sdl/sdl.h"
+
 #ifndef _STRUCT_GAMEMEDIA
 #define _STRUCT_GAMEMEDIA
 struct GameMedia {
