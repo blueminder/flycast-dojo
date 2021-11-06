@@ -11,7 +11,7 @@ jobs:
       matrix:
         config:
           # - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "Xcode", destDir: osx, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, destDir: linux, buildType: RelWithDebInfo}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
@@ -31,7 +31,7 @@ jobs:
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev libasio-dev
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev libasio-dev wget zip
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
@@ -69,7 +69,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua mingw-w64-x86_64-asio
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua mingw-w64-x86_64-asio wget zip
         if: matrix.config.os == 'windows-latest'
 
       - uses: actions/checkout@v2
@@ -89,7 +89,7 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
         if: matrix.config.os != 'windows-latest'
 
@@ -109,6 +109,24 @@ jobs:
       #     ./build/tests/flycast
       #   if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
+      - name: Install breakpad (linux)
+        working-directory: core/deps/breakpad
+        run: |
+          ./configure
+          make
+          sudo make install
+        if: matrix.config.os == 'ubuntu-latest'
+
+      - name: Dump symbols (linux)
+        shell: bash
+        run: |
+          dump_syms build/artifact/flycast > flycast.elf.sym 2>/dev/null
+          BUILD_ID=`head -1 flycast.elf.sym | awk '{ print $4 }'`
+          mkdir -p symbols/flycast.elf/$BUILD_ID
+          mv flycast.elf.sym symbols/flycast.elf/$BUILD_ID
+          strip build/artifact/flycast
+        if: matrix.config.os == 'ubuntu-latest'
+
       - name: Dump symbols (windows)
         shell: msys2 {0}
         run: |
@@ -119,11 +137,6 @@ jobs:
           strip build/artifact/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: flycast-dojo-${{ matrix.config.name }}
-          path: build/artifact
-
       - name: Package app (macos)
         run: |
           cd build/artifact
@@ -132,11 +145,57 @@ jobs:
           rm -rf Flycast.app
         if: matrix.config.name == 'apple-darwin'
 
-      - name: Package app (windows)
+      - name: Package app (linux)
+        shell: bash
         run: |
-          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
-          rm build/artifact/flycast.exe
+          CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
+          cd build/artifact
+          mkdir $CURRENT_VERSION
+          mv flycast $CURRENT_VERSION/flycast.elf
+          cd $CURRENT_VERSION
+          wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+          tar zxvf master.tar.gz
+          rm master.tar.gz
+          mv flycast-netplay-nvmem-master/ default/
+          rm default/README.md
+          zip default.zip default/*
+          mv default data
+          mv default.zip data/
+          mkdir replays
+          mkdir ROMs
+          wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
+          cd ..
+          tar czvf linux-$CURRENT_VERSION.tar.gz $CURRENT_VERSION/* --remove-files
+        if: matrix.config.os == 'ubuntu-latest'
+
+      - name: Package app (windows)
+        shell: msys2 {0}
+        run: |
+          CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
+          cd build/artifact
+          mkdir $CURRENT_VERSION
+          mv flycast.exe $CURRENT_VERSION/flycast.exe
+          cd $CURRENT_VERSION
+          wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+          tar zxvf master.tar.gz
+          rm master.tar.gz
+          mv flycast-netplay-nvmem-master/ default/
+          rm default/README.md
+          zip default.zip default/*
+          mv default data
+          mv default.zip data/
+          mkdir replays
+          mkdir ROMs
+          wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
+          cd ..
+          zip $CURRENT_VERSION.zip $CURRENT_VERSION/*
+          rm -rf $CURRENT_VERSION
         if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-dojo-${{ matrix.config.name }}
+          path: build/artifact
 
       - name: Configure AWS Credentials
         id: aws-credentials
@@ -154,5 +213,5 @@ jobs:
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.os == 'windows-latest' }}
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-latest' || matrix.config.os == 'ubuntu-latest') }}
         
