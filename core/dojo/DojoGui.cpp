@@ -1304,33 +1304,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 		ShowHelpMarker("Name visible to other players");
 		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
-		if (ImGui::CollapsingHeader("Netplay Method", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			int netplayMethod;
-			if (config::NetplayMethod.get() == "Delay")
-				netplayMethod = 0;
-			else
-				netplayMethod = 1;
-
-			ImGui::Columns(2, "netplayMethod", false);
-			ImGui::RadioButton("Delay", &netplayMethod, 0);
-			ImGui::NextColumn();
-			ImGui::RadioButton("GGPO", &netplayMethod, 1);
-			ImGui::NextColumn();
-			ImGui::Columns(1, NULL, false);
-
-			switch (netplayMethod)
-			{
-			case 0:
-				config::NetplayMethod = "Delay";
-				break;
-			case 1:
-				config::NetplayMethod = "GGPO";
-				break;
-			}
-
-		}
-
 		if (ImGui::CollapsingHeader("Connection Method", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			int cxnMethod;
