@@ -158,7 +158,7 @@ jobs:
           rm master.tar.gz
           mv flycast-netplay-nvmem-master/ default/
           rm default/README.md
-          zip default.zip default/*
+          zip -r default.zip default/*
           mv default data
           mv default.zip data/
           mkdir replays
@@ -189,7 +189,7 @@ jobs:
           mkdir ROMs
           wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
           cd ..
-          zip $CURRENT_VERSION.zip $CURRENT_VERSION/*
+          zip -r $CURRENT_VERSION.zip $CURRENT_VERSION/*
           rm -rf $CURRENT_VERSION
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
