@@ -299,26 +299,31 @@ void gui_init()
 #endif
     NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
-	// revert to default input ports on startup
-	if (config::PlayerSwitched)
-		dojo.SwitchPlayer();
-
-	if (config::TestGame)
+	if (!instance_started)
 	{
-		settings.network.online = false;
-		settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
-		if (!settings.dojo.GameEntry.empty())
+		// revert to default input ports on startup
+		if (config::PlayerSwitched)
+			dojo.SwitchPlayer();
+
+		if (config::TestGame)
 		{
-			try {
-				std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
-				settings.content.path = entry_path;
+			settings.network.online = false;
+			settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
+			if (!settings.dojo.GameEntry.empty())
+			{
+				try {
+					std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
+					settings.content.path = entry_path;
+				}
+				catch (...) { }
 			}
-			catch (...) { }
+			gui_state = GuiState::TestGame;
 		}
-		gui_state = GuiState::TestGame;
+		else
+			gui_state = GuiState::Main;
+
+		instance_started = true;
 	}
-	else
-		gui_state = GuiState::Main;
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);

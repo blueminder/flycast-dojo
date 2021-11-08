@@ -101,3 +101,6 @@ extern void error_popup();
 
 void invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game);
 void download_save_popup();
+
+static bool instance_started = false;
+
