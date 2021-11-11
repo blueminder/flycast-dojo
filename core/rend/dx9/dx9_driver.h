@@ -1,7 +1,5 @@
 /*
-    Created on: Oct 18, 2019
-
-	Copyright 2019 flyinghead
+	Copyright 2021 flyinghead
 
 	This file is part of Flycast.
 
@@ -18,14 +16,23 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#if defined(TARGET_IPHONE) && !defined(LIBRETRO)
-#include "gl_context.h"
+#pragma once
+#include "rend/imgui_driver.h"
+#include "imgui_impl_dx9.h"
+#include "dxcontext.h"
 
-OSXGraphicsContext theGLContext;
-
-void OSXGraphicsContext::swap()
+class DX9Driver final : public ImGuiDriver
 {
-	do_swap_automation();
-}
+public:
+    void newFrame() override {
+    	ImGui_ImplDX9_NewFrame();
+	}
 
-#endif
+	void renderDrawData(ImDrawData *drawData) override {
+		theDXContext.EndImGuiFrame();
+	}
+
+	void present() override {
+		theDXContext.Present();
+	}
+};

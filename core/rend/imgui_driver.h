@@ -1,7 +1,5 @@
 /*
-    Created on: Oct 18, 2019
-
-	Copyright 2019 flyinghead
+	Copyright 2021 flyinghead
 
 	This file is part of Flycast.
 
@@ -18,14 +16,23 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#if defined(TARGET_IPHONE) && !defined(LIBRETRO)
-#include "gl_context.h"
+#pragma once
+#include "imgui/imgui.h"
+#include <memory>
 
-OSXGraphicsContext theGLContext;
-
-void OSXGraphicsContext::swap()
+class ImGuiDriver
 {
-	do_swap_automation();
-}
+public:
+	virtual ~ImGuiDriver() = default;
 
-#endif
+	virtual void newFrame() = 0;
+	virtual void renderDrawData(ImDrawData* drawData) = 0;
+
+	virtual void displayVmus() {}
+	virtual void displayCrosshairs() {}
+
+	virtual void present() = 0;
+};
+
+extern std::unique_ptr<ImGuiDriver> imguiDriver;
+

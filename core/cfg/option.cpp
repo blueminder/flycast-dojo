@@ -92,6 +92,7 @@ Option<bool> VSync("rend.vsync", true);
 Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
+Option<bool> DupeFrames("rend.DupeFrames", false);
 
 // Misc
 
