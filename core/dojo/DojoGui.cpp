@@ -895,7 +895,6 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	if (!paused)
 	{
 		ImGui::Render();
-		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
 }
 
