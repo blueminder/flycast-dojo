@@ -27,6 +27,8 @@
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
+#include "dojo/DojoSession.hpp"
+
 u8 *EEPROM;
 
 const u32 naomi_button_mapping[32] = {
