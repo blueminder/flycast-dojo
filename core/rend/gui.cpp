@@ -632,7 +632,7 @@ void gui_stop_game(const std::string& message)
 
 	item_current_idx = 0;
 
-	if (!commandLineStart)
+	if (!commandLineStart && !config::TestGame.get())
 	{
 		// Exit to main menu
 		emu.unloadGame();
