@@ -13,6 +13,7 @@
 #include "input/gamepad_device.h"
 #include "lua/lua.h"
 #include "stdclass.h"
+#include "serialize.h"
 
 #include "dojo/DojoSession.hpp"
 #include "dojo/deps/filesystem.hpp"
@@ -151,33 +152,19 @@ void dc_savestate(std::string filename)
 
 void dc_savestate(int index, std::string filename)
 {
-	unsigned int total_size = 0;
-	void *data = nullptr;
+	Serializer ser;
+	dc_serialize(ser);
 
-	if (!dc_serialize(&data, &total_size))
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not initialize total size") ;
-		gui_display_notification("Save state failed", 2000);
-    	return;
-	}
-
-	data = malloc(total_size);
+	void *data = malloc(ser.size());
 	if (data == nullptr)
 	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", total_size);
+		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", (int)ser.size());
 		gui_display_notification("Save state failed - memory full", 2000);
     	return;
 	}
 
-	void *data_ptr = data;
-	total_size = 0;
-	if (!dc_serialize(&data_ptr, &total_size))
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not serialize data") ;
-		gui_display_notification("Save state failed", 2000);
-		free(data);
-    	return;
-	}
+	ser = Serializer(data, ser.size());
+	dc_serialize(ser);
 
 	if (filename.length() == 0)
 		filename = hostfs::getSavestatePath(index, true);
@@ -192,7 +179,7 @@ void dc_savestate(int index, std::string filename)
     	return;
 	}
 
-	std::fwrite(data, 1, total_size, f) ;
+	std::fwrite(data, 1, ser.size(), f) ;
 	std::fclose(f);
 #else
 	RZipFile zipFile;
@@ -203,7 +190,7 @@ void dc_savestate(int index, std::string filename)
 		free(data);
     	return;
 	}
-	if (zipFile.Write(data, total_size) != total_size)
+	if (zipFile.Write(data, ser.size()) != ser.size())
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
 		gui_display_notification("Error saving state", 2000);
@@ -215,7 +202,7 @@ void dc_savestate(int index, std::string filename)
 #endif
 
 	free(data);
-	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
+	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size()) ;
 	gui_display_notification("State saved", 1000);
 }
 
@@ -315,8 +302,14 @@ void dc_loadstate(int index, std::string filename)
 		return;
 	}
 
-	const void *data_ptr = data;
-	dc_loadstate(&data_ptr, total_size);
+	try {
+		Deserializer deser(data, total_size);
+		dc_loadstate(deser);
+		if (deser.size() != total_size)
+			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
+	} catch (const Deserializer::Exception& e) {
+		ERROR_LOG(SAVESTATE, "%s", e.what());
+	}
 
 	free(data);
 	EventManager::event(Event::LoadState);
