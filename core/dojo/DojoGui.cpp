@@ -1185,7 +1185,14 @@ void DojoGui::show_pause(float scaling)
 	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
 
-	float font_size = ImGui::CalcTextSize("Paused").x;
+	std::string pause_text;
+
+	if (dojo.stepping)
+		pause_text = "Stepping";
+	else
+		pause_text = "Paused";
+
+	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
 
 	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), settings.display.height - 40));
 	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
@@ -1197,7 +1204,7 @@ void DojoGui::show_pause(float scaling)
 		font_size + (font_size / 2) + 10
 	);
 
-	ImGui::Text("Paused");
+	ImGui::Text(pause_text.c_str());
 
 	ImGui::End();
 

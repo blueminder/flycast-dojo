@@ -911,6 +911,8 @@ void setMapleInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 
+	if (dojo.stepping)
+		gui_state = GuiState::ReplayPause;
 	/*
 	std::cout << "FRAME " << dojo.FrameNumber << " ";
 

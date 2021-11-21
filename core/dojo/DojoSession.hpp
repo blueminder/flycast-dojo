@@ -302,6 +302,8 @@ public:
 	std::array<std::map<u32, int>, 2> displayed_num_dirs;
 
 	std::string AddToInputDisplay(u8 * data);
+
+	bool stepping = false;
 };
 
 extern DojoSession dojo;

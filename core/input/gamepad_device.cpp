@@ -100,6 +100,16 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				loading_state = false;
 			}
 			break;
+		case EMU_BTN_STEP:
+			if (pressed
+				&& dojo.PlayMatch
+				&& gui_state == GuiState::ReplayPause)
+			{
+				gui_state = GuiState::Closed;
+				dojo.stepping = true;
+				emu.start();
+			}
+			break;
 		case EMU_BTN_QUICK_SAVE:
 			if (pressed && !gui_is_open() && (!settings.network.online || settings.dojo.training))
 			{

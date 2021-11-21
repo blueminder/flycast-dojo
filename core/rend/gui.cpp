@@ -540,6 +540,8 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::ReplayPause)
 	{
+		if (dojo.stepping)
+			dojo.stepping = false;
 		gui_state = GuiState::Closed;
 		emu.start();
 	}
@@ -970,9 +972,12 @@ const Mapping dcButtons[] = {
 	{ DC_BTN_RELOAD, "Reload" },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_MENU, "Menu / Chat / Replay Pause" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, "Replays" },
+	{ EMU_BTN_STEP, "Step Frame" },
 
 	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },
@@ -1050,9 +1055,12 @@ const Mapping arcadeButtons[] = {
 	{ DC_DPAD2_DOWN, "Test" },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_MENU, "Menu / Chat / Replay Pause" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, "Replays" },
+	{ EMU_BTN_STEP, "Step Frame" },
 
 	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },
