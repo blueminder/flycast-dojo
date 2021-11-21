@@ -480,6 +480,11 @@ void gui_open_guest_wait()
 	}
 }
 
+void gui_open_stream_wait()
+{
+	gui_state = GuiState::StreamWait;
+}
+
 void gui_open_ggpo_join()
 {
 	dojo_gui.current_public_ip = "";
@@ -3297,13 +3302,15 @@ static void gui_display_loadscreen()
 						config::GGPOEnable = true;
 
 					config::DojoEnable = true;
-					gui_state = GuiState::Closed;
 					if (config::Receiving)
 					{
-						ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
+						gui_open_stream_wait();
 					}
 					else
+					{
+						gui_state = GuiState::Closed;
 						ImGui::Text("LOADING REPLAY...");
+					}
 				}
 				else
 				{
@@ -3419,6 +3426,9 @@ void gui_display_ui()
 		break;
 	case GuiState::GuestWait:
 		dojo_gui.gui_display_guest_wait(scaling);
+		break;
+	case GuiState::StreamWait:
+		dojo_gui.gui_display_stream_wait(scaling);
 		break;
 	case GuiState::GGPOJoin:
 		dojo_gui.gui_display_ggpo_join(scaling);

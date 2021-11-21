@@ -322,6 +322,44 @@ void DojoGui::gui_display_guest_wait(float scaling)
 	ImGui::End();
 }
 
+
+void DojoGui::gui_display_stream_wait(float scaling)
+{
+	//emu.term();
+
+	if (!config::GGPOEnable)
+		dojo.pause();
+
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("##stream_wait", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	if (config::Receiving)
+	{
+		if (dojo.maple_inputs.size() == 0)
+			ImGui::Text("WAITING FOR MATCH STREAM TO BEGIN...");
+		else
+		{
+			float progress = (float)dojo.maple_inputs.size() / (float)config::RxFrameBuffer.get();
+
+			ImGui::Text("Buffering Match Stream...");
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+			ImGui::ProgressBar(progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::PopStyleColor();
+
+			ImGui::Text("%d / %d Frames", dojo.maple_inputs.size(), config::RxFrameBuffer.get());
+		}
+	}
+
+	ImGui::End();
+
+	if (dojo.maple_inputs.size() > config::RxFrameBuffer.get())
+	{
+		gui_state = GuiState::Closed;
+	}
+}
+
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
 	std::string title = config::EnableMatchCode ? "Select GGPO Frame Delay" : "Connect to GGPO Opponent";

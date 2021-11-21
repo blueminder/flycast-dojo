@@ -72,6 +72,7 @@ enum class GuiState {
 	HostDelay,
 	HostWait,
 	GuestWait,
+	StreamWait,
 	GGPOJoin,
 	Disconnected,
 	EndReplay,

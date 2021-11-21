@@ -410,7 +410,9 @@ int DojoSession::StartDojoSession()
 		config::Receiving = true;
 
 	if (config::Receiving)
+	{
 		receiving = true;
+	}
 
 	if (dojo.PlayMatch)
 	{
