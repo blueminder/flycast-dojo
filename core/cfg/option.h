@@ -536,5 +536,9 @@ extern Option<bool> UseRawInput;
 constexpr bool UseRawInput = false;
 #endif
 
+#ifdef USE_LUA
+extern OptionString LuaFileName;
+#endif 
+
 } // namespace config
 
