@@ -3587,7 +3587,10 @@ void gui_display_osd()
 			if (!config::Receiving)
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
 			else
-				dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
+			{
+				if (config::ShowPlaybackControls)
+					dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
+			}
 			dojo_gui.show_player_name_overlay(scaling, false);
 		}
 
