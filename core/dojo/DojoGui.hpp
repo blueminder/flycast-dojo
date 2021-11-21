@@ -47,9 +47,12 @@ public:
 	void gui_display_host_delay(float scaling);
 	void gui_display_test_game(float scaling);
 	void gui_display_paused(float scaling);
+	void gui_display_replay_pause(float scaling);
 
 	void show_playback_menu(float scaling, bool paused);
 	void show_player_name_overlay(float scaling, bool paused);
+	void show_replay_position_overlay(int frame_num, float scaling, bool paused);
+	void show_pause(float scaling);
 
 	void gui_display_lobby(float scaling, std::vector<GameMedia> game_list);
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);

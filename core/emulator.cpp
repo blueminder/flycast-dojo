@@ -746,7 +746,8 @@ void Emulator::run()
 
 void Emulator::start()
 {
-	verify(state == Loaded);
+	if (!dojo.PlayMatch)
+		verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
 	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled || config::GGPOEnable;

@@ -502,9 +502,12 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		if (!ggpo::active())
+		if (!ggpo::active() || dojo.PlayMatch)
 		{
-			gui_state = GuiState::Commands;
+			if (dojo.PlayMatch)
+				gui_state = GuiState::ReplayPause;
+			else
+				gui_state = GuiState::Commands;
 			HideOSD();
 #ifdef TARGET_UWP
 			if (config::ThreadedRendering)
@@ -533,6 +536,11 @@ void gui_open_settings()
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
+		emu.start();
+	}
+	else if (gui_state == GuiState::ReplayPause)
+	{
+		gui_state = GuiState::Closed;
 		emu.start();
 	}
 }
@@ -3413,7 +3421,8 @@ void gui_display_ui()
 		scanner.get_mutex().unlock();
 		break;
 	case GuiState::ReplayPause:
-		dojo_gui.gui_display_paused(scaling);
+		//dojo_gui.gui_display_paused(scaling);
+		dojo_gui.gui_display_replay_pause(scaling);
 		break;
 	case GuiState::TestGame:
 		dojo_gui.gui_display_test_game(scaling);
@@ -3555,6 +3564,8 @@ void gui_display_osd()
 		{
 			if (!config::Receiving)
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
+			else
+				dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
 			dojo_gui.show_player_name_overlay(scaling, false);
 		}
 
@@ -3580,9 +3591,9 @@ void gui_display_osd()
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
 
-				gui_state = GuiState::EndReplay;
+				gui_state = GuiState::ReplayPause;
 				config::AutoSkipFrame = 1;
-				emu.term();
+				//emu.term();
 			}
 		}
 		else
@@ -3593,7 +3604,7 @@ void gui_display_osd()
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
 
-				gui_state = GuiState::EndReplay;
+				gui_state = GuiState::ReplayPause;
 			}
 		}
 	}

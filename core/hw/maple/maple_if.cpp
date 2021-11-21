@@ -162,7 +162,10 @@ static void maple_DoDma()
 	if (dojo.PlayMatch && config::GGPOEnable)
 	{
 		if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
-			gui_state = GuiState::EndReplay;
+		{
+			settings.input.fastForwardMode = false;
+			gui_state = GuiState::ReplayPause;
+		}
 	}
 
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)

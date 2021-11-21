@@ -1150,8 +1150,59 @@ void DojoGui::show_last_inputs_overlay()
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar(2);
 	}
+}
 
+void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool paused)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
+	if (dojo.FrameNumber < dojo.maple_inputs.size())
+	{
+		char text_pos[30] = { 0 };
+		sprintf(text_pos, "%u / %u     ", frame_num, dojo.maple_inputs.size());
+		float font_size = ImGui::CalcTextSize(text_pos).x;
+
+		ImGui::SetNextWindowPos(ImVec2(settings.display.width - font_size, settings.display.height - 40));
+		ImGui::SetNextWindowSize(ImVec2(font_size, 40));
+		ImGui::SetNextWindowBgAlpha(0.5f);
+		ImGui::Begin("#pos", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+		ImGui::Text("%u / %u", frame_num, dojo.maple_inputs.size());
+
+		ImGui::End();
+	}
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+}
+
+void DojoGui::show_pause(float scaling)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+	float font_size = ImGui::CalcTextSize("Paused").x;
+
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), settings.display.height - 40));
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+	ImGui::SetNextWindowBgAlpha(0.65f);
+	ImGui::Begin("#pause", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	ImGui::SameLine(
+		(ImGui::GetContentRegionAvail().x / 2) -
+		font_size + (font_size / 2) + 10
+	);
+
+	ImGui::Text("Paused");
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
 }
 
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
@@ -1207,6 +1258,13 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar(2);
+}
+
+void DojoGui::gui_display_replay_pause(float scaling)
+{
+	dojo_gui.show_player_name_overlay(scaling, false);
+	dojo_gui.show_pause(scaling);
+	dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
 }
 
 void DojoGui::gui_display_paused(float scaling)

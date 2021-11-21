@@ -120,7 +120,7 @@ public:
 	std::map<u32, std::string> net_inputs[4];
 	std::map<u32, std::vector<u8>> maple_inputs;
 
-	std::atomic<u32> FrameNumber;
+	std::atomic<u32> FrameNumber = {0};
 	std::atomic<u32> InputPort;
 	std::string CurrentFrameData[4];
 
