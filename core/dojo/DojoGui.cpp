@@ -1159,14 +1159,22 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
 	if (dojo.FrameNumber < dojo.maple_inputs.size() ||
-		dojo.FrameNumber < dojo.net_inputs[1].size())
+		dojo.FrameNumber < dojo.net_inputs[1].size() ||
+		settings.dojo.training)
 	{
 		char text_pos[30] = { 0 };
 
-		if (dojo.replay_version >= 2)
-			sprintf(text_pos, "%u / %u     ", frame_num, dojo.maple_inputs.size());
-		else
-			sprintf(text_pos, "%u / %u     ", frame_num, dojo.net_inputs[1].size());
+		if (dojo.PlayMatch)
+		{
+			if (dojo.replay_version >= 2)
+				sprintf(text_pos, "%u / %u     ", frame_num, dojo.maple_inputs.size());
+			else
+				sprintf(text_pos, "%u / %u     ", frame_num, dojo.net_inputs[1].size());
+		}
+		else if (settings.dojo.training)
+		{
+			sprintf(text_pos, "%u     ", frame_num);
+		}
 
 		float font_size = ImGui::CalcTextSize(text_pos).x;
 
@@ -1175,10 +1183,17 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#pos", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
-		if (dojo.replay_version >= 2)
-			ImGui::Text("%u / %u", frame_num, dojo.maple_inputs.size());
-		else
-			ImGui::Text("%u / %u", frame_num, dojo.net_inputs[1].size());
+		if (dojo.PlayMatch)
+		{
+			if (dojo.replay_version >= 2)
+				ImGui::Text("%u / %u", frame_num, dojo.maple_inputs.size());
+			else
+				ImGui::Text("%u / %u", frame_num, dojo.net_inputs[1].size());
+		}
+		else if (settings.dojo.training)
+		{
+			ImGui::Text("%u", frame_num);
+		}
 
 		ImGui::End();
 	}
@@ -1278,6 +1293,9 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 void DojoGui::gui_display_replay_pause(float scaling)
 {
+	if (settings.dojo.training && config::ShowInputDisplay)
+		dojo_gui.show_last_inputs_overlay();
+
 	dojo_gui.show_player_name_overlay(scaling, false);
 	dojo_gui.show_pause(scaling);
 	dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
