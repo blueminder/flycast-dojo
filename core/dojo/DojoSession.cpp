@@ -512,6 +512,12 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	{
 		FrameNumber++;
 
+		if (PlayMatch && stepping)
+		{
+			emu.stop();
+			gui_state = GuiState::ReplayPause;
+		}
+
 		if (config::Receiving &&
 			receiver_ended &&
 			FrameNumber > last_received_frame)
