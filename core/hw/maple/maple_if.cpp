@@ -164,7 +164,10 @@ static void maple_DoDma()
 		if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
 		{
 			settings.input.fastForwardMode = false;
-			gui_state = GuiState::ReplayPause;
+			if (config::Receiving)
+				gui_state = GuiState::ReplayPause;
+			else
+				gui_state = GuiState::EndReplay;
 		}
 	}
 

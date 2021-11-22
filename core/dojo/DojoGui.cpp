@@ -1158,10 +1158,16 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
-	if (dojo.FrameNumber < dojo.maple_inputs.size())
+	if (dojo.FrameNumber < dojo.maple_inputs.size() ||
+		dojo.FrameNumber < dojo.net_inputs[1].size())
 	{
 		char text_pos[30] = { 0 };
-		sprintf(text_pos, "%u / %u     ", frame_num, dojo.maple_inputs.size());
+
+		if (dojo.replay_version >= 2)
+			sprintf(text_pos, "%u / %u     ", frame_num, dojo.maple_inputs.size());
+		else
+			sprintf(text_pos, "%u / %u     ", frame_num, dojo.net_inputs[1].size());
+
 		float font_size = ImGui::CalcTextSize(text_pos).x;
 
 		ImGui::SetNextWindowPos(ImVec2(settings.display.width - font_size, settings.display.height - 40));
@@ -1169,7 +1175,10 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#pos", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
-		ImGui::Text("%u / %u", frame_num, dojo.maple_inputs.size());
+		if (dojo.replay_version >= 2)
+			ImGui::Text("%u / %u", frame_num, dojo.maple_inputs.size());
+		else
+			ImGui::Text("%u / %u", frame_num, dojo.net_inputs[1].size());
 
 		ImGui::End();
 	}

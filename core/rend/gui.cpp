@@ -3594,9 +3594,11 @@ void gui_display_osd()
 			dojo_gui.show_player_name_overlay(scaling, false);
 		}
 
-
 		if (settings.dojo.training && config::ShowInputDisplay)
 			dojo_gui.show_last_inputs_overlay();
+
+		if (dojo.PlayMatch && !config::GGPOEnable && config::ShowPlaybackControls)
+			dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
 
 		lua::overlay();
 
@@ -3617,7 +3619,7 @@ void gui_display_osd()
 					dojo.transmitter_ended = true;
 
 				gui_state = GuiState::ReplayPause;
-				config::AutoSkipFrame = 1;
+				config::AutoSkipFrame = 0;
 				//emu.term();
 			}
 		}
@@ -3629,7 +3631,7 @@ void gui_display_osd()
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
 
-				gui_state = GuiState::ReplayPause;
+				gui_state = GuiState::EndReplay;
 			}
 		}
 	}

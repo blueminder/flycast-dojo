@@ -103,7 +103,8 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_STEP:
 			if (pressed
 				&& dojo.PlayMatch
-				&& gui_state == GuiState::ReplayPause)
+				&& gui_state == GuiState::ReplayPause
+				&& config::GGPOEnable)
 			{
 				gui_state = GuiState::Closed;
 				dojo.stepping = true;
