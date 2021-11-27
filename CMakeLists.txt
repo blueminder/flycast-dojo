@@ -54,6 +54,17 @@ if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
         OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    if(WINDOWS_STORE)
+	    string(REPLACE "v" "" MS_VERSION ${GIT_VERSION})
+	    string(REPLACE "-" "." MS_VERSION  ${MS_VERSION})
+	    string(REGEX REPLACE "\.g[0-9a-f]+" "" MS_VERSION  ${MS_VERSION})
+	    string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" VERSION_3PARTS ${MS_VERSION})
+	    if (VERSION_3PARTS STREQUAL "")
+	    	string(APPEND MS_VERSION ".0.0")
+	    else()
+	    	string(APPEND MS_VERSION ".0")
+	    endif()
+    endif()
 endif()
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
@@ -286,9 +297,7 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
-execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr)
-add_subdirectory(core/deps/libchdr)
+add_subdirectory(core/deps/libchdr EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
 
@@ -465,67 +474,65 @@ FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_T
 FetchContent_MakeAvailable(cpr)
 target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)
 
-if(NOT MSVC)
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/deps/picotcp/include/arch/pico_arm9.h
-            core/deps/picotcp/include/arch/pico_atsamd21j18.h
-            core/deps/picotcp/include/arch/pico_avr.h
-            core/deps/picotcp/include/arch/pico_cortex_m.h
-            core/deps/picotcp/include/arch/pico_dos.h
-            core/deps/picotcp/include/arch/pico_esp8266.h
-            core/deps/picotcp/include/arch/pico_generic_gcc.h
-            core/deps/picotcp/include/arch/pico_linux.h
-            core/deps/picotcp/include/arch/pico_mbed.h
-            core/deps/picotcp/include/arch/pico_msp430.h
-            core/deps/picotcp/include/arch/pico_msvc.h
-            core/deps/picotcp/include/arch/pico_none.h
-            core/deps/picotcp/include/arch/pico_pic24.h
-            core/deps/picotcp/include/arch/pico_pic32.h
-            core/deps/picotcp/include/arch/pico_posix.h
-            core/deps/picotcp/include/heap.h
-            core/deps/picotcp/include/pico_addressing.h
-            core/deps/picotcp/include/pico_config.h
-            core/deps/picotcp/include/pico_constants.h
-            core/deps/picotcp/include/pico_defines.h
-            core/deps/picotcp/include/pico_defines_msvc.h
-            core/deps/picotcp/include/pico_device.h
-            core/deps/picotcp/include/pico_eth.h
-            core/deps/picotcp/include/pico_frame.h
-            core/deps/picotcp/include/pico_md5.h
-            core/deps/picotcp/include/pico_module_eth.h
-            core/deps/picotcp/include/pico_protocol.h
-            core/deps/picotcp/include/pico_queue.h
-            core/deps/picotcp/include/pico_socket.h
-            core/deps/picotcp/include/pico_socket_multicast.h
-            core/deps/picotcp/include/pico_stack.h
-            core/deps/picotcp/include/pico_tree.h
-            core/deps/picotcp/modules/pico_arp.c
-            core/deps/picotcp/modules/pico_dev_ppp.c
-            core/deps/picotcp/modules/pico_dhcp_common.c
-            core/deps/picotcp/modules/pico_dhcp_common.h
-            core/deps/picotcp/modules/pico_dhcp_server.c
-            core/deps/picotcp/modules/pico_dhcp_server.h
-            core/deps/picotcp/modules/pico_dns_client.c
-            core/deps/picotcp/modules/pico_dns_common.c
-            core/deps/picotcp/modules/pico_ethernet.c
-            core/deps/picotcp/modules/pico_fragments.c
-            core/deps/picotcp/modules/pico_icmp4.c
-            core/deps/picotcp/modules/pico_ipv4.c
-            core/deps/picotcp/modules/pico_socket_tcp.c
-            core/deps/picotcp/modules/pico_socket_udp.c
-            core/deps/picotcp/modules/pico_strings.c
-            core/deps/picotcp/modules/pico_tcp.c
-            core/deps/picotcp/modules/pico_udp.c
-            core/deps/picotcp/stack/pico_device.c
-            core/deps/picotcp/stack/pico_frame.c
-            core/deps/picotcp/stack/pico_md5.c
-            core/deps/picotcp/stack/pico_protocol.c
-            core/deps/picotcp/stack/pico_socket.c
-            core/deps/picotcp/stack/pico_socket_multicast.c
-            core/deps/picotcp/stack/pico_stack.c
-            core/deps/picotcp/stack/pico_tree.c)
-endif()
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
+target_sources(${PROJECT_NAME} PRIVATE
+        core/deps/picotcp/include/arch/pico_arm9.h
+        core/deps/picotcp/include/arch/pico_atsamd21j18.h
+        core/deps/picotcp/include/arch/pico_avr.h
+        core/deps/picotcp/include/arch/pico_cortex_m.h
+        core/deps/picotcp/include/arch/pico_dos.h
+        core/deps/picotcp/include/arch/pico_esp8266.h
+        core/deps/picotcp/include/arch/pico_generic_gcc.h
+        core/deps/picotcp/include/arch/pico_linux.h
+        core/deps/picotcp/include/arch/pico_mbed.h
+        core/deps/picotcp/include/arch/pico_msp430.h
+        core/deps/picotcp/include/arch/pico_msvc.h
+        core/deps/picotcp/include/arch/pico_none.h
+        core/deps/picotcp/include/arch/pico_pic24.h
+        core/deps/picotcp/include/arch/pico_pic32.h
+        core/deps/picotcp/include/arch/pico_posix.h
+        core/deps/picotcp/include/heap.h
+        core/deps/picotcp/include/pico_addressing.h
+        core/deps/picotcp/include/pico_config.h
+        core/deps/picotcp/include/pico_constants.h
+        core/deps/picotcp/include/pico_defines.h
+        core/deps/picotcp/include/pico_defines_msvc.h
+        core/deps/picotcp/include/pico_device.h
+        core/deps/picotcp/include/pico_eth.h
+        core/deps/picotcp/include/pico_frame.h
+        core/deps/picotcp/include/pico_md5.h
+        core/deps/picotcp/include/pico_module_eth.h
+        core/deps/picotcp/include/pico_protocol.h
+        core/deps/picotcp/include/pico_queue.h
+        core/deps/picotcp/include/pico_socket.h
+        core/deps/picotcp/include/pico_socket_multicast.h
+        core/deps/picotcp/include/pico_stack.h
+        core/deps/picotcp/include/pico_tree.h
+        core/deps/picotcp/modules/pico_arp.c
+        core/deps/picotcp/modules/pico_dev_ppp.c
+        core/deps/picotcp/modules/pico_dhcp_common.c
+        core/deps/picotcp/modules/pico_dhcp_common.h
+        core/deps/picotcp/modules/pico_dhcp_server.c
+        core/deps/picotcp/modules/pico_dhcp_server.h
+        core/deps/picotcp/modules/pico_dns_client.c
+        core/deps/picotcp/modules/pico_dns_common.c
+        core/deps/picotcp/modules/pico_ethernet.c
+        core/deps/picotcp/modules/pico_fragments.c
+        core/deps/picotcp/modules/pico_icmp4.c
+        core/deps/picotcp/modules/pico_ipv4.c
+        core/deps/picotcp/modules/pico_socket_tcp.c
+        core/deps/picotcp/modules/pico_socket_udp.c
+        core/deps/picotcp/modules/pico_strings.c
+        core/deps/picotcp/modules/pico_tcp.c
+        core/deps/picotcp/modules/pico_udp.c
+        core/deps/picotcp/stack/pico_device.c
+        core/deps/picotcp/stack/pico_frame.c
+        core/deps/picotcp/stack/pico_md5.c
+        core/deps/picotcp/stack/pico_protocol.c
+        core/deps/picotcp/stack/pico_socket.c
+        core/deps/picotcp/stack/pico_socket_multicast.c
+        core/deps/picotcp/stack/pico_stack.c
+        core/deps/picotcp/stack/pico_tree.c)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7zBuf.c core/deps/lzma/7zCrc.c core/deps/lzma/7zCrcOpt.c core/deps/lzma/7zDec.c core/deps/lzma/7zFile.c core/deps/lzma/7zStream.c core/deps/lzma/Alloc.c core/deps/lzma/Bcj2.c core/deps/lzma/Bra86.c core/deps/lzma/Bra.c core/deps/lzma/BraIA64.c core/deps/lzma/CpuArch.c core/deps/lzma/Delta.c core/deps/lzma/LzFind.c core/deps/lzma/Lzma2Dec.c core/deps/lzma/Lzma86Dec.c core/deps/lzma/Lzma86Enc.c core/deps/lzma/LzmaDec.c core/deps/lzma/LzmaEnc.c core/deps/lzma/LzmaLib.c core/deps/lzma/Sort.c)
@@ -1057,30 +1064,25 @@ if(USE_VULKAN)
 endif()
 
 if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+	add_subdirectory(core/rend/dx9)
+	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
+endif()
+
+if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-		core/rend/dx9/comptr.h
-		core/rend/dx9/d3d_overlay.h
-		core/rend/dx9/d3d_overlay.cpp
-		core/rend/dx9/d3d_renderer.h
-		core/rend/dx9/d3d_renderer.cpp
-		core/rend/dx9/d3d_shaders.h
-		core/rend/dx9/d3d_shaders.cpp
-		core/rend/dx9/d3d_texture.h
-		core/rend/dx9/d3d_texture.cpp
-		core/rend/dx9/dx9_driver.h
-		core/rend/dx9/dxcontext.h
-		core/rend/dx9/dxcontext.cpp
-		core/rend/dx9/imgui_impl_dx9.h
-		core/rend/dx9/imgui_impl_dx9.cpp)
-	if(NOT MINGW)
-		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
-		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
-		else()
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
-		endif()
-	endif()
-	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_renderer.cpp
+		core/rend/dx11/dx11_renderer.h
+		core/rend/dx11/dx11_shaders.cpp
+		core/rend/dx11/dx11_shaders.h
+		core/rend/dx11/dx11_texture.cpp
+		core/rend/dx11/dx11_texture.h
+		core/rend/dx11/dx11context.cpp
+		core/rend/dx11/dx11context.h
+		core/rend/dx11/imgui_impl_dx11.cpp
+		core/rend/dx11/imgui_impl_dx11.h
+		core/rend/dx11/dx11_driver.h)
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
@@ -1384,7 +1386,10 @@ if(NOT LIBRETRO)
 	            core/windows/xinput_gamepad.h)
 	    endif()
 		if(WINDOWS_STORE)
-			set(ResourceFiles shell/uwp/Package.appxmanifest
+			file(READ shell/uwp/Package.appxmanifest MANIFEST)
+			string(REPLACE "9.9.9.9" ${MS_VERSION} MANIFEST ${MANIFEST})
+			file(WRITE ${CMAKE_BINARY_DIR}/Package.appxmanifest ${MANIFEST})
+			set(ResourceFiles ${CMAKE_BINARY_DIR}/Package.appxmanifest
 					shell/uwp/flycast150.png
 					shell/uwp/flycast50.png
 					shell/uwp/flycast44.png

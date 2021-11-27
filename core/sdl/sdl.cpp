@@ -161,6 +161,8 @@ void input_sdl_init()
 			NOTICE_LOG(INPUT, "Disabling XInput, using DirectInput");
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
 		}
+		// Don't close the app when pressing the B button
+		SDL_SetHint(SDL_HINT_WINRT_HANDLE_BACK_BUTTON, "1");
 #endif
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
@@ -522,12 +524,21 @@ bool sdl_recreate_window(u32 flags)
 	}
 #endif
 
-#ifdef USE_DX9
-	if (config::RendererType == RenderType::DirectX9)
-		GraphicsContext::Instance()->setWindow(getNativeHwnd());
-	else
+	void *windowCtx = window;
+#ifdef _WIN32
+	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX9)
+#ifdef TARGET_UWP
+	{
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		SDL_GetWindowWMInfo(window, &wmInfo);
+		windowCtx = wmInfo.info.winrt.window;
+	}
+#else
+		windowCtx = getNativeHwnd();
 #endif
-	GraphicsContext::Instance()->setWindow(window);
+#endif
+	GraphicsContext::Instance()->setWindow(windowCtx);
 
 	int displayIndex = SDL_GetWindowDisplayIndex(window);
 	if (displayIndex < 0)
@@ -536,8 +547,13 @@ bool sdl_recreate_window(u32 flags)
 	{
 		SDL_DisplayMode mode{};
 		if (SDL_GetDesktopDisplayMode(displayIndex, &mode) == 0) {
-			INFO_LOG(RENDERER, "Monitor refresh rate: %d Hz", mode.refresh_rate);
+			NOTICE_LOG(RENDERER, "Monitor refresh rate: %d Hz (%d x %d)", mode.refresh_rate, mode.w, mode.h);
 			settings.display.refreshRate = mode.refresh_rate;
+			if (flags & SDL_WINDOW_FULLSCREEN)
+			{
+				settings.display.width = mode.w;
+				settings.display.height = mode.h;
+			}
 		}
 	}
 

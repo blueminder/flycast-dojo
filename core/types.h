@@ -131,9 +131,21 @@ enum HollyInterruptID
 		//bit 27 = G2 : Time out in CPU accessing
 };
 
-
+#ifndef TARGET_UWP
 #include "nowide/cstdlib.hpp"
 #include "nowide/cstdio.hpp"
+#else
+#include "nowide/config.hpp"
+#include "nowide/convert.hpp"
+#include "nowide/stackstring.hpp"
+#include "nowide/cenv.hpp"
+
+#include <cstdio>
+#include <stdio.h>
+namespace nowide {
+FILE *fopen(char const *file_name, char const *mode);
+}
+#endif
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
@@ -157,6 +169,7 @@ inline static void JITWriteProtect(bool enabled) {
 #include <vector>
 #include <string>
 #include <map>
+#include <stdexcept>
 
 #define INLINE __forceinline
 
@@ -283,6 +296,7 @@ enum class RenderType {
 	Vulkan = 4,
 	Vulkan_OIT = 5,
 	DirectX9 = 1,
+	DirectX11 = 2,
 };
 
 static inline bool isOpenGL(RenderType renderType)  {
@@ -290,6 +304,9 @@ static inline bool isOpenGL(RenderType renderType)  {
 }
 static inline bool isVulkan(RenderType renderType) {
 	return renderType == RenderType::Vulkan || renderType == RenderType::Vulkan_OIT;
+}
+static inline bool isDirectX(RenderType renderType) {
+	return renderType == RenderType::DirectX9 || renderType == RenderType::DirectX11;
 }
 
 enum class KeyboardLayout {

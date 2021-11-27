@@ -1918,6 +1918,10 @@ static void gui_display_settings()
 				renderApi = 2;
 				perPixel = false;
 				break;
+			case RenderType::DirectX11:
+				renderApi = 3;
+				perPixel = false;
+				break;
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -2010,12 +2014,17 @@ static void gui_display_settings()
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#if defined(USE_VULKAN) || defined(USE_DX9)
+#if defined(USE_VULKAN) || defined(USE_DX9) || defined(_WIN32)
 		    	ImGui::Text("Graphics API:");
-#if defined(USE_VULKAN) && defined(USE_DX9)
-	            constexpr u32 columns = 3;
-#else
-	            constexpr u32 columns = 2;
+		    	u32 columns = 1;
+#ifdef USE_VULKAN
+	            columns++;
+#endif
+#ifdef _WIN32
+	            columns++;
+#ifdef USE_DX9
+	            columns++;
+#endif
 #endif
 	            ImGui::Columns(columns, "renderApi", false);
 		    	ImGui::RadioButton("Open GL", &renderApi, 0);
@@ -2024,8 +2033,12 @@ static void gui_display_settings()
 		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
             	ImGui::NextColumn();
 #endif
+#ifdef _WIN32
 #ifdef USE_DX9
-		    	ImGui::RadioButton("DirectX", &renderApi, 2);
+		    	ImGui::RadioButton("DirectX 9", &renderApi, 2);
+            	ImGui::NextColumn();
+#endif
+		    	ImGui::RadioButton("DirectX 11", &renderApi, 3);
             	ImGui::NextColumn();
 #endif
 		    	ImGui::Columns(1, NULL, false);
@@ -2121,6 +2134,9 @@ static void gui_display_settings()
 		    	break;
 		    case 2:
 		    	config::RendererType = RenderType::DirectX9;
+		    	break;
+		    case 3:
+		    	config::RendererType = RenderType::DirectX11;
 		    	break;
 		    }
 		}
@@ -2372,6 +2388,8 @@ static void gui_display_settings()
 #else
 					"macOS"
 #endif
+#elif defined(TARGET_UWP)
+					"Windows Universal Platform"
 #elif defined(_WIN32)
 					"Windows"
 #elif defined(__SWITCH__)
@@ -2390,7 +2408,7 @@ static void gui_display_settings()
 				header("Open GL");
 	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
-	    	else if (config::RendererType == RenderType::DirectX9)
+	    	else if (isDirectX(config::RendererType))
 				header("DirectX");
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
@@ -2567,7 +2585,7 @@ static void gui_display_content()
 #endif
 
     static ImGuiTextFilter filter;
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
 	ImGui::SameLine(0, 32 * scaling);
 	filter.Draw("Filter");
 #endif
@@ -2588,7 +2606,13 @@ static void gui_display_content()
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
 
-#ifdef _WIN32
+#ifdef TARGET_UWP
+    	void gui_load_game();
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		if (ImGui::Button("Load..."))
+			gui_load_game();
+		ImGui::SameLine();
+#elif defined(_WIN32)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
