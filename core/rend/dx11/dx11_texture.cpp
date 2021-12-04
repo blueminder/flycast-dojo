@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "dx11_texture.h"
+#include "dx11context.h"
 
 void DX11Texture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
@@ -117,4 +118,9 @@ void DX11Texture::loadCustomTexture()
 		p += 4;
 	}
 	CheckCustomTexture();
+}
+
+HRESULT Samplers::createSampler(const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler)
+{
+	return theDX11Context.getDevice()->CreateSamplerState(desc, sampler);
 }

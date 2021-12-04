@@ -49,17 +49,24 @@ bool DX11Context::init(bool keepCurrentWindow)
 		{
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
-			NOTICE_LOG(RENDERER, "XBox One [S] detected. Setting resolution to 1920x1080.");
-			settings.display.width = 1920;
-			settings.display.height = 1080;
-			break;
-
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
+			{
+				Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+				Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
+				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
+				settings.display.width = displayMode->ResolutionWidthInRawPixels;
+				settings.display.height = displayMode->ResolutionHeightInRawPixels;
+				if (settings.display.width == 3840)
+					// 4K
+					scaling = 2.8f;
+				else
+					scaling = 1.4f;
+			}
+			break;
+
 		default:
-			NOTICE_LOG(RENDERER, "XBox One X detected. Setting resolution to 3840x2160.");
-			settings.display.width = 3840;
-			settings.display.height = 2160;
+			scaling = 1.f;
 		    break;
 		}
 	}
@@ -76,10 +83,10 @@ bool DX11Context::init(bool keepCurrentWindow)
 	    nullptr, // Specify nullptr to use the default adapter.
 	    D3D_DRIVER_TYPE_HARDWARE,
 	    nullptr,
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG, // FIXME
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG,
 	    featureLevels,
 	    ARRAYSIZE(featureLevels),
-	    D3D11_SDK_VERSION, // UWP apps must set this to D3D11_SDK_VERSION.
+	    D3D11_SDK_VERSION,
 	    &pDevice.get(),
 	    nullptr,
 	    &pDeviceContext.get());
@@ -152,7 +159,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver());
 	resize();
 	gui_init();
-// TODO overlay.init(pDevice);
+	shaders.init(pDevice);
+	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
 	return ImGui_ImplDX11_Init(pDevice, pDeviceContext);
 }
 
@@ -162,7 +170,9 @@ void DX11Context::term()
 	GraphicsContext::instance = nullptr;
 	ID3D11RenderTargetView* views[1] {};
 	pDeviceContext->OMSetRenderTargets(ARRAY_SIZE(views), views, nullptr);
-//TODO	overlay.term();
+	overlay.term();
+	samplers.term();
+	shaders.term();
 	imguiDriver.reset();
 	ImGui_ImplDX11_Shutdown();
 	gui_term();
@@ -179,13 +189,13 @@ void DX11Context::Present()
 		return;
 	frameRendered = false;
 	bool swapOnVSync = !settings.input.fastForwardMode && config::VSync;
-	HRESULT hr = swapchain->Present(swapOnVSync ? 1 : 0, 0);
+	HRESULT hr = swapchain->Present(swapOnVSync ? 1 : 0, !swapOnVSync ? DXGI_PRESENT_DO_NOT_WAIT : 0);
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 	{
 		WARN_LOG(RENDERER, "Present failed: device removed/reset");
 		handleDeviceLost();
 	}
-	else if (FAILED(hr))
+	else if (hr != DXGI_ERROR_WAS_STILL_DRAWING && FAILED(hr))
 		WARN_LOG(RENDERER, "Present failed %x", hr);
 }
 
@@ -200,15 +210,15 @@ void DX11Context::EndImGuiFrame()
 		if (renderer != nullptr)
 			renderer->RenderLastFrame();
 	}
-//	if (overlayOnly)
-//	{
-//		if (crosshairsNeeded() || config::FloatVMUs)
-//			overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
-//	}
-//	else
-//	{
-//		overlay.draw(settings.display.width, settings.display.height, true, false);
-//	}
+	if (overlayOnly)
+	{
+		if (crosshairsNeeded() || config::FloatVMUs)
+			overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+	}
+	else
+	{
+		overlay.draw(settings.display.width, settings.display.height, true, false);
+	}
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	frameRendered = true;
 }
@@ -226,7 +236,6 @@ void DX11Context::resize()
 		pDeviceContext->OMSetRenderTargets(ARRAY_SIZE(views), views, nullptr);
 		renderTargetView.reset();
 #ifdef TARGET_UWP
-		// FIXME how to get correct width/height?
 		HRESULT hr = swapchain->ResizeBuffers(2, settings.display.width, settings.display.height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
 #else
 		DXGI_SWAP_CHAIN_DESC swapchainDesc;

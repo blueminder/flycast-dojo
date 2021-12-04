@@ -38,8 +38,13 @@ struct VertexOut
 cbuffer constantBuffer : register(b0)
 {
 	float4x4 transMatrix;
+	float4 leftPlane;
+	float4 topPlane;
+	float4 rightPlane;
+	float4 bottomPlane;
 };
 
+[clipplanes(leftPlane, topPlane, rightPlane, bottomPlane)]
 VertexOut main(in VertexIn vin)
 {
 	VertexOut vo;
@@ -77,6 +82,10 @@ struct VertexOut
 cbuffer constantBuffer : register(b0)
 {
 	float4x4 transMatrix;
+	float4 leftPlane;
+	float4 topPlane;
+	float4 rightPlane;
+	float4 bottomPlane;
 };
 
 VertexOut main(in VertexIn vin)
@@ -127,6 +136,7 @@ cbuffer constantBuffer : register(b0)
 
 cbuffer polyConstantBuffer : register(b1)
 {
+	float4 clipTest;
 	float paletteIndex;
 	float trilinearAlpha;
 };
@@ -154,7 +164,7 @@ float4 clampColor(float4 color)
 
 float4 palettePixel(float2 coords)
 {
-	int colorIdx = int(floor(texture0.Sample(sampler0, coords).a * 255.0f + 0.5f) + paletteIndex.x);
+	int colorIdx = int(floor(texture0.Sample(sampler0, coords).a * 255.0f + 0.5f) + paletteIndex);
     float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
 	return paletteTexture.Sample(paletteSampler, c);
 }
@@ -168,7 +178,13 @@ struct PSO
 };
 
 PSO main(in Pixel inpix)
-{ 
+{
+#if pp_ClipInside == 1
+	// Clip inside the box
+	if (inpix.pos.x >= clipTest.x && inpix.pos.x <= clipTest.z
+			&& inpix.pos.y >= clipTest.y && inpix.pos.y <= clipTest.w)
+		discard;
+#endif
 #if pp_Gouraud == 1
 	float4 color = inpix.col / inpix.uv.w;
 	#if pp_BumpMap == 1 || pp_Offset == 1
@@ -189,6 +205,9 @@ PSO main(in Pixel inpix)
 	#if pp_Texture == 1
 	{
 		float2 uv = inpix.uv.xy / inpix.uv.w;
+		#if NearestWrapFix == 1
+			uv = min(fmod(uv, 1.f), 0.9997f);
+		#endif
 		#if pp_Palette == 0
 			float4 texcol = texture0.Sample(sampler0, uv);
 		#else
@@ -287,7 +306,7 @@ VertexOut main(in VertexIn vin)
 #if ROTATE == 0
 	vo.pos = float4(vin.pos, 0.f, 1.f);
 #else
-	vo.pos = float4(vin.pos.y, -vin.pos.x, 0.f, 1.f);
+	vo.pos = float4(-vin.pos.y, vin.pos.x, 0.f, 1.f);
 #endif
 	vo.uv = vin.uv;
 
@@ -296,6 +315,11 @@ VertexOut main(in VertexIn vin)
 )";
 
 const char * const QuadPixelShader = R"(
+cbuffer constantBuffer : register(b0)
+{
+	float4 color;
+};
+
 struct VertexIn
 {
 	float4 pos : SV_POSITION;
@@ -307,7 +331,7 @@ Texture2D texture0;
 
 float4 main(in VertexIn vin) : SV_Target
 {
-	return texture0.Sample(sampler0, vin.uv);
+	return color * texture0.Sample(sampler0, vin.uv);
 }
 
 )";
@@ -332,7 +356,9 @@ enum PixelMacroEnum {
 	MacroFogClamping,
 	MacroTriLinear,
 	MacroPalette,
-	MacroAlphaTest
+	MacroAlphaTest,
+	MacroClipInside,
+	MacroNearestWrapFix
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
@@ -349,12 +375,14 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "pp_TriLinear", "0" },
 	{ "pp_Palette", "0" },
 	{ "cp_AlphaTest", "0" },
+	{ "pp_ClipInside", "0" },
+	{ "NearestWrapFix", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool alphaTest)
+		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix)
 {
 	const u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -367,7 +395,9 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (trilinear << 10)
 			| (palette << 11)
 			| (gouraud << 12)
-			| (alphaTest << 13);
+			| (alphaTest << 13)
+			| (clipInside << 13)
+			| (nearestWrapFix << 14);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -385,6 +415,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 		PixelMacros[MacroTriLinear].Definition = MacroValues[trilinear];
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroAlphaTest].Definition = MacroValues[alphaTest];
+		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
+		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
 		verify(shader != nullptr);
@@ -495,3 +527,4 @@ ComPtr<ID3DBlob> DX11Shaders::getQuadVertexShaderBlob()
 {
 	return compileShader(QuadVertexShader, "main", "vs_4_0", nullptr);
 }
+
