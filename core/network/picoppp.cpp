@@ -125,7 +125,7 @@ struct socket_pair
 			}
 			if (r < 0)
 			{
-				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+				if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 				{
 					perror("recv tcp socket");
 					closesocket(native_sock);
@@ -391,10 +391,10 @@ static void tcp_callback(uint16_t ev, pico_socket *s)
 				set_non_blocking(sockfd);
 				if (connect(sockfd, (sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 				{
-					if (get_last_error() != EINPROGRESS && get_last_error() != L_EWOULDBLOCK)
+					if (get_last_error_n() != EINPROGRESS && get_last_error_n() != L_EWOULDBLOCK)
 					{
 						pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-						INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(sock_a->local_port), strerror(get_last_error()));
+						INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(sock_a->local_port), strerror(get_last_error_n()));
 						closesocket(sockfd);
 					}
 					else
@@ -540,7 +540,7 @@ static void read_native_sockets()
 		sock_t sockfd = accept(it->second, (sockaddr *)&src_addr, &addr_len);
 		if (!VALID(sockfd))
 		{
-			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+			if (get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 				perror("accept");
 			continue;
 		}
@@ -608,7 +608,7 @@ static void read_native_sockets()
 				{
 					char peer[30];
 					pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
-					INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error()));
+					INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error_n()));
 					pico_socket_close(it->first);
 					closesocket(it->second);
 				}
@@ -652,7 +652,7 @@ static void read_native_sockets()
 			if (r2 < r)
 				INFO_LOG(MODEM, "error UDP sending to %d: %s", short_be(it->first), strerror(pico_err));
 		}
-		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+		else if (r < 0 && get_last_error_n() != L_EAGAIN && get_last_error_n() != L_EWOULDBLOCK)
 		{
 			perror("recvfrom udp socket");
 			continue;
