@@ -54,7 +54,7 @@ typedef int sock_t;
 #define L_EAGAIN EAGAIN
 #define get_last_error_n() (errno)
 #define INVALID_SOCKET (-1)
-#define perror(s) do { INFO_LOG(NETWORK, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
+#define perror(s) do { INFO_LOG(NETWORK, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error_n())); } while (false)
 #else
 typedef SOCKET sock_t;
 #define VALID(s) ((s) != INVALID_SOCKET)
