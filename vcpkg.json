@@ -4,6 +4,7 @@
   "dependencies": [
     "angle",
     "sdl2",
-    "zlib"
+    "zlib",
+    "asio"
   ]
 }
