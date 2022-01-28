@@ -276,7 +276,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	oitBuffers->OnNewFrame(cmdBuffer);
 
-	SetProvokingVertices();
+	setFirstProvokingVertex(pvrrc);
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);
@@ -384,7 +384,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (!oitBuffers->isFirstFrameAfterInit())
 		{
 			// Tr modifier volumes
-			if (GetContext()->GetVendorID() != VENDOR_QUALCOMM)	// Adreno bug
+			if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
 			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
@@ -693,6 +693,12 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
+	if (frameRendered)
+	{
+		// in case the previous image was never presented
+		frameRendered = false;
+		NewImage();
+	}
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 

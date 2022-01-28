@@ -1483,7 +1483,7 @@ void error_popup()
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 			ImGui::TextWrapped("%s", error_msg.c_str());
@@ -1943,6 +1943,10 @@ static void gui_display_settings()
 				renderApi = 3;
 				perPixel = false;
 				break;
+			case RenderType::DirectX11_OIT:
+				renderApi = 3;
+				perPixel = true;
+				break;
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -2016,7 +2020,6 @@ static void gui_display_settings()
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-#endif
 		    	ImGui::Indent();
 		    	if (!config::VSync || !isVulkan(config::RendererType))
 		    	{
@@ -2030,40 +2033,49 @@ static void gui_display_settings()
 			        ImGui::PopStyleVar();
 		    	}
 		    	ImGui::Unindent();
+#endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#if defined(USE_VULKAN) || defined(USE_DX9) || defined(_WIN32)
-		    	ImGui::Text("Graphics API:");
-		    	u32 columns = 1;
+		    	constexpr int apiCount = 0
+					#ifdef USE_VULKAN
+		    			+ 1
+					#endif
+					#ifdef USE_DX9
+						+ 1
+					#endif
+					#ifdef USE_OPENGL
+						+ 1
+					#endif
+					#ifdef _WIN32
+						+ 1
+					#endif
+						;
+
+		    	if (apiCount > 1)
+		    	{
+		    		ImGui::Text("Graphics API:");
+					ImGui::Columns(apiCount, "renderApi", false);
+#ifdef USE_OPENGL
+					ImGui::RadioButton("Open GL", &renderApi, 0);
+					ImGui::NextColumn();
+#endif
 #ifdef USE_VULKAN
-	            columns++;
+					ImGui::RadioButton("Vulkan", &renderApi, 1);
+					ImGui::NextColumn();
+#endif
+#ifdef USE_DX9
+					ImGui::RadioButton("DirectX 9", &renderApi, 2);
+					ImGui::NextColumn();
 #endif
 #ifdef _WIN32
-	            columns++;
-#ifdef USE_DX9
-	            columns++;
+					ImGui::RadioButton("DirectX 11", &renderApi, 3);
+					ImGui::NextColumn();
 #endif
-#endif
-	            ImGui::Columns(columns, "renderApi", false);
-		    	ImGui::RadioButton("Open GL", &renderApi, 0);
-            	ImGui::NextColumn();
-#ifdef USE_VULKAN
-		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
-            	ImGui::NextColumn();
-#endif
-#ifdef _WIN32
-#ifdef USE_DX9
-		    	ImGui::RadioButton("DirectX 9", &renderApi, 2);
-            	ImGui::NextColumn();
-#endif
-		    	ImGui::RadioButton("DirectX 11", &renderApi, 3);
-            	ImGui::NextColumn();
-#endif
-		    	ImGui::Columns(1, NULL, false);
-#endif
+					ImGui::Columns(1, nullptr, false);
+		    	}
 
 	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
 	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
@@ -2157,7 +2169,7 @@ static void gui_display_settings()
 		    	config::RendererType = RenderType::DirectX9;
 		    	break;
 		    case 3:
-		    	config::RendererType = RenderType::DirectX11;
+		    	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
 		    	break;
 		    }
 		}
@@ -2353,7 +2365,7 @@ static void gui_display_settings()
 				strcpy(LuaFileName, config::LuaFileName.get().c_str());
 				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Specify lua filename to use. Should be located in Flycasts root directory. Defaults to flycast.lua when empty.");
+				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
 				config::LuaFileName = LuaFileName;
 
 			}

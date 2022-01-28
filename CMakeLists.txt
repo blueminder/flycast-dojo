@@ -17,6 +17,8 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
+option(USE_OPENGL "Use Open GL API" ON)
+option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -31,7 +33,13 @@ if(APPLE)
 	endif()
 endif()
 
-project(flycast)
+if(LIBRETRO)
+    project(flycast_libretro)
+else()
+    project(flycast)
+endif()
+
+include(GNUInstallDirs)
 
 if(ENABLE_CTEST)
     include(CTest)
@@ -39,7 +47,7 @@ endif()
 
 if(APPLE AND NOT LIBRETRO)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
-    enable_language(Swift OBJC OBJCXX)
+    enable_language(Swift)
 endif()
 
 find_package(Git)
@@ -100,10 +108,16 @@ elseif(LIBRETRO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
     if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
-		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv3")
+		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES3_LIBRARIES})
     elseif(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2 HAVE_OPENGLES HAVE_OPENGLES2)
-		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
+		if(USE_VIDEOCORE)
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-lbrcmGLESv2")
+			target_link_directories(${PROJECT_NAME} PRIVATE "/opt/vc/lib")
+		else()
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-GLESv2")
+		endif()
     else()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
 	    if(APPLE)
@@ -128,6 +142,7 @@ else()
 endif()
 
 if(WINDOWS_STORE)
+	set(USE_OPENGL OFF)
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
 else()
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
@@ -176,22 +191,12 @@ if(NINTENDO_SWITCH)
 endif()
 
 if(NOT LIBRETRO)
-	if(WIN32 AND NOT MSVC)
-		target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--build-id")
-		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-#	elseif(APPLE)
-#		add_subdirectory(core/deps/breakpad)
-#		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
-#		target_include_directories(${PROJECT_NAME} PRIVATE
-#			core/deps/breakpad/src/client/apple/Framework
-#			core/deps/breakpad/src/client/mac/Framework)
-##		target_include_directories(${PROJECT_NAME} PRIVATE $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/Breakpad.framework>)
-#		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-	elseif(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)" AND NOT IOS)
+	if((WIN32 AND NOT MSVC) OR (UNIX AND NOT APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 		add_subdirectory(core/deps/breakpad)
-		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
-		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/breakpad/src)
+		if(WIN32)
+			target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--build-id")
+		endif()
+		target_link_libraries(${PROJECT_NAME} PUBLIC breakpad_client)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 	endif()
 endif()
@@ -223,7 +228,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
-	add_subdirectory(core/deps/glslang)
+	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
 
@@ -235,51 +240,31 @@ if(NOT LIBRETRO)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
 	
-	if(WIN32 AND NOT WINDOWS_STORE)
-		# Build SDL
-		file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-		if(CMAKE_GENERATOR MATCHES "Visual Studio")
-			set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
-		endif()
-		execute_process(COMMAND ${CMAKE_COMMAND}
-			"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
-			-DLIBC=ON
-			-DBUILD_SHARED_LIBS=OFF
-			-G "${CMAKE_GENERATOR}"
-			${SDL_CMAKE_ARCH_ARG}
-			"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
-	    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-		execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
-	endif()
-	
 	if(MINGW)
 		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 	endif()
-	
-	if(WINDOWS_STORE)
-		find_package(SDL2 CONFIG REQUIRED)
-	elseif((APPLE AND NOT IOS) OR WIN32)
-		find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/lib/cmake/SDL2")
-	elseif(NOT ANDROID AND NOT IOS)
-	    find_package(SDL2)
-	endif()
-	if(SDL2_FOUND)
-	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
-	    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
-	    if(APPLE)
-	        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
-	    elseif(NINTENDO_SWITCH)
-	        target_include_directories(${PROJECT_NAME} PRIVATE "${DEVKITPRO}/portlibs/switch/include/SDL2")
-	    else()
-	        target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
-	    endif()
-	    if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
-	        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
-	    elseif(TARGET SDL2::SDL2)
-	        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-	    else()
-	        target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
-	    endif()
+
+	if(NOT ANDROID AND NOT IOS)
+		find_package(SDL2 QUIET)
+		if(NOT SDL2_FOUND)
+			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
+			if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+				target_compile_definitions(SDL2-static PRIVATE HAVE_LIBC)
+			endif()
+			set(SDL2_FOUND 1)
+		endif()
+
+		if(TARGET SDL2::SDL2-static)
+			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+		elseif(TARGET SDL2::SDL2)
+			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+		else()
+			target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
+		endif()
+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
+		target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
 	endif()
 	
 	find_package(ZLIB)
@@ -364,15 +349,27 @@ if(NINTENDO_SWITCH AND USE_GLES)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
+	add_definitions(
+		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
+		-DFLYCAST_SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/"
+	)
+
 	if(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
-		target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
+		if(USE_VIDEOCORE)
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-lbrcmGLESv2")
+			target_link_directories(${PROJECT_NAME} PRIVATE "/opt/vc/lib")
+		else()
+			target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
+		endif()
 	elseif(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 		if(NOT SDL2_FOUND)
 			target_link_libraries(${PROJECT_NAME} PRIVATE EGL)
 		endif()
-	else()
+		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES3_LIBRARIES})
+	elseif(USE_OPENGL)
 	    set(OpenGL_GL_PREFERENCE LEGACY)
 	    find_package(OpenGL REQUIRED)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
@@ -399,12 +396,6 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
-endif()
-
-if(WINDOWS_STORE)
-	find_package(unofficial-angle CONFIG REQUIRED)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
-	target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::angle::libEGL unofficial::angle::libGLESv2)
 endif()
 
 if(ASAN)
@@ -803,6 +794,7 @@ endif()
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
+			core/windows/comptr.h
 			core/windows/fault_handler.cpp
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
@@ -910,36 +902,66 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
-        core/wsi/egl.cpp
-        core/wsi/egl.h
-        core/wsi/gl_context.cpp
-        core/wsi/gl_context.h
         core/wsi/libretro.cpp
         core/wsi/libretro.h
-        core/wsi/osx.cpp
-        core/wsi/osx.h
-        core/wsi/sdl.cpp
-        core/wsi/sdl.h
-        core/wsi/switcher.cpp
-        core/wsi/wgl.cpp
-        core/wsi/wgl.h
-        core/wsi/xgl.cpp
-        core/wsi/xgl.h)
+        core/wsi/switcher.cpp)
 
-if(NOT APPLE AND NOT LIBRETRO)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/wsi/gl32funcs.c
-            core/wsi/gl32funcs.h)
-endif()
-if(NOT (NINTENDO_SWITCH AND LIBRETRO))
-	target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
+if(USE_OPENGL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/wsi/egl.cpp
+	        core/wsi/egl.h
+	        core/wsi/gl_context.cpp
+	        core/wsi/gl_context.h
+	        core/wsi/osx.cpp
+	        core/wsi/osx.h
+	        core/wsi/sdl.cpp
+	        core/wsi/sdl.h
+	        core/wsi/wgl.cpp
+	        core/wsi/wgl.h
+	        core/wsi/xgl.cpp
+	        core/wsi/xgl.h)
+
+	if(NOT APPLE AND NOT LIBRETRO)
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/wsi/gl32funcs.c
+	            core/wsi/gl32funcs.h)
+	endif()
+	if(NOT (NINTENDO_SWITCH AND LIBRETRO))
+		target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
+	endif()
+
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/rend/gles/glcache.h
+	        core/rend/gles/gldraw.cpp
+	        core/rend/gles/gles.cpp
+	        core/rend/gles/gles.h
+	        core/rend/gles/gltex.cpp
+	        core/rend/gles/quad.cpp
+	        core/rend/gles/postprocess.cpp
+	        core/rend/gles/postprocess.h)
+
+	if(NOT LIBRETRO)
+		target_sources(${PROJECT_NAME} PRIVATE
+		        core/rend/gles/imgui_impl_opengl3.cpp
+		        core/rend/gles/imgui_impl_opengl3.h
+		        core/rend/gles/opengl_driver.cpp
+		        core/rend/gles/opengl_driver.h)
+	endif()
+	
+	if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/gl4/abuffer.cpp
+	            core/rend/gl4/gl4.h
+	            core/rend/gl4/gldraw.cpp
+	            core/rend/gl4/gles.cpp)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/build.h
         core/cheats.cpp
         core/cheats.h
-        core/dispframe.cpp
         core/emulator.h
         core/nullDC.cpp
         core/serialize.cpp
@@ -950,14 +972,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/rend/gles/glcache.h
-        core/rend/gles/gldraw.cpp
-        core/rend/gles/gles.cpp
-        core/rend/gles/gles.h
-        core/rend/gles/gltex.cpp
-        core/rend/gles/quad.cpp
-        core/rend/gles/postprocess.cpp
-        core/rend/gles/postprocess.h
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
 		core/rend/osd.cpp
@@ -969,10 +983,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/TexCache.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/rend/gles/imgui_impl_opengl3.cpp
-	        core/rend/gles/imgui_impl_opengl3.h
-	        core/rend/gles/opengl_driver.cpp
-	        core/rend/gles/opengl_driver.h
 	        core/rend/game_scanner.h
 	        core/rend/imgui_driver.h
 	        core/rend/gui.cpp
@@ -985,14 +995,6 @@ if(NOT LIBRETRO)
 	        core/rend/gui_util.h
 	        core/rend/mainui.cpp
 	        core/rend/mainui.h)
-endif()
-
-if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
-    target_sources(${PROJECT_NAME} PRIVATE
-    	core/rend/gl4/abuffer.cpp
-    	core/rend/gl4/gl4.h
-    	core/rend/gl4/gldraw.cpp
-    	core/rend/gl4/gles.cpp)
 endif()
 
 if(USE_VULKAN)
@@ -1068,7 +1070,14 @@ if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
 endif()
 
-if(WIN32 AND NOT LIBRETRO)
+if(WIN32)
+	if(LIBRETRO)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
+	else()
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/dx11/imgui_impl_dx11.cpp
+			core/rend/dx11/imgui_impl_dx11.h)
+	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx11/dx11_driver.h
 		core/rend/dx11/dx11_overlay.cpp
@@ -1083,9 +1092,13 @@ if(WIN32 AND NOT LIBRETRO)
 		core/rend/dx11/dx11_texture.h
 		core/rend/dx11/dx11context.cpp
 		core/rend/dx11/dx11context.h
-		core/rend/dx11/imgui_impl_dx11.cpp
-		core/rend/dx11/imgui_impl_dx11.h
-		core/rend/dx11/dx11_driver.h)
+		core/rend/dx11/dx11context_lr.cpp
+		core/rend/dx11/dx11context_lr.h
+		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/oit/dx11_oitbuffers.h
+		core/rend/dx11/oit/dx11_oitrenderer.cpp
+		core/rend/dx11/oit/dx11_oitshaders.cpp
+		core/rend/dx11/oit/dx11_oitshaders.h)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 
@@ -1173,7 +1186,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_
     set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
-    add_subdirectory(core/deps/xbyak)
+    add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     	target_sources(${PROJECT_NAME} PRIVATE
@@ -1273,6 +1286,8 @@ if(NOT LIBRETRO)
 				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
 				shell/apple/emulator-ios/emulator/PadViewController.xib)
 			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
+			source_group("Resources" FILES ${IOS_RESOURCES})
+			set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"
@@ -1289,7 +1304,6 @@ if(NOT LIBRETRO)
 
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
 				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
-				RESOURCE "${IOS_RESOURCES}"
 				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
 				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
 				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
@@ -1319,21 +1333,20 @@ if(NOT LIBRETRO)
 				COMMENT "Building IPA"
 				COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/Payload
 				COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/Payload/*
-				COMMAND cp -r ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND cp -r ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
 				COMMAND for lib in ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Frameworks/*.dylib
 				COMMAND do xcrun bitcode_strip -r $lib -o $lib
 				COMMAND done
 				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Flycast
-				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload
-				COMMAND rm -rf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.swiftmodule)
+				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
 					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
-			target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
-			source_group("Resources" FILES ${XIB} ${ASSETS})
+			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
+			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 		
 			set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -1370,10 +1383,9 @@ if(NOT LIBRETRO)
 				${OPENGL_LIBRARY}
 				${IOSURFACE_LIBRARY})
 
-			set(output_dir $<$<CONFIG:Release>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO}>$<$<CONFIG:MinSizeRel>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL}>$<$<CONFIG:Debug>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}>)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
-            		${CMAKE_CURRENT_BINARY_DIR}/$<$<STREQUAL:$<GENEX_EVAL:${output_dir}>,>:$<CONFIG>>${output_dir}/Flycast.app/Contents/Frameworks/libvulkan.dylib)
+            		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)
@@ -1442,4 +1454,33 @@ if(NINTENDO_SWITCH)
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
 	endif()
+endif()
+
+if(IOS)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" TYPE BIN)
+else()
+	install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
+
+if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
+	install(FILES shell/linux/man/${PROJECT_NAME}.1
+		DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+	)
+	install(FILES shell/linux/${PROJECT_NAME}.desktop
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+	)
+	install(FILES shell/linux/${PROJECT_NAME}.png
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pixmaps"
+	)
+	install(FILES shell/linux/org.${PROJECT_NAME}.Flycast.metainfo.xml
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
+	)
+	foreach(size 16 32 64 128 256 512)
+		install(FILES
+			shell/apple/emulator-osx/emulator-osx/Images.xcassets/AppIcon.appiconset/Icon-${size}.png
+			DESTINATION
+			"${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${size}x${size}/apps"
+			RENAME ${PROJECT_NAME}.png
+		)
+	endforeach()
 endif()

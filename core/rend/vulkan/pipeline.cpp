@@ -310,7 +310,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	bool depthWriteEnable;
 	if (sortTriangles && !config::PerStripSorting)
 		// FIXME temporary work-around for intel driver bug
-		depthWriteEnable = GetContext()->GetVendorID() == VENDOR_INTEL;
+		depthWriteEnable = GetContext()->GetVendorID() == VulkanContext::VENDOR_INTEL;
 	else
 	{
 		// Z Write Disable seems to be ignored for punch-through.
@@ -396,7 +396,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
-	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;

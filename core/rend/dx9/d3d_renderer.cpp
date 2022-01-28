@@ -267,7 +267,7 @@ void D3DRenderer::readDCFramebuffer()
 
 void D3DRenderer::renderDCFramebuffer()
 {
-	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	u32 bar = (width - height * 640 / 480) / 2;
 	RECT rd{ (LONG)bar, 0, (LONG)(width - bar), (LONG)height };
 	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
@@ -322,7 +322,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	else
 		trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -471,11 +471,11 @@ void D3DRenderer::sortTriangles(int first, int count)
 	if (pidx_sort.empty())
 		return;
 
-	const u32 bufSize = vidx_sort.size() * sizeof(u32);
+	const size_t bufSize = vidx_sort.size() * sizeof(u32);
 	// Upload sorted index buffer
-	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, bufSize);
+	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, (u32)bufSize);
 	void *ptr;
-	sortedTriIndexBuffer->Lock(0, bufSize, &ptr, D3DLOCK_DISCARD);
+	sortedTriIndexBuffer->Lock(0, (UINT)bufSize, &ptr, D3DLOCK_DISCARD);
 	memcpy(ptr, &vidx_sort[0], bufSize);
 	sortedTriIndexBuffer->Unlock();
 	device->SetIndices(sortedTriIndexBuffer);
@@ -486,7 +486,7 @@ void D3DRenderer::drawSorted(bool multipass)
 	if (pidx_sort.empty())
 		return;
 
-	u32 count = pidx_sort.size();
+	u32 count = (u32)pidx_sort.size();
 
 	for (u32 p = 0; p < count; p++)
 	{
@@ -718,36 +718,6 @@ void D3DRenderer::drawModVols(int first, int count)
 	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 }
 
-// Direct3D uses the color values of the first vertex for flat shaded triangle strips.
-// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
-// TODO refactor with Vk
-void D3DRenderer::setProvokingVertices()
-{
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-        u32 *idx_base = pvrrc.idx.head();
-        Vertex *vtx_base = pvrrc.verts.head();
-		const PolyParam *pp_end = list.LastPtr(0);
-		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
-		{
-			if (!pp->pcw.Gouraud && pp->count > 2)
-			{
-				for (u32 i = 0; i < pp->count - 2; i++)
-				{
-					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
-					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
-					memcpy(vertex->col, lastVertex->col, 4);
-					memcpy(vertex->spc, lastVertex->spc, 4);
-					//memcpy(vertex->col1, lastVertex->col1, 4);
-					//memcpy(vertex->spc1, lastVertex->spc1, 4);
-				}
-			}
-		}
-	};
-	setProvokingVertex(pvrrc.global_param_op);
-	setProvokingVertex(pvrrc.global_param_pt);
-	setProvokingVertex(pvrrc.global_param_tr);
-}
-
 void D3DRenderer::drawStrips()
 {
 	RenderPass previous_pass {};
@@ -847,7 +817,7 @@ void D3DRenderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue);
+				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue);
 				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 				D3DRECT rects[] {
 						{ 0, 0, lroundf(scaled_offs_x), (long)height },
@@ -900,10 +870,10 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 		fbw2 *= 2;
 	if (!config::RenderToTextureBuffer)
 	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
+		fbw = (u32)(fbw * config::RenderResolution / 480.f);
+		fbh = (u32)(fbh * config::RenderResolution / 480.f);
+		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
+		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
 	}
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
@@ -1032,7 +1002,25 @@ bool D3DRenderer::Render()
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
-		setProvokingVertices();
+		setFirstProvokingVertex(pvrrc);
+		// Set clip planes at (-1,0) (1,0) (0,-1) and (0,1).
+		// Helps avoiding interpolation errors on large triangles.
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 15);
+		float v[4] {};
+		v[3] = 1.f;
+		// left
+		v[0] = 1.f;
+		device->SetClipPlane(0, v);
+		// right
+		v[0] = -1.f;
+		device->SetClipPlane(1, v);
+		// top
+		v[0] = 0.f;
+		v[1] = 1.f;
+		device->SetClipPlane(2, v);
+		// bottom
+		v[1] = -1.f;
+		device->SetClipPlane(3, v);
 
 		verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
 		void *ptr;
@@ -1058,10 +1046,10 @@ bool D3DRenderer::Render()
 		devCache.SetVertexShader(shaders.getVertexShader(true));
 
 		// VERT and RAM fog color constants
-		u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-		u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-		float ps_FOG_COL_VERT[4] = { fog_colvert_bgra[2] / 255.0f, fog_colvert_bgra[1] / 255.0f, fog_colvert_bgra[0] / 255.0f, 1 };
-		float ps_FOG_COL_RAM[4] = { fog_colram_bgra[2] / 255.0f, fog_colram_bgra[1] / 255.0f, fog_colram_bgra[0] / 255.0f, 1 };
+		float ps_FOG_COL_VERT[4];
+		float ps_FOG_COL_RAM[4];
+		FOG_COL_VERT.getRGBColor(ps_FOG_COL_VERT);
+		FOG_COL_RAM.getRGBColor(ps_FOG_COL_RAM);
 		device->SetPixelShaderConstantF(1, ps_FOG_COL_VERT, 1);
 		device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
 
@@ -1071,20 +1059,11 @@ bool D3DRenderer::Render()
 		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
 
 		// Color clamping
-		float fog_clamp_min[] {
-			((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(6, fog_clamp_min, 1);
-		float fog_clamp_max[] {
-			((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(7, fog_clamp_max, 1);
+		float color_clamp[4];
+		pvrrc.fog_clamp_min.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(6, color_clamp, 1);
+		pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(7, color_clamp, 1);
 
 		devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 
@@ -1098,7 +1077,6 @@ bool D3DRenderer::Render()
 		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 		devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
 
 		setBaseScissor();
@@ -1110,6 +1088,7 @@ bool D3DRenderer::Render()
 		}
 		drawStrips();
 		device->EndScene();
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 	}
 	else
 	{
@@ -1153,7 +1132,7 @@ void D3DRenderer::Resize(int w, int h)
 void D3DRenderer::renderFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	int fx = 0;
 	int sx = 0;
 	float screenAR = (float)settings.display.width / settings.display.height;

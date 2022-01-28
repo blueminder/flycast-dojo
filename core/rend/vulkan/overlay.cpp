@@ -29,6 +29,29 @@
 
 VulkanOverlay::~VulkanOverlay() = default;
 
+void VulkanOverlay::Init(QuadPipeline *pipeline)
+{
+	this->pipeline = pipeline;
+	for (auto& drawer : drawers)
+	{
+		drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		drawer->Init(pipeline);
+	}
+	xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	xhairDrawer->Init(pipeline);
+}
+
+void VulkanOverlay::Term()
+{
+	commandBuffers.clear();
+	for (auto& drawer : drawers)
+		drawer.reset();
+	xhairDrawer.reset();
+	for (auto& tex : vmuTextures)
+		tex.reset();
+	xhairTexture.reset();
+}
+
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
 	VulkanContext *context = VulkanContext::Instance();
@@ -43,7 +66,7 @@ std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandB
 	return texture;
 }
 
-void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair)
+void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair, TextureCache& textureCache)
 {
 	if (vmu)
 	{
@@ -52,12 +75,18 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 			std::unique_ptr<Texture>& texture = vmuTextures[i];
 			if (!vmu_lcd_status[i])
 			{
-				texture.reset();
+				if (texture)
+				{
+					textureCache.DestroyLater(texture.get());
+					texture.reset();
+				}
 				continue;
 			}
 			if (texture != nullptr && !vmu_lcd_changed[i])
 				continue;
 
+			if (texture)
+				textureCache.DestroyLater(texture.get());
 			texture = createTexture(cmdBuffer, 48, 32, (u8*)vmu_lcd_data[i]);
 			vmu_lcd_changed[i] = false;
 		}
@@ -69,7 +98,7 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 	}
 }
 
-vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	commandBuffers.resize(context->GetSwapChainSize());
@@ -78,7 +107,7 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 			.front());
 	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
 	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	Prepare(cmdBuffer, vmu, crosshair);
+	Prepare(cmdBuffer, vmu, crosshair, textureCache);
 	cmdBuffer.end();
 
 	return cmdBuffer;

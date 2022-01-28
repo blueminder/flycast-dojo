@@ -269,6 +269,7 @@ Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
 Renderer* rend_DirectX11();
+Renderer* rend_OITDirectX11();
 
 static void rend_create_renderer()
 {
@@ -278,6 +279,7 @@ static void rend_create_renderer()
 	switch (config::RendererType)
 	{
 	default:
+#ifdef USE_OPENGL
 	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
@@ -285,6 +287,7 @@ static void rend_create_renderer()
 	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
 		break;
+#endif
 #endif
 #ifdef USE_VULKAN
 	case RenderType::Vulkan:
@@ -299,9 +302,12 @@ static void rend_create_renderer()
 		renderer = rend_DirectX9();
 		break;
 #endif
-#if defined(_WIN32) && !defined(LIBRETRO)
+#if (defined(_WIN32) && !defined(LIBRETRO)) || defined(HAVE_D3D11)
 	case RenderType::DirectX11:
 		renderer = rend_DirectX11();
+		break;
+	case RenderType::DirectX11_OIT:
+		renderer = rend_OITDirectX11();
 		break;
 #endif
 	}
@@ -357,8 +363,8 @@ void rend_start_render()
 			ctx->rend.fb_Y_CLIP.min = 0;
 			ctx->rend.fb_Y_CLIP.max = 479;
 
-			ctx->rend.fog_clamp_min = 0;
-			ctx->rend.fog_clamp_max = 0xffffffff;
+			ctx->rend.fog_clamp_min.full = 0;
+			ctx->rend.fog_clamp_max.full = 0xffffffff;
 		}
 		else
 		{

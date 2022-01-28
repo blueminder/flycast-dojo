@@ -35,33 +35,6 @@ const D3D11_INPUT_ELEMENT_DESC ModVolLayout[]
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(ModTriangle, x0), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 
-struct VertexConstants
-{
-    float transMatrix[4][4];
-    float leftPlane[4];
-    float topPlane[4];
-    float rightPlane[4];
-    float bottomPlane[4];
-};
-
-struct PixelConstants
-{
-	float colorClampMin[4];
-	float colorClampMax[4];
-	float fog_col_vert[4];
-	float fog_col_ram[4];
-	float fogDensity;
-	float fogScale;
-	float alphaTestValue;
-};
-
-struct PixelPolyConstants
-{
-	float clipTest[4];
-	float paletteIndex;
-	float trilinearAlpha;
-};
-
 bool DX11Renderer::Init()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer initializing");
@@ -200,7 +173,7 @@ void DX11Renderer::Term()
 	device.reset();
 }
 
-void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height)
+void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
 {
 	view.reset();
 	texture.reset();
@@ -209,17 +182,17 @@ void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPt
 	desc.Height = height;
 	desc.MipLevels = 1;
 	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	desc.Format = format;
 	desc.SampleDesc.Count = 1;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | bindFlags;
 	HRESULT hr = device->CreateTexture2D(&desc, nullptr, &texture.get());
 	if (FAILED(hr))
 		WARN_LOG(RENDERER, "Depth/stencil creation failed");
 
 	// Create the depth stencil view
 	D3D11_DEPTH_STENCIL_VIEW_DESC viewDesc{};
-	viewDesc.Format = desc.Format;
+	viewDesc.Format = format == DXGI_FORMAT_R32G8X24_TYPELESS ? DXGI_FORMAT_D32_FLOAT_S8X24_UINT : DXGI_FORMAT_D24_UNORM_S8_UINT;
 	viewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	hr = device->CreateDepthStencilView(texture, &viewDesc, &view.get());
 	if (FAILED(hr))
@@ -346,7 +319,7 @@ bool DX11Renderer::Process(TA_context* ctx)
 
 //
 // Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools · November 2011
+// Journal of Graphics GPU and Game Tools ï¿½ November 2011
 //
 static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
 {
@@ -441,18 +414,14 @@ static int sutherlandHodgmanClip(const glm::vec2& point, const glm::vec2& normal
 	}
 }
 
-static std::vector<ModTriangle> clipModVols()
+static void clipModVols(List<ModifierVolumeParam>& params, std::vector<ModTriangle>& triangles)
 {
-	// clip triangles
-	std::vector<ModTriangle> allTrigs;
-	allTrigs.reserve(pvrrc.modtrig.used());
-
-	for (ModifierVolumeParam& param : pvrrc.global_param_mvo)
+	for (ModifierVolumeParam& param : params)
 	{
 		std::vector<ModTriangle> trigs(&pvrrc.modtrig.head()[param.first], &pvrrc.modtrig.head()[param.first + param.count]);
 		std::vector<ModTriangle> nextTrigs;
 		nextTrigs.reserve(trigs.size());
-		for (int axis = 0; axis < 3; axis++)
+		for (int axis = 0; axis < 4; axis++)
 		{
 			glm::vec2 point;
 			glm::vec2 normal;
@@ -490,29 +459,23 @@ static std::vector<ModTriangle> clipModVols()
 			std::swap(trigs, nextTrigs);
 			nextTrigs.clear();
 		}
-		param.first = allTrigs.size();
-		param.count = trigs.size();
-		allTrigs.insert(allTrigs.end(), trigs.begin(), trigs.end());
+		param.first = (u32)triangles.size();
+		param.count = (u32)trigs.size();
+		triangles.insert(triangles.end(), trigs.begin(), trigs.end());
 	}
-	return allTrigs;
 }
 
-bool DX11Renderer::Render()
+void DX11Renderer::configVertexShader()
 {
 	matrices.CalcMatrices(&pvrrc, width, height);
 	setBaseScissor();
-	bool is_rtt = pvrrc.isRTT;
 
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
-	if (is_rtt)
+	if (pvrrc.isRTT)
 	{
-		prepareRttRenderTarget(texAddress);
+		prepareRttRenderTarget(FB_W_SOF1 & VRAM_MASK);
 	}
 	else
 	{
-		ID3D11ShaderResourceView *p = nullptr;
-        deviceContext->PSSetShaderResources(0, 1, &p);
-		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 		D3D11_VIEWPORT vp{};
 		vp.Width = (FLOAT)width;
 		vp.Height = (FLOAT)height;
@@ -535,94 +498,112 @@ bool DX11Renderer::Render()
 	memcpy(mappedSubres.pData, &constant, sizeof(constant));
 	deviceContext->Unmap(vtxConstants, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &vtxConstants.get());
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
+}
 
-	deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+void DX11Renderer::uploadGeometryBuffers()
+{
+	setFirstProvokingVertex(pvrrc);
+
+	verify(ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, pvrrc.verts.bytes()));
+	D3D11_MAPPED_SUBRESOURCE mappedSubres;
+	deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+	memcpy(mappedSubres.pData, pvrrc.verts.head(), pvrrc.verts.bytes());
+	deviceContext->Unmap(vertexBuffer, 0);
+
+	verify(ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, pvrrc.idx.bytes()));
+	deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+	memcpy(mappedSubres.pData, pvrrc.idx.head(), pvrrc.idx.bytes());
+	deviceContext->Unmap(indexBuffer, 0);
+
+	if (config::ModifierVolumes && pvrrc.modtrig.used())
+	{
+		const ModTriangle *data = nullptr;
+		u32 size = 0;
+#if 1
+		// clip triangles
+		std::vector<ModTriangle> modVolTriangles;
+		modVolTriangles.reserve(pvrrc.modtrig.used());
+		clipModVols(pvrrc.global_param_mvo, modVolTriangles);
+		clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
+		if (!modVolTriangles.empty())
+		{
+			size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
+			data = modVolTriangles.data();
+		}
+#else
+		size = pvrrc.modtrig.bytes();
+		data = pvrrc.modtrig.head();
+#endif
+		if (size > 0)
+		{
+			verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
+			deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+			memcpy(mappedSubres.pData, data, size);
+			deviceContext->Unmap(modvolBuffer, 0);
+		}
+	}
+    unsigned int stride = sizeof(Vertex);
+    unsigned int offset = 0;
+	deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer.get(), &stride, &offset);
+	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+}
+
+void DX11Renderer::setupPixelShaderConstants()
+{
+	PixelConstants pixelConstants;
+	// VERT and RAM fog color constants
+	FOG_COL_VERT.getRGBColor(pixelConstants.fog_col_vert);
+	FOG_COL_RAM.getRGBColor(pixelConstants.fog_col_ram);
+
+	// Fog density
+	pixelConstants.fogDensity = FOG_DENSITY.get() * config::ExtraDepthScale;
+	// Shadow scale
+	pixelConstants.shadowScale = FPU_SHAD_SCALE.scale_factor / 256.f;
+
+	// Color clamping
+	pvrrc.fog_clamp_min.getRGBAColor(pixelConstants.colorClampMin);
+	pvrrc.fog_clamp_max.getRGBAColor(pixelConstants.colorClampMax);
+
+	// Punch-through alpha ref
+	pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubres;
+	deviceContext->Map(pxlConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+	memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
+	deviceContext->Unmap(pxlConstants, 0);
+	ID3D11Buffer *buffers[] { pxlConstants, pxlPolyConstants };
+	deviceContext->PSSetConstantBuffers(0, ARRAY_SIZE(buffers), buffers);
+}
+
+bool DX11Renderer::Render()
+{
+	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
+
+	// make sure to unbind the framebuffer view before setting it as render target
+	ID3D11ShaderResourceView *nullView = nullptr;
+    deviceContext->PSSetShaderResources(0, 1, &nullView);
+	bool is_rtt = pvrrc.isRTT;
+	if (!is_rtt)
+	{
+		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
+		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+	}
+	configVertexShader();
 
 	deviceContext->IASetInputLayout(mainInputLayout);
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
-		setProvokingVertices();
-
-		verify(ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, pvrrc.verts.bytes()));
-		D3D11_MAPPED_SUBRESOURCE mappedSubres;
-		deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-		memcpy(mappedSubres.pData, pvrrc.verts.head(), pvrrc.verts.bytes());
-		deviceContext->Unmap(vertexBuffer, 0);
-
-		verify(ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, pvrrc.idx.bytes()));
-		deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-		memcpy(mappedSubres.pData, pvrrc.idx.head(), pvrrc.idx.bytes());
-		deviceContext->Unmap(indexBuffer, 0);
-
-		if (config::ModifierVolumes && pvrrc.modtrig.used())
-		{
-			const ModTriangle *data = nullptr;
-			u32 size = 0;
-#if 1
-			// clip triangles
-			std::vector<ModTriangle> modVolTriangles = clipModVols();
-			if (!modVolTriangles.empty())
-			{
-				size = modVolTriangles.size() * sizeof(ModTriangle);
-				data = modVolTriangles.data();
-			}
-#else
-			size = pvrrc.modtrig.bytes();
-			data = pvrrc.modtrig.head();
-#endif
-			if (size > 0)
-			{
-				verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
-				deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-				memcpy(mappedSubres.pData, data, size);
-				deviceContext->Unmap(modvolBuffer, 0);
-			}
-		}
-	    unsigned int stride = sizeof(Vertex);
-	    unsigned int offset = 0;
-		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer.get(), &stride, &offset);
-		deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		uploadGeometryBuffers();
 
 		updateFogTexture();
 		updatePaletteTexture();
 
-		PixelConstants pixelConstants;
-
-		// VERT and RAM fog color constants
-		u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-		u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-		pixelConstants.fog_col_vert[0] = fog_colvert_bgra[2] / 255.0f;
-		pixelConstants.fog_col_vert[1] = fog_colvert_bgra[1] / 255.0f;
-		pixelConstants.fog_col_vert[2] = fog_colvert_bgra[0] / 255.0f;
-		pixelConstants.fog_col_ram[0] = fog_colram_bgra[2] / 255.0f;
-		pixelConstants.fog_col_ram[1] = fog_colram_bgra[1] / 255.0f;
-		pixelConstants.fog_col_ram[2] = fog_colram_bgra[0] / 255.0f;
-
-		// Fog density and scale constants
-		pixelConstants.fogDensity = FOG_DENSITY.get() * config::ExtraDepthScale;
-		pixelConstants.fogScale = 1.f - FPU_SHAD_SCALE.scale_factor / 256.f;
-
-		// Color clamping
-		pixelConstants.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-
-		pixelConstants.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-		pixelConstants.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
-
-		// Punch-through alpha ref
-		pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
-
-		deviceContext->Map(pxlConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-		memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
-		deviceContext->Unmap(pxlConstants, 0);
-
-		ID3D11Buffer *buffers[] { pxlConstants, pxlPolyConstants };
-		deviceContext->PSSetConstantBuffers(0, ARRAY_SIZE(buffers), buffers);
+		setupPixelShaderConstants();
 
 		drawStrips();
 	}
@@ -637,12 +618,18 @@ bool DX11Renderer::Render()
 	}
 	else
 	{
+#ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		renderFramebuffer();
 		DrawOSD(false);
+		theDX11Context.setFrameRendered();
+#else
+		ID3D11RenderTargetView *nullView = nullptr;
+		deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+		deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+#endif
 		frameRendered = true;
 		frameRenderedOnce = true;
-		theDX11Context.setFrameRendered();
 	}
 
 	return !is_rtt;
@@ -650,7 +637,9 @@ bool DX11Renderer::Render()
 
 void DX11Renderer::renderDCFramebuffer()
 {
-	FLOAT colors[4] = { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+	float colors[4];
+	VO_BORDER_COL.getRGBColor(colors);
+	colors[3] = 1.f;
 	deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
 	D3D11_VIEWPORT vp{};
 	vp.Width = (FLOAT)width;
@@ -666,6 +655,7 @@ void DX11Renderer::renderDCFramebuffer()
 
 void DX11Renderer::renderFramebuffer()
 {
+#ifndef LIBRETRO
 	D3D11_VIEWPORT vp{};
 	vp.Width = (FLOAT)settings.display.width;
 	vp.Height = (FLOAT)settings.display.height;
@@ -675,7 +665,9 @@ void DX11Renderer::renderFramebuffer()
 
 	const D3D11_RECT r = { 0, 0, settings.display.width, settings.display.height };
 	deviceContext->RSSetScissorRects(1, &r);
-	FLOAT colors[4] = { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+	float colors[4];
+	VO_BORDER_COL.getRGBColor(colors);
+	colors[3] = 1.f;
 	deviceContext->ClearRenderTargetView(theDX11Context.getRenderTarget(), colors);
 	int outwidth = settings.display.width;
 	int outheight = settings.display.height;
@@ -690,16 +682,16 @@ void DX11Renderer::renderFramebuffer()
 	else
 		dx = (int)roundf((outwidth - outheight * renderAR) / 2.f);
 
-	float x = 0, y = 0, w = outwidth, h = outheight;
+	float x = 0, y = 0, w = (float)outwidth, h = (float)outheight;
 	if (dx != 0)
 	{
-		x = dx;
-		w = outwidth - 2 * dx;
+		x = (float)dx;
+		w = (float)(outwidth - 2 * dx);
 	}
 	else
 	{
-		y = dy;
-		h = outheight - 2 * dy;
+		y = (float)dy;
+		h = (float)(outheight - 2 * dy);
 	}
 	// Normalize
 	x = x * 2.f / outwidth - 1.f;
@@ -708,6 +700,7 @@ void DX11Renderer::renderFramebuffer()
 	h *= 2.f / outheight;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, x, y, w, h, config::Rotate90);
+#endif
 }
 
 void DX11Renderer::setCullMode(int mode)
@@ -744,7 +737,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	else
 		constants.trilinearAlpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -789,10 +782,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		deviceContext->RSSetScissorRects(1, &scissorRect);
 		if (clipmode == TileClipping::Inside)
 		{
-			constants.clipTest[0] = clip_rect[0];
-			constants.clipTest[1] = clip_rect[1];
-			constants.clipTest[2] = clip_rect[0] + clip_rect[2];
-			constants.clipTest[3] = clip_rect[1] + clip_rect[3];
+			constants.clipTest[0] = (float)clip_rect[0];
+			constants.clipTest[1] = (float)clip_rect[1];
+			constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
+			constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 		}
 	}
 	if (constants.trilinearAlpha != 1.f || gpuPalette || clipmode == TileClipping::Inside)
@@ -875,9 +868,9 @@ void DX11Renderer::sortTriangles(int first, int count)
 	if (pidx_sort.empty())
 		return;
 
-	const u32 bufSize = vidx_sort.size() * sizeof(u32);
+	const size_t bufSize = vidx_sort.size() * sizeof(u32);
 	// Upload sorted index buffer
-	ensureBufferSize(sortedTriIndexBuffer, D3D11_BIND_INDEX_BUFFER, sortedTriIndexBufferSize, bufSize);
+	ensureBufferSize(sortedTriIndexBuffer, D3D11_BIND_INDEX_BUFFER, sortedTriIndexBufferSize, (u32)bufSize);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(sortedTriIndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, &vidx_sort[0], bufSize);
@@ -891,7 +884,7 @@ void DX11Renderer::drawSorted(bool multipass)
 		return;
 
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	u32 count = pidx_sort.size();
+	size_t count = pidx_sort.size();
 
 	for (u32 p = 0; p < count; p++)
 	{
@@ -1015,37 +1008,6 @@ void DX11Renderer::drawModVols(int first, int count)
 	deviceContext->DrawIndexed(4, 0, 0);
 }
 
-// Direct3D uses the color values of the first vertex for flat shaded triangle strips.
-// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
-// TODO refactor with Vk
-// FIXME share with DX9
-void DX11Renderer::setProvokingVertices()
-{
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-        u32 *idx_base = pvrrc.idx.head();
-        Vertex *vtx_base = pvrrc.verts.head();
-		const PolyParam *pp_end = list.LastPtr(0);
-		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
-		{
-			if (!pp->pcw.Gouraud && pp->count > 2)
-			{
-				for (u32 i = 0; i < pp->count - 2; i++)
-				{
-					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
-					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
-					memcpy(vertex->col, lastVertex->col, 4);
-					memcpy(vertex->spc, lastVertex->spc, 4);
-					//memcpy(vertex->col1, lastVertex->col1, 4);
-					//memcpy(vertex->spc1, lastVertex->spc1, 4);
-				}
-			}
-		}
-	};
-	setProvokingVertex(pvrrc.global_param_op);
-	setProvokingVertex(pvrrc.global_param_pt);
-	setProvokingVertex(pvrrc.global_param_tr);
-}
-
 void DX11Renderer::drawStrips()
 {
 	RenderPass previous_pass {};
@@ -1056,8 +1018,8 @@ void DX11Renderer::drawStrips()
         u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
         u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
         u32 mvo_count = current_pass.mvo_count - previous_pass.mvo_count;
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
-        		op_count, pt_count, tr_count, mvo_count);
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+        		op_count, pt_count, tr_count, mvo_count, current_pass.autosort);
 
 		drawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 
@@ -1176,11 +1138,13 @@ void DX11Renderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				float borderColor[] { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+				float borderColor[4];
+				VO_BORDER_COL.getRGBColor(borderColor);
+				borderColor[3] = 1.f;
 				D3D11_VIEWPORT vp{};
 				vp.MaxDepth = 1.f;
 				vp.Width = scaled_offs_x;
-				vp.Height = height;
+				vp.Height = (float)height;
 				deviceContext->RSSetViewports(1, &vp);
 				quad->draw(whiteTextureView, samplers->getSampler(false), borderColor);
 
@@ -1236,13 +1200,14 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 		fbw2 *= 2;
 	if (!config::RenderToTextureBuffer)
 	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
+		fbw = (u32)(fbw * config::RenderResolution / 480.f);
+		fbh = (u32)(fbh * config::RenderResolution / 480.f);
+		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
+		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
 	}
 	createTexAndRenderTarget(rttTexture, rttRenderTarget, fbw2, fbh2);
 	createDepthTexAndView(rttDepthTex, rttDepthTexView, fbw2, fbh2);
+	deviceContext->ClearDepthStencilView(rttDepthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 	deviceContext->OMSetRenderTargets(1, &rttRenderTarget.get(), rttDepthTexView);
 
 	D3D11_VIEWPORT vp{};
@@ -1378,9 +1343,11 @@ void DX11Renderer::updateFogTexture()
 
 void DX11Renderer::DrawOSD(bool clear_screen)
 {
+#ifndef LIBRETRO
 	theDX11Context.setOverlay(!clear_screen);
 	gui_display_osd();
 	theDX11Context.setOverlay(false);
+#endif
 }
 
 Renderer *rend_DirectX11()

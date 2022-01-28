@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <sstream>
 
-// On windows, transform / to \\
+// On windows, transform slashes to backslashes
 
 std::string normalize_path_separator(std::string path)
 {
@@ -64,7 +64,10 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 {
 	FILE *t = nowide::fopen(file, "rb");
 	if (t == nullptr)
+	{
+		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open GDI file ") + file);
+	}
 
 	size_t gdi_len = flycast::fsize(t);
 

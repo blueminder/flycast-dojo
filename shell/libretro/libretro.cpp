@@ -40,6 +40,10 @@
 #include "rend/vulkan/vulkan_context.h"
 #include <libretro_vulkan.h>
 #endif
+#ifdef HAVE_D3D11
+#include <libretro_d3d.h>
+#include "rend/dx11/dx11context_lr.h"
+#endif
 #include "emulator.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
@@ -73,13 +77,6 @@ constexpr char slash = path_default_slash_c();
                                             * background or not.
                                             */
 
-#define RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB (3 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-                                            /* retro_environment_t * --
-                                            * Provides the callback to the frontend method which will cancel
-                                            * all currently waiting threads.  Used when coordination is needed
-                                            * between the core and the frontend to gracefully stop all threads.
-                                            */
-
 #define RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE (4 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
                                             /* unsigned * --
                                             * Tells the frontend to override the poll type behavior. 
@@ -98,6 +95,11 @@ constexpr char slash = path_default_slash_c();
 #include "libretro_core_options.h"
 #include "vmu_xhair.h"
 
+extern void retro_audio_init(void);
+extern void retro_audio_deinit(void);
+extern void retro_audio_flush_buffer(void);
+extern void retro_audio_upload(void);
+
 std::string arcadeFlashPath;
 static bool boot_to_bios;
 
@@ -109,6 +111,17 @@ static bool digital_triggers = false;
 static bool allow_service_buttons = false;
 
 static bool libretro_supports_bitmasks = false;
+
+static bool categoriesSupported = false;
+static bool platformIsDreamcast = true;
+static bool platformIsArcade = false;
+static bool threadedRenderingEnabled = true;
+static bool oitEnabled = false;
+#if defined(HAVE_TEXUPSCALE)
+static bool textureUpscaleEnabled = false;
+#endif
+static bool vmuScreenSettingsShown = true;
+static bool lightgunSettingsShown = true;
 
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
@@ -157,7 +170,6 @@ static retro_input_poll_t         poll_cb;
 static retro_input_state_t        input_cb;
 retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t        environ_cb;
-static retro_environment_t        frontend_clear_thread_waits_cb;
 
 static retro_rumble_interface rumble;
 
@@ -189,6 +201,9 @@ static unsigned disk_index = 0;
 static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
+
+void UpdateInputState();
+static bool set_variable_visibility(void);
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
@@ -231,7 +246,20 @@ void retro_set_environment(retro_environment_t cb)
 {
 	environ_cb = cb;
 
-	libretro_set_core_options(environ_cb);
+	// An annoyance: retro_set_environment() can be called
+	// multiple times, and depending upon the current frontend
+	// state various environment callbacks may be disabled.
+	// This means the reported 'categories_supported' status
+	// may change on subsequent iterations. We therefore have
+	// to record whether 'categories_supported' is true on any
+	// iteration, and latch the result
+	bool optionCategoriesSupported = false;
+	libretro_set_core_options(environ_cb, &optionCategoriesSupported);
+	categoriesSupported |= optionCategoriesSupported;
+
+	struct retro_core_options_update_display_callback update_display_cb;
+	update_display_cb.callback = set_variable_visibility;
+	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK, &update_display_cb);
 
 	static const struct retro_controller_description ports_default[] =
 	{
@@ -277,8 +305,6 @@ void retro_init()
 	unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
 	environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 
-	environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
-
 	init_kb_map();
 	struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
 	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
@@ -287,6 +313,7 @@ void retro_init()
 		libretro_supports_bitmasks = true;
 
 	init_disk_control_interface();
+	retro_audio_init();
 
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
@@ -307,111 +334,222 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	libretro_supports_bitmasks = false;
+	categoriesSupported = false;
+	platformIsDreamcast = true;
+	platformIsArcade = false;
+	threadedRenderingEnabled = true;
+	oitEnabled = false;
+#if defined(HAVE_TEXUPSCALE)
+	textureUpscaleEnabled = false;
+#endif
+	vmuScreenSettingsShown = true;
+	lightgunSettingsShown = true;
 	LogManager::Shutdown();
+
+	retro_audio_deinit();
 }
 
-static void set_variable_visibility()
+static bool set_variable_visibility(void)
 {
 	struct retro_core_option_display option_display;
 	struct retro_variable var;
+	bool updated = false;
 
-	// Show/hide NAOMI/Atomiswave options
-	option_display.visible = ((settings.platform.system == DC_PLATFORM_NAOMI) ||
-			(settings.platform.system == DC_PLATFORM_ATOMISWAVE));
+	bool platformWasDreamcast = platformIsDreamcast;
+	bool platformWasArcade = platformIsArcade;
 
-	option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	platformIsDreamcast = (settings.platform.system == DC_PLATFORM_DREAMCAST);
+	platformIsArcade = (settings.platform.system == DC_PLATFORM_NAOMI) ||
+			(settings.platform.system == DC_PLATFORM_ATOMISWAVE);
 
-	// Show/hide Dreamcast options
-	option_display.visible = (settings.platform.system == DC_PLATFORM_DREAMCAST);
+	// Show/hide platform-dependent options
+	if (first_run || (platformIsDreamcast != platformWasDreamcast) || (platformIsArcade != platformWasArcade))
+	{
+		// Show/hide NAOMI/Atomiswave options
+		option_display.visible = platformIsArcade;
+		option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	option_display.key = CORE_OPTION_NAME "_boot_to_bios";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_hle_bios";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_cable_type";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_broadcast";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_language";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_force_wince";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_enable_purupuru";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_per_content_vmus";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		// Show/hide Dreamcast options
+		option_display.visible = platformIsDreamcast;
+		option_display.key = CORE_OPTION_NAME "_boot_to_bios";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_hle_bios";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_cable_type";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_broadcast";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_language";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_force_wince";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_enable_purupuru";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_per_content_vmus";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+		vmuScreenSettingsShown = option_display.visible;
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		// Show/hide manual option visibility toggles
+		// > Only show if categories are not supported
+		option_display.visible = platformIsDreamcast && !categoriesSupported;
+		option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+		updated = true;
+	}
+
+	// Show/hide additional manual option visibility toggles
+	// > Only show if categories are not supported
+	if (first_run)
+	{
+		option_display.visible = !categoriesSupported;
+		option_display.key = CORE_OPTION_NAME "_show_lightgun_settings";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
 
 	// Show/hide settings-dependent options
-	option_display.visible = config::ThreadedRendering;
 
-	option_display.key = CORE_OPTION_NAME "_auto_skip_frame";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	// Only for threaded renderer
+	bool threadedRenderingWasEnabled = threadedRenderingEnabled;
+	threadedRenderingEnabled = true;
+	var.key = CORE_OPTION_NAME "_threaded_rendering";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+		threadedRenderingEnabled = false;
 
+	if (first_run || (threadedRenderingEnabled != threadedRenderingWasEnabled))
+	{
+		option_display.visible = threadedRenderingEnabled;
+		option_display.key = CORE_OPTION_NAME "_auto_skip_frame";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
 	// Only for per-pixel renderers
-	option_display.visible = config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT;
-	option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	bool oitWasEnabled = oitEnabled;
+	oitEnabled = false;
+	var.key = CORE_OPTION_NAME "_alpha_sorting";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "per-pixel (accurate)"))
+		oitEnabled = true;
 
+	if (first_run || (oitEnabled != oitWasEnabled))
+	{
+		option_display.visible = oitEnabled;
+		option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+#endif
+
+#if defined(HAVE_TEXUPSCALE)
 	// Only if texture upscaling is enabled
-	option_display.visible = config::TextureUpscale > 1;
-	option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
+	textureUpscaleEnabled = false;
+	var.key = CORE_OPTION_NAME "_texupscale";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "off"))
+		textureUpscaleEnabled = true;
+
+	if (first_run || (textureUpscaleEnabled != textureUpscaleWasEnabled))
+	{
+		option_display.visible = textureUpscaleEnabled;
+		option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+#endif
+
+	// If categories are supported, no further action is required
+	if (categoriesSupported)
+		return updated;
 
 	// Show/hide VMU screen options
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	bool vmuScreenSettingsWereShown = vmuScreenSettingsShown;
+
+	if (platformIsDreamcast)
 	{
-		option_display.visible = true;
+		vmuScreenSettingsShown = true;
 		var.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-			if (!strcmp(var.value, "disabled"))
-				option_display.visible = false;
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+			vmuScreenSettingsShown = false;
 	}
 	else
-		option_display.visible = false;
+		vmuScreenSettingsShown = false;
 
-	for (int i = 0; i < 4; i++)
+	if (first_run || (vmuScreenSettingsShown != vmuScreenSettingsWereShown))
 	{
-		char key[256];
-		option_display.key = key;
+		option_display.visible = vmuScreenSettingsShown;
 
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		updated = true;
 	}
 
 	// Show/hide light gun options
-	option_display.visible = true;
+	bool lightgunSettingsWereShown = lightgunSettingsShown;
+	lightgunSettingsShown = true;
 	var.key = CORE_OPTION_NAME "_show_lightgun_settings";
 
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-		if (!strcmp(var.value, "disabled"))
-			option_display.visible = false;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+		lightgunSettingsShown = false;
 
-	for (int i = 0; i < 4; i++)
+	if (first_run || (lightgunSettingsShown != lightgunSettingsWereShown))
 	{
-		char key[256];
-		option_display.key = key;
+		option_display.visible = lightgunSettingsShown;
 
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_lightgun", i + 1, "_crosshair");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_lightgun", i + 1, "_crosshair");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		updated = true;
 	}
+
+	return updated;
 }
 
 static void setFramebufferSize()
@@ -527,42 +665,46 @@ static void update_variables(bool first_startup)
 		boot_to_bios = false;
 
 	var.key = CORE_OPTION_NAME "_alpha_sorting";
+	var.value = nullptr;
 	RenderType previous_renderer = config::RendererType;
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+	if (var.value != nullptr && !strcmp(var.value, "per-pixel (accurate)"))
 	{
-		if (!strcmp(var.value, "per-strip (fast, least accurate)"))
+		switch (config::RendererType)
 		{
-			if (config::RendererType == RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType != RenderType::Vulkan)
-				config::RendererType = RenderType::OpenGL;
-			config::PerStripSorting = true;
+		case RenderType::Vulkan:
+			config::RendererType = RenderType::Vulkan_OIT;
+			break;
+		case RenderType::DirectX11:
+			config::RendererType = RenderType::DirectX11_OIT;
+			break;
+		case RenderType::OpenGL:
+			config::RendererType = RenderType::OpenGL_OIT;
+			break;
+		default:
+			break;
 		}
-		else if (!strcmp(var.value, "per-triangle (normal)"))
-		{
-			if (config::RendererType == RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType != RenderType::Vulkan)
-				config::RendererType = RenderType::OpenGL;
-			config::PerStripSorting = false;
-		}
-		else if (!strcmp(var.value, "per-pixel (accurate)"))
-		{
-			if (config::RendererType == RenderType::Vulkan)
-				config::RendererType = RenderType::Vulkan_OIT;
-			else if (config::RendererType != RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::OpenGL_OIT;
-			config::PerStripSorting = false;	// Not used
-		}
+		config::PerStripSorting = false;	// Not used
 	}
 	else
 	{
-		if (config::RendererType == RenderType::Vulkan_OIT)
+		switch (config::RendererType)
+		{
+		case RenderType::Vulkan_OIT:
 			config::RendererType = RenderType::Vulkan;
-		else if (config::RendererType != RenderType::Vulkan)
+			break;
+		case RenderType::DirectX11_OIT:
+			config::RendererType = RenderType::DirectX11;
+			break;
+		case RenderType::OpenGL_OIT:
 			config::RendererType = RenderType::OpenGL;
-		config::PerStripSorting = false;
+			break;
+		default:
+			break;
+		}
+		config::PerStripSorting = var.value != nullptr && !strcmp(var.value, "per-strip (fast, least accurate)");
 	}
+
 	if (!first_startup && previous_renderer != config::RendererType) {
 		rend_term_renderer();
 		rend_init_renderer();
@@ -571,7 +713,7 @@ static void update_variables(bool first_startup)
 
 	if (first_startup)
 	{
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
 		var.key = CORE_OPTION_NAME "_oit_abuffer_size";
 		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 		{
@@ -811,7 +953,9 @@ static void update_variables(bool first_startup)
 		if (rotate_game)
 			config::Widescreen.override(false);
 		setFramebufferSize();
-		if (prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
+		if ((prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
+				// TODO crash with dx11
+				&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
 		{
 			retro_system_av_info avinfo;
 			setAVInfo(avinfo);
@@ -842,10 +986,7 @@ void retro_run()
 
 	// On the first call, we start the emulator
 	if (first_run)
-	{
 		emu.start();
-		first_run = false;
-	}
 
 	poll_cb();
 	UpdateInputState();
@@ -853,11 +994,11 @@ void retro_run()
 	if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
 		settings.input.fastForwardMode = fastforward;
 
+	is_dupe = true;
 	try {
 		if (config::ThreadedRendering)
 		{
 			// Render
-			is_dupe = true;
 			for (int i = 0; i < 5 && is_dupe; i++)
 				is_dupe = !emu.render();
 		}
@@ -875,10 +1016,14 @@ void retro_run()
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 
+	if (!config::ThreadedRendering || config::LimitFPS)
+		retro_audio_upload();
+	else
+		retro_audio_flush_buffer();
+
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
-	if (!config::ThreadedRendering)
-		is_dupe = true;
+	first_run = false;
 }
 
 static bool loadGame()
@@ -911,6 +1056,7 @@ void retro_reset()
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
+	retro_audio_flush_buffer();
 
 	emu.start();
 }
@@ -941,14 +1087,11 @@ static void extract_directory(char *buf, const char *path, size_t size)
 	strncpy(buf, path, size - 1);
 	buf[size - 1] = '\0';
 
-	char *base = strrchr(buf, '/');
-	if (!base)
-		base = strrchr(buf, '\\');
-
+	char *base = find_last_slash(buf);
 	if (base)
 		*base = '\0';
 	else
-		buf[0] = '\0';
+		strncpy(buf, ".", size - 1);
 }
 
 static uint32_t map_gamepad_button(unsigned device, unsigned id)
@@ -1343,11 +1486,10 @@ static void set_input_descriptors()
 
 static void extract_basename(char *buf, const char *path, size_t size)
 {
-	const char *base = strrchr(path, slash);
+	const char *base = find_last_slash(path);
 	if (!base)
 		base = path;
-
-	if (*base == slash)
+	else
 		base++;
 
 	strncpy(buf, base, size - 1);
@@ -1411,10 +1553,10 @@ static bool set_vulkan_hw_render()
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE, (void *)&negotiation_interface);
 
-	if (config::RendererType == RenderType::OpenGL)
-		config::RendererType = RenderType::Vulkan;
-	else if (config::RendererType == RenderType::OpenGL_OIT)
+	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::Vulkan_OIT;
+	else if (config::RendererType != RenderType::Vulkan_OIT)
+		config::RendererType = RenderType::Vulkan;
 	return true;
 }
 #else
@@ -1432,11 +1574,6 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.context_reset         = context_reset;
 	params.context_destroy       = context_destroy;
 	params.environ_cb            = environ_cb;
-#ifdef TARGET_NO_STENCIL
-	params.stencil               = false;
-#else
-	params.stencil               = true;
-#endif
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
 #if defined(__APPLE__) && defined(HAVE_OPENGL)
@@ -1465,9 +1602,11 @@ static bool set_opengl_hw_render(u32 preferred)
 	else
 #endif
 	{
+#ifndef HAVE_OPENGLES
 		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
 		params.minor                 = preferred == RETRO_HW_CONTEXT_OPENGL_CORE ? 2 : 0;
+#endif
 		config::RendererType = RenderType::OpenGL;
 	}
 
@@ -1485,6 +1624,59 @@ static bool set_opengl_hw_render(u32 preferred)
 #endif
 	config::RendererType = RenderType::OpenGL;
 	return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
+#else
+	return false;
+#endif
+}
+
+#ifdef HAVE_D3D11
+static void dx11_context_reset()
+{
+	NOTICE_LOG(RENDERER, "DX11 context reset");
+	retro_hw_render_interface_d3d11 *hw_render = nullptr;
+	if (!environ_cb(RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE, &hw_render) || hw_render == nullptr || hw_render->interface_type != RETRO_HW_RENDER_INTERFACE_D3D11)
+		return;
+	if (hw_render->interface_version != RETRO_HW_RENDER_INTERFACE_D3D11_VERSION)
+	{
+		WARN_LOG(RENDERER, "Unsupported interface version %d, expecting %d", hw_render->interface_version, RETRO_HW_RENDER_INTERFACE_D3D11_VERSION);
+		return;
+	}
+	rend_term_renderer();
+	theDX11Context.term();
+
+	theDX11Context.init(hw_render->device, hw_render->context, hw_render->D3DCompile, hw_render->featureLevel);
+	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT)
+		config::RendererType = RenderType::DirectX11_OIT;
+	else if (config::RendererType != RenderType::DirectX11_OIT)
+		config::RendererType = RenderType::DirectX11;
+	rend_init_renderer();
+	rend_resize_renderer();
+}
+
+static void dx11_context_destroy()
+{
+	NOTICE_LOG(RENDERER, "DX11 context destroyed");
+	rend_term_renderer();
+	theDX11Context.term();
+}
+#endif
+
+static bool set_dx11_hw_render()
+{
+#ifdef HAVE_D3D11
+	retro_hw_render_callback hw_render_{};
+	hw_render_.context_type = RETRO_HW_CONTEXT_DIRECT3D;
+	hw_render_.version_major = 11;
+	hw_render_.version_minor = 0;
+	hw_render_.context_reset = dx11_context_reset;
+	hw_render_.context_destroy = dx11_context_destroy;
+
+	if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render_))
+	{
+		WARN_LOG(RENDERER, "DX11 hardware rendering not available");
+		return false;
+	}
+	return true;
 #else
 	return false;
 #endif
@@ -1567,8 +1759,6 @@ bool retro_load_game(const struct retro_game_info *game)
 			}
 		}
 	}
-	// System may have changed - have to update hidden core options
-	set_variable_visibility();
 
 	if (game->path[0] == '\0')
 	{
@@ -1637,10 +1827,16 @@ bool retro_load_game(const struct retro_game_info *game)
 	{
 		foundRenderApi = set_vulkan_hw_render();
 	}
+	else if (preferred == RETRO_HW_CONTEXT_DIRECT3D)
+	{
+		foundRenderApi = set_dx11_hw_render();
+	}
 	else
 	{
 		// fallback when not supported (or auto-switching disabled), let's try all supported drivers
-		foundRenderApi = set_vulkan_hw_render();
+		foundRenderApi = set_dx11_hw_render();
+		if (!foundRenderApi)
+			foundRenderApi = set_vulkan_hw_render();
 #if defined(HAVE_OPENGLES)
 		if (!foundRenderApi)
 			foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGLES3);
@@ -1694,6 +1890,9 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (devices_need_refresh)
 		refresh_devices(true);
 
+	// System may have changed - have to update hidden core options
+	set_variable_visibility();
+
 	return true;
 }
 
@@ -1705,9 +1904,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	frontend_clear_thread_waits_cb(1, nullptr);
 	emu.stop();
-	frontend_clear_thread_waits_cb(0, nullptr);
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
@@ -1770,6 +1967,7 @@ bool retro_unserialize(const void * data, size_t size)
 	try {
 		Deserializer deser(data, size);
 		dc_loadstate(deser);
+	    retro_audio_flush_buffer();
 		emu.start();
 
 		return true;

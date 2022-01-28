@@ -61,7 +61,7 @@ static void loadSpecialSettings()
 				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(0.1); // taxi 2 needs 0.01 for FMV (amd, per-tri)
+			config::ExtraDepthScale.override(0.1f); // taxi 2 needs 0.01 for FMV (amd, per-tri)
 			config::FullMMU.override(true);
 			if (!config::ForceWindowsCE)
 				config::ForceWindowsCE.override(true);
@@ -124,6 +124,12 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e26f);
+		}
+		// Test Drive V-Rally
+		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(0.1f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));

@@ -44,10 +44,10 @@ public:
 	vk::Device GetDevice() const { return device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	size_t GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
+	u32 GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
 	int GetCurrentImageIndex() const { return retro_render_if->get_sync_index(retro_render_if->handle); }
-	// FIXME that's not quite correct
-	void WaitIdle() const { retro_render_if->wait_sync_index(retro_render_if->handle); }
+
+	void WaitIdle() const { queue.waitIdle(); }
 	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
 		retro_render_if->lock_queue(retro_render_if->handle);
 		queue.submit(vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers, 0, nullptr), fence);
@@ -87,6 +87,15 @@ public:
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
+
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
 	VMAllocator allocator;

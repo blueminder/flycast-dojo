@@ -37,7 +37,7 @@
 #endif
 
 #ifdef USE_BREAKPAD
-#include "client/linux/handler/exception_handler.h"
+#include "breakpad/client/linux/handler/exception_handler.h"
 #endif
 
 void os_SetupInput()
@@ -267,6 +267,10 @@ std::vector<std::string> find_system_config_dirs()
 	}
 	else
 	{
+#ifdef FLYCAST_SYSCONFDIR
+		const std::string config_dir (FLYCAST_SYSCONFDIR);
+		dirs.push_back(config_dir);
+#endif
 		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/flycast/");
 	}
@@ -326,6 +330,10 @@ std::vector<std::string> find_system_data_dirs()
 	}
 	else
 	{
+#ifdef FLYCAST_DATADIR
+		const std::string data_dir (FLYCAST_DATADIR);
+		dirs.push_back(data_dir);
+#endif
 		dirs.push_back("/usr/local/share/flycast/");
 		dirs.push_back("/usr/share/flycast/");
 		dirs.push_back("/usr/local/share/reicast/");

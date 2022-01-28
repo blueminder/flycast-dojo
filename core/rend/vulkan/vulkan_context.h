@@ -28,15 +28,6 @@ public:
 	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
 };
 
-#define VENDOR_AMD 0x1022
-// AMD GPU products use the ATI vendor Id
-#define VENDOR_ATI 0x1002
-#define VENDOR_ARM 0x13B5
-#define VENDOR_INTEL 0x8086
-#define VENDOR_NVIDIA 0x10DE
-#define VENDOR_QUALCOMM 0x5143
-#define VENDOR_MESA 0x10005
-
 #ifdef LIBRETRO
 #include "vk_context_lr.h"
 #else
@@ -49,14 +40,15 @@ public:
 #include "wsi/context.h"
 
 struct ImDrawData;
+struct TextureCache;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class VulkanContext : public GraphicsContext
 {
 public:
-	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
+	VulkanContext();
+	~VulkanContext();
 
 	bool init();
 	void term() override;
@@ -79,7 +71,7 @@ public:
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { (u32)settings.display.width, (u32)settings.display.height }; }
-	size_t GetSwapChainSize() const { return imageViews.size(); }
+	u32 GetSwapChainSize() const { return (u32)imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;
 	bool IsRendering() const { return rendering; }
@@ -132,6 +124,14 @@ public:
 		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
 	}
 #endif
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
 	void CreateSwapChain();
@@ -211,6 +211,8 @@ private:
 	vk::Extent2D lastFrameExtent;
 
 	std::unique_ptr<VulkanOverlay> overlay;
+	// only used to delay the destruction of overlay textures
+	std::unique_ptr<TextureCache> textureCache;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
