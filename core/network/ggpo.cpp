@@ -825,27 +825,46 @@ void displayStats()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(95 * scaling, 0));
-	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * scaling), ImGui::GetIO().DisplaySize.y - 40));
+	ImGui::SetNextWindowSize(ImVec2(590 * scaling, 0));
+	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-
-	// Send Queue
-	ImGui::Text("Send Q");
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * scaling), "");
 
 	// Frame Delay
 	ImGui::Text("Delay");
 	std::string delay = std::to_string(config::GGPODelay.get());
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+	ImGui::SameLine();
+	//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
 	ImGui::Text("%s", delay.c_str());
+	ImGui::PopStyleColor();
+
+	ImGui::SameLine();
+	ImGui::Dummy(ImVec2(10.0f, 0.0f));
+	ImGui::SameLine();
 
 	// Ping
 	ImGui::Text("Ping");
 	std::string ping = std::to_string(stats.network.ping);
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+	ImGui::SameLine();
+	//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
 	ImGui::Text("%s", ping.c_str());
+	ImGui::PopStyleColor();
+
+	ImGui::SameLine();
+	ImGui::Dummy(ImVec2(10.0f, 0.0f));
+	ImGui::SameLine();
+
+	// Send Queue
+	ImGui::Text("Send Q");
+	ImGui::SameLine();
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+
+	ImGui::SameLine();
+	ImGui::Dummy(ImVec2(10.0f, 0.0f));
+	ImGui::SameLine();
 
 	// Predicted Frames
 	if (stats.sync.predicted_frames >= 7)
@@ -855,16 +874,21 @@ void displayStats()
 		// yellow
 	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
 	ImGui::Text("Predicted");
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * scaling), "");
+	ImGui::SameLine();
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * scaling, 10.f * scaling), "");
 	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
+	ImGui::SameLine();
+	ImGui::Dummy(ImVec2(10.0f, 0.0f));
+	ImGui::SameLine();
 	// Frames behind
 	int timesync = timesyncOccurred;
 	if (timesync > 0)
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
 	ImGui::Text("Behind");
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * scaling), "");
+	ImGui::SameLine();
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * scaling, 10.f * scaling), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();
