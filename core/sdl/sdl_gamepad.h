@@ -130,6 +130,7 @@ public:
 			map_button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, DC_DPAD_DOWN);
 			map_button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, DC_DPAD_LEFT);
 			map_button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, DC_DPAD_RIGHT);
+			map_button(SDL_CONTROLLER_BUTTON_GUIDE, DC_DPAD2_UP); // service
 			map_button(SDL_CONTROLLER_BUTTON_BACK, EMU_BTN_MENU);
 
 			map_axis(SDL_CONTROLLER_AXIS_LEFTX, DC_AXIS_LEFT, false);
@@ -174,12 +175,12 @@ public:
 			input_mapper = std::make_shared<DefaultInputMapping<>>(sdl_controller);
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
-		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
-		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
-		{
-			SDL_HapticClose(sdl_haptic);
-			sdl_haptic = NULL;
-		}
+
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+		sdl_has_rumble = SDL_JoystickHasRumble(sdl_joystick);
+#else
+		sdl_has_rumble = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
+#endif
 	}
 
 	bool gamepad_axis_input(u32 code, int value) override
@@ -191,17 +192,17 @@ public:
 
 	void rumble(float power, float inclination, u32 duration_ms) override
 	{
-		if (sdl_haptic != NULL)
+		if (sdl_has_rumble)
 		{
 			vib_inclination = inclination * power;
 			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
-			SDL_HapticRumblePlay(sdl_haptic, power, duration_ms);
+			SDL_JoystickRumble(sdl_joystick, (Uint16)(power * 65535), (Uint16)(power * 65535), duration_ms);
 		}
 	}
 	void update_rumble() override
 	{
-		if (sdl_haptic == NULL)
+		if (!sdl_has_rumble)
 			return;
 		if (vib_inclination > 0)
 		{
@@ -209,15 +210,13 @@ public:
 			if (rem_time <= 0)
 				vib_inclination = 0;
 			else
-				SDL_HapticRumblePlay(sdl_haptic, vib_inclination * rem_time, rem_time);
+				SDL_JoystickRumble(sdl_joystick, (Uint16)(vib_inclination * rem_time * 65535), (Uint16)(vib_inclination * rem_time * 65535), rem_time);
 		}
 	}
 
 	void close()
 	{
 		INFO_LOG(INPUT, "SDL: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
-		if (sdl_haptic != nullptr)
-			SDL_HapticClose(sdl_haptic);
 		if (sdl_controller != nullptr)
 			SDL_GameControllerClose(sdl_controller);
 		SDL_JoystickClose(sdl_joystick);
@@ -372,7 +371,7 @@ public:
 private:
 	SDL_Joystick* sdl_joystick;
 	SDL_JoystickID sdl_joystick_instance;
-	SDL_Haptic *sdl_haptic;
+    bool sdl_has_rumble = false;
 	float vib_inclination = 0;
 	double vib_stop_time = 0;
 	SDL_GameController *sdl_controller = nullptr;

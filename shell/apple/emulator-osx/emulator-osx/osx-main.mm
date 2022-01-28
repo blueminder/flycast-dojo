@@ -92,6 +92,15 @@ extern "C" int SDL_main(int argc, char *argv[])
             config_dir = std::string(home) + "/.flycast/";
 		if (!file_exists(config_dir))
 			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
+
+        /* Different config folder for multiple instances */
+        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
+		if (instanceNumber > 1)
+		{
+			config_dir += std::to_string(instanceNumber) + "/";
+			[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+		}
+
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         add_system_data_dir(config_dir);
@@ -112,55 +121,6 @@ extern "C" int SDL_main(int argc, char *argv[])
         add_system_data_dir(std::string(path) + "/");
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
-
-    // Calculate screen DPI
-    /*
-    NSScreen *screen = [NSScreen mainScreen];
-    NSDictionary *description = [screen deviceDescription];
-    CGDirectDisplayID displayID = [[description objectForKey:@"NSScreenNumber"] unsignedIntValue];
-	CGSize displayPhysicalSize = CGDisplayScreenSize(displayID);
-
-	//Neither CGDisplayScreenSize(description's NSScreenNumber) nor [NSScreen backingScaleFactor] can calculate the correct dpi in macOS. E.g. backingScaleFactor is always 2 in all display modes for rMBP 16"
-	NSSize displayNativeSize;
-	CFStringRef dmKeys[1] = { kCGDisplayShowDuplicateLowResolutionModes };
-	CFBooleanRef dmValues[1] = { kCFBooleanTrue };
-	CFDictionaryRef dmOptions = CFDictionaryCreate(kCFAllocatorDefault, (const void**) dmKeys, (const void**) dmValues, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
-	CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, dmOptions);
-	CFIndex n = CFArrayGetCount(allDisplayModes);
-	for (CFIndex i = 0; i < n; ++i)
-	{
-		CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
-		CGFloat width = CGDisplayModeGetPixelWidth(m);
-		CGFloat height = CGDisplayModeGetPixelHeight(m);
-		CGFloat modeWidth = CGDisplayModeGetWidth(m);
-
-		//Only check 1x mode
-		if (width == modeWidth)
-		{
-			if (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
-			{
-				displayNativeSize.width = width;
-				displayNativeSize.height = height;
-				break;
-			}
-			//Get the largest size even if kDisplayModeNativeFlag is not present e.g. iMac 27-Inch with 5K Retina
-			if (width > displayNativeSize.width)
-			{
-				displayNativeSize.width = width;
-				displayNativeSize.height = height;
-			}
-		}
-
-	}
-	CFRelease(allDisplayModes);
-	CFRelease(dmOptions);
-
-	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
-	NSSize displayResolution;
-	displayResolution.width = CGDisplayPixelsWide(displayID);
-	displayResolution.height = CGDisplayPixelsHigh(displayID);
-	scaling = displayNativeSize.width / displayResolution.width;
-	*/
 
 	emu_flycast_init();
 

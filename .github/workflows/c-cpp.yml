@@ -147,10 +147,8 @@ jobs:
 
       - name: Package app (macos)
         run: |
-          cd build/artifact
-          rm -rf Flycast.swiftmodule
-          zip -r flycast.app.zip Flycast.app
-          rm -rf Flycast.app
+          cd artifact/bin
+          zip -rm flycast.app.zip Flycast.app
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (linux)
