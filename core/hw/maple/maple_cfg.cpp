@@ -72,7 +72,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
 	const MapleInputState& inputState = mapleInputState[playerNum()];
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		pjs->kcode = inputState.kcode;
 		pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
@@ -80,7 +80,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
 		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
 	}
-	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.isAtomiswave())
 	{
 #ifdef LIBRETRO
 		pjs->kcode = inputState.kcode;
@@ -354,6 +354,7 @@ void mcfg_CreateDevices()
 		createDreamcastDevices();
 		break;
 	case DC_PLATFORM_NAOMI:
+	case DC_PLATFORM_NAOMI2:
 		createNaomiDevices();
 		break;
 	case DC_PLATFORM_ATOMISWAVE:

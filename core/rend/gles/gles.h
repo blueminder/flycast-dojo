@@ -1,6 +1,7 @@
 #pragma once
 #include "hw/pvr/ta_structs.h"
 #include "hw/pvr/ta_ctx.h"
+#include "hw/pvr/elan_struct.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
@@ -27,6 +28,8 @@
 #define VERTEX_COL_BASE1_ARRAY 4
 #define VERTEX_COL_OFFS1_ARRAY 5
 #define VERTEX_UV1_ARRAY 6
+// Naomi2
+#define VERTEX_NORM_ARRAY 7
 
 //vertex types
 extern u32 gcflip;
@@ -47,8 +50,40 @@ struct PipelineShader
 	GLint sp_FOG_DENSITY;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
-	GLint normal_matrix;
+	GLint ndcMat;
 	GLint palette_index;
+	// Naomi2
+	GLint mvMat;
+	GLint normalMat;
+	GLint projMat;
+	GLint glossCoef0;
+	GLint lightCount;
+	GLint ambientBase;
+	GLint ambientOffset;
+	GLint ambientMaterial;
+	GLint useBaseOver;
+	GLint envMapping;
+	GLint bumpMapping;
+	struct {
+		GLint color;
+		GLint direction;
+		GLint position;
+		GLint parallel;
+		GLint diffuse;
+		GLint specular;
+		GLint routing;
+		GLint dmode;
+		GLint smode;
+		GLint distAttnMode;
+		GLint attnDistA;
+		GLint attnDistB;
+		GLint attnAngleA;
+		GLint attnAngleB;
+	} lights[elan::MAX_LIGHTS];
+	float *lastMvMat;
+	float *lastNormalMat;
+	float *lastProjMat;
+	N2LightModel *lastLightModel;
 
 	//
 	bool cp_AlphaTest;
@@ -64,6 +99,7 @@ struct PipelineShader
 	bool fog_clamping;
 	bool trilinear;
 	bool palette;
+	bool naomi2;
 };
 
 
@@ -75,9 +111,20 @@ struct gl_ctx
 
 		GLint depth_scale;
 		GLint sp_ShaderColor;
-		GLint normal_matrix;
-
+		GLint ndcMat;
 	} modvol_shader;
+
+	struct
+	{
+		GLuint program;
+
+		GLint depth_scale;
+		GLint sp_ShaderColor;
+		GLint ndcMat;
+
+		GLint mvMat;
+		GLint projMat;
+	} n2ModVolShader;
 
 	std::unordered_map<u32, PipelineShader> shaders;
 
@@ -157,7 +204,7 @@ void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_sca
 void GetFramebufferSize(float& dc_width, float& dc_height);
 void SetupMatrices(float dc_width, float dc_height,
 				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
-				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
+				   float &ds2s_offs_x, glm::mat4& ndcMat, glm::mat4& scissor_mat);
 
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
@@ -175,11 +222,12 @@ void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette);
+		bool palette, bool naomi2);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, const char *geometryShader = nullptr);
 bool CompilePipelineShader(PipelineShader* s);
+extern const char* GouraudSource;
 
 extern struct ShaderUniforms_t
 {
@@ -191,7 +239,7 @@ extern struct ShaderUniforms_t
 	float trilinear_alpha;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
-	glm::mat4 normal_mat;
+	glm::mat4 ndcMat;
 	struct {
 		bool enabled;
 		int x;
@@ -223,8 +271,8 @@ extern struct ShaderUniforms_t
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 
-		if (s->normal_matrix != -1)
-			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+		if (s->ndcMat != -1)
+			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1i(s->palette_index, palette_index);

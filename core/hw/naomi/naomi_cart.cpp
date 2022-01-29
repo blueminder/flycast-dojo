@@ -150,7 +150,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	if (config::GGPOEnable)
 		md5.getDigest(settings.network.md5.bios);
 
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isAtomiswave())
 		// Reload the writeable portion of the FlashROM
 		sys_rom->Reload();
 
@@ -586,6 +586,8 @@ int naomi_cart_GetPlatform(const char *path)
 		return DC_PLATFORM_NAOMI;
 	else if (game->cart_type == AW)
 		return DC_PLATFORM_ATOMISWAVE;
+	else if (game->bios != nullptr && !strcmp("naomi2", game->bios))
+		return DC_PLATFORM_NAOMI2;
 	else
 		return DC_PLATFORM_NAOMI;
 }
