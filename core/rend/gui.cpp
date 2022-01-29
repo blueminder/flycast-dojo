@@ -3759,7 +3759,8 @@ void download_save_popup()
 	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		ImGui::Text(dojo_file.status_text.data());
-		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended)
+		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
+			|| dojo_file.status_text.find("not found") != std::string::npos)
 		{
 			dojo_file.start_save_download = false;
 			dojo_file.save_download_started = false;
