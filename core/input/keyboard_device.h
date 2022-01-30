@@ -56,6 +56,7 @@ public:
 		set_button(EMU_BTN_SWITCH_PLAYER, 64);	// F7
 		set_button(EMU_BTN_QUICK_SAVE, 65);			// F8
 		set_button(EMU_BTN_JUMP_STATE, 66);			// F9
+		set_button(EMU_BTN_PLAY_RND, 67);			// F10
 
 		set_button(EMU_BTN_STEP, 55);			// .
 

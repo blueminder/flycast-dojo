@@ -56,6 +56,7 @@ button_list[] =
 	{ EMU_BTN_PLAY_1, "emulator", "btn_play_1_" },
 	{ EMU_BTN_RECORD_2, "emulator", "btn_record_2_" },
 	{ EMU_BTN_PLAY_2, "emulator", "btn_play_2_" },
+	{ EMU_BTN_PLAY_RND, "emulator", "btn_play_rnd_" },
 	{ EMU_BTN_SWITCH_PLAYER, "emulator", "btn_switch_player" },
 	{ EMU_BTN_STEP, "emulator", "btn_step" },
 	{ DC_AXIS_LT, "compat", "btn_trigger_left" },
