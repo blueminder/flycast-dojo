@@ -5,6 +5,7 @@
     "angle",
     "sdl2",
     "zlib",
-    "asio"
+    "asio",
+    "openssl"
   ]
 }
