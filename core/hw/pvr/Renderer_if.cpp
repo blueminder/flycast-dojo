@@ -195,8 +195,22 @@ void rend_start_render(TA_context *ctx)
 	pend_rend = false;
 	if (ctx == nullptr)
 	{
-		u32 ta_ol_base = getTAContextAddress();
-		ctx = tactx_Pop(ta_ol_base);
+		u32 addresses[MAX_PASSES];
+		int count = getTAContextAddresses(addresses);
+		if (count > 0)
+		{
+			ctx = tactx_Pop(addresses[0]);
+			if (ctx != nullptr)
+			{
+				TA_context *linkedCtx = ctx;
+				for (int i = 1; i < count; i++)
+				{
+					linkedCtx->nextContext = tactx_Pop(addresses[i]);
+					if (linkedCtx->nextContext != nullptr)
+						linkedCtx = linkedCtx->nextContext;
+				}
+			}
+		}
 	}
 
 	// No end of render interrupt when rendering the framebuffer
@@ -229,7 +243,7 @@ void rend_start_render(TA_context *ctx)
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 		}
 
-		if (!config::DelayFrameSwapping)
+		if (!config::DelayFrameSwapping && !ctx->rend.isRTT)
 			ggpo::endOfFrame();
 		palette_update();
 		if (QueueRender(ctx))
@@ -254,11 +268,10 @@ void rend_vblank()
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
 		DEBUG_LOG(PVR, "Direct framebuffer write detected");
-		TA_context ctx;
-		ctx.Alloc();
-		ctx.rend.isRenderFramebuffer = true;
-		rend_start_render(&ctx);
-		ctx.Free();
+		TA_context *ctx = new TA_context();
+		ctx->Alloc();
+		ctx->rend.isRenderFramebuffer = true;
+		rend_start_render(ctx);
 		fb_dirty = false;
 	}
 	render_called = false;

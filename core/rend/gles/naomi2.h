@@ -27,7 +27,7 @@
 class N2VertexSource : public OpenGlSource
 {
 public:
-	N2VertexSource(bool gouraud, bool geometryOnly = false);
+	N2VertexSource(bool gouraud, bool geometryOnly, bool texture);
 };
 
 class N2GeometryShader : public OpenGlSource
@@ -53,6 +53,10 @@ void initN2Uniforms(ShaderType *shader)
 	shader->glossCoef0 = glGetUniformLocation(shader->program, "glossCoef0");
 	shader->envMapping = glGetUniformLocation(shader->program, "envMapping");
 	shader->bumpMapping = glGetUniformLocation(shader->program, "bumpMapping");
+	shader->constantColor = glGetUniformLocation(shader->program, "constantColor");
+	shader->modelDiffuse = glGetUniformLocation(shader->program, "modelDiffuse");
+	shader->modelSpecular = glGetUniformLocation(shader->program, "modelSpecular");
+
 	// Lights
 	shader->lightCount = glGetUniformLocation(shader->program, "lightCount");
 	shader->ambientBase = glGetUniformLocation(shader->program, "ambientBase");
@@ -113,8 +117,11 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, pp->projMatrix);
 	}
 	glUniform1f(shader->glossCoef0, pp->glossCoef0);
+	glUniform1i(shader->constantColor, (int)pp->constantColor);
+	glUniform1i(shader->modelDiffuse, (int)pp->diffuseColor);
+	glUniform1i(shader->modelSpecular, (int)pp->specularColor);
 
-	N2LightModel *const lightModel = pp->lightModel;
+	const N2LightModel *const lightModel = pp->lightModel;
 	if (lightModel != shader->lastLightModel)
 	{
 		shader->lastLightModel = lightModel;

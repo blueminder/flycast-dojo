@@ -161,8 +161,8 @@ struct GMP : public ElanBase
 		struct {
 			u32 d0:1; // diffuse
 			u32 s0:1; // specular
-			u32 a0:1; // ambient? alpha?
-			u32 f0:1; // fog
+			u32 a0:1; // alpha?
+			u32 f0:1; // fog?
 
 			u32 d1:1;
 			u32 s1:1;
@@ -170,7 +170,7 @@ struct GMP : public ElanBase
 			u32 f1:1;
 
 			u32 vol1UsesVol0UV:1;
-			u32 b0:1; // bump mapping?? TODO check
+			u32 b0:1; // constant color
 			u32 b1:1;
 			u32 e0:1; // environmental mapping
 			u32 e1:1;
@@ -191,6 +191,7 @@ struct GMP : public ElanBase
 	// 11110 1111 1111 (everything! except v1uv0, rt66, vtx type2 (vtx only))
 	// 00110 0000 0000 (b0 and b1, vf4)
 	// 00000 1010 1010 specular and fog? soul surfer
+	// 00010 0010 0010 b0, s0 s1 (initd, headlights)
 
 	u32 diffuse0;
 	u32 specular0;
@@ -330,13 +331,10 @@ struct ICHList : public ElanBase
 	enum {
 		VTX_TYPE_V		= 0x00000002,
 		VTX_TYPE_VU		= 0x0000000A,
-		VTX_TYPE_VU1	= 0x0000001A, // TODO correct?
 		VTX_TYPE_VNU	= 0x0000000E,
 		VTX_TYPE_VR     = 0X00000042,
 		VTX_TYPE_VUR	= 0x0000004A,
-		VTX_TYPE_VUR1	= 0x000000CA, // TODO correct?
 		VTX_TYPE_VUB	= 0x0000010A,
-		VTX_TYPE_VUB1	= 0x0000030A,  // TODO correct?
 	};
 
 	// 08000700

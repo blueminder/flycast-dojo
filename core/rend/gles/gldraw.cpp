@@ -561,8 +561,8 @@ void DrawModVols(int first, int count)
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
 	int mod_base = -1;
-	float *curMVMat = nullptr;
-	float *curProjMat = nullptr;
+	const float *curMVMat = nullptr;
+	const float *curProjMat = nullptr;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
