@@ -678,6 +678,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
+        core/hw/pvr/elan.cpp
+        core/hw/pvr/elan.h
+        core/hw/pvr/elan_struct.h
         core/hw/pvr/helper_classes.h
         core/hw/pvr/pvr.cpp
         core/hw/pvr/pvr.h
@@ -945,7 +948,9 @@ if(USE_OPENGL)
 	        core/rend/gles/gltex.cpp
 	        core/rend/gles/quad.cpp
 	        core/rend/gles/postprocess.cpp
-	        core/rend/gles/postprocess.h)
+	        core/rend/gles/postprocess.h
+	        core/rend/gles/naomi2.cpp
+	        core/rend/gles/naomi2.h)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
@@ -960,7 +965,9 @@ if(USE_OPENGL)
 	            core/rend/gl4/abuffer.cpp
 	            core/rend/gl4/gl4.h
 	            core/rend/gl4/gldraw.cpp
-	            core/rend/gl4/gles.cpp)
+	            core/rend/gl4/gles.cpp
+	        	core/rend/gl4/gl4naomi2.cpp
+	        	core/rend/gl4/gl4naomi2.h)
 	endif()
 endif()
 

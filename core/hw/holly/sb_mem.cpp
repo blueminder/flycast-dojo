@@ -32,6 +32,8 @@ static std::string getRomPrefix()
 		return "dc_";
 	case DC_PLATFORM_NAOMI:
 		return "naomi_";
+	case DC_PLATFORM_NAOMI2:
+		return "naomi2_";
 	case DC_PLATFORM_ATOMISWAVE:
 		return "aw_";
 	default:
@@ -108,7 +110,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 
 static void fixUpDCFlash()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
 
@@ -173,7 +175,7 @@ static bool nvmem_load()
 	bool rc;
 	if (config::DojoEnable)
 	{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin.net", "nvram");
 		else
 			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem.net");
@@ -183,7 +185,7 @@ static bool nvmem_load()
 		if (config::GGPOEnable)
 			sys_nvmem->digest(settings.network.md5.nvmem);
 	
-		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		if (settings.platform.isAtomiswave())
 		{
 			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2.net");
 			if (config::GGPOEnable)
@@ -192,7 +194,7 @@ static bool nvmem_load()
 	}
 	else
 	{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 		else
 			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
@@ -202,7 +204,7 @@ static bool nvmem_load()
 		if (config::GGPOEnable)
 			sys_nvmem->digest(settings.network.md5.nvmem);
 	
-		if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		if (settings.platform.isAtomiswave())
 		{
 			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
 			if (config::GGPOEnable)
@@ -227,11 +229,11 @@ bool LoadRomFiles()
 		std::string dc_exceptions[] = { "T0019M", "T-31101N" };
 		bool real_boot = std::find(std::begin(dc_exceptions), std::end(dc_exceptions), prod_id) != std::end(dc_exceptions);
 
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 		{
 			// ignore official dc bios for netplay
 			// keeps boot times consistent between players
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !real_boot)
+			if (settings.platform.isConsole() && !real_boot)
 				return false;
 			else if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 			{
@@ -246,11 +248,11 @@ bool LoadRomFiles()
 	else
 	{
 		// default flycast logic
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 		{
 			if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 				bios_loaded = true;
-			else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			else if (settings.platform.isConsole())
 				return false;
 		}
 
@@ -260,11 +262,11 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
 		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isAtomiswave())
 		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
 }
 
@@ -308,12 +310,16 @@ static void WriteAWBios(u32 addr, u32 data, u32 sz)
 //0x00800000- 0x00FFFFFF	:AICA- Wave Memory
 //0x01000000- 0x01FFFFFF	:Ext. Device
 //0x02000000- 0x03FFFFFF*	:Image Area*	2MB
+// Naomi 2:
+//0x025F6800- 0x025F69FF    :PVR#2 system registers
+//0x025F7C00- 0x025F7CFF	:PVR#2 PVR i/f Control Reg.
+//0x025F8000- 0x025F9FFF	:PVR#2 TA / PVR Core Reg.
 
 template<typename T, u32 System, bool Mirror>
-T DYNACALL ReadMem_area0(u32 addr)
+T DYNACALL ReadMem_area0(u32 paddr)
 {
 	constexpr u32 sz = (u32)sizeof(T);
-	addr &= 0x01FFFFFF;
+	u32 addr = paddr & 0x01FFFFFF;
 	const u32 base = addr >> 21;
 
 	switch (expected(base, 2))
@@ -353,14 +359,14 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-			return (T)sb_ReadMem(addr, sz);
+			return (T)sb_ReadMem(paddr, sz);
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
 			if (sz != 4)
 				// House of the Dead 2
 				return 0;
-			return (T)pvr_ReadReg(addr);
+			return (T)pvr_ReadReg(paddr);
 		}
 		break;
 	case 3:
@@ -396,7 +402,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI)
+		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
 			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
 		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
@@ -408,10 +414,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 }
 
 template<typename T, u32 System, bool Mirror>
-void DYNACALL WriteMem_area0(u32 addr, T data)
+void DYNACALL WriteMem_area0(u32 paddr, T data)
 {
 	constexpr u32 sz = (u32)sizeof(T);
-	addr &= 0x01FFFFFF;//to get rid of non needed bits
+	u32 addr = paddr & 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base = addr >> 21;
 
@@ -460,14 +466,14 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
 		{
-			sb_WriteMem(addr, data, sz);
+			sb_WriteMem(paddr, data, sz);
 			return;
 		}
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
 			verify(sz == 4);
-			pvr_WriteReg(addr, data);
+			pvr_WriteReg(paddr, data);
 			return;
 		}
 		break;
@@ -509,7 +515,7 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI)
+		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
 			libExtDevice_WriteMem_A0_010(addr, data, sz);
 		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
@@ -547,6 +553,7 @@ void sh4_area0_Reset(bool hard)
 			reios_set_flash(sys_nvmem);
 			break;
 		case DC_PLATFORM_NAOMI:
+		case DC_PLATFORM_NAOMI2:
 			sys_rom = new RomChip(settings.platform.bios_size);
 			sys_nvmem = new SRamChip(settings.platform.flash_size);
 			break;
@@ -600,6 +607,10 @@ void map_area0_init()
 	case DC_PLATFORM_NAOMI:
 		area0_handler = registerHandler(DC_PLATFORM_NAOMI, false);
 		area0_mirror_handler = registerHandler(DC_PLATFORM_NAOMI, true);
+		break;
+	case DC_PLATFORM_NAOMI2:
+		area0_handler = registerHandler(DC_PLATFORM_NAOMI2, false);
+		area0_mirror_handler = registerHandler(DC_PLATFORM_NAOMI2, true);
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		area0_handler = registerHandler(DC_PLATFORM_ATOMISWAVE, false);

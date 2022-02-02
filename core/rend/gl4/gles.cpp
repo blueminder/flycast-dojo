@@ -21,6 +21,7 @@
 #include "rend/transform_matrix.h"
 #include "rend/osd.h"
 #include "glsl.h"
+#include "gl4naomi2.h"
 
 //Fragment and vertex shaders code
 
@@ -58,7 +59,7 @@ static const char* VertexShaderSource = R"(
 #endif
 
 // Uniforms 
-uniform mat4 normal_matrix;
+uniform mat4 ndcMat;
 
 // Input
 in vec4 in_pos;
@@ -79,7 +80,7 @@ noperspective out vec2 vtx_uv1;
 
 void main()
 {
-	vec4 vpos = normal_matrix * in_pos;
+	vec4 vpos = ndcMat * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
@@ -461,13 +462,23 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */, const char *vertex_source /* = nullptr */)
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */,
+		const char *vertex_source /* = nullptr */, const char *geom_source /* = nullptr */)
 {
-	Vertex4Source vertexSource(s->pp_Gouraud);
+	std::string vertexSource;
+	std::string geometrySource;
+	if (s->naomi2)
+	{
+		vertexSource = N2Vertex4Source(s->pp_Gouraud).generate();
+		geometrySource = N2Geometry4Shader(s->pp_Gouraud).generate();
+	}
+	else
+		vertexSource = Vertex4Source(s->pp_Gouraud).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
-	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.generate().c_str(),
-			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str());
+	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
+			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str(),
+			geometrySource.empty() ? nullptr : geometrySource.c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex0");
@@ -517,7 +528,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
-	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
 
 	// Shadow stencil for OP/PT rendering pass
 	gu = glGetUniformLocation(s->program, "shadow_stencil");
@@ -537,6 +548,9 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
+	if (s->naomi2)
+		initN2Uniforms(s);
+
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
@@ -550,6 +564,8 @@ static void gl4_delete_shaders()
 	gl4.shaders.clear();
 	glcache.DeleteProgram(gl4.modvol_shader.program);
 	gl4.modvol_shader.program = 0;
+	glcache.DeleteProgram(gl4.n2ModVolShader.program);
+	gl4.n2ModVolShader.program = 0;
 }
 
 static void gl4_term()
@@ -575,7 +591,15 @@ static void create_modvol_shader()
 		.addSource(ModifierVolumeShader);
 
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
-	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
+
+	N2Vertex4Source n2VertexShader(false, true);
+	N2Geometry4Shader geometryShader(false, true);
+	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str(),
+			geometryShader.generate().c_str());
+	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");
+	gl4.n2ModVolShader.mvMat = glGetUniformLocation(gl4.n2ModVolShader.program, "mvMat");
+	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
 
 static bool gl_create_resources()
@@ -691,7 +715,7 @@ static bool RenderFrame(int width, int height)
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
-	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
@@ -734,9 +758,16 @@ static bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
 	pvrrc.fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
 	
-	glcache.UseProgram(gl4.modvol_shader.program);
+	if (config::Fog)
+	{
+		glcache.UseProgram(gl4.modvol_shader.program);
+		glUniformMatrix4fv(gl4.modvol_shader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
 
-	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+		glcache.UseProgram(gl4.n2ModVolShader.program);
+		glUniformMatrix4fv(gl4.n2ModVolShader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
+	}
+	for (auto& it : gl4.shaders)
+		resetN2UniformCache(&it.second);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -969,7 +1000,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		void gl4DrawVmuTexture(u8 vmu_screen_number);
 		void gl4DrawGunCrosshair(u8 port);
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if (vmu_lcd_status[vmu_screen_number * 2])

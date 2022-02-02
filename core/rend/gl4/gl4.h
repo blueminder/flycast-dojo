@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "rend/gles/gles.h"
+#include "hw/pvr/elan_struct.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -42,8 +43,40 @@ struct gl4PipelineShader
 	GLint fog_control;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
-	GLint normal_matrix;
+	GLint ndcMat;
 	GLint palette_index;
+	// Naomi2
+	GLint mvMat;
+	GLint normalMat;
+	GLint projMat;
+	GLint glossCoef0;
+	GLint lightCount;
+	GLint ambientBase;
+	GLint ambientOffset;
+	GLint ambientMaterial;
+	GLint useBaseOver;
+	GLint envMapping;
+	GLint bumpMapping;
+	struct {
+		GLint color;
+		GLint direction;
+		GLint position;
+		GLint parallel;
+		GLint diffuse;
+		GLint specular;
+		GLint routing;
+		GLint dmode;
+		GLint smode;
+		GLint distAttnMode;
+		GLint attnDistA;
+		GLint attnDistB;
+		GLint attnAngleA;
+		GLint attnAngleB;
+	} lights[elan::MAX_LIGHTS];
+	float *lastMvMat;
+	float *lastNormalMat;
+	float *lastProjMat;
+	N2LightModel *lastLightModel;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;
@@ -59,6 +92,7 @@ struct gl4PipelineShader
 	bool pp_BumpMap;
 	bool fog_clamping;
 	bool palette;
+	bool naomi2;
 };
 
 
@@ -68,8 +102,17 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint normal_matrix;
+		GLuint ndcMat;
 	} modvol_shader;
+
+	struct
+	{
+		GLuint program;
+
+		GLuint ndcMat;
+		GLint mvMat;
+		GLint projMat;
+	} n2ModVolShader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
 
@@ -88,7 +131,8 @@ extern int max_image_width;
 extern int max_image_height;
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = nullptr, const char *vertex_source = nullptr);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = nullptr, const char *vertex_source = nullptr,
+	const char *geom_source = nullptr);
 
 void initABuffer();
 void termABuffer();
@@ -131,7 +175,7 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
-	glm::mat4 normal_mat;
+	glm::mat4 ndcMat;
 	struct {
 		bool enabled;
 		int x;
@@ -192,8 +236,8 @@ extern struct gl4ShaderUniforms_t
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 
-		if (s->normal_matrix != -1)
-			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+		if (s->ndcMat != -1)
+			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1i(s->palette_index, palette_index);
