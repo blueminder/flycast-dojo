@@ -1450,7 +1450,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 							{
-								if ((settings.platform.system == DC_PLATFORM_NAOMI) &&
+								if ((settings.platform.system == DC_PLATFORM_NAOMI
+									|| settings.platform.system == DC_PLATFORM_NAOMI2) &&
 								     config::DojoEnable)
 								{
 									if (config::DojoEnable)
@@ -1465,7 +1466,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									}
 								}
 
-								if (settings.platform.system == DC_PLATFORM_NAOMI
+								if ((settings.platform.system == DC_PLATFORM_NAOMI
+									|| settings.platform.system == DC_PLATFORM_NAOMI2)
 									&& !settings.network.online
 									&& !config::Receiving
 									&& player < 2)
