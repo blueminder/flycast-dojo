@@ -448,7 +448,8 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 						num_dir_notation = 7;
 				}
 			}
-			else if (settings.platform.system == DC_PLATFORM_NAOMI)
+			else if (settings.platform.system == DC_PLATFORM_NAOMI ||
+					 settings.platform.system == DC_PLATFORM_NAOMI2)
 			{
 				if (bt_bitset.test(11) && bt_bitset.test(13))
 					num_dir_notation = 7;
@@ -496,7 +497,8 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 							}
 						}
 					}
-					else if (settings.platform.system == DC_PLATFORM_NAOMI)
+					else if (settings.platform.system == DC_PLATFORM_NAOMI ||
+							 settings.platform.system == DC_PLATFORM_NAOMI2)
 					{
 						if (i >= 10 && i <= 13)
 						{
