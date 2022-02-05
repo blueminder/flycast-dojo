@@ -1604,6 +1604,16 @@ void DojoSession::ResetTraining()
 	}
 
 	recorded_slots.clear();
+
+	for (int i = 0; i < 2; i++)
+	{
+		displayed_inputs[i].clear();
+		displayed_inputs_str[i].clear();
+		displayed_inputs_duration[i].clear();
+		displayed_dirs[i].clear();
+		displayed_dirs_str[i].clear();
+		displayed_num_dirs[i].clear();
+	}
 }
 
 size_t ipWriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
