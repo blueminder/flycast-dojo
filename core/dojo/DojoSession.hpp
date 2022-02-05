@@ -244,9 +244,11 @@ public:
 
 	bool recording;
 	std::vector<std::string> record_slot[3];
+	std::set<int> recorded_slots;
 
 	void ToggleRecording(int slot);
 	void TogglePlayback(int slot);
+	void ToggleRandomPlayback();
 	void PlayRecording(int slot);
 	void TrainingSwitchPlayer();
 	void SwitchPlayer();
