@@ -1483,6 +1483,7 @@ void DojoSession::ToggleRecording(int slot)
 	{
 		current_record_slot = slot;
 		record_slot[slot].clear();
+		recorded_slots.insert(slot);
 		recording = true;
 		NoticeStream << "Recording Slot " << slot + 1 << " Player " << record_player + 1;
 	}
@@ -1513,6 +1514,15 @@ void DojoSession::TogglePlayback(int slot)
 		dojo.PlayRecording(slot);
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);
+}
+
+void DojoSession::ToggleRandomPlayback()
+{
+	auto it = recorded_slots.cbegin();
+	srand(time(0));
+	int rnd = rand() % recorded_slots.size();
+	std::advance(it, rnd);
+	dojo.TogglePlayback(*it);
 }
 
 void DojoSession::PlayRecording(int slot)
@@ -1592,6 +1602,8 @@ void DojoSession::ResetTraining()
 	{
 		record_slot[i].clear();
 	}
+
+	recorded_slots.clear();
 }
 
 size_t ipWriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
