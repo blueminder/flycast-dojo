@@ -628,7 +628,7 @@ static InputDescriptors clubkart_inputs = {
 			NAO_BASE_BTN_DESC
 	},
 	{
-			{ "HANDLE", Full, 0 },
+			{ "HANDLE", Full, 0, true },
 			{ "ACCEL", Half, 4 },
 			{ "BRAKE", Half, 5 },
 	},
@@ -661,5 +661,20 @@ static InputDescriptors wldrider_inputs = {
 			{ "Accelerator", Half, 4 },
 			{ "Front Brake", Half, 5 },
 			{ "Rear Brake", Full, 2 },
+	},
+};
+
+static InputDescriptors soulsurfer_inputs = {
+	{
+			{ NAOMI_LEFT_KEY, "LEFT", NAOMI_BTN0_KEY },
+			{ NAOMI_RIGHT_KEY, "RIGHT", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "FLOORMAT" }, // TODO this should always be on
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "SWING", Full, 2 },
+			{ "ROLL", Full, 0 },
+			{ "PITCH", Full, 1, true },
 	},
 };

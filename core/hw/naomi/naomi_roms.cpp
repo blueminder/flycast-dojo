@@ -170,6 +170,9 @@ BIOS_t BIOS[] =
 			{ 2, "epr-23608c.ic27", 0x000000, 0x200000 },
 		}
 	},
+	{
+		nullptr
+	}
 };
 
 Game Games[] =
@@ -6823,7 +6826,7 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23663.ic22", 0x0000000, 0x0400000, 0x6910a008 },
@@ -6848,7 +6851,7 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
 		{
 			{ "epr-23663b.ic22", 0x0000000, 0x0400000, 0x15733e44 },
@@ -6899,7 +6902,7 @@ Game Games[] =
 		0x2eef2f96,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23785.ic22", 0x0000000, 0x0400000, 0x9bd98d4b },
@@ -7001,7 +7004,9 @@ Game Games[] =
 			{ "rom19.ic19s", 0x9800000, 0x800000, 0x4f8ec86a },
 			{ "rom20.ic20s", 0xa000000, 0x800000, 0xc90b960d },
 			{ "rom21.ic21s", 0xa800000, 0x800000, 0x1477c064 },
-        }
+        },
+		nullptr,
+    	&soulsurfer_inputs,
     },
     {
     	"vf4evoct",
@@ -7011,7 +7016,7 @@ Game Games[] =
 		0x1e5bb0cd,
 		"naomi2",
 		M1,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23934.ic11",  0x0000000, 0x400000, 0x656a7d84 },
@@ -7406,7 +7411,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
@@ -7515,7 +7520,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7643,7 +7648,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0384-com.pic", 0, 0x4000, 0x081ccd51 },
@@ -7704,7 +7709,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },
@@ -7728,4 +7733,7 @@ Game Games[] =
 		"gds-0039a",
 		&initd_inputs,
     },
+	{
+		nullptr
+	}
 };
