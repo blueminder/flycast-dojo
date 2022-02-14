@@ -1450,9 +1450,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 							{
-								if (config::DojoEnable)
+								if (settings.platform.system == DC_PLATFORM_NAOMI ||
+									settings.platform.system == DC_PLATFORM_NAOMI2)
 								{
-									if (settings.platform.system == DC_PLATFORM_NAOMI)
+									if (config::DojoEnable)
 									{
 										inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
 
@@ -1462,15 +1463,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 												dojo.net_coin_press = true;
 										}
 									}
-								}
-								else
-								{
-									if (settings.platform.system == DC_PLATFORM_NAOMI
-										&& !settings.network.online
-										&& !config::Receiving
-										&& player < 2)
+									else
 									{
-										inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+										if (!settings.network.online
+											&& !config::Receiving
+											&& player < 2)
+										{
+											inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+										}
 									}
 								}
 							}
