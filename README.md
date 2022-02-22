@@ -273,9 +273,9 @@ With the new Training Mode, you can enable game cheats while playing offline usi
 
 <img alt="Open Training Mode Menu" src="training-menu.png" width="642" height="512">
 
-To target a specific player port or set playback loop settings, just press the **F7** key, or hit the **Menu** button (**TAB** by default) and click on the corresponding button to switch. Player 1 corresponds with Port A, while Player 2 corresponds with Port B. You can also switch players by pressing **F9** by default.
+To specify which player is being controlled and recorded, just press the **F7** key or press the **Menu** button (TAB by default) and click on "Watching Player". Player 1 corresponds with Port A, while Player 2 corresponds with Port B. To set playback loop settings, hit the **Menu** button and click on "Playback Loop Off" (or "On").
 
-To record inputs, hit **F1**, and hit it again to stop recording. To play back the input, press **F4**. If the Playback Loop is enabled, the input will be repeated until the Play button is hit again. If it is disabled, playback will be invoked on demand. You also have two more slots to record on **F2** and **F3**, with playback on **F5**, and **F6**.
+To record inputs, hit **F1**, and hit it again to stop recording. To play back the input, press **F4**. If the Playback Loop is enabled, the input will be repeated until the Play button is hit again. If it is disabled, playback will be invoked on demand. You also have two more slots to record on **F2** and **F3**, with playback on **F5**, and **F6**. To play a random input slot from the ones you have recorded, just hit the **F10** button.
 
 To save your current game state, hit, **F8** and to quickly load it again, hit **F9**.
 
