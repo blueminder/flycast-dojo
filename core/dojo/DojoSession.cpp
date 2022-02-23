@@ -1518,11 +1518,15 @@ void DojoSession::TogglePlayback(int slot)
 
 void DojoSession::ToggleRandomPlayback()
 {
-	auto it = recorded_slots.cbegin();
-	srand(time(0));
-	int rnd = rand() % recorded_slots.size();
-	std::advance(it, rnd);
-	dojo.TogglePlayback(*it);
+	if (!playing_input)
+	{
+		auto it = recorded_slots.cbegin();
+		srand(time(0));
+		int rnd = rand() % recorded_slots.size();
+		std::advance(it, rnd);
+		current_record_slot = *it;
+	}
+	dojo.TogglePlayback(current_record_slot);
 }
 
 void DojoSession::PlayRecording(int slot)
