@@ -1498,6 +1498,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ImGui::SameLine();
 				ShowHelpMarker("Show inputs using Numpad/Anime Notation for Directions");
 			}
+
+			OptionCheckbox("Hide Random Input Slot", config::HideRandomInputSlot);
+			ImGui::SameLine();
+			ShowHelpMarker("Hides input slot is being played for random playback");
 		}
 
 		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))

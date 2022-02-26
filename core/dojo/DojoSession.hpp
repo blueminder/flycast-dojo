@@ -248,6 +248,7 @@ public:
 
 	void ToggleRecording(int slot);
 	void TogglePlayback(int slot);
+	void TogglePlayback(int slot, bool hide_slot);
 	void ToggleRandomPlayback();
 	void PlayRecording(int slot);
 	void TrainingSwitchPlayer();

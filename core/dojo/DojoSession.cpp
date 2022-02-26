@@ -1492,25 +1492,39 @@ void DojoSession::ToggleRecording(int slot)
 
 void DojoSession::TogglePlayback(int slot)
 {
+	TogglePlayback(slot, false);
+}
+
+void DojoSession::TogglePlayback(int slot, bool hide_slot = false)
+{
 	std::ostringstream NoticeStream;
 	if (dojo.playback_loop)
 	{
 		if (dojo.trigger_playback)
 		{
 			dojo.trigger_playback = false;
-			NoticeStream << "Stop Loop Slot " << slot + 1;
+			if (hide_slot)
+				NoticeStream << "Stop Loop";
+			else
+				NoticeStream << "Stop Loop Slot " << slot + 1;
 		}
 		else
 		{
 			current_record_slot = slot;
 			dojo.trigger_playback = true;
-			NoticeStream << "Play Loop Slot " << slot + 1;
+			if (hide_slot)
+				NoticeStream << "Play Loop";
+			else
+				NoticeStream << "Play Loop Slot " << slot + 1;
 		}
 	}
 	else
 	{
 		current_record_slot = slot;
-		NoticeStream << "Play Slot " << slot + 1;
+		if (hide_slot)
+			NoticeStream << "Play Input";
+		else
+			NoticeStream << "Play Slot " << slot + 1;
 		dojo.PlayRecording(slot);
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);
@@ -1526,7 +1540,7 @@ void DojoSession::ToggleRandomPlayback()
 		std::advance(it, rnd);
 		current_record_slot = *it;
 	}
-	dojo.TogglePlayback(current_record_slot);
+	dojo.TogglePlayback(current_record_slot, config::HideRandomInputSlot.get());
 }
 
 void DojoSession::PlayRecording(int slot)
