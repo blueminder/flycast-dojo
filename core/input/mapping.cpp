@@ -66,6 +66,7 @@ button_list[] =
 	{ DC_AXIS_LEFT, "compat", "btn_analog_left" },
 	{ DC_AXIS_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
+	{ EMU_BTN_INSERT_CARD, "emulator", "insert_card" },
 	{ EMU_CMB_X_Y_A_B, "emulator", "cmb_x_y_a_b" },
 	{ EMU_CMB_X_Y_A, "emulator", "cmb_x_y_a" },
 	{ EMU_CMB_X_Y_LT, "emulator", "cmb_x_y_lt" },
