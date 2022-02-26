@@ -526,6 +526,7 @@ extern Option<bool> NetStartVerifyRoms;
 extern Option<bool> ShowPublicIP;
 extern Option<bool> ShowInputDisplay;
 extern Option<bool> UseAnimeInputNotation;
+extern Option<bool> HideRandomInputSlot;
 
 // Maple
 
