@@ -52,7 +52,8 @@ int flycast_init(int argc, char* argv[])
 	os_SetupInput();
 
 	debugger::init();
-	lua::init();
+	if (!settings.network.online)
+		lua::init();
 
 	return 0;
 }
@@ -81,7 +82,8 @@ void SaveSettings()
 void flycast_term()
 {
 	gui_cancel_load();
-	lua::term();
+	if (!settings.network.online)
+		lua::term();
 	emu.term();
 }
 

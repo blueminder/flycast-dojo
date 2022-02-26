@@ -3646,7 +3646,8 @@ void gui_display_osd()
 		if (dojo.PlayMatch && !config::GGPOEnable && config::ShowPlaybackControls)
 			dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
 
-		lua::overlay();
+		if (!settings.network.online)
+			lua::overlay();
 
 		gui_endFrame();
 	}

@@ -845,7 +845,8 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
-	lua::vblank();
+	if (!settings.network.online)
+		lua::vblank();
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;
