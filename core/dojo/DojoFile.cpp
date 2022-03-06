@@ -1,4 +1,7 @@
+#ifndef __ANDROID__
 #include <cpr/cpr.h>
+#endif
+
 #include "DojoFile.hpp"
 
 #include <iostream>
@@ -529,6 +532,7 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 
 	std::string latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
 
+#ifndef ANDROID
 	auto curl = curl_easy_init();
 	if (curl)
 	{
@@ -567,6 +571,10 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 		tag_name = "";
 		download_url = "";
 	}
+#else
+	tag_name = "";
+	download_url = "";
+#endif
 	return std::make_tuple(tag_name, download_url);
 }
 
@@ -575,6 +583,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	return DownloadFile(download_url, dest_folder, 0);
 }
 
+#ifndef ANDROID
 static int xferinfo(void *p,
                     curl_off_t dltotal, curl_off_t dlnow,
                     curl_off_t ultotal, curl_off_t ulnow)
@@ -598,6 +607,7 @@ size_t writeFileFunction(const char *p, size_t size, size_t nmemb) {
 	dojo_file.of.write(p, size * nmemb);
 	return size * nmemb;
 }
+#endif
 
 std::string DojoFile::DownloadNetSave(std::string rom_name)
 {
@@ -667,9 +677,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 
 	total_size = download_size;
 
+	long response_code = -1;
+#ifndef ANDROID
 	auto curl = curl_easy_init();
 	CURLcode res = CURLE_OK;
-	long response_code = -1;
 	if (curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_URL, download_url.data());
@@ -713,7 +724,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 			remove(path.c_str());
 		download_ended = true;
 	}
-
+#endif
 	of.close();
 
 	if (file_exists(path.c_str()))
@@ -855,6 +866,7 @@ void DojoFile::Update()
 
 std::string DojoFile::get_savestate_commit(std::string filename)
 {
+#ifndef __ANDROID__
 	std::string github_base = "https://github.com/";
 	size_t repo_pos = config::NetSaveBase.get().find(github_base);
 	if (repo_pos == std::string::npos)
@@ -873,6 +885,8 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 	cfgSaveStr("dojo", "LatestStateCommit", sha);
 	commit_file << sha << std::endl;
 	commit_file.close();
-
+#else
+	std::string sha = "";
+#endif
 	return sha;
 }

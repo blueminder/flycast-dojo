@@ -1641,8 +1641,10 @@ size_t ipWriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) 
 
 std::string DojoSession::GetExternalIP()
 {
-	auto curl = curl_easy_init();
+
 	std::string response_string = "";
+#ifndef __ANDROID__
+	auto curl = curl_easy_init();
 
 	if (curl) {
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -1670,6 +1672,7 @@ std::string DojoSession::GetExternalIP()
 		curl_easy_cleanup(curl);
 		curl = NULL;
 	}
+#endif
 
 	std::cout << response_string << std::endl;
 	return response_string;

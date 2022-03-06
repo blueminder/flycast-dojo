@@ -90,7 +90,7 @@ std::shared_ptr<AndroidMouse> mouse;
 
 float vjoy_pos[15][8];
 
-static bool game_started;
+extern bool game_started;
 
 //stuff for saving prefs
 jobject g_emulator;
