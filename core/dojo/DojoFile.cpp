@@ -668,7 +668,13 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	auto filename = stringfix::split("//", download_url).back();
 	std::string path = filename;
 	if (!dest_folder.empty())
+	{
+#if defined(__APPLE__) || defined(__ANDROID__)
+		path = get_writable_config_path("") + "//" + dest_folder + "//" + filename;
+#else
 		path = dest_folder + "//" + filename;
+#endif
+	}
 
 	// if file already exists, delete before starting new download
 	if (file_exists(path.c_str()))
