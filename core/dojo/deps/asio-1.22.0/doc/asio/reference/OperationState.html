@@ -1,0 +1,66 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Operation state concept</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<link rel="home" href="../../index.html" title="Asio">
+<link rel="up" href="../reference.html" title="Reference">
+<link rel="prev" href="MutableBufferSequence.html" title="Mutable buffer sequence requirements">
+<link rel="next" href="ProtoAllocator.html" title="Proto-allocator requirements">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="MutableBufferSequence.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="ProtoAllocator.html"><img src="../../next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="asio.reference.OperationState"></a><a class="link" href="OperationState.html" title="Operation state concept">Operation state concept</a>
+</h3></div></div></div>
+<pre class="programlisting">template&lt;class O&gt;
+  concept operation_state =
+    destructible&lt;O&gt; &amp;&amp;
+    is_object_v&lt;O&gt; &amp;&amp;
+    requires (O&amp; o) {
+      { execution::start(o) } noexcept;
+    };
+</pre>
+<p>
+        An object whose type satisfies <code class="computeroutput">operation_state</code> represents the
+        state of an asynchronous operation. It is the result of calling <code class="computeroutput">execution::connect</code>
+        with a <code class="computeroutput">sender</code> and a <code class="computeroutput">receiver</code>.
+      </p>
+<p>
+        <code class="computeroutput">execution::start</code> may be called on an <code class="computeroutput">operation_state</code>
+        object at most once. Once <code class="computeroutput">execution::start</code> has been invoked,
+        the caller shall ensure that the start of a non-exceptional invocation of
+        one of the receiver's completion-signalling operations strongly happens before
+        [intro.multithread] the call to the <code class="computeroutput">operation_state</code> destructor.
+      </p>
+<p>
+        The start of the invocation of <code class="computeroutput">execution::start</code> shall strongly
+        happen before [intro.multithread] the invocation of one of the three receiver
+        operations.
+      </p>
+<p>
+        <code class="computeroutput">execution::start</code> may or may not block pending the successful
+        transfer of execution to one of the three receiver operations.
+      </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright © 2003-2021 Christopher
+      M. Kohlhoff<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="MutableBufferSequence.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="ProtoAllocator.html"><img src="../../next.png" alt="Next"></a>
+</div>
+</body>
+</html>
