@@ -183,6 +183,9 @@ if(IOS)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/dojo)
+if(ANDROID)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/dojo/deps/asio-1.22.0/include)
+endif()
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -475,10 +478,6 @@ if(NOT ANDROID)
 	FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG f4622efcb59d84071ae11404ae61bd821c1c344b) # the commit hash for 1.6.2
 	FetchContent_MakeAvailable(cpr)
 	target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)
-endif()
-
-if(ANDROID)
-	include_directories(core/dojo/deps/asio-1.22.0/include)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
