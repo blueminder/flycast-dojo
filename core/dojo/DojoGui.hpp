@@ -17,7 +17,9 @@
 #include <oslib/audiostream.h>
 #include <hw/naomi/naomi_cart.h>
 
+#ifndef __ANDROID__
 #include "sdl/sdl.h"
+#endif
 
 #ifndef _STRUCT_GAMEMEDIA
 #define _STRUCT_GAMEMEDIA

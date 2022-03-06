@@ -32,8 +32,10 @@
 #include "MessageWriter.hpp"
 #include "MessageReader.hpp"
 
+#ifndef __ANDROID__
 #include <curl/curl.h>
 #include <curl/easy.h>
+#endif
 
 #include "network/miniupnp.h"
 

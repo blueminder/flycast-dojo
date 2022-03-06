@@ -36,8 +36,10 @@ struct GameMedia {
 };
 #endif
 
+#ifndef ANDROID
 #include <curl/curl.h>
 #include <curl/easy.h>
+#endif
 
 #include <stdclass.h>
 

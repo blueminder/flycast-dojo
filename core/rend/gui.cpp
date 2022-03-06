@@ -2799,19 +2799,23 @@ static void gui_display_content()
 						ImGui::Text("%s", dojo_gui.current_filename.c_str());
 
 						ImGui::InputText("##Calculated", md5, IM_ARRAYSIZE(md5), ImGuiInputTextFlags_ReadOnly);
+#ifndef __ANDROID__
 						ImGui::SameLine();
 						if (ImGui::Button("Copy"))
 						{
 							SDL_SetClipboardText(dojo_gui.current_checksum.data());
 						}
+#endif
 
 						ImGui::InputTextWithHint("", "MD5 Checksum to Compare", verify_md5, IM_ARRAYSIZE(verify_md5));
+#ifndef __ANDROID__
 						ImGui::SameLine();
 						if (ImGui::Button("Paste & Verify"))
 						{
 							char* pasted_txt = SDL_GetClipboardText();
 							memcpy(verify_md5, pasted_txt, strlen(pasted_txt));
 						}
+#endif
 
 						if (dojo_gui.current_json_found)
 						{
@@ -3761,7 +3765,7 @@ void download_save_popup()
 {
 	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		ImGui::Text(dojo_file.status_text.data());
+		ImGui::TextUnformatted(dojo_file.status_text.data());
 		if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
 			|| dojo_file.status_text.find("not found") != std::string::npos)
 		{

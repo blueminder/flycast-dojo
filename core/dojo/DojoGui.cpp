@@ -41,9 +41,9 @@ void DojoGui::gui_display_bios_rom_warning(float scaling)
 	{
 		std::string msg = start_msg + " not match the checksum of community-recommended " + file_d + ".\nPlease find a new " + designation + " and try again.";
 		ImGui::TextColored(ImVec4(128, 0, 0, 1), "WARNING");
-		ImGui::TextColored(ImVec4(128, 128, 0, 1), msg.data());
+		ImGui::TextColored(ImVec4(128, 128, 0, 1), "%s", msg.data());
 		std::string msg_2 = "Having a different " + designation + " than your opponent may result in desyncs.\nProceed at your own risk.";
-		ImGui::Text(msg_2.data());
+		ImGui::TextUnformatted(msg_2.data());
 
 		if (ImGui::Button("Continue"))
 		{
@@ -126,10 +126,12 @@ void DojoGui::gui_display_host_wait(float scaling)
 		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
 		ImGui::SameLine();
 		ShowHelpMarker("Match Codes not working?\nTry switching to Direct IP in the settings.");
+#ifndef __ANDROID__
 		if (ImGui::Button("Copy Match Code"))
 		{
 			SDL_SetClipboardText(config::MatchCode.get().data());
 		}
+#endif
 	}
 
 	/*
@@ -200,13 +202,14 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				static char mc[128] = "";
 				ImGui::InputTextWithHint("", "ABC123", mc, IM_ARRAYSIZE(mc), ImGuiInputTextFlags_CharsUppercase);
 
+#ifndef __ANDROID__
 				ImGui::SameLine();
 				if (ImGui::Button("Paste"))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(mc, pasted_txt, strlen(pasted_txt));
 				}
-
+#endif
 				if (ImGui::Button("Start Session"))
 				{
 					dojo.MatchCode = std::string(mc, strlen(mc));
@@ -239,14 +242,14 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    				static char si[128] = "";
    				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
-
-					ImGui::SameLine();
-					if (ImGui::Button("Paste"))
-					{
-						char* pasted_txt = SDL_GetClipboardText();
-						memcpy(si, pasted_txt, strlen(pasted_txt));
-					}
-
+#ifndef __ANDROID__
+				ImGui::SameLine();
+				if (ImGui::Button("Paste"))
+				{
+					char* pasted_txt = SDL_GetClipboardText();
+					memcpy(si, pasted_txt, strlen(pasted_txt));
+				}
+#endif
    				static char sp[128] = "6000";
    				ImGui::InputTextWithHint("Port", "6000", sp, IM_ARRAYSIZE(sp));
 
@@ -407,22 +410,25 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 					ImGui::PopStyleColor();
 					ImGui::SameLine();
 					ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
-
+#ifndef __ANDROID__
 					ImGui::SameLine();
 					if (ImGui::Button("Copy"))
 					{
 						SDL_SetClipboardText(current_public_ip.data());
 					}
+#endif
 				}
 
 				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 				detect_address = std::string(si);
+#ifndef __ANDROID__
 				ImGui::SameLine();
 				if (ImGui::Button("Paste"))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(si, pasted_txt, strlen(pasted_txt));
 				}
+#endif
 			}
 		}
 
@@ -724,6 +730,7 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
 
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 {
+#ifndef __ANDROID__
 	if (!dojo.lobby_active)
 	{
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
@@ -862,6 +869,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
     ImGui::End();
     ImGui::PopStyleVar();
+#endif
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -1228,7 +1236,7 @@ void DojoGui::show_pause(float scaling)
 		font_size + (font_size / 2) + 10
 	);
 
-	ImGui::Text(pause_text.c_str());
+	ImGui::TextUnformatted(pause_text.c_str());
 
 	ImGui::End();
 
@@ -1264,7 +1272,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 			font_size + (font_size / 2) + 10 
 		);
 
-		ImGui::Text(dojo.player_1.c_str());
+		ImGui::TextUnformatted(dojo.player_1.c_str());
 
 		ImGui::End();
 	}
@@ -1283,7 +1291,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 			font_size + (font_size / 2) + 10 
 		);
 
-		ImGui::Text(dojo.player_2.c_str());
+		ImGui::TextUnformatted(dojo.player_2.c_str());
 		ImGui::End();
 	}
 
@@ -1407,8 +1415,8 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 			if (!guest_player.empty())
 				players += " vs " + guest_player;
 
-			ImGui::Text(players.c_str());  ImGui::NextColumn();
-			ImGui::Text(game_name.c_str());  ImGui::NextColumn();
+			ImGui::TextUnformatted(players.c_str());  ImGui::NextColumn();
+			ImGui::TextUnformatted(game_name.c_str());  ImGui::NextColumn();
 		}
 	}
 
@@ -1722,7 +1730,7 @@ void DojoGui::update_action()
 
 			if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 			{
-				ImGui::Text(dojo_file.status_text.data());
+				ImGui::TextUnformatted(dojo_file.status_text.data());
 				if (strcmp(dojo_file.status_text.data(), "Update complete.\nPlease restart Flycast Dojo to use new version.") == 0)
 				{
 					if (ImGui::Button("Exit"))
