@@ -1,0 +1,58 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>experimental::basic_channel::try_receive</title>
+<link rel="stylesheet" href="../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<link rel="home" href="../../../index.html" title="Asio">
+<link rel="up" href="../experimental__basic_channel.html" title="experimental::basic_channel">
+<link rel="prev" href="traits_type.html" title="experimental::basic_channel::traits_type">
+<link rel="next" href="try_send.html" title="experimental::basic_channel::try_send">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="traits_type.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../experimental__basic_channel.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="try_send.html"><img src="../../../next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="asio.reference.experimental__basic_channel.try_receive"></a><a class="link" href="try_receive.html" title="experimental::basic_channel::try_receive">experimental::basic_channel::try_receive</a>
+</h4></div></div></div>
+<p>
+          <a class="indexterm" name="asio.indexterm.experimental__basic_channel.try_receive"></a> 
+Try
+          to receive a message without blocking.
+        </p>
+<pre class="programlisting">template&lt;
+    typename <a class="link" href="../Handler.html" title="Handlers">Handler</a>&gt;
+bool try_receive(
+    Handler &amp;&amp; handler);
+</pre>
+<p>
+          Fails if the buffer is full and there are no waiting receive operations.
+        </p>
+<h6>
+<a name="asio.reference.experimental__basic_channel.try_receive.h0"></a>
+          <span><a name="asio.reference.experimental__basic_channel.try_receive.return_value"></a></span><a class="link" href="try_receive.html#asio.reference.experimental__basic_channel.try_receive.return_value">Return
+          Value</a>
+        </h6>
+<p>
+          <code class="computeroutput">true</code> on success, <code class="computeroutput">false</code> on failure.
+        </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright © 2003-2021 Christopher
+      M. Kohlhoff<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="traits_type.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../experimental__basic_channel.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="try_send.html"><img src="../../../next.png" alt="Next"></a>
+</div>
+</body>
+</html>
