@@ -310,11 +310,11 @@ You may also call Flycast from the command line. All command line flags correspo
 ## Netplay
  * Server (Without Match Codes)
 
-```flycast.exe -config dojo:Enable=yes -config dojo:EnableMatchCode=no -config dojo:ActAsServer=yes -config dojo:ServerPort=6000 -config dojo:PlayerName=Player1 ControllerTest-DJ.cdi```
+```flycast.exe -config network:GGPO=yes -config dojo:EnableMatchCode=no -config network:ActAsServer=yes -config network:server=127.0.0.1 -config network:GGPOPort=6000 -config network:GGPORemotePort=6001 -config dojo:PlayerName=Player1 ControllerTest-DJ.cdi```
 
 *  Client (Without Match Codes)
 
-```flycast.exe -config dojo:Enable=yes -config dojo:EnableMatchCode=no -config dojo:ActAsServer=no -config dojo:ServerIP=127.0.0.1 -config dojo:ServerPort=6000 -config dojo:PlayerName=Player2 ControllerTest-DJ.cdi```
+```/flycast.exe -config network:GGPO=yes -config dojo:EnableMatchCode=no -config network:ActAsServer=no -config network:server=127.0.0.1 -config network:GGPOPort=6001 -config network:GGPORemotePort=6000 -config dojo:PlayerName=Player2 ControllerTest-DJ.cdi```
 
 ## Spectating
  * TCP Match Transmission (Spectating)
