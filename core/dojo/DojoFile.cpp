@@ -19,7 +19,7 @@ DojoFile::DojoFile()
 	char result[PATH_MAX];
 	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
 	if (count != -1)
-		root_path = std::string(dirname(result)) + "/";
+		root_path = ghc::filesystem::path(result).parent_path().string() + "/";
 #endif
 
 	LoadedFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
@@ -220,10 +220,11 @@ bool DojoFile::CompareRom(std::string file_path)
 static void safe_create_dir(const char* dir)
 {
 #ifdef _WIN32
-	if (mkdir(dir) < 0) {
-#elif __linux__
-	if (mkdir(dir, 0777) < 0) {
+	if (mkdir(dir) < 0)
+#else
+	if (mkdir(dir, 0777) < 0)
 #endif
+	{
 		if (errno != EEXIST) {
 			perror(dir);
 			exit(1);

@@ -183,7 +183,7 @@ if(IOS)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/dojo)
-if(ANDROID)
+if(ANDROID OR APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/dojo/deps/asio-1.22.0/include)
 endif()
 if(LIBRETRO)

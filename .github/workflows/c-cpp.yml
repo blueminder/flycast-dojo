@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         config:
-          # - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "Xcode", destDir: osx, buildType: Release}
+          - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "Xcode", destDir: osx, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, destDir: linux, buildType: RelWithDebInfo}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
@@ -85,28 +85,20 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Create artifact directory
-        run: mkdir -p build/artifact
-
-      - name: Build SDL (macos)
-        run: |
-          cd shell/apple
-          mkdir artifacts
-          brew install --build-from-source ./sdl2.rb
-        if: matrix.config.name == 'apple-darwin'
-
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
         if: endsWith(matrix.config.name, 'w64-mingw32') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
         run: |
           unset temp tmp
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
         if: endsWith(matrix.config.name, 'w64-mingw32')
 
       # - name: Unit Tests
@@ -128,21 +120,21 @@ jobs:
       - name: Dump symbols (linux)
         shell: bash
         run: |
-          dump_syms build/artifact/flycast > flycast.elf.sym 2>/dev/null
+          dump_syms artifact/bin/flycast > flycast.elf.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.elf.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.elf/$BUILD_ID
           mv flycast.elf.sym symbols/flycast.elf/$BUILD_ID
-          strip build/artifact/flycast
+          strip artifact/bin/flycast
         if: matrix.config.os == 'ubuntu-latest'
 
       - name: Dump symbols (windows)
         shell: msys2 {0}
         run: |
-          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
+          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
-          strip build/artifact/flycast.exe
+          strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - name: Package app (macos)
@@ -155,7 +147,7 @@ jobs:
         shell: bash
         run: |
           CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
-          cd build/artifact
+          cd artifact/bin
           mkdir $CURRENT_VERSION
           mv flycast $CURRENT_VERSION/flycast.elf
           cd $CURRENT_VERSION
@@ -178,7 +170,7 @@ jobs:
         shell: msys2 {0}
         run: |
           CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
-          cd build/artifact
+          cd artifact/bin
           mkdir $CURRENT_VERSION
           mv flycast.exe $CURRENT_VERSION/flycast.exe
           cd $CURRENT_VERSION
@@ -202,7 +194,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: flycast-dojo-${{ matrix.config.name }}
-          path: build/artifact
+          path: artifact/bin
 
       - name: Configure AWS Credentials
         id: aws-credentials
@@ -214,11 +206,10 @@ jobs:
         if: github.repository == 'blueminder/flycast-dojo' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-dojo-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: aws s3 sync artifact/bin s3://flycast-dojo-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-latest' || matrix.config.os == 'ubuntu-latest') }}
-        
