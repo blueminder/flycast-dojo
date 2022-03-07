@@ -140,7 +140,19 @@ jobs:
       - name: Package app (macos)
         run: |
           cd artifact/bin
-          zip -rm flycast.app.zip Flycast.app
+          cd "Flycast Dojo.app"
+          cd Contents/Resources
+          wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+          tar zxvf master.tar.gz
+          rm master.tar.gz
+          mv flycast-netplay-nvmem-master/ default/
+          rm default/README.md
+          zip -r default.zip default/*
+          mv default data
+          mv default.zip data/
+          wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
+          cd ../../..
+          zip -rm flycast.app.zip "Flycast Dojo.app"
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (linux)
