@@ -129,7 +129,7 @@ extern "C" int SDL_main(int argc, char *argv[])
 
             [fileManager copyItemAtPath:[thisBundle pathForResource:@"data" ofType:@""] toPath:saveFilePath error:NULL];
         }
-        set_user_data_dir(data_dir);
+        set_user_data_dir(data_dir + "/");
 
         std::string replays_dir = config_dir + "replays/";
         mkdir(replays_dir.c_str(), 0755);
