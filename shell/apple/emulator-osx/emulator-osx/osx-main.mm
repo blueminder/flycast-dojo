@@ -89,12 +89,12 @@ extern "C" int SDL_main(int argc, char *argv[])
     {
         std::string config_dir = std::string(home) + "/.reicast/";
         if (!file_exists(config_dir))
-            config_dir = std::string(home) + "/.flycast/";
+            config_dir = std::string(home) + "/.flycast_dojo/";
 		if (!file_exists(config_dir))
-			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
+			config_dir = std::string(home) + "/Library/Application Support/Flycast Dojo/";
 
         /* Different config folder for multiple instances */
-        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
+        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.blueminder.FlycastDojo"] count];
 		if (instanceNumber > 1)
 		{
 			config_dir += std::to_string(instanceNumber) + "/";
@@ -104,9 +104,13 @@ extern "C" int SDL_main(int argc, char *argv[])
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         add_system_data_dir(config_dir);
-        config_dir += "data/";
-        mkdir(config_dir.c_str(), 0755);
-        set_user_data_dir(config_dir);
+
+        std::string data_dir = config_dir + "data/";
+        mkdir(data_dir.c_str(), 0755);
+        set_user_data_dir(data_dir);
+
+        std::string replays_dir = config_dir + "replays/";
+        mkdir(replays_dir.c_str(), 0755);
     }
     else
     {
