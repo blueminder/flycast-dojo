@@ -106,6 +106,8 @@ public:
 	std::string root_path;
 
 	std::string get_savestate_commit(std::string filename);
+
+	void RefreshFileDefinitions();
 };
 
 extern DojoFile dojo_file;
