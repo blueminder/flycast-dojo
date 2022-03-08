@@ -2992,7 +2992,7 @@ static void gui_display_content()
   windowDragScroll();
 	ImGui::EndChild();
 
-	if (!settings.network.online)
+	if (item_current_idx == 0 || item_current_idx == 3)
 	{
 		int delay_min = 0;
 		int delay_max = 10;
@@ -3013,7 +3013,7 @@ static void gui_display_content()
 			cfgSaveInt("dojo", "Delay", config::Delay);
 		}
 	}
-	else if (config::DojoEnable && !config::Receiving)
+	else if (item_current_idx == 1 || item_current_idx == 2)
 	{
 		char PlayerName[256] = { 0 };
 		strcpy(PlayerName, config::PlayerName.get().c_str());
