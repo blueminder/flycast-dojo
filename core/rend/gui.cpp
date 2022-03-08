@@ -582,7 +582,11 @@ void gui_start_game(const std::string& path)
 		std::FILE* file = std::fopen(path.c_str(), "rb");
 		dojo.game_checksum = md5file(file);
 
+#if defined(__APPLE__) || defined(__ANDROID__)
+		std::string net_save_path = get_writable_data_path(game_name + ".state.net");
+#else
 		std::string net_save_path = "data/" + game_name + ".state.net";
+#endif
 		if(ghc::filesystem::exists(net_save_path))
 		{
 			std::FILE* save_file = std::fopen(net_save_path.c_str(), "rb");
@@ -3371,8 +3375,8 @@ static void gui_display_loadscreen()
 			}
 			else if (config::DojoEnable || dojo.PlayMatch)
 			{
-				dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
-				dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
+				//dojo_gui.bios_json_match = dojo_file.CompareBIOS(settings.platform.system);
+				//dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
 
 				dojo.StartDojoSession();
 
