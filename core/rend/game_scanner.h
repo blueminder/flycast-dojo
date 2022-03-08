@@ -174,7 +174,11 @@ public:
 				}
 
 				if (config::ContentPath.get().size() == 0)
+#if defined(__APPLE__) || defined(__ANDROID__)
+					config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
+#else
 					config::ContentPath.get().push_back("ROMs");
+#endif
 
 				for (const auto& path : config::ContentPath.get())
 				{
