@@ -105,4 +105,3 @@ void invoke_download_save_popup(std::string game_path, bool* net_save_download, 
 void download_save_popup();
 
 static bool instance_started = false;
-

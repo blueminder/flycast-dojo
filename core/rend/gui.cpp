@@ -2610,7 +2610,7 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
@@ -2640,7 +2640,7 @@ static void gui_display_content()
 				gui_state = GuiState::Lobby;
 		}
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
@@ -2654,7 +2654,7 @@ static void gui_display_content()
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
@@ -2667,6 +2667,14 @@ static void gui_display_content()
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
 			ShellExecute(0, 0, "http://flycast.dojo.ooo/faq.html", 0, 0 , SW_SHOW );
+#elif defined(__APPLE__)
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button("Help"))
+			system("open http://flycast.dojo.ooo/faq.html");
+#elif defined(__linux__)
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button("Help"))
+			system("xdg-open http://flycast.dojo.ooo/faq.html");
 #endif
 
     ImGui::PopStyleVar();
