@@ -133,6 +133,9 @@ extern "C" int SDL_main(int argc, char *argv[])
 
         std::string replays_dir = config_dir + "replays/";
         mkdir(replays_dir.c_str(), 0755);
+
+        std::string roms_dir = config_dir + "ROMs/";
+        mkdir(roms_dir.c_str(), 0755);
     }
     else
     {
