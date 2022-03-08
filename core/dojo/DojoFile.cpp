@@ -10,6 +10,21 @@ DojoFile dojo_file;
 
 DojoFile::DojoFile()
 {
+	RefreshFileDefinitions();
+	start_update = false;
+	update_started = false;
+	start_download = false;
+	download_started = false;
+	start_save_download = false;
+	save_download_started = false;
+
+	save_download_ended = false;
+	download_ended = false;
+	post_save_launch = false;
+}
+
+void DojoFile::RefreshFileDefinitions()
+{
 #ifdef _WIN32
 	// assign exe root path on launch
 	TCHAR szPath[MAX_PATH];
@@ -23,19 +38,8 @@ DojoFile::DojoFile()
 	if (count != -1)
 		root_path = ghc::filesystem::path(result).parent_path().string() + "/";
 #endif
-
 	LoadedFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
 	RemainingFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
-	start_update = false;
-	update_started = false;
-	start_download = false;
-	download_started = false;
-	start_save_download = false;
-	save_download_started = false;
-
-	save_download_ended = false;
-	download_ended = false;
-	post_save_launch = false;
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)

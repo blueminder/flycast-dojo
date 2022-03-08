@@ -2781,14 +2781,26 @@ static void gui_display_content()
 						{
 							invoke_download_save_popup(game.path, &net_save_download, false);
 						}
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 						std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(game.path);
 						if (!game_links.empty())
 						{
 							for (std::pair<std::string, std::string> link: game_links)
 							{
 								if (ImGui::MenuItem(std::string("Open " + link.first).data()))
+								{
+#endif
+#ifdef _WIN32
 									ShellExecute(0, 0, link.second.data(), 0, 0, SW_SHOW);
+#elif defined(__APPLE__)
+									std::string cmd = "open " + link.second;
+									system(cmd.data());
+#elif defined(__linux__)
+									std::string cmd = "xdg-open " + link.second;
+									system(cmd.data());
+#endif
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
+								}
 							}
 						}
 #endif
@@ -3510,6 +3522,9 @@ void gui_display_ui()
 		dojo_gui.gui_display_replay_pause(scaling);
 		break;
 	case GuiState::TestGame:
+#if defined(__APPLE__)
+	dojo_file.RefreshFileDefinitions();
+#endif
 		dojo_gui.gui_display_test_game(scaling);
 		break;
 	case GuiState::HostDelay:
@@ -3546,6 +3561,9 @@ void gui_display_ui()
 		gui_display_commands();
 		break;
 	case GuiState::Main:
+#if defined(__APPLE__)
+	dojo_file.RefreshFileDefinitions();
+#endif
 		//gui_display_demo();
 		gui_display_content();
 		break;
