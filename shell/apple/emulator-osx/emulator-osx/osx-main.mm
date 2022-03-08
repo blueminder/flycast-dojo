@@ -84,14 +84,23 @@ static void emu_flycast_term()
 
 extern "C" int SDL_main(int argc, char *argv[])
 {
+    char *base_dir = getenv("DOJO_BASE_DIR");
     char *home = getenv("HOME");
-    if (home != NULL)
+    if (home != NULL || base_dir != NULL)
     {
-        std::string config_dir = std::string(home) + "/.reicast/";
-        if (!file_exists(config_dir))
-            config_dir = std::string(home) + "/.flycast_dojo/";
-		if (!file_exists(config_dir))
-			config_dir = std::string(home) + "/Library/Application Support/Flycast Dojo/";
+        std::string config_dir;
+        if (base_dir != NULL)
+        {
+            config_dir = std::string(base_dir) + "/";
+        }
+        else
+        {
+            config_dir = std::string(home) + "/.reicast/";
+            if (!file_exists(config_dir))
+                config_dir = std::string(home) + "/.flycast_dojo/";
+            if (!file_exists(config_dir))
+                config_dir = std::string(home) + "/Library/Application Support/Flycast Dojo/";
+        }
 
         /* Different config folder for multiple instances */
         int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.blueminder.FlycastDojo"] count];
