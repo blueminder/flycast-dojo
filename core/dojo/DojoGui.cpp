@@ -702,7 +702,7 @@ void DojoGui::gui_display_test_game( float scaling)
         ImGui::PopStyleVar();
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 	std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(settings.content.path);
 	if (!game_links.empty())
 	{
@@ -710,7 +710,19 @@ void DojoGui::gui_display_test_game( float scaling)
 		{
 			ImGui::NextColumn();
 			if (ImGui::Button(std::string("Open\n" + link.first).data(), ImVec2(150 * scaling, 50 * scaling)))
+			{
+#endif
+#ifdef _WIN32
 				ShellExecute(0, 0, link.second.data(), 0, 0, SW_SHOW);
+#elif defined(__APPLE__)
+				std::string cmd = "open " + link.second;
+				system(cmd.data());
+#elif defined(__linux__)
+				std::string cmd = "xdg-open " + link.second;
+				system(cmd.data());
+#endif
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
+			}
 		}
 	}
 #endif
