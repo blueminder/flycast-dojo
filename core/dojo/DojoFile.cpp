@@ -15,6 +15,8 @@ DojoFile::DojoFile()
 	TCHAR szPath[MAX_PATH];
 	GetModuleFileName(0, szPath, MAX_PATH);
 	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
+#elif defined(__APPLE__) || defined(__ANDROID__)
+	root_path = get_writable_config_path("") + "/";
 #else
 	char result[PATH_MAX];
 	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
