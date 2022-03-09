@@ -10,9 +10,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "Xcode", destDir: osx, buildType: Release}
+          - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "Xcode", destDir: osx, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -174,7 +174,7 @@ jobs:
           mkdir $CURRENT_VERSION
           mv flycast.exe $CURRENT_VERSION/flycast.exe
           cd $CURRENT_VERSION
-          cp /mingw64/bin/{zlib1.dll,libssl-1_1-x64.dll,libssh2-1.dll,libcrypto-1_1-x64.dll} .
+          cp /mingw64/bin/{zlib1.dll,libssl-1_1-x64.dll,libcrypto-1_1-x64.dll} .
           wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
           tar zxvf master.tar.gz
           rm master.tar.gz
