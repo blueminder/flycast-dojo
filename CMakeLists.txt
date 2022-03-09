@@ -1370,7 +1370,30 @@ if(NOT LIBRETRO)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
 			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-		
+
+			set(ROMS_JSON flycast_roms.json)
+			target_sources(${PROJECT_NAME} PRIVATE ${ROMS_JSON})
+			source_group("Resources" FILES ${ROMS_JSON})
+			set_source_files_properties(${ROMS_JSON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+			add_custom_command(
+				OUTPUT ${CMAKE_SOURCE_DIR}/data
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				COMMAND wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+				COMMAND tar zxvf master.tar.gz
+				COMMAND rm master.tar.gz
+				COMMAND mv flycast-netplay-nvmem-master/ default/
+				COMMAND rm default/README.md
+				COMMAND zip default.zip default/*
+				COMMAND mv default data
+				COMMAND mv default.zip data/
+			)
+
+			set(DATA_DIR ${CMAKE_SOURCE_DIR}/data)
+			target_sources(${PROJECT_NAME} PRIVATE ${DATA_DIR})
+			source_group("Resources" FILES ${DATA_DIR})
+			set_source_files_properties(${DATA_DIR} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast Dojo"
 				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-osx/MacOSXBundleInfo.plist.in
