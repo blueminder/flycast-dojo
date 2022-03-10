@@ -160,6 +160,7 @@ public:
 	bool receiver_ended;
 
 	bool lobby_active;
+	bool beacon_active;
 
 	std::string PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);

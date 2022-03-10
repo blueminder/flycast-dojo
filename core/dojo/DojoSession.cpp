@@ -58,6 +58,7 @@ void DojoSession::Init()
 	ReplayFilename = "";
 
 	lobby_active = false;
+	beacon_active = false;
 	disconnect_toggle = false;
 
 	receiver_started = false;

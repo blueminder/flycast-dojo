@@ -570,6 +570,13 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	if (dojo_gui.lobby_host_screen && !dojo.beacon_active)
+	{
+		settings.content.path = path;
+		std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
+		t3.detach();
+	}
+
 	std::string filename = path.substr(path.find_last_of("/\\") + 1);
 	auto game_name = stringfix::remove_extension(filename);
 	dojo.game_name = game_name;
@@ -2511,7 +2518,13 @@ static void gui_display_content()
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
-	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+	if (dojo_gui.lobby_host_screen)
+	{
+		ImGui::Text("HOST");
+		item_current_idx = 1;
+	}
+	else
+		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
 	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
@@ -2609,7 +2622,7 @@ static void gui_display_content()
 
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("LAN").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 4);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
     else if (!config::DojoEnable)
@@ -2624,21 +2637,32 @@ static void gui_display_content()
 #endif
 
     static ImGuiTextFilter filter;
+	float filterSize;
+	float buttonRegionSize;
+	if (config::EnableLobby)
+		buttonRegionSize = ImGui::CalcTextSize("Filter").x + ImGui::CalcTextSize("Replays").x + ImGui::CalcTextSize("LAN").x + ImGui::GetStyle().ItemSpacing.x * 12 + ImGui::CalcTextSize("Settings").x + ImGui::CalcTextSize("Help").x + ImGui::GetStyle().FramePadding.x * 4;
+	else
+		buttonRegionSize = ImGui::CalcTextSize("Filter").x + ImGui::CalcTextSize("Replays").x + ImGui::GetStyle().ItemSpacing.x * 11 + ImGui::CalcTextSize("Settings").x + ImGui::CalcTextSize("Help").x + ImGui::GetStyle().FramePadding.x * 2;
+	filterSize = ImGui::GetContentRegionAvail().x - buttonRegionSize;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 32 * scaling);
+	ImGui::SameLine(0, 12 * scaling);
+	ImGui::PushItemWidth(filterSize);
 	filter.Draw("Filter");
+	ImGui::PopItemWidth();
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
-		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-			if (ImGui::Button("Lobby"))
-				gui_state = GuiState::Lobby;
-		}
-
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		filterSize = ImGui::GetContentRegionAvail().x - buttonRegionSize + ImGui::CalcTextSize("Filter").x + ImGui::GetStyle().FramePadding.x * 2;
+		if (config::EnableLobby)
+		{
+			ImGui::SameLine(filterSize);
+			if (ImGui::Button("LAN"))
+				gui_state = GuiState::Lobby;
+
+			filterSize += ImGui::CalcTextSize("LAN").x + ImGui::GetStyle().ItemSpacing.x * 4;
+		}
+		ImGui::SameLine(filterSize);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
@@ -2652,7 +2676,7 @@ static void gui_display_content()
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(filterSize + ImGui::CalcTextSize("Replays").x + ImGui::GetStyle().ItemSpacing.x * 4);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif

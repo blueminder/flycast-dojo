@@ -627,7 +627,6 @@ void DojoGui::gui_display_test_game( float scaling)
 				gui_state = GuiState::BiosRomWarning;
 			else
 			*/
-
 			gui_start_game(settings.content.path);
 		}
 		else
@@ -761,14 +760,16 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		if (game_started)
     		gui_state = GuiState::Commands;
     	else
-    		gui_state = GuiState::Main;
+		{
+			lobby_host_screen = false;
+			gui_state = GuiState::Main;
+		}
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
 	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 	{
-		config::ActAsServer = true;
-		cfgSaveBool("dojo", "ActAsServer", config::ActAsServer);
+		lobby_host_screen = true;
 		gui_state = GuiState::Main;
 	}
 

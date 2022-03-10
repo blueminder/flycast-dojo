@@ -9,6 +9,9 @@ void DojoLobby::BeaconThread()
 		asio::io_context io_context;
 		Beacon b(io_context,
 			asio::ip::make_address(config::LobbyMulticastAddress));
+
+		dojo.beacon_active = true;
+
 		io_context.run();
 	}
 	catch (...) {}
@@ -34,37 +37,40 @@ void DojoLobby::ListenerThread()
 
 std::string DojoLobby::ConstructMsg()
 {
+	//std::string current_game = "GAME";
 	std::string current_game = get_file_basename(settings.content.path);
 	current_game = current_game.substr(current_game.find_last_of("/\\") + 1);
 
-	std::string status;
+	std::string status_h = "";
 
 	const char* message;
+
+	dojo.host_status = 1;
 
 	switch (dojo.host_status)
 	{
 	case 0:
-		status = "Idle";
+		status_h = "Idle";
 		break;
 	case 1:
-		status = "Hosting, Waiting";
+		status_h = "Hosting, Waiting";
 		break;
 	case 2:
-		status = "Hosting, Starting";
+		status_h = "Hosting, Starting";
 		break;
 	case 3:
-		status = "Hosting, Playing";
+		status_h = "Hosting, Playing";
 		break;
 	case 4:
-		status = "Guest, Connecting";
+		status_h = "Guest, Connecting";
 		break;
 	case 5:
-		status = "Guest, Playing";
+		status_h = "Guest, Playing";
 		break;
 	}
 
 	std::stringstream message_ss("");
-	message_ss << "2001_" << config::DojoServerPort.get() << "__" << status << "__" << current_game << "__" << config::PlayerName.get();
+	message_ss << "2001_" << config::GGPOPort.get() << "__" << status_h << "__" << current_game << "__" << config::PlayerName.get();
 	if (dojo.host_status == 2 || dojo.host_status == 3)
 	{
 		message_ss << " vs " << config::OpponentName.get() << "__";

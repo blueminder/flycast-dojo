@@ -74,6 +74,8 @@ public:
 
 	void show_last_inputs_overlay();
 	void display_input_str(std::string input_str);
+
+	bool lobby_host_screen = false;
 };
 
 extern DojoGui dojo_gui;
