@@ -650,7 +650,11 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	if (!commit.empty())
 	{
 		net_state_file = net_state_file + "." + commit;
+#if defined(__APPLE__) || defined(__ANDROID__)
+		ghc::filesystem::copy(filename, get_writable_config_path("") + "/data/" + net_state_file);
+#else
 		ghc::filesystem::copy(filename, "data/" + net_state_file);
+#endif
 	}
 
 	//std::FILE* file = std::fopen(filename.data(), "rb");
