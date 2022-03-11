@@ -1607,32 +1607,29 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				}
 			}
 
-			if (!config::EnableMatchCode && config::NetplayMethod.get() == "Delay")
+			OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
+			ImGui::SameLine();
+			ShowHelpMarker("Enable discovery and matchmaking over LAN");
+
+			if (config::EnableLobby)
 			{
-				OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable discovery and matchmaking over LAN");
-
-				if (config::EnableLobby)
+				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						char LobbyMulticastAddress[256];
+					char LobbyMulticastAddress[256];
 
-						strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
-						ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("Multicast IP Address for Lobby to Target");
-						config::LobbyMulticastAddress = LobbyMulticastAddress;
+					strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
+					ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast IP Address for Lobby to Target");
+					config::LobbyMulticastAddress = LobbyMulticastAddress;
 
-						char LobbyMulticastPort[256];
+					char LobbyMulticastPort[256];
 
-						strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
-						ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("Multicast Port for Lobby to Target");
-						config::LobbyMulticastPort = LobbyMulticastPort;
-					}
+					strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
+					ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast Port for Lobby to Target");
+					config::LobbyMulticastPort = LobbyMulticastPort;
 				}
 			}
 		}
