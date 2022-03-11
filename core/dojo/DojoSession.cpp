@@ -1214,14 +1214,31 @@ void DojoSession::receiver_client_thread()
 		{
 			// read header
 			memset((void*)header_buf, 0, HEADER_LEN);
-			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+			try
+			{
+				asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+			}
+			catch (const std::system_error& e)
+			{
+				receiver_ended = true;
+				break;
+			}
 
 			unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
 			unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
 
 			// read body
 			body_buf.resize(body_size);
-			asio::read(socket, asio::buffer(body_buf, body_size));
+
+			try
+			{
+				asio::read(socket, asio::buffer(body_buf, body_size));
+			}
+			catch (const std::system_error& e)
+			{
+				receiver_ended = true;
+				break;
+			}
 
 			offset = 0;
 
