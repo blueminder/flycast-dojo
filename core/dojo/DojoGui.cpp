@@ -453,13 +453,14 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			if (!config::EnableMatchCode)
+			if (!config::EnableMatchCode && !dojo_gui.lobby_guest)
 			{
 				config::NetworkServer.set(std::string(si, strlen(si)));
 				cfgSaveStr("network", "server", config::NetworkServer.get());
 
-				config::DojoEnable = false;
 			}
+			config::DojoEnable = false;
+
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
 		}
@@ -832,11 +833,17 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				dojo.PlayMatch = false;
+				dojo_gui.lobby_guest = true;
 
+				dojo.PlayMatch = false;
+				config::Receiving = false;
+
+				config::DojoActAsServer = false;
+				config::DojoEnable = true;
+				config::GGPOEnable = true;
 				config::ActAsServer = false;
-				config::DojoServerIP = beacon_ip;
-				config::DojoServerPort = beacon_server_port;
+
+				config::NetworkServer = beacon_ip;
 
 				SaveSettings();
 

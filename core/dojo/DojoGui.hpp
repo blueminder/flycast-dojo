@@ -76,6 +76,7 @@ public:
 	void display_input_str(std::string input_str);
 
 	bool lobby_host_screen = false;
+	bool lobby_guest = false;
 };
 
 extern DojoGui dojo_gui;
