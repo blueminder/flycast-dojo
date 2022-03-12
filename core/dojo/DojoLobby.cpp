@@ -5,12 +5,11 @@ void DojoLobby::BeaconThread()
 	try
 	{
 		dojo.presence.multicast_port = std::stoul(config::LobbyMulticastPort);
+		dojo.beacon_active = true;
 
 		asio::io_context io_context;
 		Beacon b(io_context,
 			asio::ip::make_address(config::LobbyMulticastAddress));
-
-		dojo.beacon_active = true;
 
 		io_context.run();
 	}
@@ -22,13 +21,13 @@ void DojoLobby::ListenerThread()
 	try
 	{
 		dojo.presence.multicast_port = std::stoul(config::LobbyMulticastPort);
+		dojo.lobby_active = true;
 
 		asio::io_context io_context;
 		Listener l(io_context,
 			asio::ip::make_address("0.0.0.0"),
 			asio::ip::make_address(config::LobbyMulticastAddress));
 
-		dojo.lobby_active = true;
 
 		io_context.run();
 	}
@@ -133,7 +132,10 @@ Beacon::Beacon(asio::io_context& io_context,
 		socket_(io_context, endpoint_.protocol()),
 		timer_(io_context)
 {
-	do_send();
+	if (dojo.beacon_active)
+		do_send();
+	else
+		socket_.close();
 }
 
 void Beacon::do_send()
@@ -176,7 +178,10 @@ Listener::Listener(asio::io_context& io_context,
 	socket_.set_option(
 		asio::ip::multicast::join_group(multicast_address));
 
-	do_receive();
+	if (dojo.lobby_active)
+		do_receive();
+	else
+		socket_.close();
 }
 
 void Listener::do_receive()

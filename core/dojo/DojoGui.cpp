@@ -763,6 +763,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
     	else
 		{
 			lobby_host_screen = false;
+			dojo.lobby_active = false;
 			gui_state = GuiState::Main;
 		}
 	}
@@ -834,6 +835,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				dojo_gui.lobby_guest = true;
+				dojo.lobby_active = false;
 
 				dojo.PlayMatch = false;
 				config::Receiving = false;
