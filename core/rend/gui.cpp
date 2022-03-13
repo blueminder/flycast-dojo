@@ -3016,7 +3016,11 @@ static void gui_display_content()
 	{
 		int delay_min = 0;
 		int delay_max = 10;
+#if defined(__APPLE__)
+		ImGui::PushItemWidth(130);
+#else
 		ImGui::PushItemWidth(80);
+#endif
 		int delay_one = 1;
 		int delay = config::Delay.get();
 		ImGui::InputScalar("Offline Delay", ImGuiDataType_S32, &delay, &delay_one, NULL, "%d");
