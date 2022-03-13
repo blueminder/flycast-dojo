@@ -1275,7 +1275,11 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		float font_size = ImGui::CalcTextSize(dojo.player_1.data()).x;
 
 		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size + 20) / 2), 0));
+#if defined(__APPLE__)
+		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 42));
+#else
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
+#endif
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
@@ -1294,7 +1298,11 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		float font_size = ImGui::CalcTextSize(dojo.player_2.data()).x;
 
 		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size + 20) / 2), 0));
+#if defined(__APPLE__)
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
+#else
+		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 45));
+#endif
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
