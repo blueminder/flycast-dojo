@@ -417,25 +417,9 @@
         "filename": "Puyo Puyoon (Japan).chd",
         "md5_checksum": "f69c133f44c246adba03c2eaf459c8ac"
     },
-    "flycast_dc_sakura-wars-columns-2-english-v-1.1": {
-        "filename": "disc.gdi",
-        "dir": "Sakura Wars - Columns 2 (English - v1.1)",
-        "md5_checksum": "346fea58ab1a55c577138c5b04319157"
-    },
-    "dc_sakura-wars-columns-2-english-v-1.1_track01": {
-        "filename": "track01.bin",
-        "dir": "Sakura Wars - Columns 2 (English - v1.1)",
-        "md5_checksum": "f237bf581ec689fc421b31006e138b5b"
-    },
-    "dc_sakura-wars-columns-2-english-v-1.1_track02": {
-        "filename": "track02.raw",
-        "dir": "Sakura Wars - Columns 2 (English - v1.1)",
-        "md5_checksum": "98d912d36b179dc5d2386e41b72ffbc9"
-    },
-    "dc_sakura-wars-columns-2-english-v-1.1_track03": {
-        "filename": "track03.bin",
-        "dir": "Sakura Wars - Columns 2 (English - v1.1)",
-        "md5_checksum": "eb798d61cfd8a715b69471320fa29558"
+    "flycast_dc_sakurawarscolumns2eng": {
+        "filename": "Sakura Wars - Columns 2 (English - v1.2).cdi",
+        "md5_checksum": "5e0627495487427d41980d327ac3df61"
     },
     "flycast_dc_wetrix_plus": {
         "filename": "Wetrix+ (USA).chd",
