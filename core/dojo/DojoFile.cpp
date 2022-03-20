@@ -521,6 +521,7 @@ void DojoFile::CopyNewFlycast(std::string new_root)
 		// copy new game definitions
 		ghc::filesystem::copy_file(new_root + "/flycast_roms.json", "flycast_roms.json",
 			ghc::filesystem::copy_options::overwrite_existing);
+
 		//exit(0);
 	}
 }
@@ -566,7 +567,8 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 			tag_name = j["tag_name"].get<std::string>();
 			for (nlohmann::json::iterator it = j["assets"].begin(); it != j["assets"].end(); ++it)
 			{
-				if ((*it)["content_type"] == "application/x-zip-compressed")
+				if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
+					(*it)["content_type"] == "application/x-zip-compressed")
 				{
 					download_url = (*it)["browser_download_url"].get<std::string>();
 				}
@@ -872,6 +874,7 @@ void DojoFile::Update()
 	status_text = "Downloading Latest Update";
 	std::string filename = dojo_file.DownloadFile(download_url, "");
 	auto dirname = stringfix::remove_extension(filename);
+	safe_create_dir(dirname.c_str());
 	Unzip(filename);
 	OverwriteDataFolder("flycast-" + tag_name);
 	CopyNewFlycast("flycast-" + tag_name);
