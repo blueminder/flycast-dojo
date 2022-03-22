@@ -424,5 +424,13 @@
     "flycast_dc_wetrix_plus": {
         "filename": "Wetrix+ (USA).chd",
         "md5_checksum": "2bbd228f4d1372518ce5e3a7e7144bee"
+    },
+    "flycast_dc_ssf2x": {
+        "filename": "Super Street Fighter II X for Matching Service (Japan).chd",
+        "md5_checksum": "e5b82b02c86d5f96857f69d9319d6282"
+    },
+    "flycast_dc_sfiii3": {
+        "filename": "Street Fighter III - 3rd Strike (USA).chd",
+        "md5_checksum": "2f64324bde3cf4f174f32663492647e4"
     }
 }
