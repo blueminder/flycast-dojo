@@ -302,8 +302,6 @@ The following are the relevant dependencies:
   * `libcurl3-gnutls`
   * `libzip`
 
-To compile on your own, just head to `shell/linux` and run `make -j8`, where `-j` defines the number of cores you wish to devote to the process. When you run the resulting binary, be sure that the directory structure in the official tarball is preserved, so that `data/`, `replays/`, `mappings/` and `ROMs/` are in the same directory as the binary.
-
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
