@@ -8,7 +8,6 @@ jobs:
     runs-on: ${{ matrix.config.os }}
 
     strategy:
-      fail-fast: false
       matrix:
         config:
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "Xcode", destDir: osx, buildType: Release}
