@@ -17,7 +17,6 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 - [Visual Aids](#visual-aids)
   * [Match Code Quick Start](#match-code-quick-start)
   * [Fightcade Quick Start](#fightcade-quick-start)
-  * [LAN Lobby Quick Start](#lan-lobby-quick-start)
 - [Getting Started](#getting-started)
 - [Setting Controls](#setting-controls)
 - [Starting a Netplay Session](#starting-a-netplay-session)
@@ -27,11 +26,6 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
       - [Set Delay](#set-delay)
     + [As Guest](#as-guest)
     + [Troubleshooting](#match-code-troubleshooting)
-  * [Lobby Quick Start](#lobby-quick-start)
-    + [As Guest](#as-guest-1)
-    + [As Host](#as-host-1)
-      - [Set Delay](#set-delay-1)
-    + [As Spectator](#as-spectator)
   * [Manual Operation](#manual-operation)
     + [Set Server IP & Port](#set-server-ip--port)
     + [Delay Calculation](#manual-delay-calculation)
@@ -62,9 +56,6 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 ## Fightcade Quick Start
 <a href="https://www.youtube.com/watch?v=47oJOUoGYmI"><img src="http://img.youtube.com/vi/47oJOUoGYmI/0.jpg" alt="Fightcade Quick Start" width="480" height="360"></a>
 
-## LAN Lobby Quick Start
-<a href="https://www.youtube.com/watch?v=VcalBJpbjxA"><img src="http://img.youtube.com/vi/VcalBJpbjxA/0.jpg" alt="LAN Lobby Quick Start" width="480" height="360"></a>
-
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.226** romset.
 
@@ -94,7 +85,7 @@ You can find the Netplay settings under the **Dojo** section of the emulator's s
 
 <img alt="Dojo Options" src="dojo_settings.png" width="642" height="576">
 
-Match Codes are enabled by default, pointing to the default matchmaking relay. To use the LAN Lobby or Manual Operation (i.e., Command Line or External Lobbies) just disable the checkbox from **Enable Internet Matchmaking**, or pass `dojo:EnableMatchCode=no` to the command line options.
+Match Codes are enabled by default, pointing to the default matchmaking relay. For manual operation (i.e., Command Line or External Lobbies) just disable the checkbox from **Enable Internet Matchmaking**, or pass `dojo:EnableMatchCode=no` to the command line options.
 
 <img alt="Dojo Options - Match Codes Disabled" src="dojo_settings_sans_match.png" width="642" height="512">
 
@@ -136,46 +127,10 @@ If you are unable to find this setting, you can forward your router's port and [
 
 For more information, check out [10 VoIP Problems: How to Fix Them Forever](https://www.nextiva.com/blog/voip-problems.html#s2).
 
-## Lobby Quick Start
-If you are connected to your opponents on a shared LAN or are using software that emulates local connections like ZeroTier or Radmin VPN, you can make your life easier by enabling lobbies.
-
-* In the Netplay options, check "Enable Lobby" to make yourself visible to anyone connected to your network.
-* Set a unique Player Name to distinguish yourself from the crowd.
-
-### As Guest
-* On the Lobby screen, click on any entries with the status of "Hosting, Waiting" to launch a game. The game will load, and the session will start once the host has selected delay.
-
-<img alt="Lobby - Entry Select" src="lobby3.png" width="642" height="512">
-
-### As Host
-* In the Lobby screen, click "Host Game" and select your game of choice.
-
-<img alt="Lobby" src="lobby1.png" width="641" height="508">
-> Empty lobby with "Host Game" button highlighted
-
-<img alt="Host Game Selection" src="lobby2.png" width="641" height="508">
-> Host game selection menu with search filter
-
-#### Set Delay
-When a guest joins a session, the host can set the delay according to packet round trip time by pressing **"Detect Delay"**. Use the slider to adjust the game to your liking, and press "Start Game" to begin your session.
-
-Depending on the connection between you and your opponent and the tendency for network spikes, you may have to bump delay up to make your game smoother. The best course of action is to start low, and go higher until both you and your opponent have a smooth framerate.
-
-<img alt="Host Delay Selection" src="hostdelay.png" width="642" height="512">
-
-### As Spectator
-To spectate a match in your lobby, you will need to make a spectate request before a second player joins a match. Before spectating, make sure that you also have the same ROM as the players do.
-
-Just right-click on any lobby game with the status of "Hosting, Waiting" and click on Spectate. From here, the game will start and pause until the match starts.
-
-As of right now, spectating is limited to one person at a time. This should be handy for running tournaments online.
-
-<img alt="Lobby Spectating" src="spectate1.png" width="642" height="512">
-
 # Manual Operation
 
 ## Set Server IP & Port
-If you are hosting and do not wish to use the lobby system, you can enter your server details manually in the "Netplay" settings. Once you have specified your session details, make sure that your opponent enters your IP address and port specified.
+If you are hosting, you can enter your server details manually in the "Netplay" settings. Once you have specified your session details, make sure that your opponent enters your IP address and port specified.
 
 If you are a guest, make sure that "Act As Server" is not checked and that you have entered the matching IP address and port of your opponent in the "Server" column.
 
@@ -298,9 +253,11 @@ The following are the relevant dependencies:
 * **Ubuntu 20.10** Dependencies
   * `libcurl3-gnutls`
   * `libzip5`
+  * `libminiupnpc17`
 * **Arch Linux 2021.04.01** Dependencies
   * `libcurl3-gnutls`
   * `libzip`
+  * `miniupnpc`
 
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
@@ -350,11 +307,11 @@ _append to server arguments_
 - [x] UDP Delay Netplay
 - [x] UDP Spectating
 - [x] Session Replays
-- [x] LAN Lobbies
+- [ ] LAN Lobbies (currently being overhauled)
 - [x] TCP Spectating
 - [x] Offline Game Recording
 - [x] Offline Game Delay (Practice)
 - [x] Training Mode
 - [x] Native Linux Support
-- [ ] Native Mac OS Support
+- [x] Native Mac OS Support
 - [x] Lua Scripting (Introduced upstream)
