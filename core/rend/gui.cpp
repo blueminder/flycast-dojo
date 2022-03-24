@@ -2899,7 +2899,12 @@ static void gui_display_content()
 							if (config::Receiving)
 							{
 								if (dojo.replay_version == 2)
-									dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8");
+								{
+									if(dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8").empty())
+									{
+										dojo_file.DownloadNetSave(dojo_file.entry_name);
+									}
+								}
 								else if (!settings.dojo.state_commit.empty())
 								{
 									std::cout << "state commit: " << settings.dojo.state_commit << std::endl;
