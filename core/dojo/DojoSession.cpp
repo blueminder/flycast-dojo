@@ -1277,7 +1277,10 @@ void DojoSession::transmitter_thread()
 
 		spectate_start.AppendHeader(1, SPECTATE_START);
 
-		spectate_start.AppendInt(2);
+		spectate_start.AppendInt(3);
+		spectate_start.AppendString(settings.dojo.state_md5);
+		spectate_start.AppendString(settings.dojo.state_commit);
+
 		spectate_start.AppendString(get_game_name());
 		spectate_start.AppendString(config::PlayerName.get());
 		spectate_start.AppendString(config::OpponentName.get());

@@ -2902,13 +2902,18 @@ static void gui_display_content()
 								{
 									if(dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8").empty())
 									{
+										// fall back to current savestate if commit not found
 										dojo_file.DownloadNetSave(dojo_file.entry_name);
 									}
 								}
 								else if (!settings.dojo.state_commit.empty())
 								{
 									std::cout << "state commit: " << settings.dojo.state_commit << std::endl;
-									dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit);
+									if(dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit).empty())
+									{
+										// fall back to current savestate if commit not found
+										dojo_file.DownloadNetSave(dojo_file.entry_name);
+									}
 								}
 								else
 									dojo_file.DownloadNetSave(dojo_file.entry_name);
