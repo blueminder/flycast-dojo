@@ -646,6 +646,9 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	status_text = "Downloading netplay savestate for " + rom_name + ".";
 
 	auto filename = DownloadFile(net_state_url, "data");
+	if (filename.empty())
+		return filename;
+
 	save_download_ended = true;
 
 	// if not latest, append savestate filename with commit
@@ -754,7 +757,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	}
 
 	if (response_code == 404 || (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0))
+	{
 		remove(path.c_str());
+		path = "";
+	}
 	else
 		status_text = filename + " successfully downloaded.";
 

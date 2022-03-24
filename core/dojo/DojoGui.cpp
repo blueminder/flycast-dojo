@@ -1063,112 +1063,68 @@ void DojoGui::display_input_str(std::string input_str)
 
 void DojoGui::show_last_inputs_overlay()
 {
-	if (!dojo.displayed_inputs[0].empty())
+	for (int di = 0; di < 2; di++)
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-
-		ImGui::SetNextWindowPos(ImVec2(10, 100));
-		ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetIO().DisplaySize.y - 130));
-		ImGui::SetNextWindowBgAlpha(0.4f);
-		ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-
-		std::map<u32, std::bitset<18>>::reverse_iterator it = dojo.displayed_inputs[0].rbegin();
-
-		u32 input_frame_num = it->first;
-		u32 input_duration = dojo.FrameNumber - input_frame_num;
-
-		// dir
-		std::vector<bool> current_dirs = dojo.displayed_dirs[0][input_frame_num];
-
-		ImGui::Text("%03u", input_duration);
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-		if (config::UseAnimeInputNotation)
-			ImGui::Text("%d", dojo.displayed_num_dirs[0][input_frame_num]);
-		else
-			ImGui::Text("%6s", dojo.displayed_dirs_str[0][input_frame_num].c_str());
-		ImGui::PopStyleColor();
-		ImGui::SameLine();
-		display_input_str(dojo.displayed_inputs_str[0][input_frame_num]);
-		//ImGui::SameLine();
-		//ImGui::Text("%s", dojo.displayed_inputs_str[0][input_frame_num].c_str());
-		dojo.displayed_inputs_duration[0][input_frame_num] = input_duration;
-
-		for(auto rit = std::prev(dojo.displayed_inputs[0].rbegin()); rit != dojo.displayed_inputs[0].rend(); ++rit)
+		if (!dojo.displayed_inputs[di].empty())
 		{
-			ImGui::Text("%03u", dojo.displayed_inputs_duration[0][rit->first], dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
-			ImGui::SameLine();
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-			if (config::UseAnimeInputNotation)
-				ImGui::Text("%d", dojo.displayed_num_dirs[0][rit->first]);
-			else
-				ImGui::Text("%6s", dojo.displayed_dirs_str[0][rit->first].c_str(), dojo.displayed_inputs_str[0][rit->first].c_str());
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+#if defined(__APPLE__)
+			ImGui::SetNextWindowSize(ImVec2(250, ImGui::GetIO().DisplaySize.y - 210));
+#else
+			ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetIO().DisplaySize.y - 130));
+#endif
+
+			if (di == 0)
+			{
+#if defined(__APPLE__)
+				ImGui::SetNextWindowPos(ImVec2(10, 180));
+#else
+				ImGui::SetNextWindowPos(ImVec2(10, 100));
+#endif
+				ImGui::SetNextWindowBgAlpha(0.4f);
+				ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+			}
+			else if (di == 1)
+			{
+#if defined(__APPLE__)
+				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 260, 180));
+#else
+				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 180, 100));
+#endif
+				ImGui::SetNextWindowBgAlpha(0.4f);
+				ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+			}
+
+			std::map<u32, std::bitset<18>>::reverse_iterator it = dojo.displayed_inputs[di].rbegin();
+
+			u32 input_frame_num = it->first;
+			u32 input_duration = dojo.FrameNumber - input_frame_num;
+
+			dojo.displayed_inputs_duration[di][input_frame_num] = input_duration;
+
+			for(auto rit = dojo.displayed_inputs[di].rbegin(); rit != dojo.displayed_inputs[di].rend(); ++rit)
+			{
+				ImGui::Text("%03u", dojo.displayed_inputs_duration[di][rit->first], dojo.displayed_dirs_str[di][rit->first].c_str(), dojo.displayed_inputs_str[di][rit->first].c_str());
+				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+				if (config::UseAnimeInputNotation)
+					ImGui::Text("%d", dojo.displayed_num_dirs[di][rit->first]);
+				else
+					ImGui::Text("%6s", dojo.displayed_dirs_str[di][rit->first].c_str(), dojo.displayed_inputs_str[di][rit->first].c_str());
+				ImGui::PopStyleColor();
+				ImGui::SameLine();
+				display_input_str(dojo.displayed_inputs_str[di][rit->first]);
+				//ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
+			}
+			ImGui::End();
+
 			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			display_input_str(dojo.displayed_inputs_str[0][rit->first]);
-			//ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
+			ImGui::PopStyleVar(2);
 		}
-
-		ImGui::End();
-
-		ImGui::PopStyleColor();
-		ImGui::PopStyleVar(2);
-	}
-
-	if (!dojo.displayed_inputs[1].empty())
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 180, 100));
-		ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetIO().DisplaySize.y - 130));
-		ImGui::SetNextWindowBgAlpha(0.4f);
-		ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-
-		std::map<u32, std::bitset<18>>::reverse_iterator it = dojo.displayed_inputs[1].rbegin();
-
-		u32 input_frame_num = it->first;
-		u32 input_duration = dojo.FrameNumber - input_frame_num;
-
-		// dir
-		std::vector<bool> current_dirs = dojo.displayed_dirs[1][input_frame_num];
-
-		ImGui::Text("%03u", input_duration);
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-		if (config::UseAnimeInputNotation)
-			ImGui::Text("%d", dojo.displayed_num_dirs[1][input_frame_num]);
-		else
-			ImGui::Text("%6s", dojo.displayed_dirs_str[1][input_frame_num].c_str());
-		ImGui::PopStyleColor();
-		ImGui::SameLine();
-		display_input_str(dojo.displayed_inputs_str[1][input_frame_num]);
-		//ImGui::SameLine();
-		//ImGui::Text("%s", dojo.displayed_inputs_str[1][input_frame_num].c_str());
-		dojo.displayed_inputs_duration[1][input_frame_num] = input_duration;
-
-		for(auto rit = std::prev(dojo.displayed_inputs[1].rbegin()); rit != dojo.displayed_inputs[1].rend(); ++rit)
-		{
-			ImGui::Text("%03u", dojo.displayed_inputs_duration[1][rit->first], dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
-			ImGui::SameLine();
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-			if (config::UseAnimeInputNotation)
-				ImGui::Text("%d", dojo.displayed_num_dirs[1][rit->first]);
-			else
-				ImGui::Text("%6s", dojo.displayed_dirs_str[1][rit->first].c_str(), dojo.displayed_inputs_str[1][rit->first].c_str());
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			display_input_str(dojo.displayed_inputs_str[1][rit->first]);
-			//ImGui::Text("%s", dojo.displayed_inputs_str[1][rit->first].c_str());
-		}
-
-		ImGui::End();
-
-		ImGui::PopStyleColor();
-		ImGui::PopStyleVar(2);
 	}
 }
 
