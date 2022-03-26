@@ -590,8 +590,10 @@ void gui_start_game(const std::string& path)
 		if(ghc::filesystem::exists(net_save_path))
 		{
 			std::FILE* save_file = std::fopen(net_save_path.c_str(), "rb");
-			dojo.save_checksum = md5file(save_file);
-			settings.dojo.state_md5 = md5file(save_file);
+			//dojo.save_checksum = md5file(save_file);
+			//settings.dojo.state_md5 = md5file(save_file);
+			dojo.save_checksum = "";
+			settings.dojo.state_md5 = "";
 
 			if(ghc::filesystem::exists(net_save_path + ".commit"))
 			{
