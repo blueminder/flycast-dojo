@@ -84,7 +84,11 @@ public:
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		vk::Filter filter;
+		if (config::NoTextureFilter)
+			filter = vk::Filter::eNearest;
+		else
+			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
 		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge

@@ -223,8 +223,16 @@ static void SetGPState(const PolyParam* gp)
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
 					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					if (config::NoTextureFilter)
+					{
+						glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST);
+						glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					}
+					else
+					{
+						glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+						glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					}
 					if (mipmapped)
 						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
 					if (gl.max_anisotropy > 1.f)

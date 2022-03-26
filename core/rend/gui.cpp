@@ -2043,6 +2043,7 @@ static void gui_display_settings()
 		    	ImGui::Unindent();
 #endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
+		    	OptionCheckbox("Disable Texture Filtering", config::NoTextureFilter, "Unblurs textures. Sharper, more pixelated look.");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
