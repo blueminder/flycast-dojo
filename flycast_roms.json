@@ -432,5 +432,13 @@
     "flycast_dc_sfiii3": {
         "filename": "Street Fighter III - 3rd Strike (USA).chd",
         "md5_checksum": "2f64324bde3cf4f174f32663492647e4"
+    },
+    "flycast_dc_daytona": {
+        "filename": "Daytona USA (USA).chd",
+        "md5_checksum": "a31dc7bf00df60cc952590d1d2178f59"
+    },
+    "flycast_dc_sf2049": {
+        "filename": "San Francisco Rush 2049 (USA) (En,Fr,De,Es,It,Nl).chd",
+        "md5_checksum": "57b9d666befa313b8a47055b2262f327"
     }
 }
