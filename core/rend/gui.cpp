@@ -536,7 +536,10 @@ void gui_open_settings()
 		if (!ggpo::active() || dojo.PlayMatch)
 		{
 			if (dojo.PlayMatch)
+			{
+				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;
+			}
 			else
 				gui_state = GuiState::Commands;
 			HideOSD();
@@ -563,6 +566,8 @@ void gui_open_settings()
 	{
 		if (dojo.stepping)
 			dojo.stepping = false;
+		if (dojo.manual_pause)
+			dojo.manual_pause = false;
 		gui_state = GuiState::Closed;
 		emu.start();
 	}

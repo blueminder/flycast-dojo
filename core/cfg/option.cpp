@@ -172,6 +172,7 @@ Option<bool> ShowPublicIP("ShowPublicIP", false, "dojo");
 Option<bool> ShowInputDisplay("ShowInputDisplay", true, "dojo");
 Option<bool> UseAnimeInputNotation("UseAnimeInputNotation", true, "dojo");
 Option<bool> HideRandomInputSlot("HideRandomInputSlot", true, "dojo");
+Option<bool> BufferAutoResume("BufferAutoResume", true, "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 

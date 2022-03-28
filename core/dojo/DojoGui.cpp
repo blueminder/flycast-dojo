@@ -1190,7 +1190,12 @@ void DojoGui::show_pause(float scaling)
 	if (dojo.stepping)
 		pause_text = "Stepping";
 	else
-		pause_text = "Paused";
+	{
+		if (config::Receiving.get() && config::BufferAutoResume.get() && !dojo.manual_pause)
+			pause_text = "Buffering";
+		else
+			pause_text = "Paused";
+	}
 
 	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
 
@@ -1283,6 +1288,22 @@ void DojoGui::gui_display_replay_pause(float scaling)
 	dojo_gui.show_player_name_overlay(scaling, false);
 	dojo_gui.show_pause(scaling);
 	dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
+
+	if (config::Receiving.get())
+	{
+		u32 current = dojo.FrameNumber.load();
+		// RxFrameBuffer divided by 10 for some reason?
+		u32 rx_buffer = (u32)(config::RxFrameBuffer.get() * 10);
+		u32 resume_target = current + rx_buffer;
+
+		if (config::BufferAutoResume.get() &&
+			!dojo.manual_pause &&
+			dojo.maple_inputs.size() > resume_target)
+		{
+			gui_state = GuiState::Closed;
+			emu.start();
+		}
+	}
 }
 
 void DojoGui::gui_display_paused(float scaling)

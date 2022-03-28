@@ -309,6 +309,7 @@ public:
 	std::string AddToInputDisplay(u8 * data);
 
 	bool stepping = false;
+	bool manual_pause = false;
 };
 
 extern DojoSession dojo;

@@ -530,6 +530,7 @@ extern Option<bool> ShowPublicIP;
 extern Option<bool> ShowInputDisplay;
 extern Option<bool> UseAnimeInputNotation;
 extern Option<bool> HideRandomInputSlot;
+extern Option<bool> BufferAutoResume;
 
 // Maple
 
