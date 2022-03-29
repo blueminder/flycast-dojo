@@ -1260,6 +1260,12 @@ void DojoSession::transmitter_thread()
 {
 	try
 	{
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		if (config::SpectatorIP.get() == "ggpo.fightcade.com")
+		{
+			while (config::Quark.get().length() == 0);
+		}
+
 		asio::io_context io_context;
 
 		tcp::resolver resolver(io_context);
