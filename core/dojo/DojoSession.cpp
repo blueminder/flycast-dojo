@@ -976,7 +976,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		config::Quark = Quark;
 		config::MatchCode = MatchCode;
 
-		if (replay_version == 3)
+		if (replay_version >= 3)
 		{
 			settings.dojo.state_md5 = MessageReader::ReadString((const char*)buffer, offset);
 			settings.dojo.state_commit = MessageReader::ReadString((const char*)buffer, offset);
@@ -1284,8 +1284,6 @@ void DojoSession::transmitter_thread()
 		spectate_start.AppendHeader(1, SPECTATE_START);
 
 		spectate_start.AppendInt(3);
-		spectate_start.AppendString(settings.dojo.state_md5);
-		spectate_start.AppendString(settings.dojo.state_commit);
 
 		spectate_start.AppendString(get_game_name());
 		spectate_start.AppendString(config::PlayerName.get());
@@ -1296,6 +1294,9 @@ void DojoSession::transmitter_thread()
 
 		// ggpo analog settings
 		spectate_start.AppendInt((u32)config::GGPOAnalogAxes.get());
+
+		spectate_start.AppendString(settings.dojo.state_md5);
+		spectate_start.AppendString(settings.dojo.state_commit);
 
 		std::vector<unsigned char> message = spectate_start.Msg();
 		asio::write(socket, asio::buffer(message));
