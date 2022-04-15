@@ -442,7 +442,6 @@ extern Option<u64> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
-extern Option<bool> NoTextureFilter;
 
 // Misc
 

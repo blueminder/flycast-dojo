@@ -185,16 +185,8 @@ __forceinline
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
 			bool mipmapped = texture->IsMipmapped();
-			if(config::NoTextureFilter)
-			{
-				glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST);
-				glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			}
-			else
-			{
-				glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-				glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			}
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #ifdef GL_TEXTURE_LOD_BIAS
 			if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
@@ -207,12 +199,7 @@ __forceinline
 							std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
 					// Set the recommended minification filter for best results
 					if (mipmapped)
-					{
-						if (config::NoTextureFilter)
-							glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-						else
-							glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-					}
+						glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 				}
 				else
 					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
@@ -729,18 +716,9 @@ bool render_output_framebuffer()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		if(config::NoTextureFilter)
-		{
-			glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
-					sx, 0, settings.display.width - sx, settings.display.height,
-					GL_COLOR_BUFFER_BIT, GL_NEAREST);
-		}
-		else
-		{
-			glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
-					sx, 0, settings.display.width - sx, settings.display.height,
-					GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		}
+		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
+				sx, 0, settings.display.width - sx, settings.display.height,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}

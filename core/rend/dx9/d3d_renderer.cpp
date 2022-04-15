@@ -390,43 +390,21 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		setTexMode(D3DSAMP_ADDRESSU, gp->tsp.ClampU, gp->tsp.FlipU);
 		setTexMode(D3DSAMP_ADDRESSV, gp->tsp.ClampV, gp->tsp.FlipV);
 
-		if (config::NoTextureFilter)
+		//set texture filter mode
+		if (gp->tsp.FilterMode == 0 || gpuPalette)
 		{
-			//set texture filter mode
-			if (gp->tsp.FilterMode == 0 || gpuPalette)
-			{
-				//disable filtering, mipmaps
-				devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-			}
-			else
-			{
-				//bilinear filtering
-				devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);		// LINEAR for Trilinear filtering
-			}
+			//disable filtering, mipmaps
+			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
 		}
 		else
 		{
-			//set texture filter mode
-			if (gp->tsp.FilterMode == 0 || gpuPalette)
-			{
-				//disable filtering, mipmaps
-				devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-				devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-			}
-			else
-			{
-				//bilinear filtering
-				devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-				devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-				devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
-			}
+			//bilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
 		}
-
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
