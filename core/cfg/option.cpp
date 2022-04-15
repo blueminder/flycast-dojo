@@ -91,6 +91,7 @@ Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
 Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
+Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 
@@ -117,7 +118,7 @@ Option<bool> EnableUPnP("EnableUPnP", false, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPOPort("GGPOPort", 19713, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
-Option<bool> NetworkStats("Stats", false, "network");
+Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<int> GGPORemotePort("GGPORemotePort", 19713, "network");
 Option<bool> GGPOChat("GGPOChat", true, "network");
