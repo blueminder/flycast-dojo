@@ -23,6 +23,7 @@
 #include "rend/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
+#include "hw/naomi/card_reader.h"
 #include "stdclass.h"
 
 #include <algorithm>
@@ -89,6 +90,10 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_FFORWARD:
 			if (pressed && !gui_is_open())
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online;
+			break;
+		case EMU_BTN_INSERT_CARD:
+			if (pressed && settings.platform.isNaomi())
+				card_reader::insertCard();
 			break;
 		case EMU_BTN_JUMP_STATE:
 			loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
@@ -501,7 +506,7 @@ void GamepadDevice::load_system_mappings()
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
 		if (!gamepad->find_mapping())
-			gamepad->resetMappingToDefault(settings.platform.system != DC_PLATFORM_DREAMCAST, true);
+			gamepad->resetMappingToDefault(settings.platform.isArcade(), true);
 	}
 }
 
@@ -555,6 +560,7 @@ bool GamepadDevice::find_mapping(int system /* = settings.platform.system */)
 				if (cloneMapping)
 					input_mapper = std::make_shared<InputMapping>(*input_mapper);
 				perGameMapping = perGame;
+				rumblePower = input_mapper->rumblePower;
 				return true;
 			}
 			if (!perGame)

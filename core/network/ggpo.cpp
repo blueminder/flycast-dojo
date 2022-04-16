@@ -32,6 +32,8 @@ void UpdateInputState();
 namespace ggpo
 {
 
+bool inRollback;
+
 static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
@@ -118,7 +120,6 @@ static bool absPointerPos;
 static bool keyboardGame;
 static bool mouseGame;
 static int inputSize;
-static bool inRollback;
 static void (*chatCallback)(int playerNum, const std::string& msg);
 
 struct MemPages
@@ -128,10 +129,12 @@ struct MemPages
 		ram = memwatch::ramWatcher.getPages();
 		vram = memwatch::vramWatcher.getPages();
 		aram = memwatch::aramWatcher.getPages();
+		elanram = memwatch::elanWatcher.getPages();
 	}
 	memwatch::PageMap ram;
 	memwatch::PageMap vram;
 	memwatch::PageMap aram;
+	memwatch::PageMap elanram;
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
@@ -281,12 +284,6 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
-	dc_deserialize(deser);
-	if (deser.size() != (u32)len)
-	{
-		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, (int)deser.size());
-		die("fatal");
-	}
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
 		const MemPages& pages = deltaStates[f];
@@ -296,8 +293,16 @@ static bool load_game_state(unsigned char *buffer, int len)
 			memcpy(memwatch::vramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
 		for (const auto& pair : pages.aram)
 			memcpy(memwatch::aramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
-		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d aica ram", f, (u32)pages.ram.size(),
-					(u32)pages.vram.size(), (u32)pages.aram.size());
+		for (const auto& pair : pages.elanram)
+			memcpy(memwatch::elanWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d eram, %d aica ram", f, (u32)pages.ram.size(),
+					(u32)pages.vram.size(), (u32)pages.elanram.size(), (u32)pages.aram.size());
+	}
+	dc_deserialize(deser);
+	if (deser.size() != (u32)len)
+	{
+		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, (int)deser.size());
+		die("fatal");
 	}
 	rend_allow_rollback();	// ggpo might load another state right after this one
 	memwatch::reset();
@@ -315,7 +320,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 {
 	verify(!sh4_cpu.IsCpuRunning());
 	lastSavedFrame = frame;
-	size_t allocSize = (settings.platform.system == DC_PLATFORM_NAOMI ? 20 : 10) * 1024 * 1024;
+	size_t allocSize = (settings.platform.isNaomi() ? 20 : 10) * 1024 * 1024;
 	*buffer = (unsigned char *)malloc(allocSize);
 	if (*buffer == nullptr)
 	{
@@ -379,8 +384,8 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 #endif
 		// Save the delta to frame-1
 		deltaStates[frame - 1].load();
-		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
-				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].aram.size());
+		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d eram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
+				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].elanram.size(), (u32)deltaStates[frame - 1].aram.size());
 	}
 	memwatch::protect();
 
@@ -478,7 +483,7 @@ void startSession(int localPort, int localPlayerNum)
 	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		analogAxes = config::GGPOAnalogAxes;
 	else
 	{
@@ -764,6 +769,14 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
+			/*
+			if (config::EnableUPnP)
+			{
+				miniupnp.Init();
+				miniupnp.AddPortMapping(config::GGPOPort.get(), false);
+			}
+			*/
+
 			try {
 				if (dojo.commandLineStart)
 				{
@@ -832,8 +845,8 @@ void displayStats()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * scaling), ImGui::GetIO().DisplaySize.y - 40));
-	ImGui::SetNextWindowSize(ImVec2(590 * scaling, 0));
+	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * settings.display.uiScale), ImGui::GetIO().DisplaySize.y - 40));
+	ImGui::SetNextWindowSize(ImVec2(590 * settings.display.uiScale, 0));
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
@@ -867,7 +880,7 @@ void displayStats()
 	// Send Queue
 	ImGui::Text("Send Q");
 	ImGui::SameLine();
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 
 	ImGui::SameLine();
 	ImGui::Dummy(ImVec2(10.0f, 0.0f));
@@ -882,7 +895,7 @@ void displayStats()
 	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
 	ImGui::Text("Predicted");
 	ImGui::SameLine();
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
@@ -895,7 +908,7 @@ void displayStats()
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
 	ImGui::Text("Behind");
 	ImGui::SameLine();
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();

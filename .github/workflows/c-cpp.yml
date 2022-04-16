@@ -15,7 +15,7 @@ jobs:
           - {name: x86_64-w64-mingw32, os: windows-2019, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
-      - name: Set up build environment (macos-latest)
+      - name: Set up build environment (macOS)
         run: |
           brew update
           brew install libao ldid libomp ninja pulseaudio zlib asio gnutls lua
@@ -24,6 +24,8 @@ jobs:
           sudo /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/vulkansdk-macos-*
           echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
+          echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
       - name: Set up build environment (ubuntu-latest)
@@ -210,4 +212,5 @@ jobs:
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
+		shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-latest') }}

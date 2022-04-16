@@ -67,7 +67,7 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 		val >>= 1;
 	}
 	u32 arcade_key;
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.isNaomi())
 	{
 		if (pos >= ARRAY_SIZE(naomi_button_mapping))
 			return nullptr;
@@ -645,8 +645,17 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		{
+			// reverse the board order so that P1 is P1
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
+		}
+		else
+		{
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		}
 		break;
 	case JVS::LightGun:
 		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
@@ -976,7 +985,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		{
 			int address = dma_buffer_in[1];
 			int size = dma_buffer_in[2];
-			DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
+			DEBUG_LOG(MAPLE, "EEprom write %08x %08x", address, size);
 			//printState(Command,buffer_in,buffer_in_len);
 			address = address % sizeof(eeprom);
 			size = std::min((int)sizeof(eeprom) - address, size);
@@ -1450,9 +1459,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						{
 							if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 							{
-								if (config::DojoEnable)
+								if (settings.platform.system == DC_PLATFORM_NAOMI ||
+									settings.platform.system == DC_PLATFORM_NAOMI2)
 								{
-									if (settings.platform.system == DC_PLATFORM_NAOMI)
+									if (config::DojoEnable)
 									{
 										inputs[player] = dojo.ApplyNetInputs(inputs[player], player);
 
@@ -1462,15 +1472,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 												dojo.net_coin_press = true;
 										}
 									}
-								}
-								else
-								{
-									if (settings.platform.system == DC_PLATFORM_NAOMI
-										&& !settings.network.online
-										&& !config::Receiving
-										&& player < 2)
+									else
 									{
-										inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+										if (!settings.network.online
+											&& !config::Receiving
+											&& player < 2)
+										{
+											inputs[player] = dojo.ApplyOfflineInputs(0, inputs[player], player);
+										}
 									}
 								}
 							}

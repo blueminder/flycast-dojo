@@ -56,6 +56,7 @@ enum class Event {
 	Resume,
 	Terminate,
 	LoadState,
+	VBlank,
 };
 
 class EventManager
