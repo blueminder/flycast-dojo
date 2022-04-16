@@ -845,7 +845,7 @@ void displayStats()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * scaling), ImGui::GetIO().DisplaySize.y - 40));
+	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * settings.display.uiScale), ImGui::GetIO().DisplaySize.y - 40));
 	ImGui::SetNextWindowSize(ImVec2(590 * settings.display.uiScale, 0));
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
@@ -880,7 +880,7 @@ void displayStats()
 	// Send Queue
 	ImGui::Text("Send Q");
 	ImGui::SameLine();
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 
 	ImGui::SameLine();
 	ImGui::Dummy(ImVec2(10.0f, 0.0f));

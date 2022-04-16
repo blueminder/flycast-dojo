@@ -307,7 +307,6 @@ void gui_initFonts()
 
     // TODO Linux, iOS, ...
 #endif
-    //NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
 	if (!instance_started)
 	{
@@ -769,7 +768,7 @@ static void gui_display_commands()
 	{
 		std::ostringstream watch_text;
 		watch_text << "Watching Player " << dojo.record_player + 1;
-		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
 		{
 			dojo.TrainingSwitchPlayer();
 		}
@@ -777,7 +776,7 @@ static void gui_display_commands()
 		std::ostringstream playback_loop_text;
 		playback_loop_text << "Playback Loop ";
 		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
-		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
 		{
 			dojo.playback_loop = (dojo.playback_loop ? false : true);
 		}
@@ -824,7 +823,7 @@ static void gui_display_commands()
 		std::ostringstream input_display_text;
 		input_display_text << "Input Display ";
 		input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
-		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * scaling, 50 * scaling)))
+		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
 		{
 			config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
 		}
@@ -1312,7 +1311,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		if (gamepad->maple_port() == MAPLE_PORTS)
 		{
 			ImGui::SameLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * settings.display.uiScale - ImGui::GetFontSize()) / 2));
 			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
 			ImGui::SetNextItemWidth(portWidth);
 			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
@@ -1334,7 +1333,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		float gameConfigWidth = 0;
 		if (!settings.content.gameId.empty())
 			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
-		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - 100 * settings.display.uiScale * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
 
@@ -1374,7 +1373,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 					hitbox = true;
 			}
 			ImGui::NewLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * settings.display.uiScale, ImGui::GetStyle().ItemSpacing.y));
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 			if (ImGui::Button("Yes"))
 			{
@@ -1399,7 +1398,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::SetNextItemWidth(comboWidth);
 		// Make the combo height the same as the Done and Reset buttons
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * settings.display.uiScale - ImGui::GetFontSize()) / 2));
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
 		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
@@ -2910,7 +2909,7 @@ static void gui_display_content()
 
 					if (ImGui::BeginPopupModal("MD5 Checksum", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 					{
-						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2 * scaling, 4 * scaling));
+						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2 * settings.display.uiScale, 4 * settings.display.uiScale));
 
 						ImGui::Text("%s", dojo_gui.current_filename.c_str());
 
@@ -3044,7 +3043,7 @@ static void gui_display_content()
 					filename.find("data") == std::string::npos &&
 					!download_url.empty())
 				{
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * settings.display.uiScale, 20 * settings.display.uiScale));		// from 8, 4
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
 					ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(255, 145, 145, 1));
 
@@ -3610,50 +3609,50 @@ void gui_display_ui()
 	{
 	case GuiState::Lobby:
 		scanner.get_mutex().lock();
-		dojo_gui.gui_display_lobby(scaling, scanner.get_game_list());
+		dojo_gui.gui_display_lobby(settings.display.uiScale, scanner.get_game_list());
 		scanner.get_mutex().unlock();
 		break;
 	case GuiState::Replays:
 		scanner.get_mutex().lock();
-		dojo_gui.gui_display_replays(scaling, scanner.get_game_list());
+		dojo_gui.gui_display_replays(settings.display.uiScale, scanner.get_game_list());
 		scanner.get_mutex().unlock();
 		break;
 	case GuiState::ReplayPause:
 		//dojo_gui.gui_display_paused(scaling);
-		dojo_gui.gui_display_replay_pause(scaling);
+		dojo_gui.gui_display_replay_pause(settings.display.uiScale);
 		break;
 	case GuiState::TestGame:
 #if defined(__APPLE__)
 	dojo_file.RefreshFileDefinitions();
 #endif
-		dojo_gui.gui_display_test_game(scaling);
+		dojo_gui.gui_display_test_game(settings.display.uiScale);
 		break;
 	case GuiState::HostDelay:
-		dojo_gui.gui_display_host_delay(scaling);
+		dojo_gui.gui_display_host_delay(settings.display.uiScale);
 		break;
 	case GuiState::HostWait:
-		dojo_gui.gui_display_host_wait(scaling);
+		dojo_gui.gui_display_host_wait(settings.display.uiScale);
 		break;
 	case GuiState::GuestWait:
-		dojo_gui.gui_display_guest_wait(scaling);
+		dojo_gui.gui_display_guest_wait(settings.display.uiScale);
 		break;
 	case GuiState::StreamWait:
-		dojo_gui.gui_display_stream_wait(scaling);
+		dojo_gui.gui_display_stream_wait(settings.display.uiScale);
 		break;
 	case GuiState::GGPOJoin:
-		dojo_gui.gui_display_ggpo_join(scaling);
+		dojo_gui.gui_display_ggpo_join(settings.display.uiScale);
 		break;
 	case GuiState::Disconnected:
-		dojo_gui.gui_display_disconnected(scaling);
+		dojo_gui.gui_display_disconnected(settings.display.uiScale);
 		break;
 	case GuiState::EndReplay:
-		dojo_gui.gui_display_end_replay(scaling);
+		dojo_gui.gui_display_end_replay(settings.display.uiScale);
 		break;
 	case GuiState::EndSpectate:
-		dojo_gui.gui_display_end_spectate(scaling);
+		dojo_gui.gui_display_end_spectate(settings.display.uiScale);
 		break;
 	case GuiState::BiosRomWarning:
-		dojo_gui.gui_display_bios_rom_warning(scaling);
+		dojo_gui.gui_display_bios_rom_warning(settings.display.uiScale);
 		break;
 	case GuiState::Settings:
 		gui_display_settings();
@@ -3770,16 +3769,16 @@ void gui_display_osd()
 			else
 			{
 				if (config::ShowPlaybackControls)
-					dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
+					dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
 			}
-			dojo_gui.show_player_name_overlay(scaling, false);
+			dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
 		}
 
 		if (settings.dojo.training && config::ShowInputDisplay)
 			dojo_gui.show_last_inputs_overlay();
 
 		if (dojo.PlayMatch && !config::GGPOEnable && config::ShowPlaybackControls)
-			dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
+			dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
 
 		if (!settings.network.online)
 			lua::overlay();
@@ -3790,7 +3789,7 @@ void gui_display_osd()
 	if (dojo.PlayMatch)
 	{
 		if (!config::Receiving)
-			dojo_gui.show_playback_menu(scaling, false);
+			dojo_gui.show_playback_menu(settings.display.uiScale, false);
 
 		if (dojo.replay_version >= 2)
 		{
@@ -3820,7 +3819,7 @@ void gui_display_osd()
 	{
 		if (config::EnablePlayerNameOverlay || config::Receiving)
 		{
-			dojo_gui.show_player_name_overlay(scaling, false);
+			dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
 		}
 	}
 }
