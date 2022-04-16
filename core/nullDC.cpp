@@ -47,7 +47,7 @@ int flycast_init(int argc, char* argv[])
 		LogManager::Init();
 		config::Settings::instance().load(false);
 	}
-
+	gui_init();
 	os_CreateWindow();
 	os_SetupInput();
 
@@ -85,6 +85,7 @@ void flycast_term()
 	if (!settings.network.online)
 		lua::term();
 	emu.term();
+	gui_term();
 }
 
 std::string get_game_name()

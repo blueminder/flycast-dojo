@@ -21,6 +21,7 @@
 #include "cfg/option.h"
 
 void gui_init();
+void gui_initFonts();
 void gui_open_settings();
 void gui_display_ui();
 void gui_display_notification(const char *msg, int duration);
@@ -50,9 +51,6 @@ void gui_open_guest_wait();
 void gui_open_disconnected();
 
 void gui_open_ggpo_join();
-
-extern int screen_dpi;
-extern float scaling;
 
 enum class GuiState {
 	Closed,
@@ -89,9 +87,6 @@ static inline bool gui_is_open()
 static inline bool gui_is_content_browser()
 {
 	return gui_state == GuiState::Main;
-}
-static inline float gui_get_scaling() {
-	return scaling;
 }
 extern bool game_started;
 extern void gui_start_game(const std::string& path);

@@ -52,12 +52,10 @@
 
 bool game_started;
 
-int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
 std::unique_ptr<ImGuiDriver> imguiDriver;
 
 static bool inited = false;
-float scaling = 1;
 GuiState gui_state = GuiState::Main;
 static bool commandLineStart;
 static u32 mouseButtons;
@@ -178,7 +176,19 @@ void gui_init()
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
+    EventManager::listen(Event::Resume, emuEventCallback);
+    EventManager::listen(Event::Start, emuEventCallback);
+	EventManager::listen(Event::Terminate, emuEventCallback);
+    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+}
 
+void gui_initFonts()
+{
+	static float uiScale;
+
+	verify(inited);
+	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
+		return;
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
     // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -193,14 +203,15 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !defined(_WIN32) && !defined(__SWITCH__)
-    scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
+#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
-    	scaling = std::min(1.2f, scaling);
+    	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
 #endif
-    if (scaling > 1)
-		ImGui::GetStyle().ScaleAllSizes(scaling);
+    uiScale = settings.display.uiScale;
+    if (settings.display.uiScale > 1)
+    	ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 
     static const ImWchar ranges[] =
     {
@@ -208,7 +219,10 @@ void gui_init()
         0,
     };
 
-    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->Clear();
+	const float fontSize = 17.f * settings.display.uiScale;
+	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
 #ifdef _WIN32
@@ -219,33 +233,33 @@ void gui_init()
     case 932:	// Japanese
 		{
 			font_cfg.FontNo = 2;	// UIGothic
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
 			font_cfg.FontNo = 2;	// Meiryo UI
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
 		}
 		break;
     case 949:	// Korean
 		{
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
 			if (font == nullptr)
 			{
 				font_cfg.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
 			}
 		}
     	break;
     case 950:	// Traditional Chinese
 		{
 			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 			font_cfg.FontNo = 0;
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 		}
     	break;
     case 936:	// Simplified Chinese
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     	break;
     default:
     	break;
@@ -258,19 +272,19 @@ void gui_init()
 
     if (locale.find("ja") == 0)             // Japanese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
     }
     else if (locale.find("ko") == 0)       // Korean
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
     }
     else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
     }
     else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     }
 #elif defined(__ANDROID__)
     if (getenv("FLYCAST_LOCALE") != nullptr)
@@ -288,12 +302,12 @@ void gui_init()
         	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
 
         if (glyphRanges != nullptr)
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &font_cfg, glyphRanges);
     }
 
     // TODO Linux, iOS, ...
 #endif
-    NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
+    //NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
 	if (!instance_started)
 	{
@@ -325,6 +339,7 @@ void gui_init()
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 
 void gui_keyboard_input(u16 wc)
@@ -696,7 +711,7 @@ static void gui_display_commands()
    	imguiDriver->displayVmus();
 
     centerNextWindow();
-    ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+    ImGui::SetNextWindowSize(ScaledVec2(330, 0));
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -711,7 +726,7 @@ static void gui_display_commands()
 	}
 
 	// Load State
-	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_loadstate(config::SavestateSlot);
@@ -720,7 +735,7 @@ static void gui_display_commands()
 
 	// Slot #
 	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+	if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
 		ImGui::OpenPopup("slot_select_popup");
     if (ImGui::BeginPopup("slot_select_popup"))
     {
@@ -735,7 +750,7 @@ static void gui_display_commands()
 	ImGui::SameLine();
 
 	// Save State
-	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_savestate(config::SavestateSlot);
@@ -777,7 +792,7 @@ static void gui_display_commands()
 	}
 
 	// Settings
-	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
 	{
 		gui_state = GuiState::Settings;
 	}
@@ -789,7 +804,7 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
-	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
 		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
@@ -820,7 +835,7 @@ static void gui_display_commands()
 
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button(disk_label, ScaledVec2(150, 50)))
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
@@ -842,7 +857,7 @@ static void gui_display_commands()
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.network.online)
+	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
@@ -861,8 +876,8 @@ static void gui_display_commands()
 	ImGui::Columns(1, nullptr, false);
 
 	// Exit
-	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
-			50 * scaling)))
+	if (ImGui::Button("Exit", ScaledVec2(300, 50)
+			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{
@@ -1197,7 +1212,7 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 }
 static void detect_input_popup(const Mapping *mapping)
 {
-	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+	ImVec2 padding = ScaledVec2(20, 20);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
@@ -1276,12 +1291,13 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+		const float scaling = settings.display.uiScale;
 
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
@@ -1326,7 +1342,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		{
 			if (gamepad->isPerGameMapping())
 			{
-				if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 				{
 					gamepad->setPerGameMapping(false);
 					if (!gamepad->find_mapping(map_system))
@@ -1335,15 +1351,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			else
 			{
-				if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 					gamepad->setPerGameMapping(true);
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Reset...", ImVec2(100 * scaling, 30 * scaling)))
+		if (ImGui::Button("Reset...", ScaledVec2(100, 30)))
 			ImGui::OpenPopup("Confirm Reset");
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20 * scaling, 20 * scaling));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 		if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::Text("Are you sure you want to reset the mappings to default?");
@@ -1359,7 +1375,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			ImGui::NewLine();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10 * scaling, 10 * scaling));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 			if (ImGui::Button("Yes"))
 			{
 				gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
@@ -1486,26 +1502,26 @@ void error_popup()
 {
 	if (!error_msg_shown && !error_msg.empty())
 	{
-		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+		ImVec2 padding = ScaledVec2(20, 20);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
 			ImGui::TextWrapped("%s", error_msg.c_str());
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (dojo.commandLineStart)
 			{
-				if (ImGui::Button("Exit", ImVec2(80.f * scaling, 0.f)))
+				if (ImGui::Button("Exit", ImVec2(80.f * settings.display.uiScale, 0.f)))
 					dc_exit();
 
 			}
 			else
 			{
-				if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+				if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
 				{
 					error_msg.clear();
 					ImGui::CloseCurrentPopup();
@@ -1531,12 +1547,12 @@ static void contentpath_warning_popup()
         ImGui::OpenPopup("Incorrect Content Location?");
         if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
             float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-            if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
+            ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * settings.display.uiScale);
+            if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
             {
             	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
@@ -1544,8 +1560,8 @@ static void contentpath_warning_popup()
             }
 
             ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+            ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * settings.display.uiScale);
+            if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
             {
             	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
@@ -1586,7 +1602,7 @@ static void gui_display_settings()
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
-    if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+    if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
     	if (game_started)
     		gui_state = GuiState::Commands;
@@ -1606,10 +1622,10 @@ static void gui_display_settings()
 	if (game_started)
 	{
 	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
-			if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
@@ -1618,13 +1634,13 @@ static void gui_display_settings()
 		}
 		else
 		{
-			if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
 	    ImGui::PopStyleVar();
 	}
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
@@ -1690,7 +1706,7 @@ static void gui_display_settings()
                 		to_delete = i;
                 	ImGui::PopID();
                 }
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
                 if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
                 select_file_popup("Select Directory", [](bool cancelled, std::string selection)
@@ -1823,9 +1839,9 @@ static void gui_display_settings()
 #endif
 					if (gamepad->is_rumble_enabled())
 					{
-						ImGui::SameLine(0, 16 * scaling);
+						ImGui::SameLine(0, 16 * settings.display.uiScale);
 						int power = gamepad->get_rumble_power();
-						ImGui::SetNextItemWidth(150 * scaling);
+						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
 						if (ImGui::SliderInt("Rumble", &power, 0, 100))
 							gamepad->set_rumble_power(power);
 					}
@@ -2574,7 +2590,7 @@ static void gui_display_content()
 
 	ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * scaling, 6 * scaling));		// from 8, 4
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
 	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
@@ -2633,6 +2649,8 @@ static void gui_display_content()
 			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = false;
+    ImGui::Indent(10 * settings.display.uiScale);
+    ImGui::Unindent(10 * settings.display.uiScale);
 
 			if (config::EnableMatchCode)
 				config::MatchCode = "";
@@ -2699,7 +2717,7 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 32 * scaling);
+	ImGui::SameLine(0, 32 * settings.display.uiScale);
 	filter.Draw("Filter");
 #endif
     if (gui_state != GuiState::SelectDisk)
@@ -2755,7 +2773,7 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, -(ImGui::CalcTextSize("Foo").y + ImGui::GetStyle().FramePadding.y * 4.0f)), true, ImGuiWindowFlags_DragScrolling);
   {
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		if (!settings.network.online && !config::RecordMatches && !settings.dojo.training &&
 			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
@@ -3356,13 +3374,13 @@ static std::future<bool> networkStatus;
 static void gui_network_start()
 {
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
 	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
-	ImGui::SetCursorPosX(20.f * scaling);
+	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
@@ -3397,9 +3415,9 @@ static void gui_network_start()
 	ImGui::Text("%s", get_notification().c_str());
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
-	ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(126.f * scaling);
-	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -3429,13 +3447,13 @@ void start_ggpo()
 static void gui_display_loadscreen()
 {
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
   ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * settings.display.uiScale, 10 * settings.display.uiScale));
   ImGui::AlignTextToFramePadding();
-  ImGui::SetCursorPosX(20.f * scaling);
+  ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
 	try {
 		if (gameLoader.ready())
@@ -3545,13 +3563,13 @@ static void gui_display_loadscreen()
 				label = "Loading...";
 			ImGui::Text("%s", label);
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
 			ImGui::PopStyleColor();
 
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			ImGui::SetCursorPosY(126.f * scaling);
-			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+			ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+			if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 				gameLoader.cancel();
 		}
 	} catch (const FlycastException& ex) {
@@ -3659,7 +3677,7 @@ void gui_display_ui()
 		break;
 	case GuiState::VJoyEditCommands:
 #ifdef __ANDROID__
-		gui_display_vjoy_commands(scaling);
+		gui_display_vjoy_commands();
 #endif
 		break;
 	case GuiState::SelectDisk:

@@ -846,7 +846,7 @@ void displayStats()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * scaling), ImGui::GetIO().DisplaySize.y - 40));
-	ImGui::SetNextWindowSize(ImVec2(590 * scaling, 0));
+	ImGui::SetNextWindowSize(ImVec2(590 * settings.display.uiScale, 0));
 	ImGui::SetNextWindowBgAlpha(0.5f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
@@ -895,7 +895,7 @@ void displayStats()
 	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
 	ImGui::Text("Predicted");
 	ImGui::SameLine();
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
@@ -908,7 +908,7 @@ void displayStats()
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
 	ImGui::Text("Behind");
 	ImGui::SameLine();
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * scaling, 10.f * scaling), "");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();
