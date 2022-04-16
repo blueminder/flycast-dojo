@@ -154,7 +154,7 @@ private:
 			int rc = recvfrom(sock, (char *)&packet, sizeof(packet), 0, (sockaddr *)&addr, &len);
 			if (rc == -1)
 			{
-				int error = get_last_error();
+				int error = get_last_error_n();
 				if (error == L_EWOULDBLOCK || error == L_EAGAIN)
 					break;
 #ifdef _WIN32
@@ -183,7 +183,7 @@ private:
 		int rc = sendto(sock, (const char *)packet, size, 0,
 				(sockaddr *)addr, sizeof(*addr));
 		if (rc != (int)size)
-			throw Exception("Send failed: errno " + std::to_string(get_last_error()));
+			throw Exception("Send failed: errno " + std::to_string(get_last_error_n()));
 		DEBUG_LOG(NETWORK, "Sent port %d pckt %d size %x", ntohs(addr->sin_port), packet->type, size - (u32)packet->size(0));
 	}
 

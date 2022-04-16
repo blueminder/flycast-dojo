@@ -75,7 +75,7 @@ struct MaxSpeedNetPipe : public SerialPipe
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 		{
-			ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
+			ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error_n());
 			throw Exception("WSAStartup failed");
 		}
 #endif
@@ -157,7 +157,7 @@ private:
 			int rc = recvfrom(sock, (char *)data, sizeof(data), 0, (sockaddr *)&addr, &len);
 			if (rc == -1)
 			{
-				int error = get_last_error();
+				int error = get_last_error_n();
 				if (error == L_EWOULDBLOCK || error == L_EAGAIN)
 					break;
 #ifdef _WIN32
@@ -183,7 +183,7 @@ private:
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		if (sock == INVALID_SOCKET)
 		{
-			ERROR_LOG(NETWORK, "Socket creation failed: errno %d", get_last_error());
+			ERROR_LOG(NETWORK, "Socket creation failed: errno %d", get_last_error_n());
 			throw Exception("Socket creation failed");
 		}
 		int option = 1;
@@ -195,7 +195,7 @@ private:
 
 		if (::bind(sock, (sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 		{
-			ERROR_LOG(NETWORK, "NaomiServer: bind() failed. errno=%d", get_last_error());
+			ERROR_LOG(NETWORK, "NaomiServer: bind() failed. errno=%d", get_last_error_n());
 			closesocket(sock);
 
 			throw Exception("Socket bind failed");
@@ -205,7 +205,7 @@ private:
 	    // Allow broadcast packets to be sent
 	    int broadcast = 1;
 	    if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcast, sizeof(broadcast)) == -1)
-	        WARN_LOG(NETWORK, "setsockopt(SO_BROADCAST) failed. errno=%d", get_last_error());
+	        WARN_LOG(NETWORK, "setsockopt(SO_BROADCAST) failed. errno=%d", get_last_error_n());
 
 	    peerAddress.sin_family = AF_INET;
 	    peerAddress.sin_addr.s_addr = INADDR_BROADCAST;
