@@ -397,19 +397,20 @@ void CheatManager::reset(const std::string& gameId)
 				loadCheatFile(cheatFile);
 		}
 #endif
-		// enable skip dimm version check for vf4 final tuned
-		if (gameId == "VF4 FINAL TUNED JAPAN")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9);
-			cheats.back().builtIn = true;
-		}
 	}
 
 	// disable all loaded cheats outside of training mode
 	if (!settings.dojo.training)
 		for (size_t i = 0; i < cheatManager.cheatCount(); i++)
 			cheatManager.enableCheat(i, false);
+
+	// enable skip dimm version check for vf4 final tuned
+	if (gameId == "VF4 FINAL TUNED JAPAN")
+	{
+		setActive(true);
+		cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9);
+		cheats.back().builtIn = true;
+	}
 
 	if (config::WidescreenGameHacks)
 	{
