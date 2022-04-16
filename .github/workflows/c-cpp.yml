@@ -212,5 +212,4 @@ jobs:
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
-		shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-latest') }}
