@@ -252,10 +252,10 @@ void gui_init()
     }
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
-    
+
     extern std::string os_Locale();
     std::string locale = os_Locale();
-    
+
     if (locale.find("ja") == 0)             // Japanese
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
@@ -1542,7 +1542,7 @@ static void contentpath_warning_popup()
                 ImGui::CloseCurrentPopup();
                 show_contentpath_selection = true;
             }
-            
+
             ImGui::SameLine();
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
             if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
@@ -1763,12 +1763,13 @@ static void gui_display_settings()
 			header("Physical Devices");
 		    {
 				ImGui::Columns(4, "physicalDevices", false);
-				ImGui::Text("System");
+				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
+				ImGui::TextColored(gray, "System");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
-				ImGui::Text("Name");
+				ImGui::TextColored(gray, "Name");
 				ImGui::NextColumn();
-				ImGui::Text("Port");
+				ImGui::TextColored(gray, "Port");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
 					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
@@ -1818,7 +1819,16 @@ static void gui_display_settings()
 						ImGui::SameLine();
 						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
+					else
 #endif
+					if (gamepad->is_rumble_enabled())
+					{
+						ImGui::SameLine(0, 16 * scaling);
+						int power = gamepad->get_rumble_power();
+						ImGui::SetNextItemWidth(150 * scaling);
+						if (ImGui::SliderInt("Rumble", &power, 0, 100))
+							gamepad->set_rumble_power(power);
+					}
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}
@@ -2027,6 +2037,60 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+
+				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
+	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
+	            u32 afSelected = 0;
+	            for (u32 i = 0; i < aniso.size(); i++)
+	            {
+	            	if (aniso[i] == config::AnisotropicFiltering)
+	            		afSelected = i;
+	            }
+
+                ImGuiStyle& style = ImGui::GetStyle();
+                float innerSpacing = style.ItemInnerSpacing.x;
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+                {
+                	for (u32 i = 0; i < aniso.size(); i++)
+                    {
+                        bool is_selected = aniso[i] == config::AnisotropicFiltering;
+                        if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
+                        	config::AnisotropicFiltering = aniso[i];
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, innerSpacing);
+
+                if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
+                {
+                    if (afSelected > 0)
+                    	config::AnisotropicFiltering = aniso[afSelected - 1];
+                }
+                ImGui::SameLine(0, innerSpacing);
+                if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
+                {
+                    if (afSelected < aniso.size() - 1)
+                    	config::AnisotropicFiltering = aniso[afSelected + 1];
+                }
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Anisotropic Filtering");
+                ImGui::SameLine();
+                ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
+
+		    	ImGui::Text("Texture Filtering:");
+		    	ImGui::Columns(3, "textureFiltering", false);
+		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
+		    	ImGui::Columns(1, nullptr, false);
+
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
 		    	ImGui::Indent();
@@ -2086,8 +2150,8 @@ static void gui_display_settings()
 					ImGui::Columns(1, nullptr, false);
 		    	}
 
-	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
-	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
+	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
+	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
 	            std::array<int, scalings.size()> vres;
 	            std::array<std::string, scalings.size()> resLabels;
 	            u32 selected = 0;
@@ -2103,8 +2167,6 @@ static void gui_display_settings()
 	            	resLabels[i] += " (" + scalingsText[i] + ")";
 	            }
 
-                ImGuiStyle& style = ImGui::GetStyle();
-                float innerSpacing = style.ItemInnerSpacing.x;
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
                 if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
                 {
@@ -2120,7 +2182,7 @@ static void gui_display_settings()
                 }
                 ImGui::PopItemWidth();
                 ImGui::SameLine(0, innerSpacing);
-                
+
                 if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
                 {
                     if (selected > 0)
@@ -2133,10 +2195,10 @@ static void gui_display_settings()
                     	config::RenderResolution = vres[selected + 1];
                 }
                 ImGui::SameLine(0, style.ItemInnerSpacing.x);
-                
+
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
-                ShowHelpMarker("Internal render resolution. Higher is better but more demanding");
+                ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
 		    			"Stretch the screen horizontally");
@@ -2316,26 +2378,35 @@ static void gui_display_settings()
 		    }
 	    	ImGui::Spacing();
 		    header("Network");
+			{
+				OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+				OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
+					"Enable networking for supported Naomi games");
+				if (config::NetworkEnable)
 				{
-					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-						"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-					OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
-						"Enable networking for supported Naomi games");
-					if (config::NetworkEnable)
-					{
-						OptionCheckbox("Act as Server", config::ActAsServer,
+					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
-						if (!config::ActAsServer)
-						{
-							char server_name[256];
-							strcpy(server_name, config::NetworkServer.get().c_str());
-							ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-							ImGui::SameLine();
-							ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
-							config::NetworkServer.set(server_name);
-						}
+					if (!config::ActAsServer)
+					{
+						char server_name[256];
+						strcpy(server_name, config::NetworkServer.get().c_str());
+						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
+						config::NetworkServer.set(server_name);
 					}
-				}
+					char localPort[256];
+					sprintf(localPort, "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
+		    	}
+				OptionCheckbox("Enable UPnP", config::EnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Automatically configure your network router for netplay");
+		    }
 	    	ImGui::Spacing();
 		    header("Other");
 		    {

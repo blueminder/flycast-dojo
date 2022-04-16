@@ -86,6 +86,7 @@ Option<int> RenderResolution("", 480);
 Option<bool> VSync("", true);
 Option<bool> ThreadedRendering(CORE_OPTION_NAME "_threaded_rendering", true);
 Option<int> AnisotropicFiltering(CORE_OPTION_NAME "_anisotropic_filtering");
+Option<int> TextureFiltering(CORE_OPTION_NAME "_texture_filtering");
 Option<bool> PowerVR2Filter(CORE_OPTION_NAME "_pvr2_filtering");
 Option<u64> PixelBufferSize("", 512 * 1024 * 1024);
 
@@ -107,7 +108,9 @@ Option<bool> NetworkEnable("", false);
 Option<bool> ActAsServer("", false);
 OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
+Option<int> LocalPort("", 0);
 Option<bool> EmulateBBA("", false); // TODO
+Option<bool> EnableUPnP("", true); // TODO
 Option<bool> GGPOEnable("", false);
 Option<int> GGPODelay("", 0);
 Option<bool> NetworkStats("", false);

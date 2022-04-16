@@ -68,6 +68,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::LoadState:
 			key = "loadState";
 			break;
+		case Event::VBlank:
+			key = "vblank";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();
@@ -88,11 +91,6 @@ static void eventCallback(const char *tag)
 	} catch (const LuaException& e) {
 		WARN_LOG(COMMON, "Lua exception[%s]: %s", tag, e.what());
 	}
-}
-
-void vblank()
-{
-	eventCallback("vblank");
 }
 
 void overlay()
@@ -168,6 +166,7 @@ CONFIG_ACCESSORS(RenderResolution)
 CONFIG_ACCESSORS(VSync)
 CONFIG_ACCESSORS(PixelBufferSize)
 CONFIG_ACCESSORS(AnisotropicFiltering)
+CONFIG_ACCESSORS(TextureFiltering)
 CONFIG_ACCESSORS(ThreadedRendering)
 
 // Audio
@@ -489,6 +488,7 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(VSync, bool)
 					CONFIG_PROPERTY(PixelBufferSize, u64)
 					CONFIG_PROPERTY(AnisotropicFiltering, int)
+					CONFIG_PROPERTY(TextureFiltering, int)
 					CONFIG_PROPERTY(ThreadedRendering, bool)
 				.endNamespace()
 
@@ -591,7 +591,7 @@ static std::string getLuaFile()
 
 	return initFile;
 
-} 
+}
 
 static void doExec(const std::string& path)
 {
@@ -624,6 +624,7 @@ void init()
     EventManager::listen(Event::Pause, emuEventCallback);
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
+    EventManager::listen(Event::VBlank, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -637,6 +638,7 @@ void term()
     EventManager::unlisten(Event::Pause, emuEventCallback);
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
+    EventManager::unlisten(Event::VBlank, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }

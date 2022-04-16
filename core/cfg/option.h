@@ -441,6 +441,7 @@ extern Option<int> RenderResolution;
 extern Option<bool> VSync;
 extern Option<u64> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;
+extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force linear
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 
@@ -462,6 +463,7 @@ extern Option<bool> NetworkEnable;
 extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
+extern Option<int> LocalPort;
 extern Option<bool> EmulateBBA;
 extern Option<bool> EnableUPnP;
 extern Option<bool> GGPOEnable;
@@ -545,7 +547,6 @@ constexpr bool UseRawInput = false;
 
 #ifdef USE_LUA
 extern OptionString LuaFileName;
-#endif 
+#endif
 
 } // namespace config
-

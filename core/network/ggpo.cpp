@@ -769,6 +769,12 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
+			if (config::EnableUPnP)
+			{
+				miniupnp.Init();
+				miniupnp.AddPortMapping(config::GGPOPort.get(), false);
+			}
+
 			try {
 				if (dojo.commandLineStart)
 				{
