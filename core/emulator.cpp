@@ -344,7 +344,7 @@ void dc_reset(bool hard)
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	libAICA_Reset(hard);
-	libARM_Reset(hard);
+	aicaarm::reset();
 	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 }
@@ -406,7 +406,7 @@ void Emulator::init()
 
 	pvr::init();
 	libAICA_Init();
-	libARM_Init();
+	aicaarm::init();
 	mem_Init();
 	reios_init();
 
@@ -600,7 +600,6 @@ void Emulator::term()
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
-		libARM_Term();
 		libAICA_Term();
 		pvr::term();
 		mem_Term();

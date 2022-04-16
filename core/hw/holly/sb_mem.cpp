@@ -387,10 +387,10 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
-			return (T)ReadMem_aica_reg(addr, sz);
+			return ReadMem_aica_reg<T>(addr);
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
-			return (T)ReadMem_aica_rtc(addr, sz);
+			return ReadMem_aica_rtc<T>(addr);
 		break;
 
 	case 4:
@@ -398,12 +398,15 @@ T DYNACALL ReadMem_area0(u32 paddr)
 	case 6:
 	case 7:
 		// AICA ram
-		return (T)ReadMemArr<sz>(aica_ram.data, addr & ARAM_MASK);
+		return ReadMemArr<T>(aica_ram.data, addr & ARAM_MASK);
 
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
+		{
+			INFO_LOG(MEMORY, "Read<%d> from G2 Ext area not implemented @ %08x", sz, addr);
+			return (T)0;
+		}
 		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
 		else
@@ -495,13 +498,13 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
 		{
-			WriteMem_aica_reg(addr, data, sz);
+			WriteMem_aica_reg(addr, data);
 			return;
 		}
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
 		{
-			WriteMem_aica_rtc(addr, data, sz);
+			WriteMem_aica_rtc(addr, data);
 			return;
 		}
 		break;
@@ -510,18 +513,18 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 	case 6:
 	case 7:
 		// AICA ram
-		WriteMemArr<sz>(aica_ram.data, addr & ARAM_MASK, data);
+		WriteMemArr(aica_ram.data, addr & ARAM_MASK, data);
 		return;
 
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-			libExtDevice_WriteMem_A0_010(addr, data, sz);
+			INFO_LOG(MEMORY, "Write<%d> to G2 Ext area not implemented @ %08x: %x", sz, addr, (u32)data);
 		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
 		return;
 	}
-	INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
+	INFO_LOG(MEMORY, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 }
 
 //Init/Res/Term
