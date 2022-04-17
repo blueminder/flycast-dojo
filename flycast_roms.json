@@ -440,5 +440,42 @@
     "flycast_dc_sf2049": {
         "filename": "San Francisco Rush 2049 (USA) (En,Fr,De,Es,It,Nl).chd",
         "md5_checksum": "57b9d666befa313b8a47055b2262f327"
+    },
+    "flycast_naomi2_bios": {
+        "filename": "../data/naomi2.zip",
+        "md5_checksum": "c50072cbab75673e1b1a6b94355e6fa8"
+    },
+    "flycast_vf4tuned": {
+        "filename": "vf4tuned.zip",
+        "md5_checksum": "9c3f452daf1166721d19360e90da36c1",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4fta"
+        }
+    },
+    "vf4tuned_chd": {
+        "filename": "/vf4tuned/gds-0036f.chd",
+        "md5_checksum": "ca809ed67dfd58db648f5ad3a65d0a8b"
+    },
+    "flycast_vf4evo": {
+        "filename": "vf4evo.zip",
+        "md5_checksum": "381739a42986b6e56706c85576e6e33a",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4evob"
+        }
+    },
+    "vf4evo_chd": {
+        "filename": "/vf4evo/gds-0024c.chd",
+        "md5_checksum": "992bbcd7eca0c55a6fa118bbe7490b4b"
+    },
+    "flycast_vf4": {
+        "filename": "vf4.zip",
+        "md5_checksum": "383ee658d376419bb7f48b65e8f7d6f2",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4c"
+        }
+    },
+    "vf4_chd": {
+        "filename": "/vf4/gds-0012c.chd",
+        "md5_checksum": "8fa25603520d80ccec487298a75358bb"
     }
 }
