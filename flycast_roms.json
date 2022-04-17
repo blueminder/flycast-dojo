@@ -477,5 +477,21 @@
     "vf4_chd": {
         "filename": "/vf4/gds-0012c.chd",
         "md5_checksum": "8fa25603520d80ccec487298a75358bb"
+    },
+    "flycast_beachspi": {
+        "filename": "beachspi.zip",
+        "md5_checksum": "c114cc2701d7551bc3c1b9f1e3c8cbe3"
+    },
+    "beachspi_chd": {
+        "filename": "/beachspi/gds-0014.chd",
+        "md5_checksum": "d1ab66b9e25bf319928312d36cfd2f48"
+    },
+    "flycast_vstrik3": {
+        "filename": "vstrik3.zip",
+        "md5_checksum": "079dba6a81c953e22e6fa6bf0cfd1b42"
+    },
+    "vstrik3_chd": {
+        "filename": "/vstrik3/gds-0006.chd",
+        "md5_checksum": "6d7aa455c5ecffa4d9dadc4b1ebeaba6"
     }
 }
