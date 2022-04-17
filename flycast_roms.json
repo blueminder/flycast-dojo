@@ -493,5 +493,13 @@
     "vstrik3_chd": {
         "filename": "/vstrik3/gds-0006.chd",
         "md5_checksum": "6d7aa455c5ecffa4d9dadc4b1ebeaba6"
+    },
+    "flycast_dc_aerowings": {
+        "filename": "AeroWings (USA).chd",
+        "md5_checksum": "f4b81974737819dbffcc318fe93f9492"
+    },
+    "flycast_dc_aerowings2": {
+        "filename": "AeroWings 2 - Airstrike (USA).chd",
+        "md5_checksum": "8f5c785fd7c2315577f435a2273a8d23"
     }
 }
