@@ -1565,6 +1565,11 @@ void DojoSession::TogglePlayback(int slot, bool hide_slot = false)
 
 void DojoSession::ToggleRandomPlayback()
 {
+	if (recorded_slots.empty())
+	{
+		gui_display_notification("No Input Slots Recorded", 2000);
+		return;
+	}
 	if (!playing_input)
 	{
 		auto it = recorded_slots.cbegin();
