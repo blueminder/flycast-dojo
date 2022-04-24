@@ -1099,6 +1099,16 @@ void DojoGui::show_last_inputs_overlay()
 				ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 			}
 
+			if (dojo.displayed_inputs[di].size() > 60)
+			{
+				dojo.displayed_inputs[di].erase(dojo.displayed_inputs[di].begin());
+				dojo.displayed_inputs_str[di].erase(dojo.displayed_inputs_str[di].begin());
+				dojo.displayed_dirs_str[di].erase(dojo.displayed_dirs_str[di].begin());
+				dojo.displayed_dirs[di].erase(dojo.displayed_dirs[di].begin());
+				dojo.displayed_inputs_duration[di].erase(dojo.displayed_inputs_duration[di].begin());
+				dojo.displayed_num_dirs[di].erase(dojo.displayed_num_dirs[di].begin());
+			}
+
 			std::map<u32, std::bitset<18>>::reverse_iterator it = dojo.displayed_inputs[di].rbegin();
 
 			u32 input_frame_num = it->first;

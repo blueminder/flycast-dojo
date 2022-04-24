@@ -552,16 +552,6 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 			displayed_inputs_duration[player][effective_frame] = 1;
 			displayed_num_dirs[player][effective_frame] = num_dir_notation;
 		}
-
-		if (displayed_inputs[player].size() > 60)
-		{
-			displayed_inputs[player].erase(displayed_inputs[player].begin());
-			displayed_inputs_str[player].erase(displayed_inputs_str[player].begin());
-			displayed_dirs_str[player].erase(displayed_dirs_str[player].begin());
-			displayed_dirs[player].erase(displayed_dirs[player].begin());
-			displayed_inputs_duration[player].erase(displayed_inputs_duration[player].begin());
-			displayed_num_dirs[player].erase(displayed_num_dirs[player].begin());
-		}
 	}
 
 	return output;
