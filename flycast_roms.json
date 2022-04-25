@@ -501,5 +501,9 @@
     "flycast_dc_aerowings2": {
         "filename": "AeroWings 2 - Airstrike (USA).chd",
         "md5_checksum": "8f5c785fd7c2315577f435a2273a8d23"
+    },
+    "flycast_dc_nflblitz2000": {
+        "filename": "NFL Blitz 2000 (USA) (Rev 1).chd",
+        "md5_checksum": "6c08ddd095421c18de0634bd358307fb"
     }
 }
