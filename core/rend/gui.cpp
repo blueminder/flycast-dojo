@@ -547,9 +547,9 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		if (!ggpo::active() || dojo.PlayMatch)
+		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
-			if (dojo.PlayMatch)
+			if (dojo.PlayMatch || (dojo.stepping && settings.dojo.training))
 			{
 				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;

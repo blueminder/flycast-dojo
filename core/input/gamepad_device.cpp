@@ -106,20 +106,22 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			}
 			break;
 		case EMU_BTN_STEP:
-			if (pressed)
+			if (pressed && !config::ThreadedRendering)
 			{
 				if (dojo.PlayMatch || settings.dojo.training)
 				{
 					if (gui_state == GuiState::Closed)
 					{
 						dojo.stepping = true;
-						emu.stop();
-						gui_state = GuiState::ReplayPause;
+						if (dojo.PlayMatch || settings.dojo.training)
+						{
+							gui_open_settings();
+						}
 					}
 					else if (gui_state == GuiState::ReplayPause)
 					{
-						gui_state = GuiState::Closed;
 						dojo.stepping = true;
+						gui_state = GuiState::Closed;
 						emu.start();
 					}
 				}
