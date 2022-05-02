@@ -748,7 +748,11 @@ void Emulator::run()
 	try {
 		runInternal();
 		if (ggpo::active())
+		{
 			ggpo::nextFrame();
+			if (dojo.PlayMatch && dojo.stepping)
+				stop();
+		}
 	} catch (...) {
 		setNetworkState(false);
 		state = Error;

@@ -545,17 +545,17 @@ void gui_open_disconnected()
 
 void gui_open_settings()
 {
+	if (dojo.stepping)
+		dojo.stepping = false;
 	if (gui_state == GuiState::Closed)
 	{
 		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
-			if (dojo.PlayMatch || (dojo.stepping && settings.dojo.training))
+			if (dojo.PlayMatch || settings.dojo.training)
 			{
 				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;
 			}
-			else
-				gui_state = GuiState::Commands;
 			HideOSD();
 			emu.stop();
 		}
@@ -578,8 +578,6 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::ReplayPause)
 	{
-		if (dojo.stepping)
-			dojo.stepping = false;
 		if (dojo.manual_pause)
 			dojo.manual_pause = false;
 		gui_state = GuiState::Closed;
@@ -3794,6 +3792,9 @@ void gui_display_osd()
 
 		if (!settings.network.online)
 			lua::overlay();
+
+		if (dojo.stepping)
+			dojo_gui.show_pause(settings.display.uiScale);
 
 		gui_endFrame();
 	}
