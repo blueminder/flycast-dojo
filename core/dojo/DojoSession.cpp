@@ -1379,7 +1379,7 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		}
 	}
 
-	if (settings.dojo.training && stepping && port == 0)
+	if (settings.dojo.training && !config::ThreadedRendering && stepping && port == 0)
 	{
 		emu.stop();
 		gui_state = GuiState::ReplayPause;

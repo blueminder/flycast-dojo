@@ -551,11 +551,13 @@ void gui_open_settings()
 	{
 		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
-			if (dojo.PlayMatch || settings.dojo.training)
+			if (dojo.PlayMatch)
 			{
 				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;
 			}
+			else
+				gui_state = GuiState::Commands;
 			HideOSD();
 			emu.stop();
 		}
