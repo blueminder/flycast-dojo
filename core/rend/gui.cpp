@@ -553,6 +553,12 @@ void gui_open_settings()
 			emu.start();
 			return;
 		}
+		if (dojo.PlayMatch && dojo.buffering)
+		{
+			dojo.buffering = false;
+			emu.start();
+			return;
+		}
 		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
 			if (dojo.stepping)
@@ -590,6 +596,8 @@ void gui_open_settings()
 			dojo.stepping = false;
 		if (dojo.manual_pause)
 			dojo.manual_pause = false;
+		if (dojo.buffering)
+			dojo.buffering = false;
 		gui_state = GuiState::Closed;
 		emu.start();
 	}
@@ -3625,6 +3633,15 @@ void gui_display_ui()
 	ImGui::NewFrame();
 	error_msg_shown = false;
 
+	if (dojo.buffering)
+	{
+		if (dojo.maple_inputs.size() > (dojo.FrameNumber.load() + config::RxFrameBuffer.get() * 10))
+		{
+			dojo.buffering = false;
+			gui_state = GuiState::Closed;
+		}
+	}
+
 	switch (gui_state)
 	{
 	case GuiState::Lobby:
@@ -3805,6 +3822,23 @@ void gui_display_osd()
 
 		if (dojo.stepping)
 			dojo_gui.show_pause(settings.display.uiScale);
+
+		if (dojo.PlayMatch && config::GGPOEnable)
+		{
+			if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
+			{
+				settings.input.fastForwardMode = false;
+				if (config::Receiving)
+				{
+					dojo.buffering = true;
+				}
+				else
+					gui_state = GuiState::EndReplay;
+			}
+		}
+
+		if (dojo.buffering)
+			gui_state = GuiState::ReplayPause;
 
 		gui_endFrame();
 	}

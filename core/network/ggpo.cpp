@@ -653,7 +653,7 @@ bool nextFrame()
 {
 	if (dojo.PlayMatch && dojo.replay_version >= 2)
 	{
-		if (dojo.stepping)
+		if (dojo.stepping || dojo.buffering)
 			return false;
 		else
 			return true;
@@ -960,8 +960,6 @@ void setMapleInput(MapleInputState inputState[4])
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 
-	//if (dojo.stepping && !config::ThreadedRendering)
-	//	gui_state = GuiState::ReplayPause;
 	/*
 	std::cout << "FRAME " << dojo.FrameNumber << " ";
 

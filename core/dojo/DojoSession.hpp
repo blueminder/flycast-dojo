@@ -310,6 +310,7 @@ public:
 
 	bool stepping = false;
 	bool manual_pause = false;
+	bool buffering = false;
 };
 
 extern DojoSession dojo;

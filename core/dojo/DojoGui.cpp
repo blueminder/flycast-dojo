@@ -1201,7 +1201,7 @@ void DojoGui::show_pause(float scaling)
 		pause_text = "Stepping";
 	else
 	{
-		if (config::Receiving.get() && config::BufferAutoResume.get() && !dojo.manual_pause)
+		if (dojo.buffering)
 			pause_text = "Buffering";
 		else
 			pause_text = "Paused";
@@ -1310,8 +1310,17 @@ void DojoGui::gui_display_replay_pause(float scaling)
 			!dojo.manual_pause &&
 			dojo.maple_inputs.size() > resume_target)
 		{
-			gui_state = GuiState::Closed;
-			emu.start();
+			if (dojo.buffering)
+				dojo.buffering = false;
+			if (!config::ThreadedRendering)
+			{
+				gui_state = GuiState::Closed;
+				emu.start();
+			}
+			else
+			{
+				gui_open_settings();
+			}
 		}
 	}
 }
