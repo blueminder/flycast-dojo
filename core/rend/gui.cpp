@@ -545,12 +545,18 @@ void gui_open_disconnected()
 
 void gui_open_settings()
 {
-	if (dojo.stepping)
-		dojo.stepping = false;
 	if (gui_state == GuiState::Closed)
 	{
+		if (dojo.PlayMatch && dojo.stepping)
+		{
+			dojo.stepping = false;
+			emu.start();
+			return;
+		}
 		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
+			if (dojo.stepping)
+				dojo.stepping = false;
 			if (dojo.PlayMatch)
 			{
 				dojo.manual_pause = true;
@@ -580,6 +586,8 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::ReplayPause)
 	{
+		if (dojo.stepping)
+			dojo.stepping = false;
 		if (dojo.manual_pause)
 			dojo.manual_pause = false;
 		gui_state = GuiState::Closed;
