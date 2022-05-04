@@ -119,7 +119,7 @@ elseif(LIBRETRO)
 		else()
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
 		endif()
-    else()
+    elseif(USE_OPENGL)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
 	    if(APPLE)
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-framework,OpenGL")
@@ -560,15 +560,18 @@ if(LIBRETRO)
 		core/deps/libretro-common/compat/fopen_utf8.c
 		core/deps/libretro-common/compat/compat_strcasestr.c
 		core/deps/libretro-common/file/retro_dirent.c
-		core/deps/libretro-common/string/stdstring.c
-		core/deps/libretro-common/glsm/glsm.c
-		core/deps/libretro-common/glsym/rglgen.c)
-	if(ANDROID OR USE_GLES)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
-	elseif(USE_GLES2)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
-	else()
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
+		core/deps/libretro-common/string/stdstring.c)
+	if(USE_OPENGL)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/libretro-common/glsm/glsm.c
+			core/deps/libretro-common/glsym/rglgen.c)
+		if(ANDROID OR USE_GLES)
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
+		elseif(USE_GLES2)
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
+		else()
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
+		endif()
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		shell/libretro/audiostream.cpp
@@ -922,8 +925,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
-        core/wsi/libretro.cpp
-        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -933,6 +934,8 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
+            core/wsi/libretro.cpp
+            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp
@@ -1445,7 +1448,6 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
-			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 
@@ -1453,7 +1455,6 @@ if(NOT LIBRETRO)
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
-				${MULTITOUCH_SUPPORT_LIBRARY}
 				${OPENGL_LIBRARY}
 				${IOSURFACE_LIBRARY})
 

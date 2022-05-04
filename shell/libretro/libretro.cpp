@@ -998,8 +998,10 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
+#endif
 
 	// On the first call, we start the emulator
 	if (first_run)
@@ -1030,8 +1032,10 @@ void retro_run()
 		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
+#endif
 
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
@@ -1963,11 +1967,13 @@ size_t retro_serialize_size()
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	Serializer ser;
 	dc_serialize(ser);
-	emu.start();
+	if (!first_run)
+		emu.start();
 
 	return ser.size();
 }
@@ -1977,11 +1983,13 @@ bool retro_serialize(void *data, size_t size)
 	DEBUG_LOG(SAVESTATE, "retro_serialize %d bytes", (int)size);
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	Serializer ser(data, size);
 	dc_serialize(ser);
-	emu.start();
+	if (!first_run)
+		emu.start();
 
 	return true;
 }
@@ -1991,13 +1999,15 @@ bool retro_unserialize(const void * data, size_t size)
 	DEBUG_LOG(SAVESTATE, "retro_unserialize");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	try {
 		Deserializer deser(data, size);
 		dc_loadstate(deser);
 	    retro_audio_flush_buffer();
-		emu.start();
+		if (!first_run)
+			emu.start();
 
 		return true;
 	} catch (const Deserializer::Exception& e) {

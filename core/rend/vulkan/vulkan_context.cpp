@@ -436,10 +436,10 @@ bool VulkanContext::InitDevice()
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
             { vk::DescriptorType::eUniformBuffer, 80000 },
-            { vk::DescriptorType::eStorageBuffer, 36 },
+            { vk::DescriptorType::eStorageBuffer, 50 },
             { vk::DescriptorType::eUniformBufferDynamic, 2 },
             { vk::DescriptorType::eStorageBufferDynamic, 2 },
-            { vk::DescriptorType::eInputAttachment, 36 }
+            { vk::DescriptorType::eInputAttachment, 50 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
 	    		40000, ARRAY_SIZE(pool_sizes), pool_sizes));
@@ -859,9 +859,9 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
-		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 	else
-		quadDrawer->Draw(commandBuffer, imageView, vtx);
+		quadDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 }
 
 void VulkanContext::WaitIdle() const
