@@ -505,5 +505,33 @@
     "flycast_dc_nflblitz2000": {
         "filename": "NFL Blitz 2000 (USA) (Rev 1).chd",
         "md5_checksum": "6c08ddd095421c18de0634bd358307fb"
+    },
+    "flycast_dc_ggram2": {
+        "filename": "Giant Gram - Zen Nihon Pro Wres 2 in Nihon Budoukan (Japan).chd",
+        "md5_checksum": "dd4193d58cf6f84b5fd8cf5a1f6bcbbb"
+    },
+    "flycast_dc_gram2000": {
+        "filename": "Giant Gram 2000 - Zen Nihon Pro Wres 3 Eikou no Yuusha-tachi (Japan).chd",
+        "md5_checksum": "0662a6eebe96c7f4f227d053127c4ea4"
+    },
+    "flycast_dc_ufc": {
+        "filename": "Ultimate Fighting Championship (USA).chd",
+        "md5_checksum": "54f2f5b7faee509a1d856a4037c46464"
+    },
+    "flycast_dc_ecwhr": {
+        "filename": "ECW Hardcore Revolution (USA).chd",
+        "md5_checksum": "5d47fb8a45814b1527e59a85f803747d"
+    },
+    "flycast_dc_ecwar": {
+        "filename": "ECW Anarchy Rulz (USA).chd",
+        "md5_checksum": "cf56514c59a4aa39fea503541a201f41"
+    },
+    "flycast_dc_wwfa": {
+        "filename": "WWF Attitude (USA).chd",
+        "md5_checksum": "df57ca1e94236dfd7ad73119af29cb32"
+    },
+    "flycast_dc_wwfrr": {
+        "filename": "WWF Royal Rumble (USA).chd",
+        "md5_checksum": "f8d765dc12f57273f1d855fef9b7616a"
     }
 }
