@@ -261,6 +261,10 @@ The following are the relevant dependencies:
   * `miniupnpc`
   * `lua53`
 
+If you still get an error after installing Lua, try creating a symbolic link to the locally installed version of liblua to the expected path:
+
+`ln -s <liblua.so location> /app/lib/liblua5.3.so.0`
+
 # Command Line
 You may also call Flycast from the command line. All command line flags correspond with the options found in `emu.cfg`. Here are some example calls:
 
