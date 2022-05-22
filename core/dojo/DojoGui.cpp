@@ -1511,6 +1511,19 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
 
 				OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
+				if (config::GGPOChat)
+				{
+					OptionCheckbox("Enable Chat Window Timeout", config::GGPOChatTimeoutToggle, "Automatically close chat window after 20 seconds");
+					if (config::GGPOChatTimeoutToggle)
+					{
+						char chatTimeout[256];
+						sprintf(chatTimeout, "%d", (int)config::GGPOChatTimeout);
+						ImGui::InputText("Chat Window Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+						ImGui::SameLine();
+						ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
+						config::GGPOChatTimeout.set(atoi(chatTimeout));
+					}
+				}
 			}
 		}
 
