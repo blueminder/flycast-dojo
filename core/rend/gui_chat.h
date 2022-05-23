@@ -50,7 +50,7 @@ class Chat
 public:
 	void toggle_timeout()
 	{
-		if (!manual_open)
+		if (config::GGPOChatTimeoutToggle && !manual_open)
 		{
 			enable_timeout = true;
 			launch_time = std::chrono::steady_clock::now();
