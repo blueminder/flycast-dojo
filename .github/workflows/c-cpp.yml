@@ -11,7 +11,7 @@ jobs:
       matrix:
         config:
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "Xcode", destDir: osx, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, destDir: linux, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-22.04, destDir: linux, buildType: RelWithDebInfo}
           - {name: x86_64-w64-mingw32, os: windows-2019, cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
@@ -28,12 +28,12 @@ jobs:
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
-      - name: Set up build environment (ubuntu-latest)
+      - name: Set up build environment (ubuntu-22.04)
         run: |
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev libasio-dev wget zip libcurl4-gnutls-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Set up build environment (windows-2019)
         run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
@@ -119,7 +119,7 @@ jobs:
           ./configure
           make
           sudo make install
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Dump symbols (linux)
         shell: bash
@@ -129,7 +129,7 @@ jobs:
           mkdir -p symbols/flycast.elf/$BUILD_ID
           mv flycast.elf.sym symbols/flycast.elf/$BUILD_ID
           strip artifact/bin/flycast
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Dump symbols (windows)
         shell: msys2 {0}
@@ -168,7 +168,7 @@ jobs:
           wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
           cd ..
           tar czvf linux-$CURRENT_VERSION.tar.gz $CURRENT_VERSION/* --remove-files
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Package app (windows)
         shell: msys2 {0}
@@ -216,4 +216,4 @@ jobs:
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-latest') }}
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-22.04') }}
