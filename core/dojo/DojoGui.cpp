@@ -1696,12 +1696,12 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			ImGui::SameLine();
 			ShowHelpMarker("Validates BIOSes & ROMs against provided flycast_roms.json. Ensures proper files for retrieved savestates and known netplay games.");
 
+			OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
+			ImGui::SameLine();
+			ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
+
 			if (config::NetplayMethod.get() == "Delay")
 			{
-				OptionCheckbox("Enable NVMEM/EEPROM Restoration", config::EnableMemRestore);
-				ImGui::SameLine();
-				ShowHelpMarker("Restores NVMEM & EEPROM files before netplay session to prevent desyncs. Disable if you wish to use modified files with your opponent. (i.e., palmods, custom dipswitches)");
-
 				OptionCheckbox("Ignore Existing Netplay Savestates", config::IgnoreNetSave);
 				ImGui::SameLine();
 				ShowHelpMarker("Ignore previously generated or custom savestates ending in .net.");
