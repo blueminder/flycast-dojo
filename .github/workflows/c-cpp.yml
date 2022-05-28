@@ -85,6 +85,10 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Compile a universal OpenMP
+        run: brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+        if: runner.os == 'macOS'
+
       - name: CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
