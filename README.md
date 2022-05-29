@@ -250,11 +250,11 @@ Flycast Dojo is currently available as a `tar.gz` archive containing a 64-bit x8
 
 The following are the relevant dependencies:
 
-* **Ubuntu 20.04** Dependencies
+* **Ubuntu 22.04** Dependencies
   * `libcurl3-gnutls`
-  * `libzip5`
+  * `libzip4`
   * `libminiupnpc17`
-  * `liblua5.3`
+  * `liblua5.3-0`
 * **Arch Linux** Dependencies
   * `libcurl3-gnutls`
   * `libzip`
