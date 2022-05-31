@@ -86,6 +86,7 @@ void flycast_term()
 		lua::term();
 	emu.term();
 	gui_term();
+	os_TermInput();
 }
 
 std::string get_game_name()
