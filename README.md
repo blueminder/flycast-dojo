@@ -246,7 +246,7 @@ Defaults:
 <img alt="Training Mode Controller Mapping" src="training-mode-map.png" width="642" height="512">
 
 # Linux Build
-Flycast Dojo is currently available as a `tar.gz` archive containing a 64-bit x86 binary `flycast.elf`. It can run self-contained from the same directory, with all user configurations and relevant game metadata kept in the same place. It has been tested to run on **Ubuntu 20.04**, as well as **Arch Linux 2021.04.01**. So long as you have the dependencies installed, you should be able to run `tar zxvf linux-flycast-dojo-*.tar.gz`, enter the directory, and start using it immediately.
+Flycast Dojo is currently available as a `tar.gz` archive containing a 64-bit x86 binary `flycast.elf`. It can run self-contained from the same directory, with all user configurations and relevant game metadata kept in the same place. It has been tested to run on **Ubuntu 22.04**, as well as **Arch Linux 2021.04.01**. So long as you have the dependencies installed, you should be able to run `tar zxvf linux-flycast-dojo-*.tar.gz`, enter the directory, and start using it immediately.
 
 The following are the relevant dependencies:
 
