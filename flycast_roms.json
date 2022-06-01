@@ -533,5 +533,9 @@
     "flycast_dc_wwfrr": {
         "filename": "WWF Royal Rumble (USA).chd",
         "md5_checksum": "f8d765dc12f57273f1d855fef9b7616a"
+    },
+    "flycast_dc_snowsurfers": {
+        "filename": "Snow Surfers (Europe).chd",
+        "md5_checksum": "429f584b2698e290cad3eb430c5a5de9"
     }
 }
