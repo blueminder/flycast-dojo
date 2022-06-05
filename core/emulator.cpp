@@ -555,11 +555,14 @@ void Emulator::runInternal()
 			}
 		} while (resetRequested);
 
-		while (jump_state_requested && !settings.network.online)
+		if (!config::ThreadedRendering)
 		{
-			jump_state_requested = false;
-			jump_state();
-			sh4_cpu.Run();
+			while (jump_state_requested && !settings.network.online)
+			{
+				jump_state_requested = false;
+				jump_state();
+				sh4_cpu.Run();
+			}
 		}
 	}
 }

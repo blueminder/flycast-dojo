@@ -102,6 +102,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				loading_state = true;
 				bool dojo_invoke = config::DojoEnable.get();
 				emu.invoke_jump_state(dojo_invoke);
+				if (config::ThreadedRendering)
+				{
+					emu.stop();
+					dc_loadstate(config::SavestateSlot);
+					emu.start();
+				}
 				loading_state = false;
 			}
 			break;
