@@ -245,6 +245,7 @@ public:
 	bool receiver_start_read;
 
 	bool recording;
+	bool recording_started = false;
 	std::vector<std::string> record_slot[3];
 	std::set<int> recorded_slots;
 

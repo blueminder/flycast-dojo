@@ -1404,7 +1404,26 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	if (settings.dojo.training)
 	{
 		if (recording && GetPlayer((u8*)current_frame_data.data()) == record_player)
-			record_slot[current_record_slot].push_back(current_frame_data);
+		{
+			if (config::RecordOnFirstInput)
+			{
+				if(!recording_started &&
+					(current_frame_data.data()[4] != 0 ||
+					current_frame_data.data()[5] != 0 ||
+					current_frame_data.data()[6] != 0 ||
+					current_frame_data.data()[7] != 0 ||
+					current_frame_data.data()[8] != 0 ||
+					current_frame_data.data()[9] != 0))
+				{
+					recording_started = true;
+				}
+			}
+
+			if (recording_started)
+			{
+				record_slot[current_record_slot].push_back(current_frame_data);
+			}
+		}
 
 		if (!recording && !playing_input &&
 			playback_loop && trigger_playback &&
@@ -1510,6 +1529,7 @@ void DojoSession::ToggleRecording(int slot)
 	if (recording)
 	{
 		recording = false;
+		recording_started = false;
 		NoticeStream << "Stop Recording Slot " << slot + 1 << " Player " << record_player + 1;
 	}
 	else
@@ -1518,6 +1538,10 @@ void DojoSession::ToggleRecording(int slot)
 		record_slot[slot].clear();
 		recorded_slots.insert(slot);
 		recording = true;
+		if (config::RecordOnFirstInput)
+			recording_started = false;
+		else
+			recording_started = true;
 		NoticeStream << "Recording Slot " << slot + 1 << " Player " << record_player + 1;
 	}
 	gui_display_notification(NoticeStream.str().data(), 2000);

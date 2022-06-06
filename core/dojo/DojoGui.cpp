@@ -1543,6 +1543,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			OptionCheckbox("Hide Random Input Slot", config::HideRandomInputSlot);
 			ImGui::SameLine();
 			ShowHelpMarker("Hides input slot is being played for random playback");
+
+			OptionCheckbox("Start Recording on First Input", config::RecordOnFirstInput);
+			ImGui::SameLine();
+			ShowHelpMarker("Delay dummy recording until the first input is registered");
 		}
 
 		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))

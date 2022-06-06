@@ -179,6 +179,7 @@ Option<bool> ShowInputDisplay("ShowInputDisplay", true, "dojo");
 Option<bool> UseAnimeInputNotation("UseAnimeInputNotation", true, "dojo");
 Option<bool> HideRandomInputSlot("HideRandomInputSlot", true, "dojo");
 Option<bool> BufferAutoResume("BufferAutoResume", true, "dojo");
+Option<bool> RecordOnFirstInput("RecordOnFirstInput", false, "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 
