@@ -41,6 +41,7 @@ Option<bool> ForceFreePlay("ForceFreePlay", true);
 
 // Sound
 
+Option<bool> LimitFPS("aica.LimitFPS", false);
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
@@ -90,7 +91,7 @@ Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
-Option<bool> VSync("rend.vsync", true);
+Option<bool> VSync("rend.vsync", false);
 Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
@@ -98,6 +99,7 @@ Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
+Option<int> FixedFrequency ("rend.FixedFrequency", 1);
 
 // Misc
 

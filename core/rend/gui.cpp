@@ -2035,6 +2035,21 @@ static void gui_display_settings()
 
 		    header("Rendering Options");
 		    {
+ 		    	ImGui::Text("Fixed Frequency:");
+				ImGui::SameLine();
+				ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
+ 		    	ImGui::Columns(5, "fixed_freq", false);
+ 		    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Broadcast type");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC frequency");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 3, "Native VGA frequency");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
+ 		    	ImGui::Columns(1, nullptr, false);
+
 		    	ImGui::Text("Automatic Frame Skipping:");
 		    	ImGui::Columns(3, "autoskip", false);
 		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
@@ -2118,7 +2133,7 @@ static void gui_display_settings()
 		    	ImGui::Columns(1, nullptr, false);
 
 #ifndef TARGET_IPHONE
-		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
 		    	if (isVulkan(config::RendererType))
 		    	{
 			    	ImGui::Indent();
@@ -2329,6 +2344,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Audio"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			OptionCheckbox("Audio Frame Sync", config::LimitFPS, "Sync frames with audio output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
 			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))

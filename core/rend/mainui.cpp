@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#include <atomic>
 #include <chrono>
 #include <thread>
 #include "mainui.h"
@@ -32,6 +33,42 @@ u32 MainFrameCount;
 static bool forceReinit;
 
 void UpdateInputState();
+
+std::atomic<bool> display_refresh(false);
+
+void display_refresh_thread()
+{
+	auto dispStart = std::chrono::steady_clock::now();
+	while(1)
+	{
+		long long period;
+		if (config::FixedFrequency.get() == 3 ||
+				 config::FixedFrequency.get() == 1 && config::Cable.get() == 0 ||
+				 config::FixedFrequency.get() == 1 && config::Cable.get() == 1)
+			period = 16666; // 1/60
+		else if (config::FixedFrequency.get() == 2 ||
+			config::FixedFrequency.get() == 1 && config::Broadcast.get() == 0 ||
+			config::FixedFrequency.get() == 1 && config::Broadcast.get() == 4)
+			period = 16683; // 1/59.94
+		else if (config::FixedFrequency.get() == 4 ||
+				 config::FixedFrequency.get() == 1 && config::Broadcast.get() == 1)
+			period = 20000; // 1/50
+
+		auto now = std::chrono::steady_clock::now();
+		long long duration = std::chrono::duration_cast<std::chrono::microseconds>(now - dispStart).count();
+		if (duration > period)
+		{
+			display_refresh.exchange(true);
+			dispStart = now;
+		}
+	}
+}
+
+void start_display_refresh_thread()
+{
+	std::thread t1(&display_refresh_thread);
+	t1.detach();
+}
 
 bool mainui_rend_frame()
 {
@@ -81,9 +118,21 @@ void mainui_loop()
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
 
+	if (config::FixedFrequency.get() != 0)
+		start_display_refresh_thread();
+
 	while (mainui_enabled)
 	{
+		if (config::FixedFrequency.get() != 0 &&
+			!gui_is_open() &&
+			!settings.input.fastForwardMode)
+		{
+			while(!display_refresh.load());
+			display_refresh.exchange(false);
+		}
+
 		mainui_rend_frame();
+
 		imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
