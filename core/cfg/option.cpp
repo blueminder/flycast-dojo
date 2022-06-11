@@ -97,6 +97,7 @@ Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
+Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 
 // Misc
 

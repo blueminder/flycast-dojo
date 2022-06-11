@@ -927,6 +927,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
+        core/wsi/libretro.cpp
+        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -936,8 +938,6 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
-            core/wsi/libretro.cpp
-            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp
@@ -1499,7 +1499,7 @@ if(NOT LIBRETRO)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32)
 		endif()
 	endif()
 endif()
