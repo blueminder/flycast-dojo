@@ -69,7 +69,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua mingw-w64-x86_64-asio wget zip
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua mingw-w64-x86_64-ninja mingw-w64-x86_64-SDL2 mingw-w64-x86_64-asio wget zip
         if: endsWith(matrix.config.name, 'w64-mingw32')
 
       # - name: Downgrade gcc to 10.3
