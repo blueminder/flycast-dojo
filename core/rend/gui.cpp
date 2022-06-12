@@ -1867,7 +1867,7 @@ static void gui_display_settings()
 #endif
 
 			ImGui::Spacing();
-			header("Dreamcast Devices");
+			if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_None))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
