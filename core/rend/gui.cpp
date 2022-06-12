@@ -1995,12 +1995,14 @@ static void gui_display_settings()
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 
-			{
-		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
-		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
-			}
+            ImGuiStyle& style = ImGui::GetStyle();
+            float innerSpacing = style.ItemInnerSpacing.x;
 
-		    header("Graphics API");
+			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
+
+		    header("Basic Settings");
+			{
+
 			{
 		    	constexpr int apiCount = 0
 					#ifdef USE_VULKAN
@@ -2017,139 +2019,71 @@ static void gui_display_settings()
 					#endif
 						;
 
-		    	if (apiCount > 1)
+				std::vector<int> graphapi;
+	            std::vector<std::string> graphapiText;
+
+		    	if (apiCount > 0)
 		    	{
-		    		//ImGui::Text("Graphics API:");
-					ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_OPENGL
-					ImGui::RadioButton("Open GL", &renderApi, 0);
-					ImGui::NextColumn();
+					graphapi.push_back(0);
+					graphapiText.push_back("OpenGL");
 #endif
 #ifdef USE_VULKAN
-					ImGui::RadioButton("Vulkan", &renderApi, 1);
-					ImGui::NextColumn();
+					graphapi.push_back(1);
+					graphapiText.push_back("Vulkan");
 #endif
 #ifdef USE_DX9
-					ImGui::RadioButton("DirectX 9", &renderApi, 2);
-					ImGui::NextColumn();
+					graphapi.push_back(2);
+					graphapiText.push_back("DirectX 9");
 #endif
 #ifdef _WIN32
-					ImGui::RadioButton("DirectX 11", &renderApi, 3);
-					ImGui::NextColumn();
+					graphapi.push_back(3);
+					graphapiText.push_back("DirectX 11");
 #endif
-					ImGui::Columns(1, nullptr, false);
 		    	}
-			}
 
-			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
-		    header("Transparent Sorting");
-		    {
-		    	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
-		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
-		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
-            	ImGui::NextColumn();
-		    	ImGui::RadioButton("Per Strip", &renderer, 1);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Sort transparent polygons per strip. Faster but may produce graphical glitches");
-	            if (has_per_pixel)
+	            u32 gaSelected = 0;
+	            for (u32 i = 0; i < graphapi.size(); i++)
 	            {
-	            	ImGui::NextColumn();
-	            	ImGui::RadioButton("Per Pixel", &renderer, 2);
-	            	ImGui::SameLine();
-	            	ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
+	            	if (graphapi[i] == renderApi)
+	            		gaSelected = i;
 	            }
-		    	ImGui::Columns(1, NULL, false);
-		    	switch (renderer)
-		    	{
-		    	case 0:
-		    		perPixel = false;
-		    		config::PerStripSorting.set(false);
-		    		break;
-		    	case 1:
-		    		perPixel = false;
-		    		config::PerStripSorting.set(true);
-		    		break;
-		    	case 2:
-		    		perPixel = true;
-		    		break;
-		    	}
-		    }
 
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Graphics API", graphapiText[gaSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+                {
+                	for (u32 i = 0; i < graphapi.size(); i++)
+                    {
+                        bool is_selected = graphapi[i] == renderApi;
+                        if (ImGui::Selectable(graphapiText[i].c_str(), is_selected))
+                        	renderApi = graphapi[i];
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, innerSpacing);
 
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
-			{
+                if (ImGui::ArrowButton("##Dec Graphics API", ImGuiDir_Left))
+                {
+                    if (gaSelected > 0)
+                    	renderApi = graphapi[gaSelected - 1];
+                }
+                ImGui::SameLine(0, innerSpacing);
+                if (ImGui::ArrowButton("##Inc Graphics API", ImGuiDir_Right))
+                {
+                    if (gaSelected < graphapi.size() - 1)
+                    	renderApi = graphapi[gaSelected + 1];
+                }
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
-	    	ImGui::Spacing();
-            ImGuiStyle& style = ImGui::GetStyle();
-            float innerSpacing = style.ItemInnerSpacing.x;
-
-		    {
- 		    	ImGui::Text("Fixed Frequency:");
-				ImGui::SameLine();
-				ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
- 		    	ImGui::Columns(5, "fixed_freq", false);
- 		    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
- 		    	ImGui::Columns(1, nullptr, false);
+                ImGui::Text("Graphics API");
+                ImGui::SameLine();
+                ShowHelpMarker("Chooses the backend to use for rendering. DirectX 9 offers the best compatibility on Windows, while OpenGL .");
 			}
 
 			{
-		    	OptionCheckbox("Shadows", config::ModifierVolumes,
-		    			"Enable modifier volumes, usually used for shadows");
-		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
-		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		    	}
-		    	ImGui::Indent();
-		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
-		    	ImGui::Unindent();
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PopItemFlag();
-			        ImGui::PopStyleVar();
-		    	}
-		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
-		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-#ifndef TARGET_IPHONE
-		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
-		    	if (isVulkan(config::RendererType))
-		    	{
-			    	ImGui::Indent();
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			    	}
-		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PopItemFlag();
-				        ImGui::PopStyleVar();
-			    	}
-			    	ImGui::Unindent();
-		    	}
-#endif
-		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
-		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
-		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
-		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
-
 	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
 	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
 	            std::array<int, scalings.size()> vres;
@@ -2199,9 +2133,81 @@ static void gui_display_settings()
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
                 ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
+			}
 
-		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
-		    			"Stretch the screen horizontally");
+			{
+				int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
+
+				std::vector<int> tsort{0, 1};
+	            std::vector<std::string> tsortText{"Per Triangle", "Per Strip"};
+
+		    	if (has_per_pixel)
+		    	{
+					tsort.push_back(2);
+					tsortText.push_back("Per Pixel");
+		    	}
+
+	            u32 tsSelected = 0;
+	            for (u32 i = 0; i < tsort.size(); i++)
+	            {
+	            	if (tsort[i] == renderer)
+	            		tsSelected = i;
+	            }
+
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Transparent Sorting", tsortText[tsSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+                {
+                	for (u32 i = 0; i < tsort.size(); i++)
+                    {
+                        bool is_selected = tsort[i] == renderer;
+                        if (ImGui::Selectable(tsortText[i].c_str(), is_selected))
+                        	renderer = tsort[i];
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, innerSpacing);
+
+                if (ImGui::ArrowButton("##Dec Transparent Sorting", ImGuiDir_Left))
+                {
+                    if (tsSelected > 0)
+                    	renderer = tsort[tsSelected - 1];
+                }
+                ImGui::SameLine(0, innerSpacing);
+                if (ImGui::ArrowButton("##Inc Transparent Sorting", ImGuiDir_Right))
+                {
+                    if (tsSelected < tsort.size() - 1)
+                    	renderer = tsort[tsSelected + 1];
+                }
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Transparent Sorting");
+                ImGui::SameLine();
+
+				std::string help_text;
+				switch (renderer)
+		    	{
+		    	case 0:
+		    		perPixel = false;
+		    		config::PerStripSorting.set(false);
+					help_text = "Per Triangle: Sort transparent polygons per triangle. Fast but may produce graphical glitches";
+		    		break;
+		    	case 1:
+		    		perPixel = false;
+		    		config::PerStripSorting.set(true);
+					help_text = "Per Strip: Sort transparent polygons per strip. Faster but may produce graphical glitches";
+		    		break;
+		    	case 2:
+		    		perPixel = true;
+					help_text = "Per Pixel: Sort transparent polygons per pixel. Slower but accurate";
+		    		break;
+		    	}
+
+                ShowHelpMarker(help_text.c_str());
+			}
+
 			}
 
 			if (perPixel)
@@ -2259,23 +2265,18 @@ static void gui_display_settings()
 				}
 			}
 
-			header("Frame Skipping");
+			header("On-Screen Display");
 			{
-		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
-		    			"Number of frames to skip between two actually rendered frames");
-
-		    	ImGui::Text("Automatic Frame Skipping:");
-		    	ImGui::Columns(3, "autoskip", false);
-		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
-		    	ImGui::Columns(1, nullptr, false);
-		    }
+		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
+		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+			}
 
 			ImGui::Spacing();
-			header("Textures");
+			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+			{
+
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_None))
 			{
 		    	ImGui::Text("Texture Filtering:");
 		    	ImGui::Columns(3, "textureFiltering", false);
@@ -2327,14 +2328,7 @@ static void gui_display_settings()
                 ImGui::Text("Anisotropic Filtering");
                 ImGui::SameLine();
                 ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
-			}
 
-	    	ImGui::Spacing();
-		    header("Render to Texture");
-		    {
-		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
-		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
-		    }
 	    	ImGui::Spacing();
 		    header("Texture Upscaling");
 		    {
@@ -2348,6 +2342,112 @@ static void gui_display_settings()
 #endif
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
+		    }
+
+		    OptionCheckbox("Render to Texture Buffer", config::RenderToTextureBuffer,
+		    		"Copy rendered-to textures back to VRAM. Slower but accurate");
+
+			}
+
+	    	ImGui::Spacing();
+		    //header("Display");
+			if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
+		    {
+ 		    	ImGui::Text("Fixed Frequency:");
+				ImGui::SameLine();
+				ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
+ 		    	ImGui::Columns(5, "fixed_freq", false);
+ 		    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
+ 		    	ImGui::NextColumn();
+ 		    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
+ 		    	ImGui::Columns(1, nullptr, false);
+
+#ifndef TARGET_IPHONE
+		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
+		    	if (isVulkan(config::RendererType))
+		    	{
+			    	ImGui::Indent();
+			    	if (!config::VSync)
+			    	{
+				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			    	}
+		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+			    	if (!config::VSync)
+			    	{
+				        ImGui::PopItemFlag();
+				        ImGui::PopStyleVar();
+			    	}
+			    	ImGui::Unindent();
+		    	}
+#endif
+		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
+		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
+		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+			}
+
+	    	ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Effects", ImGuiTreeNodeFlags_None))
+			{
+		    	OptionCheckbox("Shadows", config::ModifierVolumes,
+		    			"Enable modifier volumes, usually used for shadows");
+		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
+			}
+
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Widescreen", ImGuiTreeNodeFlags_None))
+			{
+		    	OptionCheckbox("Widescreen", config::Widescreen,
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		    	}
+		    	ImGui::Indent();
+		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    	ImGui::Unindent();
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PopItemFlag();
+			        ImGui::PopStyleVar();
+		    	}
+		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+
+			}
+
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_None))
+			{
+		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+		    			"Stretch the screen horizontally");
+				
+		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
+			}
+
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Frame Skipping", ImGuiTreeNodeFlags_None))
+			{
+		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
+		    			"Number of frames to skip between two actually rendered frames");
+
+		    	ImGui::Text("Automatic Frame Skipping:");
+		    	ImGui::Columns(3, "autoskip", false);
+		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
+		    	ImGui::Columns(1, nullptr, false);
 		    }
 
 			}
