@@ -2041,11 +2041,11 @@ static void gui_display_settings()
  		    	ImGui::Columns(5, "fixed_freq", false);
  		    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
  		    	ImGui::NextColumn();
- 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Broadcast type");
+ 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
  		    	ImGui::NextColumn();
- 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC frequency");
+ 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
  		    	ImGui::NextColumn();
- 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 3, "Native VGA frequency");
+ 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
  		    	ImGui::NextColumn();
  		    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
  		    	ImGui::Columns(1, nullptr, false);

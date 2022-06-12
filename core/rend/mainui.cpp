@@ -39,19 +39,22 @@ std::atomic<bool> display_refresh(false);
 void display_refresh_thread()
 {
 	auto dispStart = std::chrono::steady_clock::now();
+	long long period = 16666; // VGA by default
 	while(1)
 	{
-		long long period;
-		if (config::FixedFrequency.get() == 3 ||
-				 config::FixedFrequency.get() == 1 && config::Cable.get() == 0 ||
-				 config::FixedFrequency.get() == 1 && config::Cable.get() == 1)
+		// VGA
+		if (config::FixedFrequency == 2 ||
+			(config::FixedFrequency == 1 &&
+				(config::Cable == 0 || config::Cable == 1)))
 			period = 16666; // 1/60
-		else if (config::FixedFrequency.get() == 2 ||
-			config::FixedFrequency.get() == 1 && config::Broadcast.get() == 0 ||
-			config::FixedFrequency.get() == 1 && config::Broadcast.get() == 4)
+		// NTSC
+		else if (config::FixedFrequency == 3 ||
+			(config::FixedFrequency == 1 && config::Cable == 3 &&
+				(config::Broadcast == 0 || config::Broadcast == 4)))
 			period = 16683; // 1/59.94
-		else if (config::FixedFrequency.get() == 4 ||
-				 config::FixedFrequency.get() == 1 && config::Broadcast.get() == 1)
+		// PAL
+		else if (config::FixedFrequency == 4 ||
+				 (config::FixedFrequency == 1 && config::Cable == 3))
 			period = 20000; // 1/50
 
 		auto now = std::chrono::steady_clock::now();
@@ -118,12 +121,12 @@ void mainui_loop()
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
 
-	if (config::FixedFrequency.get() != 0)
+	if (config::FixedFrequency != 0)
 		start_display_refresh_thread();
 
 	while (mainui_enabled)
 	{
-		if (config::FixedFrequency.get() != 0 &&
+		if (config::FixedFrequency != 0 &&
 			!gui_is_open() &&
 			!settings.input.fastForwardMode)
 		{
