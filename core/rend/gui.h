@@ -52,6 +52,9 @@ void gui_open_disconnected();
 
 void gui_open_ggpo_join();
 
+void scanner_stop();
+void scanner_refresh();
+
 enum class GuiState {
 	Closed,
 	Commands,

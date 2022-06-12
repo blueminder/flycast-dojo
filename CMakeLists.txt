@@ -1077,6 +1077,8 @@ if(NOT LIBRETRO)
 	        core/rend/gui_android.h
 	        core/rend/gui_chat.h
 	        core/rend/gui_cheats.cpp
+	        core/rend/gui_settings.cpp
+	        core/rend/gui_settings.h
 	        core/rend/gui_util.cpp
 	        core/rend/gui_util.h
 	        core/rend/mainui.cpp
