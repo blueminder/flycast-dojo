@@ -1600,62 +1600,9 @@ static void contentpath_warning_popup()
     }
 }
 
-static void gui_display_settings()
+static void settings_body_general(ImVec2 normal_padding)
 {
-	static bool maple_devices_changed;
-
-	fullScreenWindow(false);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-
-    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
-    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-
-    if (ImGui::Button("Done", ScaledVec2(100, 30)))
-    {
-    	if (game_started)
-    		gui_state = GuiState::Commands;
-    	else
-    		gui_state = GuiState::Main;
-    	if (maple_devices_changed)
-    	{
-    		maple_devices_changed = false;
-    		if (game_started && settings.platform.isConsole())
-    		{
-    			maple_ReconnectDevices();
-    			reset_vmus();
-    		}
-    	}
-       	SaveSettings();
-    }
-	if (game_started)
-	{
-	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
-		if (config::Settings::instance().hasPerGameConfig())
-		{
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
-			{
-				config::Settings::instance().setPerGameConfig(false);
-				config::Settings::instance().load(false);
-				loadGameSpecificSettings();
-			}
-		}
-		else
-		{
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
-				config::Settings::instance().setPerGameConfig(true);
-		}
-	    ImGui::PopStyleVar();
-	}
-
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
-
-    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
-    {
-		dojo_gui.insert_netplay_tab(normal_padding);
-
-		if (ImGui::BeginTabItem("General"))
+		//if (ImGui::BeginTabItem("General"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
@@ -1780,9 +1727,14 @@ static void gui_display_settings()
 			OptionCheckbox("Naomi Free Play", config::ForceFreePlay, "Configure Naomi games in Free Play mode.");
 
 			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Controls"))
+}
+
+static bool maple_devices_changed;
+
+static void settings_body_controls(ImVec2 normal_padding)
+{
+		//if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
@@ -1954,241 +1906,244 @@ static void gui_display_settings()
 		    }
 
 			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Video"))
+
+}
+
+static void settings_body_video(ImVec2 normal_padding)
+{
+	{
+		int renderApi;
+		bool perPixel;
+		switch (config::RendererType)
 		{
-			int renderApi;
-			bool perPixel;
-			switch (config::RendererType)
-			{
-			default:
-			case RenderType::OpenGL:
-				renderApi = 0;
-				perPixel = false;
-				break;
-			case RenderType::OpenGL_OIT:
-				renderApi = 0;
-				perPixel = true;
-				break;
-			case RenderType::Vulkan:
-				renderApi = 1;
-				perPixel = false;
-				break;
-			case RenderType::Vulkan_OIT:
-				renderApi = 1;
-				perPixel = true;
-				break;
-			case RenderType::DirectX9:
-				renderApi = 2;
-				perPixel = false;
-				break;
-			case RenderType::DirectX11:
-				renderApi = 3;
-				perPixel = false;
-				break;
-			case RenderType::DirectX11_OIT:
-				renderApi = 3;
-				perPixel = true;
-				break;
-			}
+		default:
+		case RenderType::OpenGL:
+			renderApi = 0;
+			perPixel = false;
+			break;
+		case RenderType::OpenGL_OIT:
+			renderApi = 0;
+			perPixel = true;
+			break;
+		case RenderType::Vulkan:
+			renderApi = 1;
+			perPixel = false;
+			break;
+		case RenderType::Vulkan_OIT:
+			renderApi = 1;
+			perPixel = true;
+			break;
+		case RenderType::DirectX9:
+			renderApi = 2;
+			perPixel = false;
+			break;
+		case RenderType::DirectX11:
+			renderApi = 3;
+			perPixel = false;
+			break;
+		case RenderType::DirectX11_OIT:
+			renderApi = 3;
+			perPixel = true;
+			break;
+		}
 
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 
-            ImGuiStyle& style = ImGui::GetStyle();
-            float innerSpacing = style.ItemInnerSpacing.x;
+        ImGuiStyle& style = ImGui::GetStyle();
+        float innerSpacing = style.ItemInnerSpacing.x;
 
-			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
+		const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
 
-		    header("Basic Settings");
-			{
+	    header("Basic Settings");
+		{
 
-			{
-		    	constexpr int apiCount = 0
-					#ifdef USE_VULKAN
-		    			+ 1
-					#endif
-					#ifdef USE_DX9
-						+ 1
-					#endif
-					#ifdef USE_OPENGL
-						+ 1
-					#endif
-					#ifdef _WIN32
-						+ 1
-					#endif
-						;
+		{
+	    	constexpr int apiCount = 0
+				#ifdef USE_VULKAN
+	    			+ 1
+				#endif
+				#ifdef USE_DX9
+					+ 1
+				#endif
+				#ifdef USE_OPENGL
+					+ 1
+				#endif
+				#ifdef _WIN32
+					+ 1
+				#endif
+					;
 
-				std::vector<int> graphapi;
-	            std::vector<std::string> graphapiText;
+			std::vector<int> graphapi;
+            std::vector<std::string> graphapiText;
 
-		    	if (apiCount > 0)
-		    	{
+	    	if (apiCount > 0)
+	    	{
 #ifdef USE_OPENGL
-					graphapi.push_back(0);
-					graphapiText.push_back("OpenGL");
+				graphapi.push_back(0);
+				graphapiText.push_back("OpenGL");
 #endif
 #ifdef USE_VULKAN
-					graphapi.push_back(1);
-					graphapiText.push_back("Vulkan");
+				graphapi.push_back(1);
+				graphapiText.push_back("Vulkan");
 #endif
 #ifdef USE_DX9
-					graphapi.push_back(2);
-					graphapiText.push_back("DirectX 9");
+				graphapi.push_back(2);
+				graphapiText.push_back("DirectX 9");
 #endif
 #ifdef _WIN32
-					graphapi.push_back(3);
-					graphapiText.push_back("DirectX 11");
+				graphapi.push_back(3);
+				graphapiText.push_back("DirectX 11");
 #endif
-		    	}
+	    	}
 
-	            u32 gaSelected = 0;
-	            for (u32 i = 0; i < graphapi.size(); i++)
-	            {
-	            	if (graphapi[i] == renderApi)
-	            		gaSelected = i;
-	            }
+            u32 gaSelected = 0;
+            for (u32 i = 0; i < graphapi.size(); i++)
+            {
+            	if (graphapi[i] == renderApi)
+            		gaSelected = i;
+            }
 
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Graphics API", graphapiText[gaSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+            ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+            if (ImGui::BeginCombo("##Graphics API", graphapiText[gaSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+            {
+            	for (u32 i = 0; i < graphapi.size(); i++)
                 {
-                	for (u32 i = 0; i < graphapi.size(); i++)
-                    {
-                        bool is_selected = graphapi[i] == renderApi;
-                        if (ImGui::Selectable(graphapiText[i].c_str(), is_selected))
-                        	renderApi = graphapi[i];
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
+                    bool is_selected = graphapi[i] == renderApi;
+                    if (ImGui::Selectable(graphapiText[i].c_str(), is_selected))
+                    	renderApi = graphapi[i];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
                 }
-                ImGui::PopItemWidth();
-                ImGui::SameLine(0, innerSpacing);
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine(0, innerSpacing);
 
-                if (ImGui::ArrowButton("##Dec Graphics API", ImGuiDir_Left))
+            if (ImGui::ArrowButton("##Dec Graphics API", ImGuiDir_Left))
+            {
+                if (gaSelected > 0)
+                	renderApi = graphapi[gaSelected - 1];
+            }
+            ImGui::SameLine(0, innerSpacing);
+            if (ImGui::ArrowButton("##Inc Graphics API", ImGuiDir_Right))
+            {
+                if (gaSelected < graphapi.size() - 1)
+                	renderApi = graphapi[gaSelected + 1];
+            }
+            ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+            ImGui::Text("Graphics API");
+            ImGui::SameLine();
+            ShowHelpMarker("Chooses the backend to use for rendering. DirectX 9 offers the best compatibility on Windows, while OpenGL .");
+		}
+
+		{
+            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
+            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
+            std::array<int, scalings.size()> vres;
+            std::array<std::string, scalings.size()> resLabels;
+            u32 selected = 0;
+            for (u32 i = 0; i < scalings.size(); i++)
+            {
+            	vres[i] = scalings[i] * 480;
+            	if (vres[i] == config::RenderResolution)
+            		selected = i;
+            	if (!config::Widescreen)
+            		resLabels[i] = std::to_string((int)(scalings[i] * 640)) + "x" + std::to_string((int)(scalings[i] * 480));
+            	else
+            		resLabels[i] = std::to_string((int)(scalings[i] * 480 * 16 / 9)) + "x" + std::to_string((int)(scalings[i] * 480));
+            	resLabels[i] += " (" + scalingsText[i] + ")";
+            }
+
+            ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+            if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+            {
+            	for (u32 i = 0; i < scalings.size(); i++)
                 {
-                    if (gaSelected > 0)
-                    	renderApi = graphapi[gaSelected - 1];
+                    bool is_selected = vres[i] == config::RenderResolution;
+                    if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
+                    	config::RenderResolution = vres[i];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
                 }
-                ImGui::SameLine(0, innerSpacing);
-                if (ImGui::ArrowButton("##Inc Graphics API", ImGuiDir_Right))
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine(0, innerSpacing);
+
+            if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
+            {
+                if (selected > 0)
+                	config::RenderResolution = vres[selected - 1];
+            }
+            ImGui::SameLine(0, innerSpacing);
+            if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
+            {
+                if (selected < vres.size() - 1)
+                	config::RenderResolution = vres[selected + 1];
+            }
+            ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+            ImGui::Text("Internal Resolution");
+            ImGui::SameLine();
+            ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
+		}
+
+		{
+			int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
+
+			std::vector<int> tsort{0, 1};
+            std::vector<std::string> tsortText{"Per Triangle", "Per Strip"};
+
+	    	if (has_per_pixel)
+	    	{
+				tsort.push_back(2);
+				tsortText.push_back("Per Pixel");
+	    	}
+
+            u32 tsSelected = 0;
+            for (u32 i = 0; i < tsort.size(); i++)
+            {
+            	if (tsort[i] == renderer)
+            		tsSelected = i;
+            }
+
+            ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+            if (ImGui::BeginCombo("##Transparent Sorting", tsortText[tsSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+            {
+            	for (u32 i = 0; i < tsort.size(); i++)
                 {
-                    if (gaSelected < graphapi.size() - 1)
-                    	renderApi = graphapi[gaSelected + 1];
+                    bool is_selected = tsort[i] == renderer;
+                    if (ImGui::Selectable(tsortText[i].c_str(), is_selected))
+                    	renderer = tsort[i];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
                 }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine(0, innerSpacing);
 
-                ImGui::Text("Graphics API");
-                ImGui::SameLine();
-                ShowHelpMarker("Chooses the backend to use for rendering. DirectX 9 offers the best compatibility on Windows, while OpenGL .");
-			}
+            if (ImGui::ArrowButton("##Dec Transparent Sorting", ImGuiDir_Left))
+            {
+                if (tsSelected > 0)
+                	renderer = tsort[tsSelected - 1];
+            }
+            ImGui::SameLine(0, innerSpacing);
+            if (ImGui::ArrowButton("##Inc Transparent Sorting", ImGuiDir_Right))
+            {
+                if (tsSelected < tsort.size() - 1)
+                	renderer = tsort[tsSelected + 1];
+            }
+            ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
-			{
-	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
-	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
-	            std::array<int, scalings.size()> vres;
-	            std::array<std::string, scalings.size()> resLabels;
-	            u32 selected = 0;
-	            for (u32 i = 0; i < scalings.size(); i++)
-	            {
-	            	vres[i] = scalings[i] * 480;
-	            	if (vres[i] == config::RenderResolution)
-	            		selected = i;
-	            	if (!config::Widescreen)
-	            		resLabels[i] = std::to_string((int)(scalings[i] * 640)) + "x" + std::to_string((int)(scalings[i] * 480));
-	            	else
-	            		resLabels[i] = std::to_string((int)(scalings[i] * 480 * 16 / 9)) + "x" + std::to_string((int)(scalings[i] * 480));
-	            	resLabels[i] += " (" + scalingsText[i] + ")";
-	            }
+            ImGui::Text("Transparent Sorting");
+            ImGui::SameLine();
 
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
-                {
-                	for (u32 i = 0; i < scalings.size(); i++)
-                    {
-                        bool is_selected = vres[i] == config::RenderResolution;
-                        if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
-                        	config::RenderResolution = vres[i];
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::PopItemWidth();
-                ImGui::SameLine(0, innerSpacing);
-
-                if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
-                {
-                    if (selected > 0)
-                    	config::RenderResolution = vres[selected - 1];
-                }
-                ImGui::SameLine(0, innerSpacing);
-                if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
-                {
-                    if (selected < vres.size() - 1)
-                    	config::RenderResolution = vres[selected + 1];
-                }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
-
-                ImGui::Text("Internal Resolution");
-                ImGui::SameLine();
-                ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
-			}
-
-			{
-				int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
-
-				std::vector<int> tsort{0, 1};
-	            std::vector<std::string> tsortText{"Per Triangle", "Per Strip"};
-
-		    	if (has_per_pixel)
-		    	{
-					tsort.push_back(2);
-					tsortText.push_back("Per Pixel");
-		    	}
-
-	            u32 tsSelected = 0;
-	            for (u32 i = 0; i < tsort.size(); i++)
-	            {
-	            	if (tsort[i] == renderer)
-	            		tsSelected = i;
-	            }
-
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Transparent Sorting", tsortText[tsSelected].c_str(), ImGuiComboFlags_NoArrowButton))
-                {
-                	for (u32 i = 0; i < tsort.size(); i++)
-                    {
-                        bool is_selected = tsort[i] == renderer;
-                        if (ImGui::Selectable(tsortText[i].c_str(), is_selected))
-                        	renderer = tsort[i];
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::PopItemWidth();
-                ImGui::SameLine(0, innerSpacing);
-
-                if (ImGui::ArrowButton("##Dec Transparent Sorting", ImGuiDir_Left))
-                {
-                    if (tsSelected > 0)
-                    	renderer = tsort[tsSelected - 1];
-                }
-                ImGui::SameLine(0, innerSpacing);
-                if (ImGui::ArrowButton("##Inc Transparent Sorting", ImGuiDir_Right))
-                {
-                    if (tsSelected < tsort.size() - 1)
-                    	renderer = tsort[tsSelected + 1];
-                }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
-
-                ImGui::Text("Transparent Sorting");
-                ImGui::SameLine();
-
-				std::string help_text;
-				switch (renderer)
-		    	{
+			std::string help_text;
+			switch (renderer)
+	    	{
 		    	case 0:
 		    		perPixel = false;
 		    		config::PerStripSorting.set(false);
@@ -2203,569 +2158,680 @@ static void gui_display_settings()
 		    		perPixel = true;
 					help_text = "Per Pixel: Sort transparent polygons per pixel. Slower but accurate";
 		    		break;
-		    	}
+	    	}
 
-                ShowHelpMarker(help_text.c_str());
-			}
+            ShowHelpMarker(help_text.c_str());
+		}
 
-			}
+		}
 
-			if (perPixel)
+		if (perPixel)
+		{
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Per Pixel Settings", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::Spacing();
-				if (ImGui::CollapsingHeader("Per Pixel Settings", ImGuiTreeNodeFlags_None))
-				{
 
-				const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
-				const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-				u32 selected = 0;
-				for (; selected < bufSizes.size(); selected++)
-					if (bufSizes[selected] == config::PixelBufferSize)
-						break;
-				if (selected == bufSizes.size())
-					selected = 0;
-				if (ImGui::BeginCombo("##PixelBuffer", bufSizesText[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+			const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
+			const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
+            ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+			u32 selected = 0;
+			for (; selected < bufSizes.size(); selected++)
+				if (bufSizes[selected] == config::PixelBufferSize)
+					break;
+			if (selected == bufSizes.size())
+				selected = 0;
+			if (ImGui::BeginCombo("##PixelBuffer", bufSizesText[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+			{
+				for (u32 i = 0; i < bufSizes.size(); i++)
 				{
-					for (u32 i = 0; i < bufSizes.size(); i++)
-					{
-						bool is_selected = i == selected;
-						if (ImGui::Selectable(bufSizesText[i].c_str(), is_selected))
-							config::PixelBufferSize = bufSizes[i];
-						if (is_selected) {
-							ImGui::SetItemDefaultFocus();
-							selected = i;
-						}
+					bool is_selected = i == selected;
+					if (ImGui::Selectable(bufSizesText[i].c_str(), is_selected))
+						config::PixelBufferSize = bufSizes[i];
+					if (is_selected) {
+						ImGui::SetItemDefaultFocus();
+						selected = i;
 					}
-					ImGui::EndCombo();
 				}
-                ImGui::PopItemWidth();
-				ImGui::SameLine(0, innerSpacing);
-
-				if (ImGui::ArrowButton("##Decrease BufSize", ImGuiDir_Left))
-				{
-					if (selected > 0)
-						config::PixelBufferSize = bufSizes[selected - 1];
-				}
-				ImGui::SameLine(0, innerSpacing);
-				if (ImGui::ArrowButton("##Increase BufSize", ImGuiDir_Right))
-				{
-					if (selected < bufSizes.size() - 1)
-						config::PixelBufferSize = bufSizes[selected + 1];
-				}
-				ImGui::SameLine(0, style.ItemInnerSpacing.x);
-
-                ImGui::Text("Pixel Buffer Size");
-                ImGui::SameLine();
-                ShowHelpMarker("The size of the pixel buffer. May need to be increased when upscaling by a large factor.");
-
-                OptionSlider("Maximum Layers", config::PerPixelLayers, 8, 128,
-                		"Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.");
-
-				}
+				ImGui::EndCombo();
 			}
+            ImGui::PopItemWidth();
+			ImGui::SameLine(0, innerSpacing);
 
-			header("On-Screen Display");
+			if (ImGui::ArrowButton("##Decrease BufSize", ImGuiDir_Left))
 			{
-		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
-		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+				if (selected > 0)
+					config::PixelBufferSize = bufSizes[selected - 1];
 			}
-
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+			ImGui::SameLine(0, innerSpacing);
+			if (ImGui::ArrowButton("##Increase BufSize", ImGuiDir_Right))
 			{
+				if (selected < bufSizes.size() - 1)
+					config::PixelBufferSize = bufSizes[selected + 1];
+			}
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_None))
-			{
-		    	ImGui::Text("Texture Filtering:");
-		    	ImGui::Columns(3, "textureFiltering", false);
-		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
-		    	ImGui::Columns(1, nullptr, false);
+            ImGui::Text("Pixel Buffer Size");
+            ImGui::SameLine();
+            ShowHelpMarker("The size of the pixel buffer. May need to be increased when upscaling by a large factor.");
 
-				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
-	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
-	            u32 afSelected = 0;
-	            for (u32 i = 0; i < aniso.size(); i++)
-	            {
-	            	if (aniso[i] == config::AnisotropicFiltering)
-	            		afSelected = i;
-	            }
+            OptionSlider("Maximum Layers", config::PerPixelLayers, 8, 128,
+            		"Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.");
 
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+		}
+	}
+
+		header("On-Screen Display");
+		{
+	    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
+	    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+		}
+
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_None))
+		{
+
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_None))
+		{
+	    	ImGui::Text("Texture Filtering:");
+	    	ImGui::Columns(3, "textureFiltering", false);
+	    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
+           	ImGui::NextColumn();
+	    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
+           	ImGui::NextColumn();
+	    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
+	    	ImGui::Columns(1, nullptr, false);
+
+			const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
+            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
+            u32 afSelected = 0;
+            for (u32 i = 0; i < aniso.size(); i++)
+            {
+            	if (aniso[i] == config::AnisotropicFiltering)
+            		afSelected = i;
+            }
+
+            ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+            if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+            {
+               	for (u32 i = 0; i < aniso.size(); i++)
                 {
-                	for (u32 i = 0; i < aniso.size(); i++)
-                    {
-                        bool is_selected = aniso[i] == config::AnisotropicFiltering;
-                        if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
-                        	config::AnisotropicFiltering = aniso[i];
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
+                    bool is_selected = aniso[i] == config::AnisotropicFiltering;
+                    if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
+                      	config::AnisotropicFiltering = aniso[i];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
                 }
-                ImGui::PopItemWidth();
-                ImGui::SameLine(0, innerSpacing);
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine(0, innerSpacing);
 
-                if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
-                {
-                    if (afSelected > 0)
-                    	config::AnisotropicFiltering = aniso[afSelected - 1];
-                }
-                ImGui::SameLine(0, innerSpacing);
-                if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
-                {
-                    if (afSelected < aniso.size() - 1)
-                    	config::AnisotropicFiltering = aniso[afSelected + 1];
-                }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+            if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
+            {
+				if (afSelected > 0)
+					config::AnisotropicFiltering = aniso[afSelected - 1];
+			}
+            ImGui::SameLine(0, innerSpacing);
+            if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
+            {
+                if (afSelected < aniso.size() - 1)
+                	config::AnisotropicFiltering = aniso[afSelected + 1];
+            }
+            ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
-                ImGui::Text("Anisotropic Filtering");
-                ImGui::SameLine();
-                ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
+            ImGui::Text("Anisotropic Filtering");
+            ImGui::SameLine();
+            ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
 
 	    	ImGui::Spacing();
+
 		    header("Texture Upscaling");
 		    {
 #ifdef _OPENMP
-		    	OptionArrowButtons("Texture Upscaling", config::TextureUpscale, 1, 8,
-		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
-		    	OptionSlider("Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
-		    			"Textures larger than this dimension squared will not be upscaled");
-		    	OptionArrowButtons("Max Threads", config::MaxThreads, 1, 8,
-		    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
+	    	OptionArrowButtons("Texture Upscaling", config::TextureUpscale, 1, 8,
+	    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
+	    	OptionSlider("Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
+	    			"Textures larger than this dimension squared will not be upscaled");
+	    	OptionArrowButtons("Max Threads", config::MaxThreads, 1, 8,
+	    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 #endif
-		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
-		    			"Load custom/high-res textures from data/textures/<game id>");
-		    }
+	    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
+	    			"Load custom/high-res textures from data/textures/<game id>");
+	    }
 
-		    OptionCheckbox("Render to Texture Buffer", config::RenderToTextureBuffer,
-		    		"Copy rendered-to textures back to VRAM. Slower but accurate");
+	    OptionCheckbox("Render to Texture Buffer", config::RenderToTextureBuffer,
+	    		"Copy rendered-to textures back to VRAM. Slower but accurate");
 
-			}
+		}
 
-	    	ImGui::Spacing();
-		    //header("Display");
-			if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
-		    {
- 		    	ImGui::Text("Fixed Frequency:");
-				ImGui::SameLine();
-				ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
- 		    	ImGui::Columns(5, "fixed_freq", false);
- 		    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
- 		    	ImGui::NextColumn();
- 		    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
- 		    	ImGui::Columns(1, nullptr, false);
+    	ImGui::Spacing();
+	    //header("Display");
+		if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
+	    {
+	    	ImGui::Text("Fixed Frequency:");
+			ImGui::SameLine();
+			ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
+	    	ImGui::Columns(5, "fixed_freq", false);
+	    	OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
+	    	ImGui::NextColumn();
+	    	OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
+	    	ImGui::NextColumn();
+	    	OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
+	    	ImGui::NextColumn();
+	    	OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
+	    	ImGui::NextColumn();
+	    	OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
+	    	ImGui::Columns(1, nullptr, false);
 
 #ifndef TARGET_IPHONE
-		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
-		    	if (isVulkan(config::RendererType))
-		    	{
-			    	ImGui::Indent();
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			    	}
-		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PopItemFlag();
-				        ImGui::PopStyleVar();
-			    	}
-			    	ImGui::Unindent();
-		    	}
-#endif
-		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
-		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
-		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
-			}
-
-	    	ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Effects", ImGuiTreeNodeFlags_None))
-			{
-		    	OptionCheckbox("Shadows", config::ModifierVolumes,
-		    			"Enable modifier volumes, usually used for shadows");
-		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
-			}
-
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Widescreen", ImGuiTreeNodeFlags_None))
-			{
-		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
-		    	if (!config::Widescreen)
+	    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
+	    	if (isVulkan(config::RendererType))
+	    	{
+		    	ImGui::Indent();
+		    	if (!config::VSync)
 		    	{
 			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 		    	}
-		    	ImGui::Indent();
-		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
-		    	ImGui::Unindent();
-		    	if (!config::Widescreen)
+	    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+		    	if (!config::VSync)
 		    	{
 			        ImGui::PopItemFlag();
 			        ImGui::PopStyleVar();
 		    	}
-		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
-		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-
-			}
-
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_None))
-			{
-		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
-		    			"Stretch the screen horizontally");
-				
-		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
-			}
-
-			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Frame Skipping", ImGuiTreeNodeFlags_None))
-			{
-		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
-		    			"Number of frames to skip between two actually rendered frames");
-
-		    	ImGui::Text("Automatic Frame Skipping:");
-		    	ImGui::Columns(3, "autoskip", false);
-		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
-		    	ImGui::Columns(1, nullptr, false);
-		    }
-
-			}
-
-			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
-
-		    switch (renderApi)
-		    {
-		    case 0:
-		    	config::RendererType = perPixel ? RenderType::OpenGL_OIT : RenderType::OpenGL;
-		    	break;
-		    case 1:
-		    	config::RendererType = perPixel ? RenderType::Vulkan_OIT : RenderType::Vulkan;
-		    	break;
-		    case 2:
-		    	config::RendererType = RenderType::DirectX9;
-		    	break;
-		    case 3:
-		    	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
-		    	break;
-		    }
-		}
-		if (ImGui::BeginTabItem("Audio"))
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			OptionCheckbox("Audio Frame Sync", config::LimitFPS, "Sync frames with audio output");
-			OptionCheckbox("Enable DSP", config::DSPEnabled,
-					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
-			{
-				config::AudioVolume.calcDbPower();
-			};
-#ifdef __ANDROID__
-			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
-				OptionCheckbox("Automatic Latency", config::AutoLatency,
-						"Automatically set audio latency. Recommended");
+		    	ImGui::Unindent();
+	    	}
 #endif
-            if (!config::AutoLatency
-            		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
-            {
-				int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
-				ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
-				config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
-				ImGui::SameLine();
-				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
-            }
+	    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
+	    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+	    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
+	    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+		}
 
-			audiobackend_t* backend = nullptr;
-			std::string backend_name = config::AudioBackend;
-			if (backend_name != "auto")
-			{
-				backend = GetAudioBackend(config::AudioBackend);
-				if (backend != NULL)
-					backend_name = backend->slug;
-			}
+    	ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Effects", ImGuiTreeNodeFlags_None))
+		{
+	    	OptionCheckbox("Shadows", config::ModifierVolumes,
+	    			"Enable modifier volumes, usually used for shadows");
+	    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
+		}
 
-			audiobackend_t* current_backend = backend;
-			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
-			{
-				bool is_selected = (config::AudioBackend.get() == "auto");
-				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
-					config::AudioBackend.set("auto");
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Widescreen", ImGuiTreeNodeFlags_None))
+		{
+	    	OptionCheckbox("Widescreen", config::Widescreen,
+    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+	    	if (!config::Widescreen)
+	    	{
+		        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	    	}
+	    	ImGui::Indent();
+	    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+	    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+	    	ImGui::Unindent();
+	    	if (!config::Widescreen)
+	    	{
+		        ImGui::PopItemFlag();
+		        ImGui::PopStyleVar();
+	    	}
+	    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+	    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 
-				for (u32 i = 0; i < GetAudioBackendCount(); i++)
-				{
-					backend = GetAudioBackend(i);
-					is_selected = (config::AudioBackend.get() == backend->slug);
+		}
 
-					if (is_selected)
-						current_backend = backend;
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_None))
+		{
+	    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+	    			"Stretch the screen horizontally");
+			
+	    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
+		}
 
-					if (ImGui::Selectable((backend->slug + " - " + backend->name).c_str(), &is_selected))
-						config::AudioBackend.set(backend->slug);
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Frame Skipping", ImGuiTreeNodeFlags_None))
+		{
+	    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
+	    			"Number of frames to skip between two actually rendered frames");
+
+	    	ImGui::Text("Automatic Frame Skipping:");
+	    	ImGui::Columns(3, "autoskip", false);
+	    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
+           	ImGui::NextColumn();
+	    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
+           	ImGui::NextColumn();
+	    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
+	    	ImGui::Columns(1, nullptr, false);
+	    }
+
+		}
+
+		ImGui::PopStyleVar();
+
+	    switch (renderApi)
+	    {
+	    case 0:
+	    	config::RendererType = perPixel ? RenderType::OpenGL_OIT : RenderType::OpenGL;
+	    	break;
+	    case 1:
+	    	config::RendererType = perPixel ? RenderType::Vulkan_OIT : RenderType::Vulkan;
+	    	break;
+	    case 2:
+	    	config::RendererType = RenderType::DirectX9;
+	    	break;
+	    case 3:
+	    	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
+	    	break;
+	    }
+	}
+}
+
+static void settings_body_audio(ImVec2 normal_padding)
+{
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		OptionCheckbox("Audio Frame Sync", config::LimitFPS, "Sync frames with audio output");
+		OptionCheckbox("Enable DSP", config::DSPEnabled,
+				"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+		if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
+		{
+			config::AudioVolume.calcDbPower();
+		};
+#ifdef __ANDROID__
+		if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
+			OptionCheckbox("Automatic Latency", config::AutoLatency,
+					"Automatically set audio latency. Recommended");
+#endif
+        if (!config::AutoLatency
+        		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
+        {
+			int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
+			ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
+			config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
 			ImGui::SameLine();
-			ShowHelpMarker("The audio driver to use");
+			ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
+        }
 
-			if (current_backend != NULL && current_backend->get_options != NULL)
-			{
-				// get backend specific options
-				int option_count;
-				audio_option_t* options = current_backend->get_options(&option_count);
-
-				for (int o = 0; o < option_count; o++)
-				{
-					std::string value = cfgLoadStr(current_backend->slug, options->cfg_name, "");
-
-					if (options->type == integer)
-					{
-						int val = stoi(value);
-						if (ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value))
-						{
-							std::string s = std::to_string(val);
-							cfgSaveStr(current_backend->slug, options->cfg_name, s);
-						}
-					}
-					else if (options->type == checkbox)
-					{
-						bool check = value == "1";
-						if (ImGui::Checkbox(options->caption.c_str(), &check))
-							cfgSaveStr(current_backend->slug, options->cfg_name,
-									check ? "1" : "0");
-					}
-					else if (options->type == ::list)
-					{
-						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
-						{
-							bool is_selected = false;
-							for (const auto& cur : options->list_callback())
-							{
-								is_selected = value == cur;
-								if (ImGui::Selectable(cur.c_str(), &is_selected))
-									cfgSaveStr(current_backend->slug, options->cfg_name, cur);
-
-								if (is_selected)
-									ImGui::SetItemDefaultFocus();
-							}
-							ImGui::EndCombo();
-						}
-					}
-					else {
-						WARN_LOG(RENDERER, "Unknown option");
-					}
-
-					options++;
-				}
-			}
-
-			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
+		audiobackend_t* backend = nullptr;
+		std::string backend_name = config::AudioBackend;
+		if (backend_name != "auto")
+		{
+			backend = GetAudioBackend(config::AudioBackend);
+			if (backend != NULL)
+				backend_name = backend->slug;
 		}
 
-		if (ImGui::BeginTabItem("Advanced"))
+		audiobackend_t* current_backend = backend;
+		if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    header("CPU Mode");
-		    {
-				ImGui::Columns(2, "cpu_modes", false);
-				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
-					"Use the dynamic recompiler. Recommended in most cases");
-				ImGui::NextColumn();
-				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
-					"Use the interpreter. Very slow but may help in case of a dynarec problem");
-				ImGui::Columns(1, NULL, false);
-		    }
-		    if (config::DynarecEnabled)
-		    {
-		    	ImGui::Spacing();
-		    	header("Dynarec Options");
-		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
-		    }
-	    	ImGui::Spacing();
-		    header("Network");
+			bool is_selected = (config::AudioBackend.get() == "auto");
+			if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
+				config::AudioBackend.set("auto");
+
+			for (u32 i = 0; i < GetAudioBackendCount(); i++)
 			{
-				OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-				OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
-					"Enable networking for supported Naomi games");
-				if (config::NetworkEnable)
+				backend = GetAudioBackend(i);
+				is_selected = (config::AudioBackend.get() == backend->slug);
+
+				if (is_selected)
+					current_backend = backend;
+
+				if (ImGui::Selectable((backend->slug + " - " + backend->name).c_str(), &is_selected))
+					config::AudioBackend.set(backend->slug);
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::SameLine();
+		ShowHelpMarker("The audio driver to use");
+
+		if (current_backend != NULL && current_backend->get_options != NULL)
+		{
+			// get backend specific options
+			int option_count;
+			audio_option_t* options = current_backend->get_options(&option_count);
+
+			for (int o = 0; o < option_count; o++)
+			{
+				std::string value = cfgLoadStr(current_backend->slug, options->cfg_name, "");
+
+				if (options->type == integer)
 				{
-					OptionCheckbox("Act as Server", config::ActAsServer,
-							"Create a local server for Naomi network games");
-					if (!config::ActAsServer)
+					int val = stoi(value);
+					if (ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value))
 					{
-						char server_name[256];
-						strcpy(server_name, config::NetworkServer.get().c_str());
-						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
-						config::NetworkServer.set(server_name);
+						std::string s = std::to_string(val);
+						cfgSaveStr(current_backend->slug, options->cfg_name, s);
 					}
-					char localPort[256];
-					sprintf(localPort, "%d", (int)config::LocalPort);
-					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+				}
+				else if (options->type == checkbox)
+				{
+					bool check = value == "1";
+					if (ImGui::Checkbox(options->caption.c_str(), &check))
+						cfgSaveStr(current_backend->slug, options->cfg_name,
+								check ? "1" : "0");
+				}
+				else if (options->type == ::list)
+				{
+					if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
+					{
+						bool is_selected = false;
+						for (const auto& cur : options->list_callback())
+						{
+							is_selected = value == cur;
+							if (ImGui::Selectable(cur.c_str(), &is_selected))
+								cfgSaveStr(current_backend->slug, options->cfg_name, cur);
+
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+				}
+				else {
+					WARN_LOG(RENDERER, "Unknown option");
+				}
+
+				options++;
+			}
+		}
+
+		ImGui::PopStyleVar();
+	}
+}
+
+static void settings_body_advanced(ImVec2 normal_padding)
+{
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	    header("CPU Mode");
+	    {
+			ImGui::Columns(2, "cpu_modes", false);
+			OptionRadioButton("Dynarec", config::DynarecEnabled, true,
+				"Use the dynamic recompiler. Recommended in most cases");
+			ImGui::NextColumn();
+			OptionRadioButton("Interpreter", config::DynarecEnabled, false,
+				"Use the interpreter. Very slow but may help in case of a dynarec problem");
+			ImGui::Columns(1, NULL, false);
+	    }
+	    if (config::DynarecEnabled)
+	    {
+	    	ImGui::Spacing();
+	    	header("Dynarec Options");
+	    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
+	    }
+	   	ImGui::Spacing();
+	    header("Network");
+		{
+			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+				"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+			OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
+				"Enable networking for supported Naomi games");
+			if (config::NetworkEnable)
+			{
+				OptionCheckbox("Act as Server", config::ActAsServer,
+						"Create a local server for Naomi network games");
+				if (!config::ActAsServer)
+				{
+					char server_name[256];
+					strcpy(server_name, config::NetworkServer.get().c_str());
+					ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
-					ShowHelpMarker("The local UDP port to use");
-					config::LocalPort.set(atoi(localPort));
-		    	}
-				OptionCheckbox("Enable UPnP", config::EnableUPnP);
+					ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
+					config::NetworkServer.set(server_name);
+				}
+				char localPort[256];
+				sprintf(localPort, "%d", (int)config::LocalPort);
+				ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Automatically configure your network router for netplay");
-		    }
-	    	ImGui::Spacing();
-		    header("Other");
-		    {
-		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
-	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
-	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
-	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-	            		"Run the emulated CPU and GPU on different threads");
+				ShowHelpMarker("The local UDP port to use");
+				config::LocalPort.set(atoi(localPort));
+	    	}
+			OptionCheckbox("Enable UPnP", config::EnableUPnP);
+			ImGui::SameLine();
+			ShowHelpMarker("Automatically configure your network router for netplay");
+	    }
+    	ImGui::Spacing();
+	    header("Other");
+	    {
+	    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
+            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
+            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+            		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
-	            OptionCheckbox("Serial Console", config::SerialConsole,
-	            		"Dump the Dreamcast serial console to stdout");
+            OptionCheckbox("Serial Console", config::SerialConsole,
+            		"Dump the Dreamcast serial console to stdout");
 #endif
-	            OptionCheckbox("Dump Textures", config::DumpTextures,
-	            		"Dump all textures into data/texdump/<game id>");
+            OptionCheckbox("Dump Textures", config::DumpTextures,
+            		"Dump all textures into data/texdump/<game id>");
 
-	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
-	            bool newLogToFile = logToFile;
-				ImGui::Checkbox("Log to File", &newLogToFile);
-				if (logToFile != newLogToFile)
-				{
-					cfgSaveBool("log", "LogToFile", newLogToFile);
-					LogManager::Shutdown();
-					LogManager::Init();
-				}
-	            ImGui::SameLine();
-	            ShowHelpMarker("Log debug information to flycast.log");
-		    }
-			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
-
-			#ifdef USE_LUA
-			header("Lua Scripting");
+            bool logToFile = cfgLoadBool("log", "LogToFile", false);
+            bool newLogToFile = logToFile;
+			ImGui::Checkbox("Log to File", &newLogToFile);
+			if (logToFile != newLogToFile)
 			{
-				char LuaFileName[256];
-
-				strcpy(LuaFileName, config::LuaFileName.get().c_str());
-				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
-				config::LuaFileName = LuaFileName;
-
+				cfgSaveBool("log", "LogToFile", newLogToFile);
+				LogManager::Shutdown();
+				LogManager::Init();
 			}
-			#endif
-		}
-		if (ImGui::BeginTabItem("About"))
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    header("Flycast");
-		    {
-				ImGui::Text("Version: %s", GIT_VERSION);
-#ifdef _WIN32
-				ImGui::SameLine();
-				if (ImGui::Button("Update"))
-				{
-					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
-					ImGui::OpenPopup("Update?");
-				}
+            ImGui::SameLine();
+            ShowHelpMarker("Log debug information to flycast.log");
+	    }
+		ImGui::PopStyleVar();
 
-				dojo_gui.update_action();
+#ifdef USE_LUA
+		header("Lua Scripting");
+		{
+			char LuaFileName[256];
+
+			strcpy(LuaFileName, config::LuaFileName.get().c_str());
+			ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
+			config::LuaFileName = LuaFileName;
+
+		}
 #endif
-				ImGui::Text("Git Hash: %s", GIT_HASH);
-				ImGui::Text("Build Date: %s", BUILD_DATE);
-		    }
-	    	ImGui::Spacing();
-		    header("Platform");
-		    {
-		    	ImGui::Text("CPU: %s",
+	}
+}
+
+static void settings_body_about(ImVec2 normal_padding)
+{
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	    header("Flycast");
+	    {
+			ImGui::Text("Version: %s", GIT_VERSION);
+#ifdef _WIN32
+			ImGui::SameLine();
+			if (ImGui::Button("Update"))
+			{
+				dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
+				ImGui::OpenPopup("Update?");
+			}
+
+			dojo_gui.update_action();
+#endif
+			ImGui::Text("Git Hash: %s", GIT_HASH);
+			ImGui::Text("Build Date: %s", BUILD_DATE);
+	    }
+	   	ImGui::Spacing();
+	    header("Platform");
+	    {
+	    	ImGui::Text("CPU: %s",
 #if HOST_CPU == CPU_X86
-					"x86"
+				"x86"
 #elif HOST_CPU == CPU_ARM
-					"ARM"
+				"ARM"
 #elif HOST_CPU == CPU_MIPS
-					"MIPS"
+				"MIPS"
 #elif HOST_CPU == CPU_X64
-					"x86/64"
+				"x86/64"
 #elif HOST_CPU == CPU_GENERIC
-					"Generic"
+				"Generic"
 #elif HOST_CPU == CPU_ARM64
-					"ARM64"
+				"ARM64"
 #else
-					"Unknown"
+				"Unknown"
 #endif
-						);
-		    	ImGui::Text("Operating System: %s",
+					);
+	    	ImGui::Text("Operating System: %s",
 #ifdef __ANDROID__
-					"Android"
+				"Android"
 #elif defined(__unix__)
-					"Linux"
+				"Linux"
 #elif defined(__APPLE__)
 #ifdef TARGET_IPHONE
-		    		"iOS"
+	    		"iOS"
 #else
-					"macOS"
+				"macOS"
 #endif
 #elif defined(TARGET_UWP)
-					"Windows Universal Platform"
+				"Windows Universal Platform"
 #elif defined(_WIN32)
-					"Windows"
+				"Windows"
 #elif defined(__SWITCH__)
-					"Switch"
+				"Switch"
 #else
-					"Unknown"
+				"Unknown"
 #endif
-						);
+					);
 #ifdef TARGET_IPHONE
-				extern std::string iosJitStatus;
-				ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
+			extern std::string iosJitStatus;
+			ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
 #endif
-		    }
-	    	ImGui::Spacing();
-	    	if (isOpenGL(config::RendererType))
-				header("Open GL");
-	    	else if (isVulkan(config::RendererType))
-				header("Vulkan");
-	    	else if (isDirectX(config::RendererType))
-				header("DirectX");
-			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
-			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
+	    }
+	   	ImGui::Spacing();
+	   	if (isOpenGL(config::RendererType))
+			header("OpenGL");
+	   	else if (isVulkan(config::RendererType))
+			header("Vulkan");
+	   	else if (isDirectX(config::RendererType))
+			header("DirectX");
+		ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
+		ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
 #ifdef __ANDROID__
-		    ImGui::Separator();
-		    if (ImGui::Button("Send Logs")) {
-		    	void android_send_logs();
-		    	android_send_logs();
-		    }
+	    ImGui::Separator();
+	    if (ImGui::Button("Send Logs")) {
+	    	void android_send_logs();
+	    	android_send_logs();
+	    }
 #endif
-			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
-		}
-		ImGui::EndTabBar();
+		ImGui::PopStyleVar();
+	}
+}
+
+static void gui_display_settings()
+{
+
+	fullScreenWindow(false);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+
+    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+
+    if (ImGui::Button("Done", ScaledVec2(100, 30)))
+    {
+    	if (game_started)
+    		gui_state = GuiState::Commands;
+    	else
+    		gui_state = GuiState::Main;
+    	if (maple_devices_changed)
+    	{
+    		maple_devices_changed = false;
+    		if (game_started && settings.platform.isConsole())
+    		{
+    			maple_ReconnectDevices();
+    			reset_vmus();
+    		}
+    	}
+       	SaveSettings();
     }
+	if (game_started)
+	{
+	    ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+		if (config::Settings::instance().hasPerGameConfig())
+		{
+			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+			{
+				config::Settings::instance().setPerGameConfig(false);
+				config::Settings::instance().load(false);
+				loadGameSpecificSettings();
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+				config::Settings::instance().setPerGameConfig(true);
+		}
+	    ImGui::PopStyleVar();
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
+
+	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About" };
+ 
+    // Left
+    static int selected = 0;
+    {
+        ImGui::BeginChild("left pane", ImVec2(100, 0), true);
+
+        for (int i = 0; i < sections.size(); i++)
+        {
+            char label[128];
+            sprintf(label, "%s", sections[i].c_str());
+            if (ImGui::Selectable(label, selected == i))
+                selected = i;
+        }
+        ImGui::EndChild();
+    }
+    ImGui::SameLine();
+
+	{
+        ImGui::BeginGroup();
+        //ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+        ImGui::BeginChild("item view", ImVec2(0, 0));
+
+		header(sections[selected].c_str());
+        ImGui::Separator();
+
+		if (sections[selected] == "General")
+			settings_body_general(normal_padding);
+
+		if (sections[selected] == "Controls")
+			settings_body_controls(normal_padding);
+
+		if (sections[selected] == "Video")
+			settings_body_video(normal_padding);
+
+		if (sections[selected] == "Audio")
+			settings_body_audio(normal_padding);
+
+		if (sections[selected] == "Netplay")
+			dojo_gui.insert_netplay_tab(normal_padding);
+
+		if (sections[selected] == "Replays")
+			dojo_gui.insert_replays_tab(normal_padding);
+
+		if (sections[selected] == "Training")
+			dojo_gui.insert_training_tab(normal_padding);
+
+		if (sections[selected] == "Advanced")
+			settings_body_advanced(normal_padding);
+
+		if (sections[selected] == "About")
+			settings_body_about(normal_padding);
+
+		ImGui::EndGroup();
+	}
+
     ImGui::PopStyleVar();
 
     scrollWhenDraggingOnVoid();

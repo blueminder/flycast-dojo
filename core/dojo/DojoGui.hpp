@@ -60,6 +60,8 @@ public:
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
 
 	void insert_netplay_tab(ImVec2 normal_padding);
+	void insert_replays_tab(ImVec2 normal_padding);
+	void insert_training_tab(ImVec2 normal_padding);
 
 	void update_action();
 

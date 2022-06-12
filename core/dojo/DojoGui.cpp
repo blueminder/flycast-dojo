@@ -1446,7 +1446,6 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 
 void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 {
-	if (ImGui::BeginTabItem("Dojo"))
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 
@@ -1525,39 +1524,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					}
 				}
 			}
-		}
-
-		if (ImGui::CollapsingHeader("Training Mode", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			OptionCheckbox("Show Input Display", config::ShowInputDisplay);
-			ImGui::SameLine();
-			ShowHelpMarker("Shows controller input history in Training Mode");
-
-			if (config::ShowInputDisplay)
-			{
-				OptionCheckbox("Use Numpad Notation", config::UseAnimeInputNotation);
-				ImGui::SameLine();
-				ShowHelpMarker("Show inputs using Numpad/Anime Notation for Directions");
-			}
-
-			OptionCheckbox("Hide Random Input Slot", config::HideRandomInputSlot);
-			ImGui::SameLine();
-			ShowHelpMarker("Hides input slot is being played for random playback");
-
-			OptionCheckbox("Start Recording on First Input", config::RecordOnFirstInput);
-			ImGui::SameLine();
-			ShowHelpMarker("Delay dummy recording until the first input is registered");
-		}
-
-		if (ImGui::CollapsingHeader("Replays", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			OptionCheckbox("Show Frame Position", config::ShowPlaybackControls);
-			ImGui::SameLine();
-			ShowHelpMarker("Shows current frame position on playback.");
-
-			OptionCheckbox("Record All Sessions", config::RecordMatches);
-			ImGui::SameLine();
-			ShowHelpMarker("Record all gameplay sessions to a local file");
 		}
 
 		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1657,43 +1623,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			OptionCheckbox("Enable Session Transmission", config::Transmitting);
-			ImGui::SameLine();
-			ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
-
-			if (config::Transmitting)
-			{
-				char SpectatorIP[256];
-
-				strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
-				ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				ImGui::SameLine();
-				ShowHelpMarker("Target Spectator IP Address");
-				config::SpectatorIP = SpectatorIP;
-
-				/*
-				OptionCheckbox("Transmit Replays", config::TransmitReplays);
-				ImGui::SameLine();
-				ShowHelpMarker("Transmit replays to target spectator");
-				*/
-			}
-
-			char SpectatorPort[256];
-
-			strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
-			ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("Port to send or receive session streams");
-			config::SpectatorPort = SpectatorPort;
-
-			int one = 1;
-			ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
-			ImGui::SameLine();
-			ShowHelpMarker("# of frames to cache before playing received match stream");
-		}
-
 		if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
 		{
 			OptionCheckbox("Validate BIOS & ROMs before netplay session", config::NetStartVerifyRoms);
@@ -1749,6 +1678,81 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		ImGui::PopStyleVar();
 		ImGui::EndTabItem();
+	}
+}
+
+void DojoGui::insert_replays_tab(ImVec2 normal_padding)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+
+	OptionCheckbox("Show Frame Position", config::ShowPlaybackControls);
+	ImGui::SameLine();
+	ShowHelpMarker("Shows current frame position on playback.");
+
+	OptionCheckbox("Record All Sessions", config::RecordMatches);
+	ImGui::SameLine();
+	ShowHelpMarker("Record all gameplay sessions to a local file");
+
+	if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		OptionCheckbox("Enable Session Transmission", config::Transmitting);
+		ImGui::SameLine();
+		ShowHelpMarker("Transmit netplay sessions as TCP stream to target spectator");
+
+		if (config::Transmitting)
+		{
+			char SpectatorIP[256];
+
+			strcpy(SpectatorIP, config::SpectatorIP.get().c_str());
+			ImGui::InputText("Spectator IP Address", SpectatorIP, sizeof(SpectatorIP), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			ImGui::SameLine();
+			ShowHelpMarker("Target Spectator IP Address");
+			config::SpectatorIP = SpectatorIP;
+
+			/*
+			OptionCheckbox("Transmit Replays", config::TransmitReplays);
+			ImGui::SameLine();
+			ShowHelpMarker("Transmit replays to target spectator");
+			*/
+		}
+
+		char SpectatorPort[256];
+
+		strcpy(SpectatorPort, config::SpectatorPort.get().c_str());
+		ImGui::InputText("Spectator Port", SpectatorPort, sizeof(SpectatorPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Port to send or receive session streams");
+		config::SpectatorPort = SpectatorPort;
+
+		int one = 1;
+		ImGui::InputScalar("Frame Buffer", ImGuiDataType_S32, &config::RxFrameBuffer.get(), &one, NULL, "%d");
+		ImGui::SameLine();
+		ShowHelpMarker("# of frames to cache before playing received match stream");
+	}
+}
+
+void DojoGui::insert_training_tab(ImVec2 normal_padding)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	{
+		OptionCheckbox("Show Input Display", config::ShowInputDisplay);
+		ImGui::SameLine();
+		ShowHelpMarker("Shows controller input history in Training Mode");
+
+		if (config::ShowInputDisplay)
+		{
+			OptionCheckbox("Use Numpad Notation", config::UseAnimeInputNotation);
+			ImGui::SameLine();
+			ShowHelpMarker("Show inputs using Numpad/Anime Notation for Directions");
+		}
+
+		OptionCheckbox("Hide Random Input Slot", config::HideRandomInputSlot);
+		ImGui::SameLine();
+		ShowHelpMarker("Hides input slot is being played for random playback");
+
+		OptionCheckbox("Start Recording on First Input", config::RecordOnFirstInput);
+		ImGui::SameLine();
+		ShowHelpMarker("Delay dummy recording until the first input is registered");
 	}
 }
 
