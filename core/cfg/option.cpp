@@ -87,7 +87,7 @@ std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor3"),
 	Option<int>("rend.CrossHairColor4"),
 };
-Option<int> SkipFrame("ta.skip");
+Option<int> SkipFrame("ta.skip", 0);
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
