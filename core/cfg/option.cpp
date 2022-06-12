@@ -161,7 +161,7 @@ OptionString MatchmakingServerAddress("MatchmakingServerAddress", "match.dojo.oo
 OptionString MatchmakingServerPort("MatchmakingServerPort", "52001", "dojo");
 OptionString MatchCode("MatchCode", "", "dojo");
 OptionString GameName("GameName", "", "dojo");
-Option<bool> EnableMemRestore("EnableMemRestore", true, "dojo");
+Option<bool> EnableMemRestore("EnableMemRestore", false, "dojo");
 OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
 Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
 Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
