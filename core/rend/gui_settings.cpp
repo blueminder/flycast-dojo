@@ -342,7 +342,7 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 void GuiSettings::settings_body_about(ImVec2 normal_padding)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-	header("Flycast");
+	header("Flycast Dojo");
 	{
 		ImGui::Text("Version: %s", GIT_VERSION);
 #ifdef _WIN32
@@ -517,7 +517,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 
 		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-		if (ImGui::BeginCombo("##Graphics API", graphapiText[gaSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+		if (ImGui::BeginCombo("##Graphics API", graphapiText[gaSelected].c_str(), ImGuiComboFlags_None))
 		{
 			for (u32 i = 0; i < graphapi.size(); i++)
 			{
@@ -531,19 +531,6 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine(0, innerSpacing);
-
-		if (ImGui::ArrowButton("##Dec Graphics API", ImGuiDir_Left))
-		{
-			if (gaSelected > 0)
-				renderApi = graphapi[gaSelected - 1];
-		}
-		ImGui::SameLine(0, innerSpacing);
-		if (ImGui::ArrowButton("##Inc Graphics API", ImGuiDir_Right))
-		{
-			if (gaSelected < graphapi.size() - 1)
-				renderApi = graphapi[gaSelected + 1];
-		}
-		ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
 		ImGui::Text("Graphics API");
 		ImGui::SameLine();
@@ -567,7 +554,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 
 		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-		if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+		if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_None))
 		{
 			for (u32 i = 0; i < scalings.size(); i++)
 			{
@@ -581,19 +568,6 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine(0, innerSpacing);
-
-		if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
-		{
-			if (selected > 0)
-				config::RenderResolution = vres[selected - 1];
-		}
-		ImGui::SameLine(0, innerSpacing);
-		if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
-		{
-			if (selected < vres.size() - 1)
-				config::RenderResolution = vres[selected + 1];
-		}
-		ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
 		ImGui::Text("Internal Resolution");
 		ImGui::SameLine();
@@ -619,7 +593,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 
 		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-		if (ImGui::BeginCombo("##Transparent Sorting", tsortText[tsSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+		if (ImGui::BeginCombo("##Transparent Sorting", tsortText[tsSelected].c_str(), ImGuiComboFlags_None))
 		{
 			for (u32 i = 0; i < tsort.size(); i++)
 			{
@@ -633,19 +607,6 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine(0, innerSpacing);
-
-		if (ImGui::ArrowButton("##Dec Transparent Sorting", ImGuiDir_Left))
-		{
-			if (tsSelected > 0)
-				renderer = tsort[tsSelected - 1];
-		}
-		ImGui::SameLine(0, innerSpacing);
-		if (ImGui::ArrowButton("##Inc Transparent Sorting", ImGuiDir_Right))
-		{
-			if (tsSelected < tsort.size() - 1)
-				renderer = tsort[tsSelected + 1];
-		}
-		ImGui::SameLine(0, style.ItemInnerSpacing.x);
 
 		ImGui::Text("Transparent Sorting");
 		ImGui::SameLine();

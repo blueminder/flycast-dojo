@@ -1444,10 +1444,20 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
     ImGui::PopStyleVar();
 }
 
+inline static void header(const char *title)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleVar();
+}
+
 void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 {
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+
+		OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
+			"Display network statistics on screen");
 
 		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
 		ImGui::SameLine();
@@ -1460,7 +1470,25 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 		ShowHelpMarker("Name visible to other players");
 		config::PlayerName = std::string(PlayerName, strlen(PlayerName));
 
-		if (ImGui::CollapsingHeader("Connection Method", ImGuiTreeNodeFlags_DefaultOpen))
+		header("Chat");
+		{
+			OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
+			if (config::GGPOChat)
+			{
+				OptionCheckbox("Enable Chat Window Timeout", config::GGPOChatTimeoutToggle, "Automatically close chat window after an assigned timeout");
+				if (config::GGPOChatTimeoutToggle)
+				{
+					char chatTimeout[256];
+					sprintf(chatTimeout, "%d", (int)config::GGPOChatTimeout);
+					ImGui::InputText("Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
+					config::GGPOChatTimeout.set(atoi(chatTimeout));
+				}
+			}
+		}
+
+		header("Connection Method");
 		{
 			int cxnMethod;
 			if (!config::EnableMatchCode)
@@ -1490,6 +1518,27 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
+		if (!config::EnableLobby)
+		{
+			if (config::EnableMatchCode)
+			{
+				if (ImGui::CollapsingHeader("Match Codes", ImGuiTreeNodeFlags_None))
+				{
+					char MatchmakingServerAddress[256];
+
+					strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
+					ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					config::MatchmakingServerAddress = MatchmakingServerAddress;
+
+					char MatchmakingServerPort[256];
+
+					strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
+					ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					config::MatchmakingServerPort = MatchmakingServerPort;
+				}
+			}
+		}
+
 		if (config::NetplayMethod.get() == "GGPO")
 		{
 			if (!config::EnableMatchCode)
@@ -1497,42 +1546,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				OptionCheckbox("Show Public IP on Connection Dialog", config::ShowPublicIP);
 			}
 
-			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
-					"Display network statistics on screen");
-
-				ImGui::Text("Left Thumbstick:");
-				OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
-				ImGui::SameLine();
-				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
-				ImGui::SameLine();
-				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
-
-				OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
-				if (config::GGPOChat)
-				{
-					OptionCheckbox("Enable Chat Window Timeout", config::GGPOChatTimeoutToggle, "Automatically close chat window after 20 seconds");
-					if (config::GGPOChatTimeoutToggle)
-					{
-						char chatTimeout[256];
-						sprintf(chatTimeout, "%d", (int)config::GGPOChatTimeout);
-						ImGui::InputText("Chat Window Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
-						config::GGPOChatTimeout.set(atoi(chatTimeout));
-					}
-				}
-			}
-		}
-
-		if (ImGui::CollapsingHeader("Netplay", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			OptionCheckbox("Enable UPnP", config::EnableUPnP);
-			ImGui::SameLine();
-			ShowHelpMarker("Enable Universal Plug & Play for game sessions.");
-
-			if (config::NetplayMethod.get() == "GGPO")
+			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_None))
 			{
 				int GGPOPort = config::GGPOPort.get();
 				ImGui::InputInt("GGPO Local Port", &GGPOPort);
@@ -1548,77 +1562,68 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				if (GGPORemotePort != config::GGPORemotePort.get())
 					config::GGPORemotePort = GGPORemotePort;
 
-			}
+				std::string PortTitle;
+				std::string PortDescription;
 
-			std::string PortTitle;
-			std::string PortDescription;
-
-			if (config::NetplayMethod.get() == "Delay")
-			{
-				PortTitle = "Server Port";
-				PortDescription = "The server port to listen on";
-			}
-			else
-			{
-				PortTitle = "Handshake Port";
-				PortDescription = "The handshake port to listen on";
-			}
-
-			char ServerPort[256];
-			strcpy(ServerPort, config::DojoServerPort.get().c_str());
-
-			ImGui::InputText(PortTitle.c_str(), ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker(PortDescription.c_str());
-			config::DojoServerPort = ServerPort;
-
-			if (!config::EnableLobby)
-			{
-				if (config::EnableMatchCode)
+				if (config::NetplayMethod.get() == "Delay")
 				{
-					if (ImGui::CollapsingHeader("Match Codes", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						char MatchmakingServerAddress[256];
-
-						strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
-						ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						config::MatchmakingServerAddress = MatchmakingServerAddress;
-
-						char MatchmakingServerPort[256];
-
-						strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
-						ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						config::MatchmakingServerPort = MatchmakingServerPort;
-					}
+					PortTitle = "Server Port";
+					PortDescription = "The server port to listen on";
 				}
-			}
-
-			if (!config::EnableMatchCode && config::NetplayMethod.get() == "Delay")
-			{
-				OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
-				ImGui::SameLine();
-				ShowHelpMarker("Enable discovery and matchmaking over LAN");
-
-				if (config::EnableLobby)
+				else
 				{
-					if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						char LobbyMulticastAddress[256];
+					PortTitle = "Handshake Port";
+					PortDescription = "The handshake port to listen on";
+				}
 
-						strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
-						ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("Multicast IP Address for Lobby to Target");
-						config::LobbyMulticastAddress = LobbyMulticastAddress;
+				char ServerPort[256];
+				strcpy(ServerPort, config::DojoServerPort.get().c_str());
 
-						char LobbyMulticastPort[256];
+				ImGui::InputText(PortTitle.c_str(), ServerPort, sizeof(ServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker(PortDescription.c_str());
+				config::DojoServerPort = ServerPort;
 
-						strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
-						ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-						ImGui::SameLine();
-						ShowHelpMarker("Multicast Port for Lobby to Target");
-						config::LobbyMulticastPort = LobbyMulticastPort;
-					}
+				ImGui::Text("Left Thumbstick:");
+				ImGui::SameLine();
+				ShowHelpMarker("Simulates Dreamcast Left Thumbstick. If unneeded, leave disabled. May cause extra rollbacks online.");
+				OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used. Recommended for most games.");
+				ImGui::SameLine();
+				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only. Used for racing games.");
+				ImGui::SameLine();
+				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes. Used for games that require full analog to function.");
+
+				OptionCheckbox("Enable UPnP", config::EnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable Universal Plug & Play for game sessions.");
+			}
+		}
+
+		if (!config::EnableMatchCode && config::NetplayMethod.get() == "Delay")
+		{
+			OptionCheckbox("Enable LAN Lobby", config::EnableLobby);
+			ImGui::SameLine();
+			ShowHelpMarker("Enable discovery and matchmaking over LAN");
+
+			if (config::EnableLobby)
+			{
+				if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					char LobbyMulticastAddress[256];
+
+					strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
+					ImGui::InputText("Lobby Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast IP Address for Lobby to Target");
+					config::LobbyMulticastAddress = LobbyMulticastAddress;
+
+					char LobbyMulticastPort[256];
+
+					strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
+					ImGui::InputText("Lobby Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Multicast Port for Lobby to Target");
+					config::LobbyMulticastPort = LobbyMulticastPort;
 				}
 			}
 		}
@@ -1693,7 +1698,7 @@ void DojoGui::insert_replays_tab(ImVec2 normal_padding)
 	ImGui::SameLine();
 	ShowHelpMarker("Record all gameplay sessions to a local file");
 
-	if (ImGui::CollapsingHeader("Session Streaming", ImGuiTreeNodeFlags_DefaultOpen))
+	header("Session Streaming");
 	{
 		OptionCheckbox("Enable Session Transmission", config::Transmitting);
 		ImGui::SameLine();
