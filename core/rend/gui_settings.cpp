@@ -782,9 +782,9 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			ImGui::NextColumn();
 			OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
 			ImGui::NextColumn();
-			OptionRadioButton("60 Hz", config::FixedFrequency, 2, "Native VGA frequency");
+			OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC/VGA frequency");
 			ImGui::NextColumn();
-			OptionRadioButton("59.94 Hz", config::FixedFrequency, 3, "Native NTSC frequency");
+			OptionRadioButton("60 Hz", config::FixedFrequency, 3, "Approximate NTSC/VGA frequency");
 			ImGui::NextColumn();
 			OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
 			ImGui::Columns(1, nullptr, false);

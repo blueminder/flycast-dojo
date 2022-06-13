@@ -39,19 +39,19 @@ std::atomic<bool> display_refresh(false);
 void display_refresh_thread()
 {
 	auto dispStart = std::chrono::steady_clock::now();
-	long long period = 16666; // VGA by default
+	long long period = 16683; // Native NTSC/VGA by default
 	while(1)
 	{
-		// VGA
+		// Native NTSC/VGA
 		if (config::FixedFrequency == 2 ||
 			(config::FixedFrequency == 1 &&
-				(config::Cable == 0 || config::Cable == 1)))
-			period = 16666; // 1/60
-		// NTSC
-		else if (config::FixedFrequency == 3 ||
+				(config::Cable == 0 || config::Cable == 1)) ||
 			(config::FixedFrequency == 1 && config::Cable == 3 &&
 				(config::Broadcast == 0 || config::Broadcast == 4)))
 			period = 16683; // 1/59.94
+		// Approximate VGA
+		else if (config::FixedFrequency == 3)
+			period = 16666; // 1/60
 		// PAL
 		else if (config::FixedFrequency == 4 ||
 				 (config::FixedFrequency == 1 && config::Cable == 3))
