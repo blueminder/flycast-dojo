@@ -534,7 +534,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 
 		ImGui::Text("Graphics API");
 		ImGui::SameLine();
-		ShowHelpMarker("Chooses the backend to use for rendering. DirectX 9 offers the best compatibility on Windows, while OpenGL .");
+		ShowHelpMarker("Chooses the backend to use for rendering. DirectX 9 offers the best compatibility on Windows, while OpenGL does for other platforms.");
 
 		const std::array<float, 13> scalings{0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f};
 		const std::array<std::string, 13> scalingsText{"Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9"};
