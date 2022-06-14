@@ -701,8 +701,9 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Text("Texture Filtering:");
-			ImGui::Columns(3, "textureFiltering", false);
+			ImGui::Columns(2, "textureFiltering", false);
 			OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
+			ImGui::NextColumn();
 			ImGui::NextColumn();
 			OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
 			ImGui::NextColumn();
