@@ -777,10 +777,11 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			ImGui::Text("Fixed Frequency:");
 			ImGui::SameLine();
 			ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
-			ImGui::Columns(5, "fixed_freq", false);
+			ImGui::Columns(3, "fixed_freq", false);
 			OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
 			ImGui::NextColumn();
 			OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
+			ImGui::NextColumn();
 			ImGui::NextColumn();
 			OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC/VGA frequency");
 			ImGui::NextColumn();
