@@ -1619,19 +1619,24 @@ static void settings_body_controls(ImVec2 normal_padding)
 {
 		//if (ImGui::BeginTabItem("Controls"))
 		{
+			float currentwidth = ImGui::GetContentRegionAvail().x - 150;
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
 		    {
 				ImGui::Columns(4, "physicalDevices", false);
 				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
+				float system_column = ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+				float port_column = ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
+					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x;
+				float name_column = currentwidth - system_column - port_column;
 				ImGui::TextColored(gray, "System");
-				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				ImGui::SetColumnWidth(-1, system_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Name");
+				ImGui::SetColumnWidth(-1, name_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Port");
-				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
-					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
+				ImGui::SetColumnWidth(-1, port_column);
 				ImGui::NextColumn();
 				ImGui::NextColumn();
 				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
@@ -1683,11 +1688,18 @@ static void settings_body_controls(ImVec2 normal_padding)
 #endif
 					if (gamepad->is_rumble_enabled())
 					{
-						ImGui::SameLine(0, 16 * settings.display.uiScale);
+						ImGui::NextColumn();
+						ImGui::Columns(2, NULL, false);
+						float system_column = ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+						ImGui::SetColumnWidth(-1, system_column);
+						ImGui::NextColumn();
 						int power = gamepad->get_rumble_power();
 						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
 						if (ImGui::SliderInt("Rumble", &power, 0, 100))
 							gamepad->set_rumble_power(power);
+						ImGui::Unindent();
+						ImGui::NextColumn();
+						ImGui::Columns(4, NULL, false);
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
