@@ -1584,7 +1584,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				ShowHelpMarker(PortDescription.c_str());
 				config::DojoServerPort = ServerPort;
 
-				ImGui::Text("Left Thumbstick:");
+				ImGui::Text("Left Thumbstick Simulation (Dreamcast):");
 				ImGui::SameLine();
 				ShowHelpMarker("Simulates Dreamcast Left Thumbstick. If unneeded, leave disabled. May cause extra rollbacks online.");
 				OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used. Recommended for most games.");
