@@ -1814,44 +1814,6 @@ static void gui_display_settings()
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
-    if (ImGui::Button("Done", ScaledVec2(100, 30)))
-    {
-    	if (game_started)
-    		gui_state = GuiState::Commands;
-    	else
-    		gui_state = GuiState::Main;
-    	if (maple_devices_changed)
-    	{
-    		maple_devices_changed = false;
-    		if (game_started && settings.platform.isConsole())
-    		{
-    			maple_ReconnectDevices();
-    			reset_vmus();
-    		}
-    	}
-       	SaveSettings();
-    }
-	if (game_started)
-	{
-	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
-		if (config::Settings::instance().hasPerGameConfig())
-		{
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
-			{
-				config::Settings::instance().setPerGameConfig(false);
-				config::Settings::instance().load(false);
-				loadGameSpecificSettings();
-			}
-		}
-		else
-		{
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
-				config::Settings::instance().setPerGameConfig(true);
-		}
-	    ImGui::PopStyleVar();
-	}
-
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About" };
@@ -1859,7 +1821,7 @@ static void gui_display_settings()
     // Left
     static int selected = 0;
     {
-        ImGui::BeginChild("left pane", ImVec2(100, 0), true);
+        ImGui::BeginChild("left pane", ImVec2(100, -40), true);
 
         for (int i = 0; i < sections.size(); i++)
         {
@@ -1875,7 +1837,7 @@ static void gui_display_settings()
 	{
         ImGui::BeginGroup();
         //ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-        ImGui::BeginChild("item view", ImVec2(0, 0));
+        ImGui::BeginChild("item view", ImVec2(0, -40));
 
 		header(sections[selected].c_str());
         //ImGui::Separator();
@@ -1907,15 +1869,56 @@ static void gui_display_settings()
 		if (sections[selected] == "About")
 			gui_settings.settings_body_about(normal_padding);
 
+        ImGui::EndChild();
 		ImGui::EndGroup();
 	}
 
+
     ImGui::PopStyleVar();
+
+	if (ImGui::Button("Done", ScaledVec2(100, 30)))
+	{
+		if (game_started)
+			gui_state = GuiState::Commands;
+		else
+			gui_state = GuiState::Main;
+		if (maple_devices_changed)
+		{
+			maple_devices_changed = false;
+			if (game_started && settings.platform.isConsole())
+			{
+				maple_ReconnectDevices();
+				reset_vmus();
+			}
+		}
+		SaveSettings();
+	}
+	if (game_started)
+	{
+	    ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+		if (config::Settings::instance().hasPerGameConfig())
+		{
+			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+			{
+				config::Settings::instance().setPerGameConfig(false);
+				config::Settings::instance().load(false);
+				loadGameSpecificSettings();
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+				config::Settings::instance().setPerGameConfig(true);
+		}
+	    ImGui::PopStyleVar();
+	}
 
     scrollWhenDraggingOnVoid();
     windowDragScroll();
-    ImGui::End();
+
     ImGui::PopStyleVar();
+    ImGui::End();
 }
 
 void gui_display_notification(const char *msg, int duration)
