@@ -1293,7 +1293,10 @@ void DojoSession::transmitter_thread()
 		spectate_start.AppendString(config::MatchCode.get());
 
 		// ggpo analog settings
-		spectate_start.AppendInt((u32)config::GGPOAnalogAxes.get());
+		if (settings.platform.isConsole())
+			spectate_start.AppendInt((u32)config::GGPOAnalogAxes.get());
+		else
+			spectate_start.AppendInt(0);
 
 		spectate_start.AppendString(settings.dojo.state_md5);
 		spectate_start.AppendString(settings.dojo.state_commit);
