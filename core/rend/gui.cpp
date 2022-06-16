@@ -1831,8 +1831,9 @@ static void gui_display_settings()
     // Left
     static int selected = 0;
     {
-        ImGui::BeginChild("left pane", ImVec2(100, -40), true);
+        ImGui::BeginChild("left pane", ImVec2(100, 0), false);
 
+        ImGui::BeginChild("left pane list", ImVec2(100, -40), true);
         for (int i = 0; i < sections.size(); i++)
         {
             char label[128];
@@ -1841,13 +1842,56 @@ static void gui_display_settings()
                 selected = i;
         }
         ImGui::EndChild();
+
+		{
+			if (ImGui::Button("Done", ScaledVec2(100, 30)))
+			{
+				if (game_started)
+					gui_state = GuiState::Commands;
+				else
+					gui_state = GuiState::Main;
+				if (maple_devices_changed)
+				{
+					maple_devices_changed = false;
+					if (game_started && settings.platform.isConsole())
+					{
+						maple_ReconnectDevices();
+						reset_vmus();
+					}
+				}
+				SaveSettings();
+			}
+			/*
+			if (game_started)
+			{
+			    ImGui::SameLine();
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+				if (config::Settings::instance().hasPerGameConfig())
+				{
+					if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+					{
+						config::Settings::instance().setPerGameConfig(false);
+						config::Settings::instance().load(false);
+						loadGameSpecificSettings();
+					}
+				}
+				else
+				{
+					if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+						config::Settings::instance().setPerGameConfig(true);
+				}
+			    ImGui::PopStyleVar();
+			}
+			*/
+		}
+        ImGui::EndChild();
     }
     ImGui::SameLine();
 
 	{
         ImGui::BeginGroup();
         //ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-        ImGui::BeginChild("item view", ImVec2(0, -40));
+        ImGui::BeginChild("item view", ImVec2(0, 0));
 
 		header(sections[selected].c_str());
         //ImGui::Separator();
@@ -1883,46 +1927,7 @@ static void gui_display_settings()
 		ImGui::EndGroup();
 	}
 
-
     ImGui::PopStyleVar();
-
-	if (ImGui::Button("Done", ScaledVec2(100, 30)))
-	{
-		if (game_started)
-			gui_state = GuiState::Commands;
-		else
-			gui_state = GuiState::Main;
-		if (maple_devices_changed)
-		{
-			maple_devices_changed = false;
-			if (game_started && settings.platform.isConsole())
-			{
-				maple_ReconnectDevices();
-				reset_vmus();
-			}
-		}
-		SaveSettings();
-	}
-	if (game_started)
-	{
-	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
-		if (config::Settings::instance().hasPerGameConfig())
-		{
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
-			{
-				config::Settings::instance().setPerGameConfig(false);
-				config::Settings::instance().load(false);
-				loadGameSpecificSettings();
-			}
-		}
-		else
-		{
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
-				config::Settings::instance().setPerGameConfig(true);
-		}
-	    ImGui::PopStyleVar();
-	}
 
     scrollWhenDraggingOnVoid();
     windowDragScroll();
