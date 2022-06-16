@@ -853,7 +853,7 @@ static void gui_display_commands()
 		}
 	}
 
-	if (!settings.dojo.training)
+	if (!settings.dojo.training && config::ShowEjectDisk)
 	{
 
 	// Insert/Eject Disk
@@ -872,7 +872,9 @@ static void gui_display_commands()
 	}
 
 	}
-	ImGui::NextColumn();
+
+	if (settings.dojo.training || config::ShowEjectDisk)
+		ImGui::NextColumn();
 
 	// Cheats
 	if (settings.network.online)
@@ -896,11 +898,19 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 
-	ImGui::Columns(1, nullptr, false);
+	if (settings.dojo.training || config::ShowEjectDisk)
+		ImGui::Columns(1, nullptr, false);
+	else
+		ImGui::NextColumn();
 
+	ImVec2 exit_size;
+
+	if (settings.dojo.training || config::ShowEjectDisk)
+		exit_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
+	else
+		exit_size = ScaledVec2(150, 50);
 	// Exit
-	if (ImGui::Button("Exit", ScaledVec2(300, 50)
-			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
+	if (ImGui::Button("Exit", exit_size))
 	{
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{

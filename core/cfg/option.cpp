@@ -113,6 +113,8 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", false);
 
+Option<bool> ShowEjectDisk("ShowEjectDisk", false);
+
 // Network
 
 Option<bool> NetworkEnable("Enable", false, "network");

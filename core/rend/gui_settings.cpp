@@ -311,6 +311,9 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 		OptionCheckbox("Dump Textures", config::DumpTextures,
 					   "Dump all textures into data/texdump/<game id>");
 
+		OptionCheckbox("Show Eject Disk", config::ShowEjectDisk,
+					   "Show Eject Disk button in Menu");
+
 		bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		bool newLogToFile = logToFile;
 		ImGui::Checkbox("Log to File", &newLogToFile);
