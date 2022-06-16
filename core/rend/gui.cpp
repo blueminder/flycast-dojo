@@ -1535,7 +1535,7 @@ void error_popup()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			if (dojo.commandLineStart)
+			if (dojo.commandLineStart || error_msg.find("Peer verification failed") != std::string::npos)
 			{
 				if (ImGui::Button("Exit", ImVec2(80.f * settings.display.uiScale, 0.f)))
 					dc_exit();

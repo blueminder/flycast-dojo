@@ -513,23 +513,18 @@ void startSession(int localPort, int localPlayerNum)
 		+ (int)keyboardGame * sizeof(Inputs::u.keys) + (int)mouseGame * sizeof(Inputs::u.relPos);
 
 	VerificationData verif;
-	MD5Sum().add(settings.network.md5.bios)
-			.add(settings.network.md5.game)
+	MD5Sum().add(settings.network.md5.game)
 			.getDigest(verif.gameMD5);
 	auto& digest = settings.network.md5.savestate;
 	if (std::find_if(std::begin(digest), std::end(digest), [](u8 b) { return b != 0; }) != std::end(digest))
 		memcpy(verif.stateMD5, digest, sizeof(digest));
 	else
 	{
-		MD5Sum().add(settings.network.md5.nvmem)
-				.add(settings.network.md5.nvmem2)
-				.add(settings.network.md5.eeprom)
-				.add(settings.network.md5.vmu)
-				.getDigest(verif.stateMD5);
+		MD5Sum().getDigest(verif.stateMD5);
 	}
 
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
-			&verif, 0);
+			&verif, sizeof(verif));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
