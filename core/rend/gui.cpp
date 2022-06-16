@@ -1932,25 +1932,24 @@ static void gui_display_settings()
 			SaveSettings();
 		}
 
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+		if (config::Settings::instance().hasPerGameConfig())
 		{
-		    ImGui::SameLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
-			if (config::Settings::instance().hasPerGameConfig())
+			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Delete Game Config").x);
+			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 			{
-				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
-				{
-					config::Settings::instance().setPerGameConfig(false);
-					config::Settings::instance().load(false);
-					loadGameSpecificSettings();
-				}
+				config::Settings::instance().setPerGameConfig(false);
+				config::Settings::instance().load(false);
+				loadGameSpecificSettings();
 			}
-			else
-			{
-				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
-					config::Settings::instance().setPerGameConfig(true);
-			}
-		    ImGui::PopStyleVar();
 		}
+		else
+		{
+			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Make Game Config").x);
+			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+				config::Settings::instance().setPerGameConfig(true);
+		}
+		   ImGui::PopStyleVar();
 	}
 
     scrollWhenDraggingOnVoid();
