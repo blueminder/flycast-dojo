@@ -181,6 +181,7 @@ OptionString NetSaveBase("NetSaveBase", "https://github.com/blueminder/flycast-n
 Option<bool> NetStartVerifyRoms("NetStartVerifyRoms", false, "dojo");
 Option<bool> ShowPublicIP("ShowPublicIP", false, "dojo");
 Option<bool> ShowInputDisplay("ShowInputDisplay", true, "dojo");
+Option<bool> ShowReplayInputDisplay("ShowReplayInputDisplay", false, "dojo");
 Option<bool> UseAnimeInputNotation("UseAnimeInputNotation", true, "dojo");
 Option<bool> HideRandomInputSlot("HideRandomInputSlot", true, "dojo");
 Option<bool> BufferAutoResume("BufferAutoResume", true, "dojo");

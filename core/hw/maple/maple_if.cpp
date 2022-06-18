@@ -160,7 +160,11 @@ static void maple_DoDma()
 	}
 
 	if (dojo.PlayMatch && dojo.maple_inputs.size() > 0)
+	{
 		ggpo::setMapleInput(mapleInputState);
+		if (config::ShowReplayInputDisplay)
+			dojo.AddToInputDisplay(mapleInputState);
+	}
 	else
 		ggpo::getInput(mapleInputState);
 

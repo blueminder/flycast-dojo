@@ -3173,7 +3173,7 @@ void gui_display_osd()
 			chat.display();
 		}
 
-		if ((ggpo::active() || config::Receiving) && config::EnablePlayerNameOverlay)
+		if (ggpo::active() || config::Receiving || (dojo.PlayMatch && dojo.replay_version > 1))
 		{
 			if (!config::Receiving)
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
@@ -3182,7 +3182,18 @@ void gui_display_osd()
 				if (config::ShowPlaybackControls)
 					dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
 			}
-			dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
+
+			if (config::ShowReplayInputDisplay &&
+				(config::Receiving || dojo.PlayMatch) &&
+				dojo.replay_version > 1)
+			{
+				dojo_gui.show_last_inputs_overlay();
+			}
+			else
+			{
+				if (config::EnablePlayerNameOverlay)
+					dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
+			}
 		}
 
 		if (settings.dojo.training && config::ShowInputDisplay)

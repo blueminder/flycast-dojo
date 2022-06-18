@@ -357,7 +357,7 @@ std::string DojoSession::PrintFrameData(const char * prefix, u8 * data)
 	return output;
 }
 
-std::string DojoSession::AddToInputDisplay(u8 * data)
+std::string DojoSession::AddToInputDisplay(u8* data)
 {
 	int player = GetPlayer(data);
 	int delay = GetDelay(data);
@@ -469,8 +469,6 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 					num_dir_notation = 6;
 			}
 
-			std::cout << "num notation " << num_dir_notation << std::endl;
-
 			for (size_t i = 0; i<bt_bitset.size(); i++)
 			{
 				if (bt_bitset.test(i))
@@ -540,8 +538,6 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 		}
 		dir_ss.flush();
 
-		std::cout << effective_frame << ": " << dir_ss.str() << " " << ss.str() << std::endl;
-			//displayed_inputs[effective_frame] = bt_bitset;
 		if (last_held_input[player] != bt_bitset)
 		{
 			last_held_input[player] = bt_bitset;
@@ -555,6 +551,205 @@ std::string DojoSession::AddToInputDisplay(u8 * data)
 	}
 
 	return output;
+}
+
+void DojoSession::AddToInputDisplay(MapleInputState inputState[4])
+{
+    u32 frame = dojo.FrameNumber.load();
+    u32 effective_frame = dojo.FrameNumber.load();
+    // set by reading replay/spectating header
+    u32 analogAxes = dojo.replay_analog;
+
+    u32 inputSize = sizeof(u32) + analogAxes;
+    std::vector<u8> inputs = dojo.maple_inputs[dojo.FrameNumber];
+
+    constexpr int MAX_PLAYERS = 2;
+    constexpr u32 BTN_TRIGGER_LEFT = DC_BTN_RELOAD << 1;
+    constexpr u32 BTN_TRIGGER_RIGHT = DC_BTN_RELOAD << 2;
+
+    std::bitset<16> input_bitset;
+
+    for (int player = 0; player < MAX_PLAYERS; player++)
+    {
+        MapleInputState &state = inputState[player];
+
+        input_bitset = std::bitset<16>(~state.kcode);
+
+        std::string dc_buttons[18] = {
+            "C",
+            "B",
+            "A",
+            "Start",
+            "Up",
+            "Down",
+            "Left",
+            "Right",
+            "Z",
+            "Y",
+            "X",
+            "D",
+            "",
+            "",
+            "",
+            "",
+            "LT",
+            "RT"
+        };
+        std::string aw_buttons[18] = {
+            "3",
+            "2",
+            "1",
+            "Start",
+            "Up",
+            "Down",
+            "Left",
+            "Right",
+            "",
+            "5",
+            "4",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "LT",
+            "RT"
+        };
+        std::string naomi_buttons[18] = {
+            "C",
+            "B",
+            "A",
+            "Start",
+            "Up",
+            "Down",
+            "Left",
+            "Right",
+            "Z",
+            "Y",
+            "X",
+            "D",
+            "",
+            "",
+            "",
+            "",
+            "LT",
+            "RT"
+        };
+
+        // tracks buttons & triggers in single digital bitset
+        std::bitset<18> bt_bitset;
+        std::vector<bool> dir_bits {
+            false,
+            false,
+            false,
+            false
+        };
+
+        for (size_t i = 0; i < input_bitset.size(); i++)
+        {
+            if (input_bitset.test(i)) {
+                bt_bitset.set(i);
+            }
+        }
+
+        if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+        {
+            if (state.kcode & BTN_TRIGGER_LEFT == 0)
+                bt_bitset.set(16);
+
+            if (state.kcode & BTN_TRIGGER_RIGHT == 0)
+                bt_bitset.set(17);
+        }
+        int num_dir_notation = 5;
+
+        std::stringstream ss("");
+        std::stringstream dir_ss("");
+
+        if (bt_bitset.test(4) && bt_bitset.test(6))
+            num_dir_notation = 7;
+        else if (bt_bitset.test(4) && bt_bitset.test(7))
+            num_dir_notation = 9;
+        else if (bt_bitset.test(5) && bt_bitset.test(6))
+            num_dir_notation = 1;
+        else if (bt_bitset.test(5) && bt_bitset.test(7))
+            num_dir_notation = 3;
+        else if (bt_bitset.test(4))
+            num_dir_notation = 8;
+        else if (bt_bitset.test(5))
+            num_dir_notation = 2;
+        else if (bt_bitset.test(6))
+            num_dir_notation = 4;
+        else if (bt_bitset.test(7))
+            num_dir_notation = 6;
+
+        for (size_t i = 0; i < bt_bitset.size(); i++)
+        {
+            if (bt_bitset.test(i))
+            {
+                // assign direction bitset
+                // U D L R
+                if (settings.platform.system == DC_PLATFORM_DREAMCAST || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+                {
+                    if (i >= 4 && i <= 7) {
+                        dir_bits[i - 4] = true;
+                    } else {
+                        if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+                            if (!dc_buttons[i].empty())
+                                ss << " " << dc_buttons[i];
+                        } else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE) {
+                            if (!aw_buttons[i].empty())
+                                ss << " " << aw_buttons[i];
+                        }
+                    }
+                }
+                else if (settings.platform.system == DC_PLATFORM_NAOMI ||
+                    settings.platform.system == DC_PLATFORM_NAOMI2)
+                {
+                    if (i >= 4 && i <= 7) {
+                        dir_bits[i - 4] = true;
+                    } else {
+                        if (!naomi_buttons[i].empty())
+                            ss << " " << naomi_buttons[i];
+                    }
+                    std::reverse(dir_bits.begin(), dir_bits.end());
+                }
+            }
+        }
+
+        ss.flush();
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (dir_bits[i]) {
+                switch (i) {
+                case 0:
+                    dir_ss << "U";
+                    break;
+                case 1:
+                    dir_ss << "D";
+                    break;
+                case 2:
+                    dir_ss << "L";
+                    break;
+                case 3:
+                    dir_ss << "R";
+                    break;
+                }
+            }
+        }
+        dir_ss.flush();
+
+        if (last_held_input[player] != bt_bitset)
+        {
+            last_held_input[player] = bt_bitset;
+            displayed_inputs[player][effective_frame] = bt_bitset;
+            displayed_inputs_str[player][effective_frame] = ss.str();
+            displayed_dirs_str[player][effective_frame] = dir_ss.str();
+            displayed_dirs[player][effective_frame] = dir_bits;
+            displayed_inputs_duration[player][effective_frame] = 1;
+            displayed_num_dirs[player][effective_frame] = num_dir_notation;
+        }
+    }
 }
 
 std::string DojoSession::GetRomNamePrefix()

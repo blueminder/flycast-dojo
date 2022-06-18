@@ -1292,8 +1292,11 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 void DojoGui::gui_display_replay_pause(float scaling)
 {
-	if (settings.dojo.training && config::ShowInputDisplay)
+	if (settings.dojo.training && config::ShowInputDisplay ||
+		dojo.PlayMatch && config::ShowReplayInputDisplay)
+	{
 		dojo_gui.show_last_inputs_overlay();
+	}
 
 	dojo_gui.show_player_name_overlay(scaling, false);
 	dojo_gui.show_pause(scaling);
@@ -1697,6 +1700,10 @@ void DojoGui::insert_replays_tab(ImVec2 normal_padding)
 	OptionCheckbox("Record All Sessions", config::RecordMatches);
 	ImGui::SameLine();
 	ShowHelpMarker("Record all gameplay sessions to a local file");
+
+	OptionCheckbox("Show Input Display", config::ShowReplayInputDisplay);
+	ImGui::SameLine();
+	ShowHelpMarker("Shows controller input history in replays");
 
 	header("Session Streaming");
 	{
