@@ -20,6 +20,8 @@
 #include "types.h"
 #include "cfg/option.h"
 
+#include "dojo/kenney_icon_font_extended.h"
+
 void gui_init();
 void gui_initFonts();
 void gui_open_settings();

@@ -616,24 +616,24 @@ void DojoSession::AddToInputDisplay(MapleInputState inputState[4])
             "RT"
         };
         std::string naomi_buttons[18] = {
-            "C",
-            "B",
-            "A",
+            "3",
+            "2",
+            "1",
             "Start",
             "Up",
             "Down",
             "Left",
             "Right",
-            "Z",
-            "Y",
-            "X",
-            "D",
+            "6",
+            "5",
+            "4",
             "",
             "",
             "",
             "",
-            "LT",
-            "RT"
+            "",
+            "",
+            ""
         };
 
         // tracks buttons & triggers in single digital bitset

@@ -182,7 +182,7 @@ Option<bool> NetStartVerifyRoms("NetStartVerifyRoms", false, "dojo");
 Option<bool> ShowPublicIP("ShowPublicIP", false, "dojo");
 Option<bool> ShowInputDisplay("ShowInputDisplay", true, "dojo");
 Option<bool> ShowReplayInputDisplay("ShowReplayInputDisplay", false, "dojo");
-Option<bool> UseAnimeInputNotation("UseAnimeInputNotation", true, "dojo");
+Option<bool> UseAnimeInputNotation("UseAnimeInputNotation", false, "dojo");
 Option<bool> HideRandomInputSlot("HideRandomInputSlot", true, "dojo");
 Option<bool> BufferAutoResume("BufferAutoResume", true, "dojo");
 Option<bool> RecordOnFirstInput("RecordOnFirstInput", false, "dojo");

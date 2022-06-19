@@ -226,6 +226,8 @@ void gui_initFonts()
 	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
+    static const ImWchar ki_ranges[] = { ICON_MIN_KI, ICON_MAX_KI, 0 };
+    io.Fonts->AddFontFromMemoryCompressedTTF(kenney_icon_font_extended_compressed_data, kenney_icon_font_extended_compressed_size, fontSize, &font_cfg, ki_ranges);
 #ifdef _WIN32
     u32 cp = GetACP();
     std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
@@ -3189,11 +3191,9 @@ void gui_display_osd()
 			{
 				dojo_gui.show_last_inputs_overlay();
 			}
-			else
-			{
-				if (config::EnablePlayerNameOverlay)
-					dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
-			}
+
+			if (config::EnablePlayerNameOverlay)
+				dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
 		}
 
 		if (settings.dojo.training && config::ShowInputDisplay)
