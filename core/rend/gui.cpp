@@ -1707,7 +1707,6 @@ static void settings_body_controls(ImVec2 normal_padding)
 						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
 						if (ImGui::SliderInt("Rumble", &power, 0, 100))
 							gamepad->set_rumble_power(power);
-						ImGui::Unindent();
 						ImGui::NextColumn();
 						ImGui::Columns(4, NULL, false);
 					}
