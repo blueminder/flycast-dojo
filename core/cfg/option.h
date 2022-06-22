@@ -413,6 +413,8 @@ public:
 		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
 #elif defined(TARGET_UWP)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
+#elif defined(__ANDROID__)
+		: Option<RenderType>("pvr.rend", RenderType::Vulkan) {}
 #else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
 #endif
