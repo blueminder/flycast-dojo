@@ -58,6 +58,7 @@ public:
 		set_button(EMU_BTN_JUMP_STATE, 66);			// F9
 		set_button(EMU_BTN_PLAY_RND, 67);			// F10
 
+		set_button(EMU_BTN_PAUSE, 54);			// ,
 		set_button(EMU_BTN_STEP, 55);			// .
 
 		dirty = false;

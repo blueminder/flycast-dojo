@@ -546,7 +546,7 @@ void gui_open_disconnected()
 	gui_state = GuiState::Disconnected;
 }
 
-void gui_open_settings()
+void gui_open_pause()
 {
 	if (gui_state == GuiState::Closed)
 	{
@@ -566,13 +566,37 @@ void gui_open_settings()
 		{
 			if (dojo.stepping)
 				dojo.stepping = false;
-			if (dojo.PlayMatch)
-			{
+			//if (dojo.PlayMatch)
+			//{
 				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;
-			}
-			else
-				gui_state = GuiState::Commands;
+			//}
+			//else
+				//gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
+	}
+	else if (gui_state == GuiState::ReplayPause)
+	{
+		if (dojo.stepping)
+			dojo.stepping = false;
+		if (dojo.manual_pause)
+			dojo.manual_pause = false;
+		if (dojo.buffering)
+			dojo.buffering = false;
+		gui_state = GuiState::Closed;
+		emu.start();
+	}
+}
+
+void gui_open_settings()
+{
+	if (gui_state == GuiState::Closed)
+	{
+		if (!ggpo::active())
+		{
+			gui_state = GuiState::Commands;
 			HideOSD();
 			emu.stop();
 		}
@@ -591,17 +615,6 @@ void gui_open_settings()
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
-		emu.start();
-	}
-	else if (gui_state == GuiState::ReplayPause)
-	{
-		if (dojo.stepping)
-			dojo.stepping = false;
-		if (dojo.manual_pause)
-			dojo.manual_pause = false;
-		if (dojo.buffering)
-			dojo.buffering = false;
-		gui_state = GuiState::Closed;
 		emu.start();
 	}
 }
@@ -1047,12 +1060,13 @@ const Mapping dcButtons[] = {
 	{ DC_BTN_RELOAD, "Reload" },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu / Chat / Replay Pause" },
+	{ EMU_BTN_MENU, "Menu / Chat" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 
 	{ EMU_BTN_NONE, "Replays" },
 	{ EMU_BTN_STEP, "Step Frame" },
+	{ EMU_BTN_PAUSE, "Pause" },
 
 	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },
@@ -1131,13 +1145,14 @@ const Mapping arcadeButtons[] = {
 	{ DC_DPAD2_DOWN, "Test" },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu / Chat / Replay Pause" },
+	{ EMU_BTN_MENU, "Menu / Chat" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, "Replays" },
 	{ EMU_BTN_STEP, "Step Frame" },
+	{ EMU_BTN_PAUSE, "Pause" },
 
 	{ EMU_BTN_NONE, "Training Mode" },
 	{ EMU_BTN_QUICK_SAVE, "Quick Save" },

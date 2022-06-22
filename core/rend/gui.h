@@ -24,6 +24,7 @@
 
 void gui_init();
 void gui_initFonts();
+void gui_open_pause();
 void gui_open_settings();
 void gui_display_ui();
 void gui_display_notification(const char *msg, int duration);
