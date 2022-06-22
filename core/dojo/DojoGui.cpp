@@ -1073,7 +1073,7 @@ void DojoGui::show_last_inputs_overlay()
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__ANDROID__)
 			ImGui::SetNextWindowSize(ImVec2(250, ImGui::GetIO().DisplaySize.y - 210));
 #else
 			ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetIO().DisplaySize.y - 130));
@@ -1081,7 +1081,7 @@ void DojoGui::show_last_inputs_overlay()
 
 			if (di == 0)
 			{
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__ANDROID__)
 				ImGui::SetNextWindowPos(ImVec2(10, 180));
 #else
 				ImGui::SetNextWindowPos(ImVec2(10, 100));
@@ -1091,7 +1091,7 @@ void DojoGui::show_last_inputs_overlay()
 			}
 			else if (di == 1)
 			{
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__ANDROID__)
 				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 260, 180));
 #else
 				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 180, 100));
