@@ -1845,6 +1845,10 @@ static void gui_display_settings()
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About" };
  
     static int selected = 0;
+#if defined(__ANDROID__)
+	ImGui::BeginChild("left pane", ImVec2(140, -40), false);
+	ImGui::BeginChild("left pane list", ImVec2(140, 0), true);
+#else
 	if (game_started)
 	{
 		ImGui::BeginChild("left pane", ImVec2(100, -40), false);
@@ -1855,6 +1859,7 @@ static void gui_display_settings()
 		ImGui::BeginChild("left pane", ImVec2(100, 0), false);
 		ImGui::BeginChild("left pane list", ImVec2(100, -40), true);
 	}
+#endif
 
 	for (int i = 0; i < sections.size(); i++)
 	{
@@ -1865,6 +1870,7 @@ static void gui_display_settings()
 	}
 	ImGui::EndChild();
 
+#if defined(__ANDROID__)
 	if (!game_started)
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
@@ -1885,14 +1891,19 @@ static void gui_display_settings()
 			SaveSettings();
 		}
 	}
+#endif
 	ImGui::EndChild();
 	ImGui::SameLine();
 
 	ImGui::BeginGroup();
+#if defined(__ANDROID__)
+	ImGui::BeginChild("item view", ImVec2(0, -60));
+#else
 	if (game_started)
 		ImGui::BeginChild("item view", ImVec2(0, -40));
 	else
 		ImGui::BeginChild("item view", ImVec2(0, 0));
+#endif
 
 	header(sections[selected].c_str());
 
@@ -1928,7 +1939,9 @@ static void gui_display_settings()
 
 	ImGui::PopStyleVar();
 
+#if !defined(__ANDROID__)
 	if (game_started)
+#endif
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
@@ -1965,7 +1978,7 @@ static void gui_display_settings()
 			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
-		   ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 	}
 
     scrollWhenDraggingOnVoid();
