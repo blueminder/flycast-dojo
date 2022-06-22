@@ -113,7 +113,7 @@ void DojoSession::CleanUp()
 	if (config::PlayerSwitched)
 		dojo.SwitchPlayer();
 
-	if (settings.dojo.training)
+	//if (settings.dojo.training)
 		dojo.ResetTraining();
 
 	if (settings.network.online)

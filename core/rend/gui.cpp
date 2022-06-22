@@ -621,6 +621,7 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	dojo.CleanUp();
 	std::string filename = path.substr(path.find_last_of("/\\") + 1);
 	auto game_name = stringfix::remove_extension(filename);
 	dojo.game_name = game_name;
