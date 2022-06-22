@@ -1846,7 +1846,7 @@ static void gui_display_settings()
  
     static int selected = 0;
 #if defined(__ANDROID__)
-	ImGui::BeginChild("left pane", ImVec2(140, -40), false);
+	ImGui::BeginChild("left pane", ImVec2(140, -50), false);
 	ImGui::BeginChild("left pane list", ImVec2(140, 0), true);
 #else
 	if (game_started)
@@ -1897,7 +1897,7 @@ static void gui_display_settings()
 
 	ImGui::BeginGroup();
 #if defined(__ANDROID__)
-	ImGui::BeginChild("item view", ImVec2(0, -60));
+	ImGui::BeginChild("item view", ImVec2(0, -50));
 #else
 	if (game_started)
 		ImGui::BeginChild("item view", ImVec2(0, -40));
@@ -1960,23 +1960,27 @@ static void gui_display_settings()
 			}
 			SaveSettings();
 		}
-
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
-		if (config::Settings::instance().hasPerGameConfig())
+#if defined(__ANDROID__)
+		if (game_started)
+#endif
 		{
-			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Delete Game Config").x);
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+			if (config::Settings::instance().hasPerGameConfig())
 			{
-				config::Settings::instance().setPerGameConfig(false);
-				config::Settings::instance().load(false);
-				loadGameSpecificSettings();
+				ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Delete Game Config").x);
+				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+				{
+					config::Settings::instance().setPerGameConfig(false);
+					config::Settings::instance().load(false);
+					loadGameSpecificSettings();
+				}
 			}
-		}
-		else
-		{
-			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Make Game Config").x);
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
-				config::Settings::instance().setPerGameConfig(true);
+			else
+			{
+				ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Make Game Config").x);
+				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+					config::Settings::instance().setPerGameConfig(true);
+			}
 		}
 		ImGui::PopStyleVar();
 	}
