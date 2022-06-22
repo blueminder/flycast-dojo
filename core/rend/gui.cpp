@@ -1922,8 +1922,10 @@ static void gui_display_settings()
 	if (sections[selected] == "Netplay")
 		dojo_gui.insert_netplay_tab(normal_padding);
 
+#if !defined(__ANDROID__)
 	if (sections[selected] == "Replays")
 		dojo_gui.insert_replays_tab(normal_padding);
+#endif
 
 	if (sections[selected] == "Training")
 		dojo_gui.insert_training_tab(normal_padding);
@@ -2129,7 +2131,9 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
-#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
+#if defined(__ANDROID__)
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
+#elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
@@ -2164,8 +2168,10 @@ static void gui_display_content()
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
+#if !defined(__ANDROID__)
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
+#endif
 
 #ifdef TARGET_UWP
     	void gui_load_game();
@@ -2182,6 +2188,7 @@ static void gui_display_content()
 			gui_state = GuiState::Settings;
     }
 
+#if !defined(__ANDROID__)
 #ifdef _WIN32
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
@@ -2194,6 +2201,7 @@ static void gui_display_content()
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
 			system("xdg-open http://flycast.dojo.ooo/faq.html");
+#endif
 #endif
 
     ImGui::PopStyleVar();
@@ -2546,6 +2554,7 @@ static void gui_display_content()
 
 	if (item_current_idx == 0 || item_current_idx == 3)
 	{
+#if !defined(__ANDROID__)
 		int delay_min = 0;
 		int delay_max = 10;
 #if defined(__APPLE__)
@@ -2568,6 +2577,7 @@ static void gui_display_content()
 			config::Delay = delay;
 			cfgSaveInt("dojo", "Delay", config::Delay);
 		}
+#endif
 	}
 	else if (item_current_idx == 1 || item_current_idx == 2)
 	{
