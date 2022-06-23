@@ -1847,7 +1847,7 @@ static void gui_display_settings()
  
     static int selected = 0;
 #if defined(__ANDROID__)
-	ImGui::BeginChild("left pane", ImVec2(140, -40), false);
+	ImGui::BeginChild("left pane", ImVec2(140, -50), false);
 	ImGui::BeginChild("left pane list", ImVec2(140, 0), true);
 #else
 	if (game_started)
@@ -1898,7 +1898,7 @@ static void gui_display_settings()
 
 	ImGui::BeginGroup();
 #if defined(__ANDROID__)
-	ImGui::BeginChild("item view", ImVec2(0, -60));
+	ImGui::BeginChild("item view", ImVec2(0, -50));
 #else
 	if (game_started)
 		ImGui::BeginChild("item view", ImVec2(0, -40));
@@ -1942,28 +1942,47 @@ static void gui_display_settings()
 
 	ImGui::PopStyleVar();
 
-#if !defined(__ANDROID__)
-	if (game_started)
-#endif
+#if defined(__ANDROID__)
+	if (ImGui::Button("Done", ScaledVec2(100, 30)))
 	{
-		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		if (game_started)
+			gui_state = GuiState::Commands;
+		else
+			gui_state = GuiState::Main;
+		if (maple_devices_changed)
 		{
-			if (game_started)
-				gui_state = GuiState::Commands;
-			else
-				gui_state = GuiState::Main;
-			if (maple_devices_changed)
+			maple_devices_changed = false;
+			if (game_started && settings.platform.isConsole())
 			{
-				maple_devices_changed = false;
-				if (game_started && settings.platform.isConsole())
-				{
-					maple_ReconnectDevices();
-					reset_vmus();
-				}
+				maple_ReconnectDevices();
+				reset_vmus();
 			}
-			SaveSettings();
 		}
+		SaveSettings();
+	}
+#endif
 
+	if (game_started)
+	{	
+#if !defined(__ANDROID__)
+	if (ImGui::Button("Done", ScaledVec2(100, 30)))
+	{
+		if (game_started)
+			gui_state = GuiState::Commands;
+		else
+			gui_state = GuiState::Main;
+		if (maple_devices_changed)
+		{
+			maple_devices_changed = false;
+			if (game_started && settings.platform.isConsole())
+			{
+				maple_ReconnectDevices();
+				reset_vmus();
+			}
+		}
+		SaveSettings();
+	}
+#endif
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
