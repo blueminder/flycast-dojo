@@ -2131,9 +2131,7 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
-#if defined(__ANDROID__)
-    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
-#elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
+#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
     else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
@@ -2166,7 +2164,8 @@ static void gui_display_content()
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
 #if !defined(__ANDROID__)
 		if (ImGui::Button("Replays"))
@@ -2578,6 +2577,7 @@ static void gui_display_content()
 			cfgSaveInt("dojo", "Delay", config::Delay);
 		}
 #endif
+		ImGui::Text(" ");
 	}
 	else if (item_current_idx == 1 || item_current_idx == 2)
 	{
