@@ -1847,8 +1847,8 @@ static void gui_display_settings()
  
     static int selected = 0;
 #if defined(__ANDROID__)
-	ImGui::BeginChild("left pane", ImVec2(140, -50), false);
-	ImGui::BeginChild("left pane list", ImVec2(140, 0), true);
+	//ImGui::BeginChild("left pane", ImVec2(140, -50), false);
+	ImGui::BeginChild("left pane list", ImVec2(140, -50), true);
 #else
 	if (game_started)
 	{
@@ -1869,9 +1869,9 @@ static void gui_display_settings()
 		if (ImGui::Selectable(label, selected == i))
 			selected = i;
 	}
+#if !defined(__ANDROID__)
 	ImGui::EndChild();
 
-#if defined(__ANDROID__)
 	if (!game_started)
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
