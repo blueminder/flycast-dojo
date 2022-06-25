@@ -119,7 +119,7 @@ public:
 	}
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
-		if (_name == "SHIELD Remote")
+		if (_name == "SHIELD Remote" || _name == "NVIDIA SHIELD Remote")
 			return std::make_shared<ShieldRemoteInputMapping>();
 		else
 			return std::make_shared<DefaultInputMapping<>>(*this);
