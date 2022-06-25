@@ -2183,10 +2183,8 @@ static void gui_display_content()
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
-#if !defined(__ANDROID__)
 		if (ImGui::Button("Replays"))
 			gui_state = GuiState::Replays;
-#endif
 
 #ifdef TARGET_UWP
     	void gui_load_game();
