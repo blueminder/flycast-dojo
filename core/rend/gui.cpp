@@ -1848,7 +1848,7 @@ static void gui_display_settings()
     static int selected = 0;
 #if defined(__ANDROID__)
 	//ImGui::BeginChild("left pane", ImVec2(140, -50), false);
-	ImGui::BeginChild("left pane list", ImVec2(140, -50), true);
+	ImGui::BeginChild("left pane list", ImVec2(150, -50), true);
 #else
 	if (game_started)
 	{
