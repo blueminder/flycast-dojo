@@ -1923,10 +1923,8 @@ static void gui_display_settings()
 	if (sections[selected] == "Netplay")
 		dojo_gui.insert_netplay_tab(normal_padding);
 
-#if !defined(__ANDROID__)
 	if (sections[selected] == "Replays")
 		dojo_gui.insert_replays_tab(normal_padding);
-#endif
 
 	if (sections[selected] == "Training")
 		dojo_gui.insert_training_tab(normal_padding);
