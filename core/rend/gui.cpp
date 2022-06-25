@@ -1848,7 +1848,7 @@ static void gui_display_settings()
     static int selected = 0;
 #if defined(__ANDROID__)
 	//ImGui::BeginChild("left pane", ImVec2(140, -50), false);
-	ImGui::BeginChild("left pane list", ImVec2(150, -50), true);
+	ImGui::BeginChild("left pane list", ImVec2(160, -50), true);
 #else
 	if (game_started)
 	{
@@ -2146,12 +2146,7 @@ static void gui_display_content()
 	ImGui::SameLine();
 
 #if defined(__ANDROID__)
-    if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
-    else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
-    else if (!config::DojoEnable)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
 #elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::DojoEnable && config::EnableLobby && !config::Receiving)
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
