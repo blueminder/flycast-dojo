@@ -2177,7 +2177,9 @@ static void gui_display_content()
 				gui_state = GuiState::Lobby;
 		}
 
-#if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
+#if defined(__ANDROID__)
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
@@ -2191,6 +2193,8 @@ static void gui_display_content()
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
+#elif defined(__ANDROID__)
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
