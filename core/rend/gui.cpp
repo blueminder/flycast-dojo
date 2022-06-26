@@ -3278,7 +3278,13 @@ void gui_display_osd()
 					dojo.buffering = true;
 				}
 				else
+				{
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+					gui_state = GuiState::Replays;
+#else
 					gui_state = GuiState::EndReplay;
+#endif
+				}
 			}
 		}
 
@@ -3313,7 +3319,11 @@ void gui_display_osd()
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
 
-				gui_state = GuiState::EndReplay;
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+					gui_state = GuiState::Replays;
+#else
+					gui_state = GuiState::EndReplay;
+#endif
 			}
 		}
 	}
