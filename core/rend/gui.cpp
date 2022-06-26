@@ -2619,6 +2619,7 @@ static void gui_display_content()
 	}
 	else
 	{
+		ImGui::SameLine();
 		ImGui::Text(" ");
 	}
 
