@@ -1330,7 +1330,8 @@ void DojoGui::gui_display_replay_pause(float scaling)
 		dojo_gui.show_last_inputs_overlay();
 	}
 
-	dojo_gui.show_player_name_overlay(scaling, false);
+	if (config::EnablePlayerNameOverlay)
+		dojo_gui.show_player_name_overlay(scaling, false);
 	dojo_gui.show_pause(scaling);
 	dojo_gui.show_replay_position_overlay(dojo.FrameNumber, scaling, false);
 
