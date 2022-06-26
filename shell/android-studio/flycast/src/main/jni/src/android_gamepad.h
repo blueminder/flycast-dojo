@@ -64,7 +64,9 @@ enum {
 	KEYCODE_BUTTON_SELECT = 109,
 	KEYCODE_BUTTON_MODE = 110,
 
+	KEYCODE_BUTTON_PAUSE = 85,
 	KEYCODE_BUTTON_REWIND = 89,
+	KEYCODE_BUTTON_FFORWARD = 90,
 };
 
 class AndroidGamepadDevice;
@@ -90,6 +92,8 @@ public:
 		set_button(EMU_BTN_MENU, KEYCODE_BACK);
 
 		set_button(DC_BTN_B, KEYCODE_BUTTON_REWIND);
+		set_button(EMU_BTN_PAUSE, KEYCODE_BUTTON_PAUSE);
+		set_button(EMU_BTN_FFORWARD, KEYCODE_BUTTON_FFORWARD);
 
 		dirty = false;
 	}
