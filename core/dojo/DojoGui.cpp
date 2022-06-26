@@ -496,7 +496,7 @@ void DojoGui::gui_display_disconnected( float scaling)
 
 	if (ImGui::Button("Exit Game"))
 	{
-		gui_state = GuiState::Main;
+		gui_stop_game();
 	}
 
 	ImGui::End();
@@ -516,6 +516,11 @@ void DojoGui::gui_display_end_replay( float scaling)
 	ImGui::Begin("##end_replay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Text("End of replay.");
+
+	if (ImGui::Button("Exit Game"))
+	{
+		gui_stop_game();
+	}
 
 	ImGui::End();
 }
@@ -1278,7 +1283,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		float font_size = ImGui::CalcTextSize(dojo.player_1.data()).x;
 
 		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size + 20) / 2), 0));
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__ANDROID__)
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 42));
 #else
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
@@ -1301,7 +1306,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		float font_size = ImGui::CalcTextSize(dojo.player_2.data()).x;
 
 		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size + 20) / 2), 0));
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__ANDROID__)
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 42));
 #else
 		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));

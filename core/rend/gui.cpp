@@ -3279,11 +3279,15 @@ void gui_display_osd()
 				}
 				else
 				{
+					emu.unloadGame();
+					gui_state = GuiState::Main;
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 					gui_state = GuiState::Replays;
 #else
 					gui_state = GuiState::EndReplay;
 #endif
+					game_started = false;
+					reset_vmus();
 				}
 			}
 		}
