@@ -494,6 +494,11 @@ void DojoGui::gui_display_disconnected( float scaling)
 	else
 		ImGui::Text("Disconnected.");
 
+	if (ImGui::Button("Exit Game"))
+	{
+		gui_state = GuiState::Main;
+	}
+
 	ImGui::End();
 
 	config::AutoSkipFrame = 1;
