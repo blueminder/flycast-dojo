@@ -2593,6 +2593,7 @@ static void gui_display_content()
 			config::Delay = delay;
 			cfgSaveInt("dojo", "Delay", config::Delay);
 		}
+		ImGui::SameLine();
 #endif
 		ImGui::Text(" ");
 	}
