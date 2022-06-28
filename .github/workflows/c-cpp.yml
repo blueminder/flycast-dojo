@@ -204,10 +204,10 @@ jobs:
         id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: AKIAVELCV4MJ6TL7JA7F
+          aws-access-key-id: ${{ secrets.S3_KEY_ID }}
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
           aws-region: us-east-2
-        if: github.repository == 'blueminder/flycast-dojo' && github.event_name == 'push' && matrix.config.destDir != ''
+        if: github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
         run: aws s3 sync artifact/bin s3://flycast-dojo-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
