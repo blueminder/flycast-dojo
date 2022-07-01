@@ -342,6 +342,18 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		}
 	}
 	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
+	if (gui_state == GuiState::ButtonCheck)
+	{
+		NOTICE_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
+		if (pressed && port < 2)
+		{
+			dojo.button_check_pressed[port].insert((int)key);
+		}
+		else
+		{
+			dojo.button_check_pressed[port].erase((int)key);
+		}
+	}
 
 	return true;
 }
@@ -395,8 +407,20 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 	auto handle_axis = [&](u32 port, DreamcastKey key, int v)
 	{
+		if (gui_state == GuiState::ButtonCheck)
+		{
+			if (v > 0 && port < 2)
+			{
+				dojo.button_check_pressed[port].insert((int)key);
+			}
+			else
+			{
+				dojo.button_check_pressed[port].erase((int)key);
+			}
+		}
 		if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_TRIGGERS)	// Triggers
 		{
+
 			//printf("T-AXIS %d Mapped to %d -> %d\n", key, value, std::min(std::abs(v) >> 7, 255));
 			if (key == DC_AXIS_LT)
 				lt[port] = std::min(std::abs(v) >> 7, 255);

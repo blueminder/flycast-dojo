@@ -611,7 +611,7 @@ void gui_open_settings()
 	{
 		gameLoader.cancel();
 	}
-	else if (gui_state == GuiState::Commands)
+	else if (gui_state == GuiState::Commands || gui_state == GuiState::ButtonCheck)
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
@@ -902,6 +902,13 @@ static void gui_display_commands()
 	{
 		gui_state = GuiState::Cheats;
 	}
+
+	ImGui::NextColumn();
+
+	if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+	{
+		gui_state = GuiState::ButtonCheck;
+	}
 	if (settings.network.online)
 	{
         ImGui::PopItemFlag();
@@ -915,16 +922,17 @@ static void gui_display_commands()
 	}
 
 	if (settings.dojo.training || config::ShowEjectDisk)
-		ImGui::Columns(1, nullptr, false);
-	else
 		ImGui::NextColumn();
+	else
+		ImGui::Columns(1, nullptr, false);
 
 	ImVec2 exit_size;
 
 	if (settings.dojo.training || config::ShowEjectDisk)
-		exit_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
-	else
 		exit_size = ScaledVec2(150, 50);
+	else
+		exit_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
+
 	// Exit
 	if (ImGui::Button("Exit", exit_size))
 	{
@@ -3127,6 +3135,9 @@ void gui_display_ui()
 		break;
 	case GuiState::BiosRomWarning:
 		dojo_gui.gui_display_bios_rom_warning(settings.display.uiScale);
+		break;
+	case GuiState::ButtonCheck:
+		dojo_gui.show_button_check(settings.display.uiScale);
 		break;
 	case GuiState::Settings:
 		gui_display_settings();

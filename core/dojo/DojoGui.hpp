@@ -55,6 +55,7 @@ public:
 	void show_player_name_overlay(float scaling, bool paused);
 	void show_replay_position_overlay(int frame_num, float scaling, bool paused);
 	void show_pause(float scaling);
+	void show_button_check(float scaling);
 
 	void gui_display_lobby(float scaling, std::vector<GameMedia> game_list);
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);

@@ -1264,6 +1264,204 @@ void DojoGui::show_pause(float scaling)
 	ImGui::PopStyleVar(2);
 }
 
+void DojoGui::show_button_check(float scaling)
+{
+
+	for (int i = 0; i < 2; i++)
+	{
+		if (i == 0)
+			ImGui::SetNextWindowPos(ImVec2(settings.display.width / 4.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		else
+			ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4.f) * 3, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+		ImGui::SetNextWindowSize(ImVec2(130 * scaling, 230 * scaling));
+
+		std::string bc_title = "##button_check" + std::to_string(i);
+		ImGui::Begin(bc_title.c_str(), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+
+		auto areaWidth = ImGui::GetContentRegionAvail().x * 0.5f;
+
+		int num = 0;
+		if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_DOWN) == 1)
+			num = 2;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_LEFT) == 1)
+			num = 4;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_RIGHT) == 1)
+			num = 6;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_UP) == 1)
+			num = 8;
+
+		if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_DOWN) == 1 &&
+			dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_LEFT) == 1)
+			num = 1;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_DOWN) == 1 &&
+				 dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_RIGHT) == 1)
+			num = 3;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_UP) == 1 &&
+				 dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_LEFT) == 1)
+			num = 7;
+		else if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_UP) == 1 &&
+				 dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_RIGHT) == 1)
+			num = 9;
+
+		ImGui::SetCursorPosX(areaWidth);
+
+		if (num == 1)
+			ImGui::Text("%s", ICON_KI_ARROW_BOTTOM_LEFT);
+		else if (num == 2)
+			ImGui::Text("%s", ICON_KI_ARROW_BOTTOM);
+		else if (num == 3)
+			ImGui::Text("%s", ICON_KI_ARROW_BOTTOM_RIGHT);
+		else if (num == 4)
+			ImGui::Text("%s", ICON_KI_ARROW_LEFT);
+		else if (num == 5)
+			ImGui::Text("    ");
+		else if (num == 6)
+			ImGui::Text("%s", ICON_KI_ARROW_RIGHT);
+		else if (num == 7)
+			ImGui::Text("%s", ICON_KI_ARROW_TOP_LEFT);
+		else if (num == 8)
+			ImGui::Text("%s", ICON_KI_ARROW_TOP);
+		else if (num == 9)
+			ImGui::Text("%s", ICON_KI_ARROW_TOP_RIGHT);
+		else
+			ImGui::Text(" ");
+
+		ImGui::PopStyleColor();
+
+		ImGui::SetCursorPosX((areaWidth) * 0.5f);
+
+		if (settings.platform.isArcade())
+		{
+			//ImGui::Text("%s %s %s", ICON_KI_BUTTON_A, ICON_KI_BUTTON_B, ICON_KI_BUTTON_C);
+			//ImGui::Text("%s %s %s", ICON_KI_BUTTON_X, ICON_KI_BUTTON_Y, ICON_KI_BUTTON_Z);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_A) == 1)
+				ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_A);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_A);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_B) == 1)
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_B);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_B);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_C) == 1)
+				ImGui::TextColored(ImVec4(255, 155, 0, 1), "%s", ICON_KI_BUTTON_C);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_C);
+
+			ImGui::SetCursorPosX((areaWidth) * 0.5f);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_X) == 1)
+				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_KI_BUTTON_X);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_X);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_Y) == 1)
+				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_Y);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_Y);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_Z) == 1)
+				ImGui::TextColored(ImVec4(255, 0, 175, 1), "%s", ICON_KI_BUTTON_Z);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_Z);
+
+			std::set<int>::reverse_iterator rit;
+			for (rit = dojo.button_check_pressed[i].rbegin(); rit != dojo.button_check_pressed[i].rend(); ++rit)
+			{
+				const char* button_name = GetCurrentGameButtonName((DreamcastKey)*rit);
+				if (button_name != nullptr && strlen(button_name) > 0 && button_name != " ")
+					ImGui::Text("%s\n", button_name);
+			}
+		}
+		else
+		{
+			//ImGui::Text("%s %s %s", ICON_KI_BUTTON_X, ICON_KI_BUTTON_Y, ICON_KI_STICK_LEFT_TOP);
+			//ImGui::Text("%s %s %s", ICON_KI_BUTTON_A, ICON_KI_BUTTON_B, ICON_KI_STICK_RIGHT_TOP);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_X) == 1)
+				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_KI_BUTTON_X);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_X);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_Y) == 1)
+				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_Y);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_Y);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_AXIS_LT) == 1)
+				ImGui::TextColored(ImVec4(255, 155, 0, 1), "%s", ICON_KI_STICK_LEFT_TOP);
+			else
+				ImGui::Text("%s", ICON_KI_STICK_LEFT_TOP);
+
+			ImGui::SetCursorPosX((areaWidth) * 0.5f);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_A) == 1)
+				ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_A);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_A);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_B) == 1)
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_B);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_B);
+
+			ImGui::SameLine();
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_AXIS_RT) == 1)
+				ImGui::TextColored(ImVec4(255, 155, 0, 1), "%s", ICON_KI_STICK_RIGHT_TOP);
+			else
+				ImGui::Text("%s", ICON_KI_STICK_RIGHT_TOP);
+		}
+		ImGui::End();
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+	std::string pause_text;
+	pause_text = "Button Check";
+
+	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
+
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), settings.display.height - 40));
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+	ImGui::SetNextWindowBgAlpha(0.65f);
+	ImGui::Begin("#pause", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	ImGui::SameLine(
+		(ImGui::GetContentRegionAvail().x / 2) -
+		font_size + (font_size / 2) + 10
+	);
+
+	ImGui::TextUnformatted(pause_text.c_str());
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+}
+
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
 	// if both player names are defaults, hide overlay

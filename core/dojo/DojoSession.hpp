@@ -313,6 +313,8 @@ public:
 	bool stepping = false;
 	bool manual_pause = false;
 	bool buffering = false;
+
+	std::set<int> button_check_pressed[2];
 };
 
 extern DojoSession dojo;
