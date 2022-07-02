@@ -613,9 +613,16 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands || gui_state == GuiState::ButtonCheck)
 	{
-		gui_state = GuiState::Closed;
-		GamepadDevice::load_system_mappings();
-		emu.start();
+		if (dojo_gui.ggpo_join_screen)
+		{
+			gui_state = GuiState::GGPOJoin;
+		}
+		else
+		{
+			gui_state = GuiState::Closed;
+			GamepadDevice::load_system_mappings();
+			emu.start();
+		}
 	}
 }
 

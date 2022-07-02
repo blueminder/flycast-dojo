@@ -77,6 +77,8 @@ public:
 
 	void show_last_inputs_overlay();
 	void display_input_str(std::string input_str);
+
+	bool ggpo_join_screen = false;
 };
 
 extern DojoGui dojo_gui;

@@ -460,6 +460,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 				config::DojoEnable = false;
 			}
+			ggpo_join_screen = false;
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
 		}
@@ -467,15 +468,25 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel"))
 		{
-		    ImGui::CloseCurrentPopup();
+			ggpo_join_screen = false;
+			ImGui::CloseCurrentPopup();
 
-		    // Exit to main menu
-		    gui_state = GuiState::Main;
-		    game_started = false;
-		    settings.content.path = "";
-		    dc_reset(true);
+			// Exit to main menu
+			gui_state = GuiState::Main;
+			game_started = false;
+			settings.content.path = "";
+			dc_reset(true);
 
-		    config::NetworkServer.set("");
+			config::NetworkServer.set("");
+		}
+
+		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("IP").x + ImGui::CalcTextSize("Paste").x - ImGui::CalcTextSize("Start Session").x);
+
+		if (ImGui::Button("Button Check"))
+		{
+			ggpo_join_screen = true;
+			gui_state = GuiState::ButtonCheck;
 		}
 
 		ImGui::EndPopup();
@@ -1266,22 +1277,72 @@ void DojoGui::show_pause(float scaling)
 
 void DojoGui::show_button_check(float scaling)
 {
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
 
-	for (int i = 0; i < 2; i++)
+	std::string pause_text;
+	pause_text = "Button Check";
+
+	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
+
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), 0));
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+	ImGui::SetNextWindowBgAlpha(0.65f);
+	ImGui::Begin("#button_check_title", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	ImGui::SameLine(
+		(ImGui::GetContentRegionAvail().x / 2) -
+		font_size + (font_size / 2) + 10
+	);
+
+	ImGui::TextUnformatted(pause_text.c_str());
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+
+	int num_players = ggpo_join_screen ? 1 : 2;
+	for (int i = 0; i < num_players; i++)
 	{
-		if (i == 0)
-			ImGui::SetNextWindowPos(ImVec2(settings.display.width / 4.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		if (num_players == 2)
+		{
+			if (i == 0)
+				ImGui::SetNextWindowPos(ImVec2(settings.display.width / 4.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+			else
+				ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4.f) * 3, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		}
 		else
-			ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4.f) * 3, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		{
+			ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		}
 
-		ImGui::SetNextWindowSize(ImVec2(130 * scaling, 230 * scaling));
+		float font_height = ImGui::CalcTextSize("Test").y;
+
+		if (settings.platform.isArcade())
+			ImGui::SetNextWindowSize(ImVec2(130 * scaling, font_height * 18));
+		else
+			ImGui::SetNextWindowSize(ImVec2(130 * scaling, 0));
 
 		std::string bc_title = "##button_check" + std::to_string(i);
 		ImGui::Begin(bc_title.c_str(), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-
 		auto areaWidth = ImGui::GetContentRegionAvail().x * 0.5f;
+
+		if (ggpo_join_screen)
+		{
+			std::string player_name = config::PlayerName.get();
+			ImGui::SetCursorPosX(10.0f + areaWidth - (ImGui::CalcTextSize(player_name.c_str()).x / 2.0f));
+			ImGui::Text("%s", player_name.c_str());
+		}
+		else
+		{
+			ImGui::SetCursorPosX(10.0f + areaWidth - (ImGui::CalcTextSize("Player X").x / 2.0f));
+			ImGui::Text("Player %d", i + 1);
+		}
+
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
 
 		int num = 0;
 		if (dojo.button_check_pressed[i].count(DreamcastKey::DC_DPAD_DOWN) == 1)
@@ -1378,6 +1439,8 @@ void DojoGui::show_button_check(float scaling)
 			else
 				ImGui::Text("%s", ICON_KI_BUTTON_Z);
 
+			ImGui::Text(" ");
+
 			std::set<int>::reverse_iterator rit;
 			for (rit = dojo.button_check_pressed[i].rbegin(); rit != dojo.button_check_pressed[i].rend(); ++rit)
 			{
@@ -1436,25 +1499,24 @@ void DojoGui::show_button_check(float scaling)
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
 
-	std::string pause_text;
-	pause_text = "Button Check";
+	std::string msg_text;
+	msg_text = "Press MENU or TAB to exit.";
 
-	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
+	float msg_font_size = ImGui::CalcTextSize(msg_text.c_str()).x;
 
-	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), settings.display.height - 40));
-	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((msg_font_size + 40) / 2), settings.display.height - 40));
+	ImGui::SetNextWindowSize(ImVec2(msg_font_size + 40, 40));
 	ImGui::SetNextWindowBgAlpha(0.65f);
-	ImGui::Begin("#pause", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::Begin("#exit_description", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
 	ImGui::SameLine(
 		(ImGui::GetContentRegionAvail().x / 2) -
-		font_size + (font_size / 2) + 10
+		msg_font_size + (msg_font_size / 2) + 10
 	);
 
-	ImGui::TextUnformatted(pause_text.c_str());
+	ImGui::TextUnformatted(msg_text.c_str());
 
 	ImGui::End();
 
