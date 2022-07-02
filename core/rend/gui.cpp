@@ -3448,6 +3448,14 @@ void download_save_popup()
 			ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
 		}
 
+		if (dojo_file.status_text.find("not found") != std::string::npos)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				settings.network.md5.savestate[i] = 0;
+			}
+		}
+
 		if (dojo_file.save_download_ended || dojo_file.status_text.find("not found") != std::string::npos)
 		{
 			if (dojo_file.post_save_launch)
