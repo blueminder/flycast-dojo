@@ -611,18 +611,22 @@ void gui_open_settings()
 	{
 		gameLoader.cancel();
 	}
-	else if (gui_state == GuiState::Commands || gui_state == GuiState::ButtonCheck)
+	else if (gui_state == GuiState::ButtonCheck)
 	{
 		if (dojo_gui.ggpo_join_screen)
 		{
 			gui_state = GuiState::GGPOJoin;
 		}
-		else
+		else if (dojo_gui.test_game_screen)
 		{
-			gui_state = GuiState::Closed;
-			GamepadDevice::load_system_mappings();
-			emu.start();
+			gui_stop_game();
 		}
+	}
+	else if (gui_state == GuiState::Commands)
+	{
+		gui_state = GuiState::Closed;
+		GamepadDevice::load_system_mappings();
+		emu.start();
 	}
 }
 
@@ -916,6 +920,7 @@ static void gui_display_commands()
 	{
 		gui_state = GuiState::ButtonCheck;
 	}
+
 	if (settings.network.online)
 	{
         ImGui::PopItemFlag();

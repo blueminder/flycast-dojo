@@ -657,6 +657,47 @@ void DojoGui::gui_display_test_game( float scaling)
 		}
 
 	}
+
+	ImGui::NextColumn();
+	if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+	{
+		test_game_screen = true;
+		gui_state = GuiState::Closed;
+
+		if (strlen(settings.content.path.data()) > 0)
+		{
+			std::string extension = get_file_extension(settings.content.path);
+			// dreamcast games use built-in bios by default
+			if (extension == "chd" || extension == "gdi" || extension == "cdi")
+			{
+				dojo_gui.bios_json_match = true;
+				settings.platform.system = DC_PLATFORM_DREAMCAST;
+			}
+			else
+			{
+				int platform = naomi_cart_GetPlatform(settings.content.path.data());
+				settings.platform.system = platform;
+				//dojo_gui.bios_json_match = dojo_file.CompareBIOS(platform);
+			}
+
+			/*
+			dojo_gui.current_json_match = dojo_file.CompareRom(settings.content.path);
+
+			if (!dojo_gui.bios_json_match || !dojo_gui.current_json_match)
+				gui_state = GuiState::BiosRomWarning;
+			else
+			*/
+
+			gui_start_game(settings.content.path);
+		}
+		else
+		{
+			gui_state = GuiState::Main;
+		}
+
+		gui_state = GuiState::ButtonCheck;
+	}
+
 	ImGui::NextColumn();
 	if (ImGui::Button("Start Training", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -1303,7 +1344,7 @@ void DojoGui::show_button_check(float scaling)
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar(2);
 
-	int num_players = ggpo_join_screen ? 1 : 2;
+	int num_players = (ggpo_join_screen || test_game_screen) ? 1 : 2;
 	for (int i = 0; i < num_players; i++)
 	{
 		if (num_players == 2)
@@ -1330,7 +1371,7 @@ void DojoGui::show_button_check(float scaling)
 
 		auto areaWidth = ImGui::GetContentRegionAvail().x * 0.5f;
 
-		if (ggpo_join_screen)
+		if (ggpo_join_screen || test_game_screen)
 		{
 			std::string player_name = config::PlayerName.get();
 			ImGui::SetCursorPosX(10.0f + areaWidth - (ImGui::CalcTextSize(player_name.c_str()).x / 2.0f));
