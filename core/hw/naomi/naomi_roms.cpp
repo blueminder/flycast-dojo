@@ -7088,6 +7088,7 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012",
+        &vf4_inputs,
     },
     {
     	"vf4b",
@@ -7102,6 +7103,7 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012b",
+        &vf4_inputs,
     },
     {
     	"vf4",
@@ -7116,6 +7118,7 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012c",
+        &vf4_inputs,
     },
     {
     	"beachspi",
@@ -7174,6 +7177,7 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024c",
+        &vf4_inputs,
     },
     {
     	"vf4evob",
@@ -7188,6 +7192,7 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024b",
+        &vf4_inputs,
     },
     {
     	"vf4evoa",
@@ -7202,6 +7207,7 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024a",
+        &vf4_inputs,
     },
     {
     	"initdexp",
@@ -7381,6 +7387,7 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036f",
+        &vf4_inputs,
     },
     {
     	"vf4tunedd",
@@ -7395,6 +7402,7 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036d",
+        &vf4_inputs,
     },
     {
     	"vf4tuneda",
@@ -7409,6 +7417,7 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036a",
+        &vf4_inputs,
     },
     {
     	"inidv3cy",

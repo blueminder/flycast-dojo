@@ -392,6 +392,8 @@ static InputDescriptors f355_inputs = {
 	  },
 };
 
+static InputDescriptors vf4_inputs = INPUT_3_BUTTONS("Punch", "Kick", "Guard");
+
 static InputDescriptors zombie_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "L" },
