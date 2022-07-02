@@ -1725,16 +1725,15 @@ static void settings_body_controls(ImVec2 normal_padding)
 					if (gamepad->is_rumble_enabled())
 					{
 						ImGui::NextColumn();
-						ImGui::Columns(2, NULL, false);
 						float system_column = ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
 						ImGui::SetColumnWidth(-1, system_column);
 						ImGui::NextColumn();
 						int power = gamepad->get_rumble_power();
-						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
+						ImGui::SetNextItemWidth(130 * settings.display.uiScale);
 						if (ImGui::SliderInt("Rumble", &power, 0, 100))
 							gamepad->set_rumble_power(power);
 						ImGui::NextColumn();
-						ImGui::Columns(4, NULL, false);
+						ImGui::NextColumn();
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
