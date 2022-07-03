@@ -594,7 +594,7 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		if (!ggpo::active())
+		if (!ggpo::active() || dojo.PlayMatch)
 		{
 			gui_state = GuiState::Commands;
 			HideOSD();
