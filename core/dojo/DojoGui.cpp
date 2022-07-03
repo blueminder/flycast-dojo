@@ -512,7 +512,7 @@ void DojoGui::gui_display_disconnected( float scaling)
 
 	ImGui::End();
 
-	config::AutoSkipFrame = 1;
+	//config::AutoSkipFrame = 1;
 
 	dojo.CleanUp();
 
@@ -526,7 +526,7 @@ void DojoGui::gui_display_end_replay( float scaling)
 
 	ImGui::Begin("##end_replay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("End of replay.");
+	ImGui::Text("End of replay. %d", dojo.replay_version);
 
 	if (ImGui::Button("Exit Game"))
 	{
@@ -1279,9 +1279,6 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 
 void DojoGui::show_pause(float scaling)
 {
-	if (dojo.PlayMatch && config::ShowPlaybackControls)
-		dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
-
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));

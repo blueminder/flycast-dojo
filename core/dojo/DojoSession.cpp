@@ -671,6 +671,11 @@ u16 DojoSession::ApplyNetInputs(PlainJoystickState* pjs, u16 buttons, u32 port)
 	else
 		buttons = TranslateFrameDataToInput((u8*)to_apply.data(), buttons);
 
+	if (dojo.PlayMatch && replay_version == 1)
+	{
+		dojo.AddToInputDisplay((u8*)to_apply.data());
+	}
+
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		return 0;

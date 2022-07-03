@@ -821,6 +821,10 @@ static void gui_display_commands()
 
 	ImGui::Columns(2, "buttons", false);
 
+	if (!dojo.PlayMatch)
+	{
+
+
 	if (settings.dojo.training)
 	{
 		std::ostringstream watch_text;
@@ -860,12 +864,29 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
+	}
+
+	if (dojo.PlayMatch)
+	{
+		std::ostringstream input_display_text;
+		input_display_text << "Input Display ";
+		input_display_text << (config::ShowReplayInputDisplay.get() ? "On" : "Off");
+		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+		{
+			config::ShowReplayInputDisplay = (config::ShowReplayInputDisplay.get() ? false : true);
+		}
+
+		ImGui::NextColumn();
+	}
+
 	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
 		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
 	}
 
+	if (!dojo.PlayMatch)
+	{
 	ImGui::NextColumn();
 
 	if (settings.network.online || config::GGPOEnable)
@@ -873,7 +894,6 @@ static void gui_display_commands()
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-
 
 	if (settings.dojo.training)
 	{
@@ -938,6 +958,7 @@ static void gui_display_commands()
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
+	}
 
 	if (settings.dojo.training || config::ShowEjectDisk)
 		ImGui::NextColumn();
@@ -959,7 +980,7 @@ static void gui_display_commands()
 			dojo.disconnect_toggle = true;
 			gui_state = GuiState::Closed;
 		}
-		else if (config::GGPOEnable)
+		else if (config::GGPOEnable && !dojo.PlayMatch)
 		{
 			gui_state = GuiState::Disconnected;
 		}
@@ -3264,14 +3285,16 @@ void gui_display_osd()
 			chat.display();
 		}
 
-		if (ggpo::active() || config::Receiving || (dojo.PlayMatch && dojo.replay_version > 1))
+		if (ggpo::active() || config::Receiving || dojo.PlayMatch)
 		{
 			if (!config::Receiving)
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
 
+			if (config::ShowPlaybackControls)
+				dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
+
 			if (config::ShowReplayInputDisplay &&
-				(config::Receiving || dojo.PlayMatch) &&
-				dojo.replay_version > 1)
+				(config::Receiving || dojo.PlayMatch))
 			{
 				dojo_gui.show_last_inputs_overlay();
 			}
