@@ -1543,7 +1543,11 @@ void DojoGui::show_button_check(float scaling)
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
 
 	std::string msg_text;
+#if defined(__ANDROID__)
+	msg_text = "Press MENU to exit.";
+#else
 	msg_text = "Press MENU or TAB to exit.";
+#endif
 
 	float msg_font_size = ImGui::CalcTextSize(msg_text.c_str()).x;
 
