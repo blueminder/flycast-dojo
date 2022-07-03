@@ -996,6 +996,19 @@ static void gui_display_commands()
 		dojo.Init();
 	}
 
+	// volume control
+	ImGui::Columns(1, nullptr, false);
+
+	char buffer[10] = { 0 };
+	if (config::AudioVolume.dbPower() > 0.0)
+		snprintf(buffer, 10, "%s", ICON_KI_SOUND_ON);
+	else
+		snprintf(buffer, 10, "%s", ICON_KI_SOUND_OFF);
+	if (OptionSlider(buffer, config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
+	{
+		config::AudioVolume.calcDbPower();
+	};
+
 	ImGui::End();
 }
 
