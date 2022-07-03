@@ -1653,9 +1653,9 @@ void DojoSession::TrainingSwitchPlayer()
 
 void DojoSession::SwitchPlayer()
 {
-	for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+	for (auto gamepad_uid : training_p1_gamepads)
 	{
-		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(gamepad_uid);
 		if (gamepad->maple_port() == 0)
 			gamepad->set_maple_port(1);
 		else if (gamepad->maple_port() == 1)
@@ -1697,6 +1697,8 @@ void DojoSession::ResetTraining()
 		displayed_dirs_str[i].clear();
 		displayed_num_dirs[i].clear();
 	}
+
+	training_p1_gamepads.clear();
 }
 
 size_t ipWriteFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {

@@ -77,6 +77,7 @@ public:
 
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
+	static std::shared_ptr<GamepadDevice> GetGamepad(std::string uid);
 	static void SaveMaplePorts();
 
 	static void load_system_mappings();

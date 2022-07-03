@@ -315,6 +315,7 @@ public:
 	bool buffering = false;
 
 	std::set<int> button_check_pressed[2];
+	std::set<std::string> training_p1_gamepads;
 };
 
 extern DojoSession dojo;

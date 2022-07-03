@@ -341,10 +341,19 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			return false;
 		}
 	}
+
+	if (settings.dojo.training && port == 0 && pressed)
+	{
+		if (dojo.training_p1_gamepads.count(_unique_id) == 0)
+		{
+			dojo.training_p1_gamepads.insert(_unique_id);
+			DEBUG_LOG(INPUT, "TRAINING P1 GAMEPAD %s", _unique_id.c_str());
+		}
+	}
+
 	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
 	if (gui_state == GuiState::ButtonCheck)
 	{
-		NOTICE_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
 		if (pressed && port < 2)
 		{
 			dojo.button_check_pressed[port].insert((int)key);
@@ -620,6 +629,19 @@ std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 		dev = _gamepads[index];
 	else
 		dev = NULL;
+	_gamepads_mutex.unlock();
+	return dev;
+}
+
+std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(std::string uid)
+{
+	_gamepads_mutex.lock();
+	std::shared_ptr<GamepadDevice> dev = NULL;
+	for (int i = 0; i < _gamepads.size(); ++i)
+	{
+		if (_gamepads[i]->unique_id() == uid)
+			dev = _gamepads[i];
+	}
 	_gamepads_mutex.unlock();
 	return dev;
 }
