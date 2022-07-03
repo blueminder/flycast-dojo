@@ -741,6 +741,9 @@ void gui_stop_game(const std::string& message)
 {
 	dojo.CleanUp();
 
+	if (dojo.PlayMatch && dojo.replay_version > 1)
+		commandLineStart = true;
+
 	item_current_idx = 0;
 
 	if (!commandLineStart && !config::TestGame.get())
@@ -3326,15 +3329,11 @@ void gui_display_osd()
 				}
 				else
 				{
-					emu.unloadGame();
-					gui_state = GuiState::Main;
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 					gui_state = GuiState::Replays;
 #else
 					gui_state = GuiState::EndReplay;
 #endif
-					game_started = false;
-					reset_vmus();
 				}
 			}
 		}
@@ -3352,14 +3351,17 @@ void gui_display_osd()
 
 		if (dojo.replay_version >= 2)
 		{
-			if(dojo.FrameNumber >= dojo.maple_inputs.size())
+			if(dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
 			{
+				settings.input.fastForwardMode = false;
 				if (config::TransmitReplays && config::Transmitting)
 					dojo.transmitter_ended = true;
 
-				gui_state = GuiState::ReplayPause;
-				config::AutoSkipFrame = 0;
-				//emu.term();
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+				gui_state = GuiState::Replays;
+#else
+				gui_state = GuiState::EndReplay;
+#endif
 			}
 		}
 		else

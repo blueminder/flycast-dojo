@@ -526,7 +526,7 @@ void DojoGui::gui_display_end_replay( float scaling)
 
 	ImGui::Begin("##end_replay", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Text("End of replay. %d", dojo.replay_version);
+	ImGui::Text("End of replay.");
 
 	if (ImGui::Button("Exit Game"))
 	{
