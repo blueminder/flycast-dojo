@@ -3268,11 +3268,6 @@ void gui_display_osd()
 		{
 			if (!config::Receiving)
 				settings.dojo.PlayerName = cfgLoadStr("dojo", "PlayerName", "Player");
-			else
-			{
-				if (config::ShowPlaybackControls)
-					dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
-			}
 
 			if (config::ShowReplayInputDisplay &&
 				(config::Receiving || dojo.PlayMatch) &&

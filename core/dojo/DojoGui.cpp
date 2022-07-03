@@ -1279,6 +1279,9 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 
 void DojoGui::show_pause(float scaling)
 {
+	if (dojo.PlayMatch && config::ShowPlaybackControls)
+		dojo_gui.show_replay_position_overlay(dojo.FrameNumber, settings.display.uiScale, false);
+
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
