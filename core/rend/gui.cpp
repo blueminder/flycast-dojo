@@ -765,6 +765,44 @@ void gui_stop_game(const std::string& message)
 	}
 }
 
+static std::string getLabelOrCode(const char *label, u32 code, const char *suffix = "")
+{
+	std::string label_or_code;
+	if (label != nullptr)
+		label_or_code = std::string(label) + std::string(suffix);
+	else
+		label_or_code = "[" + std::to_string(code) + "]" + std::string(suffix);
+
+	return label_or_code;
+}
+
+static std::string getMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
+{
+	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+	//u32 code = input_mapping->get_button_code(gamepad->maple_port(), key);
+	u32 code = input_mapping->get_button_code(0, key);
+	if (code != (u32)-1)
+	{
+		return getLabelOrCode(gamepad->get_button_name(code), code);
+	}
+	//std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad->maple_port(), key);
+	std::pair<u32, bool> pair = input_mapping->get_axis_code(0, key);
+	code = pair.first;
+	if (code != (u32)-1)
+	{
+		return getLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
+	}
+}
+
+static void displayHotkey(std::string title, DreamcastKey key, std::shared_ptr<GamepadDevice> key_gamepad)
+{
+	std::string mapped_btns = "";
+	ImGui::Text(title.c_str());
+	mapped_btns = getMappedControl(key_gamepad, key);
+	ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
+	ImGui::Text("%s", mapped_btns.c_str());
+}
+
 static void gui_display_commands()
 {
    	imguiDriver->displayVmus();
@@ -1009,7 +1047,78 @@ static void gui_display_commands()
 		config::AudioVolume.calcDbPower();
 	};
 
+	float menu_height = ImGui::GetWindowHeight();
 	ImGui::End();
+
+	if (settings.dojo.training || dojo.PlayMatch)
+	{
+		std::shared_ptr<GamepadDevice> key_gamepad;
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			if (GamepadDevice::GetGamepad(i)->unique_id().find("keyboard") != std::string::npos)
+				key_gamepad = GamepadDevice::GetGamepad(i);
+		}
+
+		if (key_gamepad)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, (ImGui::GetIO().DisplaySize.y / 2.f) + menu_height + 10),
+				ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+			ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+			ImGui::SetNextWindowBgAlpha(0.55f);
+
+			ImGui::Begin("##hotkeys", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+			std::string hotkey_title;
+			if (dojo.PlayMatch)
+				hotkey_title = "Replay Mode Hotkeys";
+			else
+				hotkey_title = "Training Mode Hotkeys";
+
+			ImGui::SetCursorPosX((330 - ImGui::CalcTextSize(hotkey_title.c_str()).x) * 0.5f);
+			ImGui::Text("%s", hotkey_title.c_str());
+
+			ImGui::Text(" ");
+
+			std::string mapped_btns = "";
+
+			displayHotkey("Pause / Unpause", EMU_BTN_PAUSE, key_gamepad);
+			displayHotkey("Frame Step", EMU_BTN_STEP, key_gamepad);
+			displayHotkey("Fast-forward", EMU_BTN_FFORWARD, key_gamepad);
+
+			if (settings.dojo.training)
+			{
+				displayHotkey("Switch Player", EMU_BTN_SWITCH_PLAYER, key_gamepad);
+				displayHotkey("Quick Save", EMU_BTN_QUICK_SAVE, key_gamepad);
+				displayHotkey("Quick Load", EMU_BTN_JUMP_STATE, key_gamepad);
+
+				std::string mapped_btns = "";
+				ImGui::Text("Record Slot 1/2/3");
+				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_RECORD);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_1);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_2);
+				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
+				ImGui::Text("%s", mapped_btns.c_str());
+
+				mapped_btns = "";
+				ImGui::Text("Play Slot 1/2/3");
+				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_PLAY);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_1);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_2);
+				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
+				ImGui::Text("%s", mapped_btns.c_str());
+			}
+
+			ImGui::End();
+
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar(2);
+		}
+	}
 }
 
 inline static void header(const char *title)
