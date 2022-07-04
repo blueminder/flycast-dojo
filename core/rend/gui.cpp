@@ -3333,7 +3333,7 @@ void gui_display_osd()
 
 		if (dojo.PlayMatch && config::GGPOEnable)
 		{
-			if (dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
+			if (dojo.FrameNumber >= dojo.maple_inputs.size() - 1)
 			{
 				settings.input.fastForwardMode = false;
 				if (config::Receiving)
@@ -3357,14 +3357,14 @@ void gui_display_osd()
 		gui_endFrame();
 	}
 
-	if (dojo.PlayMatch)
+	if (dojo.PlayMatch && !config::Receiving)
 	{
 		if (!config::Receiving)
 			dojo_gui.show_playback_menu(settings.display.uiScale, false);
 
 		if (dojo.replay_version >= 2)
 		{
-			if(dojo.FrameNumber >= dojo.maple_inputs.size() - 2)
+			if(dojo.FrameNumber >= dojo.maple_inputs.size() - 1)
 			{
 				settings.input.fastForwardMode = false;
 				if (config::TransmitReplays && config::Transmitting)

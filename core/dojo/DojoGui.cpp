@@ -1043,19 +1043,19 @@ void DojoGui::display_input_str(std::string input_str)
 	if (input_str.find("4") != std::string::npos)
 	{
 		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_KI_BUTTON_FOUR);
+		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s    ", ICON_KI_BUTTON_FOUR);
 		any_found = true;
 	}
 	if (input_str.find("5") != std::string::npos)
 	{
 		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0, 175, 0, 1), "%s", ICON_KI_BUTTON_FIVE);
+		ImGui::TextColored(ImVec4(0, 175, 0, 1), "%s    ", ICON_KI_BUTTON_FIVE);
 		any_found = true;
 	}
 	if (input_str.find("6") != std::string::npos)
 	{
 		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 0, 175, 1), "%s", ICON_KI_BUTTON_SIX);
+		ImGui::TextColored(ImVec4(255, 0, 175, 1), "%s    ", ICON_KI_BUTTON_SIX);
 		any_found = true;
 	}
 	// dc inputs
@@ -1136,9 +1136,9 @@ void DojoGui::show_last_inputs_overlay()
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
 #if defined(__APPLE__) || defined(__ANDROID__)
-			ImGui::SetNextWindowSize(ImVec2(250, ImGui::GetIO().DisplaySize.y - 210));
+			ImGui::SetNextWindowSize(ImVec2(290, ImGui::GetIO().DisplaySize.y - 230));
 #else
-			ImGui::SetNextWindowSize(ImVec2(170, ImGui::GetIO().DisplaySize.y - 130));
+			ImGui::SetNextWindowSize(ImVec2(210, ImGui::GetIO().DisplaySize.y - 150));
 #endif
 
 			if (di == 0)
@@ -1154,9 +1154,9 @@ void DojoGui::show_last_inputs_overlay()
 			else if (di == 1)
 			{
 #if defined(__APPLE__) || defined(__ANDROID__)
-				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 260, 180));
+				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 300, 180));
 #else
-				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 180, 100));
+				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 220, 100));
 #endif
 				ImGui::SetNextWindowBgAlpha(0.4f);
 				ImGui::Begin("#two_input", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
@@ -1200,8 +1200,6 @@ void DojoGui::show_last_inputs_overlay()
 						ImGui::Text("%s", ICON_KI_ARROW_BOTTOM_RIGHT);
 					else if (num == 4)
 						ImGui::Text("%s", ICON_KI_ARROW_LEFT);
-					else if (num == 5)
-						ImGui::Text("    ");
 					else if (num == 6)
 						ImGui::Text("%s", ICON_KI_ARROW_RIGHT);
 					else if (num == 7)
@@ -1210,8 +1208,6 @@ void DojoGui::show_last_inputs_overlay()
 						ImGui::Text("%s", ICON_KI_ARROW_TOP);
 					else if (num == 9)
 						ImGui::Text("%s", ICON_KI_ARROW_TOP_RIGHT);
-					else
-						ImGui::Text("%d", num);
 				}
 				//ImGui::Text("%6s", dojo.displayed_dirs_str[di][rit->first].c_str(), dojo.displayed_inputs_str[di][rit->first].c_str());
 				ImGui::PopStyleColor();
@@ -1279,6 +1275,8 @@ void DojoGui::show_replay_position_overlay(int frame_num, float scaling, bool pa
 
 void DojoGui::show_pause(float scaling)
 {
+	settings.input.fastForwardMode = false;
+
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.475f, 0.825f, 1.000f, 1.f));
