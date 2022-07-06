@@ -80,6 +80,10 @@ public:
 
 	bool ggpo_join_screen = false;
 	bool test_game_screen = false;
+
+	int current_map_button = 0;
+	bool mapping_shown = false;
+	bool pending_map = false;
 };
 
 extern DojoGui dojo_gui;

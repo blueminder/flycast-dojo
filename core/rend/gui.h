@@ -83,7 +83,8 @@ enum class GuiState {
 	EndReplay,
 	EndSpectate,
 	BiosRomWarning,
-	ButtonCheck
+	ButtonCheck,
+	QuickMapping
 };
 extern GuiState gui_state;
 
