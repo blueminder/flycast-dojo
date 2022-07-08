@@ -1478,6 +1478,13 @@ void DojoGui::show_button_check(float scaling)
 			else
 				ImGui::Text("%s", ICON_KI_BUTTON_Z);
 
+			ImGui::SetCursorPosX(areaWidth - ImGui::CalcTextSize("A").x/2.0f);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_START) == 1)
+				ImGui::TextColored(ImVec4(165, 0, 255, 1), "%s", ICON_KI_CARET_TOP);
+			else
+				ImGui::Text("%s", ICON_KI_CARET_TOP);
+
 			ImGui::Text(" ");
 
 			std::set<int>::reverse_iterator rit;
@@ -1532,6 +1539,13 @@ void DojoGui::show_button_check(float scaling)
 				ImGui::TextColored(ImVec4(255, 155, 0, 1), "%s", ICON_KI_STICK_RIGHT_TOP);
 			else
 				ImGui::Text("%s", ICON_KI_STICK_RIGHT_TOP);
+
+			ImGui::SetCursorPosX(areaWidth - ImGui::CalcTextSize("A").x/2.0f);
+
+			if (dojo.button_check_pressed[i].count(DreamcastKey::DC_BTN_START) == 1)
+				ImGui::TextColored(ImVec4(165, 0, 255, 1), "%s", ICON_KI_CARET_TOP);
+			else
+				ImGui::Text("%s", ICON_KI_CARET_TOP);
 		}
 		ImGui::End();
 	}
