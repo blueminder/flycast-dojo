@@ -592,7 +592,7 @@ void gui_open_pause()
 
 void gui_open_settings()
 {
-	if (gui_state == GuiState::Closed)
+	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
 		{
@@ -630,7 +630,10 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands)
 	{
-		gui_state = GuiState::Closed;
+		if (dojo.manual_pause)
+			gui_state = GuiState::ReplayPause;
+		else
+			gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
 		emu.start();
 	}

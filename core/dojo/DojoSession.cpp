@@ -124,7 +124,12 @@ void DojoSession::CleanUp()
 
 	for (int i = 0; i < 4; i++)
 		dojo.net_inputs[i].clear();
+
 	dojo.maple_inputs.clear();
+
+	stepping = false;
+	manual_pause = false;
+	buffering = false;
 }
 
 uint64_t DojoSession::DetectDelay(const char* ipAddr)
