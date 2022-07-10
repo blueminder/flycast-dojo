@@ -997,6 +997,7 @@ static void gui_display_commands()
 
 	if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
 	{
+		dojo_gui.current_map_button = 0;
 		gui_state = GuiState::QuickMapping;
 	}
 
@@ -1497,7 +1498,9 @@ static void detect_input_popup(const Mapping *mapping)
 		{
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
+			dojo_gui.current_map_button++;
 			dojo_gui.pending_map = false;
+			dojo_gui.mapping_shown = false;
 		}
 		ImGui::EndPopup();
 	}
