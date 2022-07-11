@@ -250,10 +250,10 @@ if(NOT LIBRETRO)
 			COMMAND sleep 20
 			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 				-a x86_64
-				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
+				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
+			COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
+			COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
 		)
 	endif()
 endif()
