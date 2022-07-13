@@ -15,7 +15,7 @@ android {
     compileSdk 29
 
     defaultConfig {
-        applicationId "com.flycast.emulator"
+        applicationId "com.flycastdojo.emulator"
         minSdk 16
         targetSdk 29
         versionCode 8

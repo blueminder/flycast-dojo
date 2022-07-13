@@ -1,8 +1,8 @@
 <resources>
 
-    <string name="app_name" translatable="false">Flycast</string>
+    <string name="app_name" translatable="false">Flycast Dojo</string>
 
-    <string name="app_site" translatable="false">reicast.com</string>
+    <string name="app_site" translatable="false">flycast.dojo.ooo</string>
 
     <string name="flavor" translatable="false">dreamcast</string>
 
