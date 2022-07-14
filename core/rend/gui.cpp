@@ -994,15 +994,17 @@ static void gui_display_commands()
 		{
 			gui_state = GuiState::ButtonCheck;
 		}
-
-		ImGui::NextColumn();
-
-		if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
-		{
-			dojo_gui.current_map_button = 0;
-			gui_state = GuiState::QuickMapping;
-		}
 	}
+
+#if !defined(__ANDROID__)
+	ImGui::NextColumn();
+
+	if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
+	{
+		dojo_gui.current_map_button = 0;
+		gui_state = GuiState::QuickMapping;
+	}
+#endif
 
 	if (settings.network.online)
 	{
@@ -2142,7 +2144,7 @@ static void gui_display_settings()
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("left pane list", ImVec2(150, -60), true, ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild("left pane list", ImVec2(160, -60), true, ImGuiWindowFlags_NavFlattened);
 #else
 	ImGui::BeginChild("left pane list", ImVec2(100, -40), true, ImGuiWindowFlags_NavFlattened);
 #endif

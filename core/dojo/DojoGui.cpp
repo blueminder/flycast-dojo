@@ -1326,7 +1326,11 @@ void DojoGui::show_button_check(float scaling)
 	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
 
 	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), 0));
+#if defined(__APPLE__) || defined(__ANDROID__)
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 60));
+#else
 	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+#endif
 	ImGui::SetNextWindowBgAlpha(0.65f);
 	ImGui::Begin("#button_check_title", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
@@ -1563,8 +1567,13 @@ void DojoGui::show_button_check(float scaling)
 
 	float msg_font_size = ImGui::CalcTextSize(msg_text.c_str()).x;
 
+#if defined(__APPLE__) || defined(__ANDROID__)
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((msg_font_size + 40) / 2), settings.display.height - 60));
+	ImGui::SetNextWindowSize(ImVec2(msg_font_size + 40, 60));
+#else
 	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((msg_font_size + 40) / 2), settings.display.height - 40));
 	ImGui::SetNextWindowSize(ImVec2(msg_font_size + 40, 40));
+#endif
 	ImGui::SetNextWindowBgAlpha(0.65f);
 	ImGui::Begin("#exit_description", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 

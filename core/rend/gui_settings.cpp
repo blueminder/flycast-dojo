@@ -107,7 +107,7 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 	ImGui::SameLine();
 	ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
 #else
-	if (ImGui::ListBoxHeader("Home Directory", 1))
+	if (ImGui::ListBoxHeader("Home Directory", 2))
 	{
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("%s", get_writable_config_path("").c_str());
