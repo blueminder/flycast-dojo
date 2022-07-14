@@ -2142,7 +2142,7 @@ static void gui_display_settings()
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("left pane list", ImVec2(120, -50), true, ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild("left pane list", ImVec2(150, -60), true, ImGuiWindowFlags_NavFlattened);
 #else
 	ImGui::BeginChild("left pane list", ImVec2(100, -40), true, ImGuiWindowFlags_NavFlattened);
 #endif
@@ -2160,7 +2160,7 @@ static void gui_display_settings()
 
 	ImGui::BeginGroup();
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("item view", ImVec2(0, -50), false, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild("item view", ImVec2(0, -60), false, ImGuiWindowFlags_DragScrolling);
 #else
 	ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_DragScrolling);
 #endif
