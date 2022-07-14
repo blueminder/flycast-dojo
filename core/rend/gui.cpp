@@ -986,19 +986,22 @@ static void gui_display_commands()
 		gui_state = GuiState::Cheats;
 	}
 
-	ImGui::NextColumn();
-
-	if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+	if (dojo.current_gamepad != "virtual_gamepad_uid")
 	{
-		gui_state = GuiState::ButtonCheck;
-	}
+		ImGui::NextColumn();
 
-	ImGui::NextColumn();
+		if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+		{
+			gui_state = GuiState::ButtonCheck;
+		}
 
-	if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
-	{
-		dojo_gui.current_map_button = 0;
-		gui_state = GuiState::QuickMapping;
+		ImGui::NextColumn();
+
+		if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
+		{
+			dojo_gui.current_map_button = 0;
+			gui_state = GuiState::QuickMapping;
+		}
 	}
 
 	if (settings.network.online)
