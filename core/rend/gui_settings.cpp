@@ -3,8 +3,12 @@
 
 inline static void header(const char *title)
 {
+	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	//ImGuiButtonFlags flags = ImGuiButtonFlags_Disabled | ImGuiButtonFlags_FlattenChildren;
+	ImGuiButtonFlags flags = ImGuiButtonFlags_Disabled | ImGuiButtonFlags_NoNavFocus;
+	ImGui::ButtonEx(title, ImVec2(-1, 0), flags);
+	ImGui::PopItemFlag();
 	ImGui::PopStyleVar();
 }
 
@@ -108,7 +112,7 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("%s", get_writable_config_path("").c_str());
 #ifdef __ANDROID__
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
+		//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
 		if (ImGui::Button("Change"))
 			gui_state = GuiState::Onboarding;
 #endif

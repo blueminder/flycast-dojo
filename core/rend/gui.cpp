@@ -2128,7 +2128,7 @@ static void gui_display_settings()
 	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_NoResize
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
@@ -2137,20 +2137,11 @@ static void gui_display_settings()
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About" };
  
     static int selected = 0;
-#if defined(__ANDROID__)
-	//ImGui::BeginChild("left pane", ImVec2(140, -50), false);
-	ImGui::BeginChild("left pane list", ImVec2(160, -50), true);
+
+#if defined(__ANDROID__) || defined(__APPLE__)
+	ImGui::BeginChild("left pane list", ImVec2(120, -50), true, ImGuiWindowFlags_NavFlattened);
 #else
-	if (game_started)
-	{
-		ImGui::BeginChild("left pane", ImVec2(100, -40), false);
-		ImGui::BeginChild("left pane list", ImVec2(100, 0), true);
-	}
-	else
-	{
-		ImGui::BeginChild("left pane", ImVec2(100, 0), false);
-		ImGui::BeginChild("left pane list", ImVec2(100, -40), true);
-	}
+	ImGui::BeginChild("left pane list", ImVec2(100, -40), true, ImGuiWindowFlags_NavFlattened);
 #endif
 
 	for (int i = 0; i < sections.size(); i++)
@@ -2160,41 +2151,15 @@ static void gui_display_settings()
 		if (ImGui::Selectable(label, selected == i))
 			selected = i;
 	}
-#if !defined(__ANDROID__)
-	ImGui::EndChild();
 
-	if (!game_started)
-	{
-		if (ImGui::Button("Done", ScaledVec2(100, 30)))
-		{
-			if (game_started)
-				gui_state = GuiState::Commands;
-			else
-				gui_state = GuiState::Main;
-			if (maple_devices_changed)
-			{
-				maple_devices_changed = false;
-				if (game_started && settings.platform.isConsole())
-				{
-					maple_ReconnectDevices();
-					reset_vmus();
-				}
-			}
-			SaveSettings();
-		}
-	}
-#endif
 	ImGui::EndChild();
 	ImGui::SameLine();
 
 	ImGui::BeginGroup();
-#if defined(__ANDROID__)
-	ImGui::BeginChild("item view", ImVec2(0, -50));
+#if defined(__ANDROID__) || defined(__APPLE__)
+	ImGui::BeginChild("item view", ImVec2(0, -50), false, ImGuiWindowFlags_DragScrolling);
 #else
-	if (game_started)
-		ImGui::BeginChild("item view", ImVec2(0, -40));
-	else
-		ImGui::BeginChild("item view", ImVec2(0, 0));
+	ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_DragScrolling);
 #endif
 
 	header(sections[selected].c_str());
@@ -2231,7 +2196,6 @@ static void gui_display_settings()
 
 	ImGui::PopStyleVar();
 
-#if defined(__ANDROID__)
 	if (ImGui::Button("Done", ScaledVec2(100, 30)))
 	{
 		if (game_started)
@@ -2249,33 +2213,13 @@ static void gui_display_settings()
 		}
 		SaveSettings();
 	}
-#endif
 
 	if (game_started)
 	{	
-#if !defined(__ANDROID__)
-	if (ImGui::Button("Done", ScaledVec2(100, 30)))
-	{
-		if (game_started)
-			gui_state = GuiState::Commands;
-		else
-			gui_state = GuiState::Main;
-		if (maple_devices_changed)
-		{
-			maple_devices_changed = false;
-			if (game_started && settings.platform.isConsole())
-			{
-				maple_ReconnectDevices();
-				reset_vmus();
-			}
-		}
-		SaveSettings();
-	}
-#endif
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
-			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Delete Game Config").x);
+			ImGui::SameLine();
 			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 			{
 				config::Settings::instance().setPerGameConfig(false);
@@ -2285,7 +2229,7 @@ static void gui_display_settings()
 		}
 		else
 		{
-			ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - 140 - ImGui::CalcTextSize("Make Game Config").x);
+			ImGui::SameLine();
 			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
