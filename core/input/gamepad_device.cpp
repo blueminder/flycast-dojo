@@ -86,7 +86,8 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_MENU:
 			if (pressed)
 			{
-				dojo.current_gamepad = _unique_id;
+				if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause)
+					dojo.current_gamepad = _unique_id;
 				gui_open_settings();
 			}
 			break;
