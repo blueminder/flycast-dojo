@@ -2154,9 +2154,9 @@ static void gui_display_settings()
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("left pane list", ImVec2(160, -60), true, ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild("left pane list", ImVec2(100, -60), false, ImGuiWindowFlags_NavFlattened);
 #else
-	ImGui::BeginChild("left pane list", ImVec2(100, -40), true, ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild("left pane list", ImVec2(100, -40), false, ImGuiWindowFlags_NavFlattened);
 #endif
 
 	for (int i = 0; i < sections.size(); i++)
@@ -2172,9 +2172,9 @@ static void gui_display_settings()
 
 	ImGui::BeginGroup();
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("item view", ImVec2(0, -60), false, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild("item view", ImVec2(0, -60), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
 #else
-	ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
 #endif
 
 	header(sections[selected].c_str());
