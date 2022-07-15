@@ -865,9 +865,11 @@ static void gui_display_commands()
 
 	ImGui::Columns(2, "buttons", false);
 
+	// track if # of buttons are even or odd for exit button size
+	int displayed_button_count = 0;
+
 	if (!dojo.PlayMatch)
 	{
-
 
 	if (settings.dojo.training)
 	{
@@ -877,6 +879,8 @@ static void gui_display_commands()
 		{
 			dojo.TrainingSwitchPlayer();
 		}
+		displayed_button_count++;
+
 		ImGui::NextColumn();
 		std::ostringstream playback_loop_text;
 		playback_loop_text << "Playback Loop ";
@@ -885,6 +889,7 @@ static void gui_display_commands()
 		{
 			dojo.playback_loop = (dojo.playback_loop ? false : true);
 		}
+		displayed_button_count++;
 
 		ImGui::NextColumn();
 	}
@@ -900,6 +905,7 @@ static void gui_display_commands()
 	{
 		gui_state = GuiState::Settings;
 	}
+	displayed_button_count++;
 
 	if (settings.network.online || config::GGPOEnable)
 	{
@@ -919,6 +925,7 @@ static void gui_display_commands()
 		{
 			config::ShowReplayInputDisplay = (config::ShowReplayInputDisplay.get() ? false : true);
 		}
+		displayed_button_count++;
 
 		ImGui::NextColumn();
 	}
@@ -928,6 +935,7 @@ static void gui_display_commands()
 		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
 	}
+	displayed_button_count++;
 
 	if (!dojo.PlayMatch)
 	{
@@ -948,6 +956,7 @@ static void gui_display_commands()
 		{
 			config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
 		}
+		displayed_button_count++;
 	}
 
 	if (!settings.dojo.training && config::ShowEjectDisk)
@@ -967,6 +976,7 @@ static void gui_display_commands()
 			gui_state = GuiState::Closed;
 		}
 	}
+	displayed_button_count++;
 
 	}
 
@@ -983,6 +993,7 @@ static void gui_display_commands()
 	{
 		gui_state = GuiState::Cheats;
 	}
+	displayed_button_count++;
 
 	if (dojo.current_gamepad != "virtual_gamepad_uid")
 	{
@@ -992,6 +1003,7 @@ static void gui_display_commands()
 		{
 			gui_state = GuiState::ButtonCheck;
 		}
+		displayed_button_count++;
 	}
 
 #if !defined(__ANDROID__)
@@ -1002,6 +1014,7 @@ static void gui_display_commands()
 		dojo_gui.current_map_button = 0;
 		gui_state = GuiState::QuickMapping;
 	}
+	displayed_button_count++;
 #endif
 
 	if (settings.network.online)
@@ -1016,15 +1029,14 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 	}
-
-	if (settings.dojo.training || config::ShowEjectDisk || dojo.PlayMatch)
+	if (displayed_button_count % 2 == 0)
 		ImGui::Columns(1, nullptr, false);
 	else
 		ImGui::NextColumn();
 
 	ImVec2 exit_size;
 
-	if (settings.dojo.training || config::ShowEjectDisk || dojo.PlayMatch)
+	if (displayed_button_count % 2 == 0)
 		exit_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
 	else
 		exit_size = ScaledVec2(150, 50);
