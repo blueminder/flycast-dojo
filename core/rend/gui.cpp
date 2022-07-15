@@ -623,9 +623,7 @@ void gui_open_settings()
 		}
 		else
 		{
-			gui_state = GuiState::Closed;
-			GamepadDevice::load_system_mappings();
-			emu.start();
+			gui_state = GuiState::Commands;
 		}
 	}
 	else if (gui_state == GuiState::Commands)
