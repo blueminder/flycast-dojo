@@ -812,6 +812,7 @@ static void gui_display_commands()
 
     centerNextWindow();
     ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+    ImGui::SetNextWindowFocus();
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
