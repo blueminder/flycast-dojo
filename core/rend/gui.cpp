@@ -2155,9 +2155,27 @@ static void gui_display_settings()
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("left pane list", ImVec2(160, -60), false, ImGuiWindowFlags_NavFlattened);
+	if (game_started)
+	{
+		ImGui::BeginChild("left pane", ImVec2(160, -60), false, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane list", ImVec2(160, 0), true, ImGuiWindowFlags_NavFlattened);
+	}
+	else
+	{
+		ImGui::BeginChild("left pane", ImVec2(160, 0), false, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane list", ImVec2(160, -60), true, ImGuiWindowFlags_NavFlattened);
+	}
 #else
-	ImGui::BeginChild("left pane list", ImVec2(100, -40), false, ImGuiWindowFlags_NavFlattened);
+	if (game_started)
+	{
+		ImGui::BeginChild("left pane", ImVec2(100, -40), false, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane list", ImVec2(100, 0), true, ImGuiWindowFlags_NavFlattened);
+	}
+	else
+	{
+		ImGui::BeginChild("left pane", ImVec2(100, 0), false, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane list", ImVec2(100, -40), true, ImGuiWindowFlags_NavFlattened);
+	}
 #endif
 
 	for (int i = 0; i < sections.size(); i++)
@@ -2169,13 +2187,42 @@ static void gui_display_settings()
 	}
 
 	ImGui::EndChild();
+
+	if (!game_started)
+	{
+		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		{
+			if (game_started)
+				gui_state = GuiState::Commands;
+			else
+				gui_state = GuiState::Main;
+			if (maple_devices_changed)
+			{
+				maple_devices_changed = false;
+				if (game_started && settings.platform.isConsole())
+				{
+					maple_ReconnectDevices();
+					reset_vmus();
+				}
+			}
+			SaveSettings();
+		}
+	}
+
+	ImGui::EndChild();
 	ImGui::SameLine();
 
 	ImGui::BeginGroup();
 #if defined(__ANDROID__) || defined(__APPLE__)
-	ImGui::BeginChild("item view", ImVec2(0, -60), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
+	if (game_started)
+		ImGui::BeginChild("item view", ImVec2(0, -60), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
+	else
+		ImGui::BeginChild("item view", ImVec2(0, 0), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
 #else
-	ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
+	if (game_started)
+		ImGui::BeginChild("item view", ImVec2(0, -40), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
+	else
+		ImGui::BeginChild("item view", ImVec2(0, 0), false, ImGuiWindowFlags_NavFlattened | ImGuiWindowFlags_DragScrolling);
 #endif
 
 	header(sections[selected].c_str());
@@ -2212,26 +2259,26 @@ static void gui_display_settings()
 
 	ImGui::PopStyleVar();
 
-	if (ImGui::Button("Done", ScaledVec2(100, 30)))
-	{
-		if (game_started)
-			gui_state = GuiState::Commands;
-		else
-			gui_state = GuiState::Main;
-		if (maple_devices_changed)
-		{
-			maple_devices_changed = false;
-			if (game_started && settings.platform.isConsole())
-			{
-				maple_ReconnectDevices();
-				reset_vmus();
-			}
-		}
-		SaveSettings();
-	}
-
 	if (game_started)
-	{	
+	{
+		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		{
+			if (game_started)
+				gui_state = GuiState::Commands;
+			else
+				gui_state = GuiState::Main;
+			if (maple_devices_changed)
+			{
+				maple_devices_changed = false;
+				if (game_started && settings.platform.isConsole())
+				{
+					maple_ReconnectDevices();
+					reset_vmus();
+				}
+			}
+			SaveSettings();
+		}
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
