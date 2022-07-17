@@ -2238,13 +2238,13 @@ static void gui_display_settings()
 #if defined(__ANDROID__) || defined(__APPLE__)
 	if (game_started)
 	{
-		ImGui::BeginChild("left pane", ImVec2(160, -60), false, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane", ImVec2(160, -62), false, ImGuiWindowFlags_NavFlattened);
 		ImGui::BeginChild("left pane list", ImVec2(160, 0), true, ImGuiWindowFlags_NavFlattened);
 	}
 	else
 	{
 		ImGui::BeginChild("left pane", ImVec2(160, 0), false, ImGuiWindowFlags_NavFlattened);
-		ImGui::BeginChild("left pane list", ImVec2(160, -60), true, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild("left pane list", ImVec2(160, -62), true, ImGuiWindowFlags_NavFlattened);
 	}
 #else
 	if (game_started)
