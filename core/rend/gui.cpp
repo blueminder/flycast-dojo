@@ -2962,6 +2962,8 @@ static void gui_display_content()
 
 			if (file_exists(entry_path))
 			{
+				settings.content.path = entry_path;
+
 				if (cfgLoadBool("dojo", "Receiving", false))
 					dojo.LaunchReceiver();
 
