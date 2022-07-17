@@ -3,12 +3,8 @@
 
 inline static void header(const char *title)
 {
-	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	//ImGuiButtonFlags flags = ImGuiButtonFlags_Disabled | ImGuiButtonFlags_FlattenChildren;
-	ImGuiButtonFlags flags = ImGuiButtonFlags_Disabled | ImGuiButtonFlags_NoNavFocus;
-	ImGui::ButtonEx(title, ImVec2(-1, 0), flags);
-	ImGui::PopItemFlag();
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleVar();
 }
 
