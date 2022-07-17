@@ -592,7 +592,7 @@ void gui_open_pause()
 
 void gui_open_settings()
 {
-	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause)
+	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
 		{
@@ -804,6 +804,144 @@ static void displayHotkey(std::string title, DreamcastKey key, std::shared_ptr<G
 	ImGui::Text("%s", mapped_btns.c_str());
 }
 
+void show_hotkeys()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+	std::string pause_text;
+	pause_text = "Hotkeys";
+
+	float font_size = ImGui::CalcTextSize(pause_text.c_str()).x;
+
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 40) / 2), 0));
+#if defined(__APPLE__) || defined(__ANDROID__)
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 60));
+#else
+	ImGui::SetNextWindowSize(ImVec2(font_size + 40, 40));
+#endif
+	ImGui::SetNextWindowBgAlpha(0.65f);
+	ImGui::Begin("#hotkeys_title", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	ImGui::SameLine(
+		(ImGui::GetContentRegionAvail().x / 2) -
+		font_size + (font_size / 2) + 10
+	);
+
+	ImGui::TextUnformatted(pause_text.c_str());
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+
+	if (settings.dojo.training || dojo.PlayMatch)
+	{
+		std::shared_ptr<GamepadDevice> key_gamepad;
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			if (GamepadDevice::GetGamepad(i)->unique_id().find("keyboard") != std::string::npos)
+				key_gamepad = GamepadDevice::GetGamepad(i);
+		}
+
+		if (key_gamepad)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
+				ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+			ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+			ImGui::SetNextWindowBgAlpha(0.55f);
+
+			ImGui::Begin("##hotkeys", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+			std::string hotkey_title;
+			if (dojo.PlayMatch)
+				hotkey_title = "Replay Mode Hotkeys";
+			else
+				hotkey_title = "Training Mode Hotkeys";
+
+			ImGui::SetCursorPosX((330 - ImGui::CalcTextSize(hotkey_title.c_str()).x) * 0.5f);
+			ImGui::Text("%s", hotkey_title.c_str());
+
+			ImGui::Text(" ");
+
+			std::string mapped_btns = "";
+
+			displayHotkey("Pause / Unpause", EMU_BTN_PAUSE, key_gamepad);
+			displayHotkey("Frame Step", EMU_BTN_STEP, key_gamepad);
+			displayHotkey("Fast-forward", EMU_BTN_FFORWARD, key_gamepad);
+
+			if (settings.dojo.training)
+			{
+				displayHotkey("Switch Player", EMU_BTN_SWITCH_PLAYER, key_gamepad);
+				displayHotkey("Quick Save", EMU_BTN_QUICK_SAVE, key_gamepad);
+				displayHotkey("Quick Load", EMU_BTN_JUMP_STATE, key_gamepad);
+
+				std::string mapped_btns = "";
+				ImGui::Text("Record Slot 1/2/3");
+				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_RECORD);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_1);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_2);
+				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
+				ImGui::Text("%s", mapped_btns.c_str());
+
+				mapped_btns = "";
+				ImGui::Text("Play Slot 1/2/3");
+				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_PLAY);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_1);
+				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_2);
+				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
+				ImGui::Text("%s", mapped_btns.c_str());
+			}
+
+			ImGui::End();
+
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar(2);
+		}
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
+
+	std::string msg_text;
+#if defined(__ANDROID__)
+	msg_text = "Press MENU to exit.";
+#else
+	msg_text = "Press MENU or TAB to exit.";
+#endif
+
+	float msg_font_size = ImGui::CalcTextSize(msg_text.c_str()).x;
+
+#if defined(__APPLE__) || defined(__ANDROID__)
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((msg_font_size + 40) / 2), settings.display.height - 60));
+	ImGui::SetNextWindowSize(ImVec2(msg_font_size + 40, 60));
+#else
+	ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((msg_font_size + 40) / 2), settings.display.height - 40));
+	ImGui::SetNextWindowSize(ImVec2(msg_font_size + 40, 40));
+#endif
+	ImGui::SetNextWindowBgAlpha(0.65f);
+	ImGui::Begin("#exit_description", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+	ImGui::SameLine(
+		(ImGui::GetContentRegionAvail().x / 2) -
+		msg_font_size + (msg_font_size / 2) + 10
+	);
+
+	ImGui::TextUnformatted(msg_text.c_str());
+
+	ImGui::End();
+
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(2);
+}
+
 void quick_mapping();
 
 static void gui_display_commands()
@@ -937,6 +1075,19 @@ static void gui_display_commands()
 		gui_state = GuiState::Closed;
 	}
 	displayed_button_count++;
+
+#if !defined(__ANDROID__)
+	if (settings.dojo.training || dojo.PlayMatch)
+	{
+		ImGui::NextColumn();
+
+		if (ImGui::Button("Show Hotkeys", ScaledVec2(150, 50)) && !settings.network.online)
+		{
+			gui_state = GuiState::Hotkeys;
+		}
+		displayed_button_count++;
+	}
+#endif
 
 	if (!dojo.PlayMatch)
 	{
@@ -1078,76 +1229,6 @@ static void gui_display_commands()
 
 	float menu_height = ImGui::GetWindowHeight();
 	ImGui::End();
-
-	if (settings.dojo.training || dojo.PlayMatch)
-	{
-		std::shared_ptr<GamepadDevice> key_gamepad;
-		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
-		{
-			if (GamepadDevice::GetGamepad(i)->unique_id().find("keyboard") != std::string::npos)
-				key_gamepad = GamepadDevice::GetGamepad(i);
-		}
-
-		if (key_gamepad)
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.335f, 0.155f, 0.770f, 1.000f));
-
-			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, (ImGui::GetIO().DisplaySize.y / 2.f) + menu_height + 10),
-				ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
-			ImGui::SetNextWindowSize(ScaledVec2(330, 0));
-			ImGui::SetNextWindowBgAlpha(0.55f);
-
-			ImGui::Begin("##hotkeys", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
-
-			std::string hotkey_title;
-			if (dojo.PlayMatch)
-				hotkey_title = "Replay Mode Hotkeys";
-			else
-				hotkey_title = "Training Mode Hotkeys";
-
-			ImGui::SetCursorPosX((330 - ImGui::CalcTextSize(hotkey_title.c_str()).x) * 0.5f);
-			ImGui::Text("%s", hotkey_title.c_str());
-
-			ImGui::Text(" ");
-
-			std::string mapped_btns = "";
-
-			displayHotkey("Pause / Unpause", EMU_BTN_PAUSE, key_gamepad);
-			displayHotkey("Frame Step", EMU_BTN_STEP, key_gamepad);
-			displayHotkey("Fast-forward", EMU_BTN_FFORWARD, key_gamepad);
-
-			if (settings.dojo.training)
-			{
-				displayHotkey("Switch Player", EMU_BTN_SWITCH_PLAYER, key_gamepad);
-				displayHotkey("Quick Save", EMU_BTN_QUICK_SAVE, key_gamepad);
-				displayHotkey("Quick Load", EMU_BTN_JUMP_STATE, key_gamepad);
-
-				std::string mapped_btns = "";
-				ImGui::Text("Record Slot 1/2/3");
-				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_RECORD);
-				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_1);
-				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_RECORD_2);
-				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
-				ImGui::Text("%s", mapped_btns.c_str());
-
-				mapped_btns = "";
-				ImGui::Text("Play Slot 1/2/3");
-				mapped_btns = getMappedControl(key_gamepad, EMU_BTN_PLAY);
-				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_1);
-				mapped_btns += "/" + getMappedControl(key_gamepad, EMU_BTN_PLAY_2);
-				ImGui::SameLine(330 - ImGui::CalcTextSize(mapped_btns.c_str()).x - 6);
-				ImGui::Text("%s", mapped_btns.c_str());
-			}
-
-			ImGui::End();
-
-			ImGui::PopStyleColor();
-			ImGui::PopStyleVar(2);
-		}
-	}
 }
 
 inline static void header(const char *title)
@@ -3433,6 +3514,9 @@ void gui_display_ui()
 		break;
 	case GuiState::QuickMapping:
 		quick_mapping();
+		break;
+	case GuiState::Hotkeys:
+		show_hotkeys();
 		break;
 	case GuiState::Settings:
 		gui_display_settings();
