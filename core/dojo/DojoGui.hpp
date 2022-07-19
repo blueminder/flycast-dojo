@@ -84,6 +84,8 @@ public:
 	int current_map_button = 0;
 	bool mapping_shown = false;
 	bool pending_map = false;
+
+	bool net_save_download = false;
 };
 
 extern DojoGui dojo_gui;

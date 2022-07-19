@@ -2660,7 +2660,7 @@ static void gui_display_content()
 							scanner.get_mutex().unlock();
 							if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 							{
-								invoke_download_save_popup(game.path, &net_save_download, true);
+								invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
 							}
 							else
 							{
@@ -3025,14 +3025,13 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
     contentpath_warning_popup();
-
+	/*
 	bool net_save_download = false;
 	settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
 	if (!settings.dojo.GameEntry.empty())
 	{
 		dojo.commandLineStart = true;
 		std::string filename;
-
 		try {
 			std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
 			filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
@@ -3089,70 +3088,14 @@ static void gui_display_content()
 		}
 		settings.dojo.GameEntry = "";
 	}
+	*/
 
-	if (net_save_download)
+	if (dojo_gui.net_save_download)
 	{
 		ImGui::OpenPopup("Download Netplay Savestate");
 	}
 
 	download_save_popup();
-
-	if (config::LaunchReplay && config::GameName.get().empty() && !scanner.get_game_list().empty())
-	{
-		std::string s = config::ReplayFilename.get();
-		dojo.ReplayFilename = s;
-
-		std::string delimiter = "__";
-		std::vector<std::string> replay_entry;
-
-		size_t pos = 0;
-		std::string token;
-		while ((pos = s.find(delimiter)) != std::string::npos) {
-		    token = s.substr(0, pos);
-		    //std::cout << token << std::endl;
-			replay_entry.push_back(token);
-		    s.erase(0, pos + delimiter.length());
-		}
-
-	#ifdef _WIN32
-		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
-	#else
-		std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
-	#endif
-
-		settings.dojo.PlayerName = replay_entry[2];
-		settings.dojo.OpponentName = replay_entry[3];
-
-		config::GameName = game_name;
-	}
-
-	if (!config::GameName.get().empty() && !scanner.get_game_list().empty())
-	{
-		auto filename = config::GameName;
-
-		auto game_found = std::find_if(
-			scanner.get_game_list().begin(),
-			scanner.get_game_list().end(),
-			[&filename](GameMedia const& c) {
-				return c.name.find(filename) != std::string::npos;
-			}
-		);
-
-		std::string found_path = game_found->path;
-
-		if(!found_path.empty())
-		{
-			settings.content.path = found_path;
-			if (config::LaunchReplay)
-			{
-				config::DojoEnable = true;
-				dojo.ReplayFilename = config::ReplayFilename.get();
-				dojo.PlayMatch = true;
-			}
-
-			gui_start_game(settings.content.path);
-		}
-	}
 }
 
 static bool systemdir_selected_callback(bool cancelled, std::string selection)
@@ -3433,17 +3376,125 @@ static void gui_display_loadscreen()
 
 void gui_display_ui()
 {
+
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;
 	if (gui_state == GuiState::Main)
 	{
-		if (!settings.content.path.empty())
+		if (config::LaunchReplay)
 		{
-#ifndef __ANDROID__
-			commandLineStart = true;
+			if (config::GameName.get().empty() && !scanner.get_game_list().empty())
+			{
+				std::string s = config::ReplayFilename.get();
+				dojo.ReplayFilename = s;
+
+				std::string delimiter = "__";
+				std::vector<std::string> replay_entry;
+
+				size_t pos = 0;
+				std::string token;
+				while ((pos = s.find(delimiter)) != std::string::npos) {
+				    token = s.substr(0, pos);
+				    //std::cout << token << std::endl;
+					replay_entry.push_back(token);
+				    s.erase(0, pos + delimiter.length());
+				}
+
+#ifdef _WIN32
+				std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("\\") + 1);
+#else
+				std::string game_name = replay_entry[0].substr(replay_entry[0].rfind("/") + 1);
 #endif
-			gui_start_game(settings.content.path);
-			return;
+
+				settings.dojo.PlayerName = replay_entry[2];
+				settings.dojo.OpponentName = replay_entry[3];
+
+				config::GameName = game_name;
+			}
+
+			if (!config::GameName.get().empty() && !scanner.get_game_list().empty())
+			{
+				auto filename = config::GameName;
+
+				auto game_found = std::find_if(
+					scanner.get_game_list().begin(),
+					scanner.get_game_list().end(),
+					[&filename](GameMedia const& c) {
+						return c.name.find(filename) != std::string::npos;
+					}
+				);
+
+				std::string found_path = game_found->path;
+
+				if(!found_path.empty())
+				{
+					settings.content.path = found_path;
+					if (config::LaunchReplay)
+					{
+						config::DojoEnable = true;
+						dojo.ReplayFilename = config::ReplayFilename.get();
+						dojo.PlayMatch = true;
+					}
+
+					gui_start_game(settings.content.path);
+				}
+			}
+		}
+		else
+		{
+			settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
+			if (!settings.dojo.GameEntry.empty())
+			{
+				try {
+					std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
+					if (file_exists(entry_path))
+					{
+						std::string filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
+						auto game_name = stringfix::remove_extension(filename);
+
+						if (cfgLoadBool("dojo", "Receiving", false))
+							dojo.LaunchReceiver();
+
+						std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
+						if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
+						{
+							while(!dojo.receiver_header_read);
+
+							if (dojo.replay_version == 3)
+							{
+								if (dojo.save_checksum != settings.dojo.state_md5)
+								{
+									//ghc::filesystem::remove(net_state_path);
+								}
+							}
+						}
+
+						if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
+							(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended))
+						{
+							if (!dojo_file.start_save_download)
+								invoke_download_save_popup(entry_path, &dojo_gui.net_save_download, true);
+						}
+						else
+						{
+							settings.content.path = entry_path;
+						}
+						settings.dojo.GameEntry = "";
+					}
+					else
+						throw std::runtime_error("File not found.");
+				}
+				catch (...) { }
+			}
+			if (!settings.content.path.empty())
+			{
+#ifndef __ANDROID__
+				commandLineStart = true;
+#endif
+				gui_start_game(settings.content.path);
+				return;
+			}
 		}
 	}
 
@@ -3827,6 +3878,7 @@ void download_save_popup()
 					dojo_file.save_download_ended = false;
 					dojo_file.post_save_launch = false;
 					std::string game_path = dojo_file.game_path;
+					settings.content.path = game_path;
 					dojo_file.game_path = "";
 					ImGui::CloseCurrentPopup();
 					gui_start_game(game_path);
