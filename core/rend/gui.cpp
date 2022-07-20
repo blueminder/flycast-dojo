@@ -112,15 +112,15 @@ static void emuEventCallback(Event event, void *)
 
 			if ((config::Receiving || dojo.PlayMatch))
 			{
-				if (!settings.dojo.state_commit.empty())
+				if (strlen(settings.dojo.state_commit.c_str()) > 0)
 				{
 					std::string commit_net_save_path = net_save_path + "." + settings.dojo.state_commit;
-					if(ghc::filesystem::exists(commit_net_save_path))
+					if(file_exists(commit_net_save_path))
 					{
 						std::cout << "LOADING " << commit_net_save_path << std::endl;
 						dc_loadstate(commit_net_save_path);
 					}
-					else if (ghc::filesystem::exists(net_save_path))
+					else if (file_exists(net_save_path))
 					{
 						std::cout << "LOADING " << net_save_path << std::endl;
 						dc_loadstate(net_save_path);
@@ -128,7 +128,7 @@ static void emuEventCallback(Event event, void *)
 				}
 				else
 				{
-					if (ghc::filesystem::exists(net_save_path))
+					if (file_exists(net_save_path))
 					{
 						std::cout << "LOADING " << net_save_path << std::endl;
 						dc_loadstate(net_save_path);
