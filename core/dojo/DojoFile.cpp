@@ -651,14 +651,15 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 
 	save_download_ended = true;
 
+	std::string commit_net_state_file;
 	// if not latest, append savestate filename with commit
 	if (!commit.empty())
 	{
-		net_state_file = net_state_file + "." + commit;
+		commit_net_state_file = net_state_file + "." + commit;
 #if defined(__APPLE__) || defined(__ANDROID__)
 		ghc::filesystem::copy(filename, get_writable_config_path("") + "/data/" + net_state_file);
 #else
-		ghc::filesystem::copy(filename, "data/" + net_state_file);
+		ghc::filesystem::copy(filename, "data/" + commit_net_state_file);
 #endif
 	}
 

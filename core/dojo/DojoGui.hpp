@@ -86,6 +86,7 @@ public:
 	bool pending_map = false;
 
 	bool net_save_download = false;
+	bool buffer_captured = false;
 };
 
 extern DojoGui dojo_gui;

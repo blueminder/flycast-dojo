@@ -330,6 +330,9 @@ void DojoGui::gui_display_stream_wait(float scaling)
 {
 	//emu.term();
 
+	if(buffer_captured)
+		gui_state = GuiState::Loading;
+
 	if (!config::GGPOEnable)
 		dojo.pause();
 
@@ -359,7 +362,7 @@ void DojoGui::gui_display_stream_wait(float scaling)
 
 	if (dojo.maple_inputs.size() > config::RxFrameBuffer.get())
 	{
-		gui_state = GuiState::Closed;
+		buffer_captured = true;
 	}
 }
 
