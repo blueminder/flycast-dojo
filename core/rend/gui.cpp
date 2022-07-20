@@ -1161,7 +1161,10 @@ static void gui_display_commands()
 #if !defined(__ANDROID__)
 	ImGui::NextColumn();
 
-	if (ImGui::Button("Quick Mapping", ScaledVec2(150, 50)) && !settings.network.online)
+
+	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+	std::string quick_map_title = "Quick Mapping\n(" + gamepad->name() + ")";
+	if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
 	{
 		dojo_gui.current_map_button = 0;
 		gui_state = GuiState::QuickMapping;
