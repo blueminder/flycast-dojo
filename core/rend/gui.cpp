@@ -644,6 +644,7 @@ void gui_start_game(const std::string& path)
 	auto game_name = stringfix::remove_extension(filename);
 	dojo.game_name = game_name;
 	dojo.current_delay = config::GGPODelay.get();
+	dojo.commandLineStart = commandLineStart;
 
 	if (cfgLoadBool("network", "GGPO", false)
 		&& !config::Receiving

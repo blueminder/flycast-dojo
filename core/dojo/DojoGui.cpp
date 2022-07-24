@@ -458,8 +458,11 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 			if (!config::EnableMatchCode)
 			{
-				config::NetworkServer.set(std::string(si, strlen(si)));
-				cfgSaveStr("network", "server", config::NetworkServer.get());
+				if (!dojo.commandLineStart)
+				{
+					config::NetworkServer.set(std::string(si, strlen(si)));
+					cfgSaveStr("network", "server", config::NetworkServer.get());
+				}
 
 				config::DojoEnable = false;
 			}
