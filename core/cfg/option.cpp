@@ -56,7 +56,7 @@ Option<bool> AutoLatency("aica.AutoLatency",
 #endif
 		);
 
-OptionString AudioBackend("backend", "auto", "audio");
+OptionString AudioBackend("backend", "sdl2", "audio");
 AudioVolumeOption AudioVolume;
 
 // Rendering
