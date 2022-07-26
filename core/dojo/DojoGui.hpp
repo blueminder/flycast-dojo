@@ -6,6 +6,7 @@
 
 #include "dojo/DojoFile.hpp"
 
+#include <algorithm>
 #include <mutex>
 #include "rend/gui.h"
 #include "cfg/cfg.h"
@@ -76,6 +77,7 @@ public:
 	std::string current_public_ip = "";
 
 	void show_last_inputs_overlay();
+	void display_btn(std::string btn_str, bool* any_found);
 	void display_input_str(std::string input_str);
 
 	bool ggpo_join_screen = false;

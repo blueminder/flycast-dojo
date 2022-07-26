@@ -1024,108 +1024,89 @@ void DojoGui::show_playback_menu(float scaling, bool paused)
 	}
 }
 
+void DojoGui::display_btn(std::string btn_str, bool* any_found)
+{
+	std::vector<std::string> btns = { "1", "2", "3", "4", "5", "6",
+			 "X", "Y", "LT", "A", "B", "RT",
+			 "C", "Z", "D", "Start"};
+
+	if (std::any_of(btns.begin(), btns.end(), [btn_str](std::string str){ return btn_str == str; }))
+	{
+		ImGui::SameLine();
+		*any_found = true;
+	}
+
+	if (btn_str == "1")
+		ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_ONE);
+	else if (btn_str == "2")
+		ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_TWO);
+	else if (btn_str == "3")
+		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_THREE);
+	else if (btn_str == "4")
+		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s    ", ICON_KI_BUTTON_FOUR);
+	else if (btn_str == "5")
+		ImGui::TextColored(ImVec4(0, 175, 0, 1), "%s    ", ICON_KI_BUTTON_FIVE);
+	else if (btn_str == "6")
+		ImGui::TextColored(ImVec4(255, 0, 175, 1), "%s    ", ICON_KI_BUTTON_SIX);
+	else if (btn_str == "X")
+		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_KI_BUTTON_X);
+	else if (btn_str == "Y")
+		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_Y);
+	else if (btn_str == "LT")
+		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_L);
+	else if (btn_str == "A")
+		ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_A);
+	else if (btn_str == "B")
+		ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_B);
+	else if (btn_str == "RT")
+		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_R);
+	else if (btn_str == "C")
+		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_C);
+	else if (btn_str == "Z")
+		ImGui::TextColored(ImVec4(255, 75, 255, 1), "%s", ICON_KI_BUTTON_Z);
+	else if (btn_str == "D")
+		ImGui::TextColored(ImVec4(0, 0, 255, 1), "%s", ICON_KI_BUTTON_D);
+	else if (btn_str == "Start")
+		ImGui::Text("%s", ICON_KI_BUTTON_START);
+}
+
 void DojoGui::display_input_str(std::string input_str)
 {
 	bool any_found = false;
 	// arcade inputs
 	if (input_str.find("1") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_ONE);
-		any_found = true;
-	}
+		display_btn("1", &any_found);
 	if (input_str.find("2") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_TWO);
-		any_found = true;
-	}
+		display_btn("2", &any_found);
 	if (input_str.find("3") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_THREE);
-		any_found = true;
-	}
+		display_btn("3", &any_found);
 	if (input_str.find("4") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s    ", ICON_KI_BUTTON_FOUR);
-		any_found = true;
-	}
+		display_btn("4", &any_found);
 	if (input_str.find("5") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0, 175, 0, 1), "%s    ", ICON_KI_BUTTON_FIVE);
-		any_found = true;
-	}
+		display_btn("5", &any_found);
 	if (input_str.find("6") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 0, 175, 1), "%s    ", ICON_KI_BUTTON_SIX);
-		any_found = true;
-	}
+		display_btn("6", &any_found);
 	// dc inputs
 	if (input_str.find("X") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_KI_BUTTON_X);
-		any_found = true;
-	}
+		display_btn("X", &any_found);
 	if (input_str.find("Y") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_Y);
-		any_found = true;
-	}
+		display_btn("Y", &any_found);
 	if (input_str.find("LT") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_L);
-		any_found = true;
-	}
+		display_btn("LT", &any_found);
 	if (input_str.find("A") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 0, 0, 1), "%s", ICON_KI_BUTTON_A);
-		any_found = true;
-	}
+		display_btn("A", &any_found);
 	if (input_str.find("B") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_KI_BUTTON_B);
-		any_found = true;
-	}
+		display_btn("B", &any_found);
 	if (input_str.find("RT") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_R);
-		any_found = true;
-	}
+		display_btn("RT", &any_found);
 	if (input_str.find("C") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_C);
-		any_found = true;
-	}
+		display_btn("C", &any_found);
 	if (input_str.find("Z") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(255, 75, 255, 1), "%s", ICON_KI_BUTTON_Z);
-		any_found = true;
-	}
+		display_btn("Z", &any_found);
 	if (input_str.find("D") != std::string::npos)
-	{
-		ImGui::SameLine();
-		//ImGui::Text("D");
-		ImGui::TextColored(ImVec4(0, 0, 255, 1), "%s", ICON_KI_BUTTON_D);
-		any_found = true;
-	}
+		display_btn("D", &any_found);
 	if (input_str.find("Start") != std::string::npos)
-	{
-		ImGui::SameLine();
-		ImGui::Text("%s", ICON_KI_BUTTON_START);
-		any_found = true;
-	}
+		display_btn("Start", &any_found);
 	if (!any_found)
 		ImGui::Text("");
 }
