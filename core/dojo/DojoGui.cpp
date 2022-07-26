@@ -1061,7 +1061,7 @@ void DojoGui::display_btn(std::string btn_str, bool* any_found)
 	else if (btn_str == "RT")
 		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_R);
 	else if (btn_str == "C")
-		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s", ICON_KI_BUTTON_C);
+		ImGui::TextColored(ImVec4(255, 255, 255, 1), "%s    ", ICON_KI_BUTTON_C);
 	else if (btn_str == "Z")
 		ImGui::TextColored(ImVec4(255, 75, 255, 1), "%s", ICON_KI_BUTTON_Z);
 	else if (btn_str == "D")
