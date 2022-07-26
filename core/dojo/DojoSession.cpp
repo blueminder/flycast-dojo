@@ -1702,6 +1702,7 @@ void DojoSession::ResetTraining()
 	{
 		displayed_inputs[i].clear();
 		displayed_inputs_str[i].clear();
+		last_displayed_inputs_str[i] = "";
 		displayed_inputs_duration[i].clear();
 		displayed_dirs[i].clear();
 		displayed_dirs_str[i].clear();

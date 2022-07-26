@@ -78,7 +78,7 @@ public:
 
 	void show_last_inputs_overlay();
 	void display_btn(std::string btn_str, bool* any_found);
-	void display_input_str(std::string input_str);
+	void display_input_str(std::string input_str, std::string prev_str = "");
 
 	bool ggpo_join_screen = false;
 	bool test_game_screen = false;

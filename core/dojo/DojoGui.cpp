@@ -1070,43 +1070,40 @@ void DojoGui::display_btn(std::string btn_str, bool* any_found)
 		ImGui::Text("%s", ICON_KI_BUTTON_START);
 }
 
-void DojoGui::display_input_str(std::string input_str)
+void DojoGui::display_input_str(std::string input_str, std::string prev_str)
 {
 	bool any_found = false;
-	// arcade inputs
-	if (input_str.find("1") != std::string::npos)
-		display_btn("1", &any_found);
-	if (input_str.find("2") != std::string::npos)
-		display_btn("2", &any_found);
-	if (input_str.find("3") != std::string::npos)
-		display_btn("3", &any_found);
-	if (input_str.find("4") != std::string::npos)
-		display_btn("4", &any_found);
-	if (input_str.find("5") != std::string::npos)
-		display_btn("5", &any_found);
-	if (input_str.find("6") != std::string::npos)
-		display_btn("6", &any_found);
-	// dc inputs
-	if (input_str.find("X") != std::string::npos)
-		display_btn("X", &any_found);
-	if (input_str.find("Y") != std::string::npos)
-		display_btn("Y", &any_found);
-	if (input_str.find("LT") != std::string::npos)
-		display_btn("LT", &any_found);
-	if (input_str.find("A") != std::string::npos)
-		display_btn("A", &any_found);
-	if (input_str.find("B") != std::string::npos)
-		display_btn("B", &any_found);
-	if (input_str.find("RT") != std::string::npos)
-		display_btn("RT", &any_found);
-	if (input_str.find("C") != std::string::npos)
-		display_btn("C", &any_found);
-	if (input_str.find("Z") != std::string::npos)
-		display_btn("Z", &any_found);
-	if (input_str.find("D") != std::string::npos)
-		display_btn("D", &any_found);
-	if (input_str.find("Start") != std::string::npos)
-		display_btn("Start", &any_found);
+	std::vector<std::string> arcade_btns = {"1", "2", "3", "4", "5", "6", "C", "Z", "D", "Start"};
+	std::vector<std::string> dc_btns = {"X", "Y", "LT", "A", "B", "RT", "C", "Start"};
+
+	std::vector<std::string> buttons = dc_btns;
+	if (settings.platform.isArcade())
+		buttons = arcade_btns;
+
+	std::string new_btns = "";
+	if (prev_str.length() > 0)
+	{
+		for (int i = 0; i < buttons.size(); i++)
+		{
+			if (prev_str.find(buttons[i]) != std::string::npos &&
+				input_str.find(buttons[i]) != std::string::npos)
+				display_btn(buttons[i], &any_found);
+			else if (prev_str.find(buttons[i]) == std::string::npos &&
+					 input_str.find(buttons[i]) != std::string::npos)
+				new_btns.append(buttons[i]);
+		}
+	}
+	else
+	{
+		new_btns = input_str;
+	}
+
+	for (int i = 0; i < buttons.size(); i++)
+	{
+		if (new_btns.find(buttons[i]) != std::string::npos)
+			display_btn(buttons[i], &any_found);
+	}
+
 	if (!any_found)
 		ImGui::Text("");
 }
@@ -1165,10 +1162,15 @@ void DojoGui::show_last_inputs_overlay()
 			u32 input_duration = dojo.FrameNumber - input_frame_num;
 
 			dojo.displayed_inputs_duration[di][input_frame_num] = input_duration;
+			if (dojo.displayed_inputs_str[di].size() > 1)
+			{
+				it++;
+				dojo.last_displayed_inputs_str[di] = dojo.displayed_inputs_str[di][it->first];
+			}
 
 			for(auto rit = dojo.displayed_inputs[di].rbegin(); rit != dojo.displayed_inputs[di].rend(); ++rit)
 			{
-				ImGui::Text("%03u", dojo.displayed_inputs_duration[di][rit->first], dojo.displayed_dirs_str[di][rit->first].c_str(), dojo.displayed_inputs_str[di][rit->first].c_str());
+				ImGui::Text("%03u", dojo.displayed_inputs_duration[di][rit->first]);
 				ImGui::SameLine();
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
 				if (config::UseAnimeInputNotation)
@@ -1196,11 +1198,10 @@ void DojoGui::show_last_inputs_overlay()
 					else if (num == 9)
 						ImGui::Text("%s", ICON_KI_ARROW_TOP_RIGHT);
 				}
-				//ImGui::Text("%6s", dojo.displayed_dirs_str[di][rit->first].c_str(), dojo.displayed_inputs_str[di][rit->first].c_str());
 				ImGui::PopStyleColor();
 				ImGui::SameLine();
-				display_input_str(dojo.displayed_inputs_str[di][rit->first]);
-				//ImGui::Text("%s", dojo.displayed_inputs_str[0][rit->first].c_str());
+				display_input_str(dojo.displayed_inputs_str[di][rit->first], dojo.last_displayed_inputs_str[di]);
+				dojo.last_displayed_inputs_str[di] = dojo.displayed_inputs_str[di][rit->first];
 			}
 			ImGui::End();
 

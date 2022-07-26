@@ -301,6 +301,7 @@ public:
 
 	std::array<std::map<u32, std::bitset<18>>, 2> displayed_inputs;
 	std::array<std::map<u32, std::string>, 2> displayed_inputs_str;
+	std::map<u32, std::string> last_displayed_inputs_str;
 	std::array<std::map<u32, std::string>, 2> displayed_dirs_str;
 	std::array<std::map<u32, u32>, 2> displayed_inputs_duration;
 	std::array<std::bitset<18>, 2> last_held_input;
