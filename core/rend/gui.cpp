@@ -746,8 +746,6 @@ void gui_stop_game(const std::string& message)
 	if (dojo.PlayMatch && dojo.replay_version > 1)
 		commandLineStart = true;
 
-	item_current_idx = 0;
-
 	if (!commandLineStart && !config::TestGame.get())
 	{
 		// Exit to main menu
