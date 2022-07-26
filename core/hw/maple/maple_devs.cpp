@@ -63,7 +63,9 @@ struct maple_sega_controller: maple_base
 
 	virtual u32 transform_kcode(u32 kcode)
 	{
-		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		// match hitbox SOCD behavior (up + down = up)
+		if ((kcode & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
+			kcode |= DC_DPAD_DOWN;
 		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
