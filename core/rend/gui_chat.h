@@ -50,7 +50,8 @@ class Chat
 public:
 	void toggle_timeout()
 	{
-		if (config::GGPOChatTimeoutToggle && !manual_open)
+		if (config::GGPOChatTimeoutToggle &&
+			(config::GGPOChatTimeoutToggleSend || !manual_open))
 		{
 			enable_timeout = true;
 			launch_time = std::chrono::steady_clock::now();
@@ -110,6 +111,8 @@ public:
 					buf[0] = '\0';
 					newMessage = true;
 					enable_timeout = false;
+					if (config::GGPOChatTimeoutToggleSend)
+						toggle_timeout();
 				}
 				ImGui::SetKeyboardFocusHere(-1);
 			}

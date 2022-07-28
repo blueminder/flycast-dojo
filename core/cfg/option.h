@@ -495,6 +495,7 @@ extern Option<int> GGPOAnalogAxes;
 extern Option<int> GGPORemotePort;
 extern Option<bool> GGPOChat;
 extern Option<bool> GGPOChatTimeoutToggle;
+extern Option<bool> GGPOChatTimeoutToggleSend;
 extern Option<int> GGPOChatTimeout;
 
 #ifdef SUPPORT_DISPMANX

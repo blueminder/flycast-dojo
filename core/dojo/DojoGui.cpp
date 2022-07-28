@@ -1830,7 +1830,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
 			if (config::GGPOChat)
 			{
-				OptionCheckbox("Enable Chat Window Timeout", config::GGPOChatTimeoutToggle, "Automatically close chat window after an assigned timeout");
+				OptionCheckbox("Enable Chat Window Timeout", config::GGPOChatTimeoutToggle, "Automatically close chat window after an assigned timeout after receiving message");
 				if (config::GGPOChatTimeoutToggle)
 				{
 					char chatTimeout[256];
@@ -1839,6 +1839,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 					ImGui::SameLine();
 					ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
 					config::GGPOChatTimeout.set(atoi(chatTimeout));
+					OptionCheckbox("Enable Chat Window Timeout On Send", config::GGPOChatTimeoutToggleSend, "Automatically close chat window after an assigned timeout after sending message");
 				}
 			}
 		}
