@@ -1110,6 +1110,9 @@ void DojoGui::display_input_str(std::string input_str, std::string prev_str)
 
 void DojoGui::show_last_inputs_overlay()
 {
+	if (settings.dojo.training && config::Delay > 0)
+		return;
+
 	for (int di = 0; di < 2; di++)
 	{
 		if (!dojo.displayed_inputs[di].empty())
@@ -2102,7 +2105,7 @@ void DojoGui::insert_training_tab(ImVec2 normal_padding)
 	{
 		OptionCheckbox("Show Input Display", config::ShowInputDisplay);
 		ImGui::SameLine();
-		ShowHelpMarker("Shows controller input history in Training Mode");
+		ShowHelpMarker("Shows controller input history in Training Mode\n(Temporarily disabled for Offline Delay > 0)");
 
 		if (config::ShowInputDisplay)
 		{

@@ -1090,7 +1090,6 @@ static void gui_display_commands()
 
 	if (!dojo.PlayMatch)
 	{
-	ImGui::NextColumn();
 
 	if (settings.network.online || config::GGPOEnable)
 	{
@@ -1098,8 +1097,9 @@ static void gui_display_commands()
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
-	if (settings.dojo.training)
+	if (settings.dojo.training && config::Delay == 0)
 	{
+		ImGui::NextColumn();
 		std::ostringstream input_display_text;
 		input_display_text << "Input Display ";
 		input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
@@ -1112,6 +1112,7 @@ static void gui_display_commands()
 
 	if (!settings.dojo.training && config::ShowEjectDisk)
 	{
+	ImGui::NextColumn();
 
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
