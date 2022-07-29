@@ -1051,22 +1051,36 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 
-	ImGui::NextColumn();
 	}
 
-	if (dojo.PlayMatch)
+	if (settings.dojo.training && config::Delay == 0 || dojo.PlayMatch)
 	{
+		if (!dojo.PlayMatch)
+			ImGui::NextColumn();
+
 		std::ostringstream input_display_text;
 		input_display_text << "Input Display ";
-		input_display_text << (config::ShowReplayInputDisplay.get() ? "On" : "Off");
-		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+
+		if (dojo.PlayMatch)
 		{
-			config::ShowReplayInputDisplay = (config::ShowReplayInputDisplay.get() ? false : true);
+			input_display_text << (config::ShowReplayInputDisplay.get() ? "On" : "Off");
+			if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+			{
+				config::ShowReplayInputDisplay = (config::ShowReplayInputDisplay.get() ? false : true);
+			}
+		}
+		else
+		{
+			input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
+			if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+			{
+				config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
+			}
 		}
 		displayed_button_count++;
-
-		ImGui::NextColumn();
 	}
+
+	ImGui::NextColumn();
 
 	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
@@ -1097,19 +1111,6 @@ static void gui_display_commands()
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
-	if (settings.dojo.training && config::Delay == 0)
-	{
-		ImGui::NextColumn();
-		std::ostringstream input_display_text;
-		input_display_text << "Input Display ";
-		input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
-		if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
-		{
-			config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
-		}
-		displayed_button_count++;
-	}
-
 	if (!settings.dojo.training && config::ShowEjectDisk)
 	{
 	ImGui::NextColumn();
@@ -1129,11 +1130,7 @@ static void gui_display_commands()
 		}
 	}
 	displayed_button_count++;
-
 	}
-
-	if (settings.dojo.training || config::ShowEjectDisk)
-		ImGui::NextColumn();
 
 	// Cheats
 	if (settings.network.online)
@@ -1141,6 +1138,9 @@ static void gui_display_commands()
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
+
+	ImGui::NextColumn();
+
 	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
