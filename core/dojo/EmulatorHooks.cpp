@@ -563,7 +563,7 @@ void DojoSession::AddToInputDisplay(MapleInputState inputState[4])
     u32 inputSize = sizeof(u32) + analogAxes;
     std::vector<u8> inputs = dojo.maple_inputs[dojo.FrameNumber];
 
-    constexpr int MAX_PLAYERS = 2;
+    int MAX_PLAYERS = config::NumPlayers.get();
     constexpr u32 BTN_TRIGGER_LEFT = DC_BTN_RELOAD << 1;
     constexpr u32 BTN_TRIGGER_RIGHT = DC_BTN_RELOAD << 2;
 

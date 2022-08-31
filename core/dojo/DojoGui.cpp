@@ -394,7 +394,8 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 		else
 		{
-			if (config::NetworkServer.get().empty())
+			if ((!config::ManualPlayerAssign && config::NetworkServer.get().empty()) ||
+				(config::ManualPlayerAssign && config::NetworkP0Server.get().empty()))
 			{
 				if (config::ShowPublicIP)
 				{
