@@ -139,6 +139,10 @@ Option<bool> NetworkEnable("Enable", false, "network");
 Option<bool> ActAsServer("ActAsServer", false, "network");
 OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
+OptionString NetworkP0Server("server0", "", "network");
+OptionString NetworkP1Server("server1", "", "network");
+OptionString NetworkP2Server("server2", "", "network");
+OptionString NetworkP3Server("server3", "", "network");
 Option<int> LocalPort("LocalPort", NaomiNetwork::SERVER_PORT, "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
 Option<bool> EnableUPnP("EnableUPnP", false, "network");
@@ -148,11 +152,18 @@ Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<int> GGPORemotePort("GGPORemotePort", 19713, "network");
+Option<int> GGPOP0Port("GGPOP0Port", 19713, "network");
+Option<int> GGPOP1Port("GGPOP1Port", 19714, "network");
+Option<int> GGPOP2Port("GGPOP2Port", 19715, "network");
+Option<int> GGPOP3Port("GGPOP3Port", 19716, "network");
 Option<bool> GGPOChat("GGPOChat", true, "network");
 Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<bool> GGPOChatTimeoutToggleSend("GGPOChatTimeoutToggleSend", false, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
+Option<int> NumPlayers("NumPlayers", 2, "network");
+Option<int> PlayerNum("PlayerNum", 0, "network");
+Option<bool> ManualPlayerAssign("ManualPlayerAssign", false, "network");
 
 // Dojo
 

@@ -92,8 +92,7 @@ namespace ggpo
 {
 using namespace std::chrono;
 
-constexpr int MAX_PLAYERS = 2;
-
+constexpr int MAX_PLAYERS = 4;
 constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
 constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
 
@@ -108,6 +107,7 @@ struct VerificationData
 
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
+static GGPOPlayerHandle playerHandles[MAX_PLAYERS];
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
 static bool synchronized;
@@ -487,6 +487,7 @@ void startSession(int localPort, int localPlayerNum)
 	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
+	NOTICE_LOG(NETWORK, "P%d GGPO: Port %d", localPlayerNum, localPort);
 	if (settings.platform.isConsole())
 		analogAxes = config::GGPOAnalogAxes;
 	else
@@ -527,7 +528,7 @@ void startSession(int localPort, int localPlayerNum)
 		MD5Sum().getDigest(verif.stateMD5);
 	}
 
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), config::NumPlayers, inputSize, localPort,
 			&verif, sizeof(verif));
 	if (result != GGPO_OK)
 	{
@@ -543,42 +544,128 @@ void startSession(int localPort, int localPlayerNum)
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
 
 	ggpo::localPlayerNum = localPlayerNum;
-	GGPOPlayer player{ sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, localPlayerNum + 1 };
-	result = ggpo_add_player(ggpoSession, &player, &localPlayer);
-	if (result != GGPO_OK)
-	{
-		WARN_LOG(NETWORK, "GGPO cannot add local player: %d", result);
-		stopSession();
-		throw FlycastException("GGPO cannot add local player");
-	}
-	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
-	std::string peerIp = config::NetworkServer.get();
-	if (peerIp.empty())
-		peerIp = "127.0.0.1";
+	int num_players = config::NumPlayers;
+	NOTICE_LOG(NETWORK, "GGPO: P%d num_players %d", localPlayerNum, num_players);
 
-	u32 peerPort;
-	if (peerIp == "127.0.0.1" && config::GGPOPort.get() == config::GGPORemotePort.get())
-	{
-		if (config::ActAsServer)
-			peerPort = config::GGPORemotePort.get() - 1;
+	GGPOPlayer players[GGPO_MAX_SPECTATORS + GGPO_MAX_PLAYERS];
+
+    for (int i = 0; i < num_players; i++) {
+		players[i].size = sizeof(players[i]);
+		players[i].player_num = i + 1;
+
+		if (ggpo::localPlayerNum == i)
+		{
+			players[i].type = GGPO_PLAYERTYPE_LOCAL;
+			continue;
+		}
+
+		std::string peerIp;
+		if (i == 0 || i == 1)
+		{
+			if (num_players == 2 && !config::ManualPlayerAssign)
+			{
+				peerIp = config::NetworkServer.get();
+			}
+			else
+			{
+				if (i == 0)
+					peerIp = config::NetworkP0Server.get();
+				else if (i == 1)
+					peerIp = config::NetworkP1Server.get();
+			}
+		}
 		else
-			peerPort = config::GGPORemotePort.get();
+		{
+			if (i == 2)
+				peerIp = config::NetworkP2Server.get();
+			else if (i == 3)
+				peerIp = config::NetworkP3Server.get();
+		}
+
+		if (peerIp.empty())
+			peerIp = "127.0.0.1";
+
+		u32 peerPort;
+		if (num_players == 2 && !config::ManualPlayerAssign)
+		{
+			if (i == 0 || i == 1)
+			{
+				peerPort = config::GGPORemotePort.get();
+			}
+		}
+		else
+		{
+			if (i == 0)
+				peerPort = config::GGPOP0Port.get();
+			else if (i == 1)
+				peerPort = config::GGPOP1Port.get();
+			else if (i == 2)
+				peerPort = config::GGPOP2Port.get();
+			else if (i == 3)
+				peerPort = config::GGPOP3Port.get();
+		}
+
+		if (num_players == 2 && !config::ManualPlayerAssign)
+		{
+			if (peerIp == "127.0.0.1" && config::GGPOPort.get() == config::GGPORemotePort.get())
+			{
+				if (config::ActAsServer)
+					peerPort = config::GGPORemotePort.get() - 1;
+				else
+					peerPort = config::GGPORemotePort.get();
+			}
+			else
+			{
+				peerPort = config::GGPORemotePort.get();
+			}
+		}
+
+		players[i].type = GGPO_PLAYERTYPE_REMOTE;
+		strcpy(players[i].u.remote.ip_address, peerIp.c_str());
+		players[i].u.remote.port = peerPort;
 	}
-	else
-	{
-		peerPort = config::GGPORemotePort.get();
-	}
-	player.type = GGPO_PLAYERTYPE_REMOTE;
-	strcpy(player.u.remote.ip_address, peerIp.c_str());
-	player.u.remote.port = peerPort;
-	player.player_num = (1 - localPlayerNum) + 1;
-	result = ggpo_add_player(ggpoSession, &player, &remotePlayer);
-	if (result != GGPO_OK)
-	{
-		WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
-		stopSession();
-		throw FlycastException("GGPO cannot add remote player");
+
+	// add all players
+	bool remoteAssigned = false;
+	for (int i = 0; i < num_players; i++) {
+		std::string player_type;
+		if (players[i].type == GGPO_PLAYERTYPE_LOCAL)
+		{
+			player_type = "local";
+			result = ggpo_add_player(ggpoSession, players + i, &localPlayer);
+		}
+		else if (players[i].type == GGPO_PLAYERTYPE_REMOTE)
+		{
+			player_type = "remote";
+			result = ggpo_add_player(ggpoSession, players + i, &playerHandles[i]);
+		}
+
+		if (result != GGPO_OK)
+		{
+			std::string error_txt;
+			error_txt = "GGPO: P" + std::to_string(localPlayerNum) + " cannot add " + player_type + " player " + std::to_string(i) + ": " + std::to_string(result);
+			WARN_LOG(NETWORK, "%s", error_txt.c_str());
+			stopSession();
+			throw FlycastException(error_txt);
+		}
+		else
+		{
+			std::string notice_txt = "P" + std::to_string(i) + ": " + player_type + " player" + std::to_string(i) + " added";
+			NOTICE_LOG(NETWORK, "%s", notice_txt.c_str());
+		}
+
+		if (num_players == 2 && !config::ManualPlayerAssign)
+		{
+			if (localPlayerNum == 0)
+				ggpo::remotePlayer = playerHandles[1];
+			else
+				ggpo::remotePlayer = playerHandles[0];
+		}
+		else
+		{
+			ggpo::remotePlayer = playerHandles[i];
+		}
 	}
 	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
@@ -605,10 +692,10 @@ void getInput(MapleInputState inputState[4])
 		getLocalInput(inputState);
 		return;
 	}
-	for (int player = 0; player < 4; player++)
+	for (int player = 0; player < MAX_PLAYERS; player++)
 		inputState[player] = {};
 
-	std::vector<u8> inputData(inputSize * MAX_PLAYERS);
+	std::vector<u8> inputData(inputSize * config::NumPlayers);
 	// should not call any callback
 	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputData[0], inputData.size(), nullptr);
 	if (error != GGPO_OK)
@@ -617,7 +704,7 @@ void getInput(MapleInputState inputState[4])
 		throw FlycastException("GGPO error");
 	}
 
-	for (int player = 0; player < MAX_PLAYERS; player++)
+	for (int player = 0; player < config::NumPlayers; player++)
 	{
 		MapleInputState& state = inputState[player];
 		const Inputs *inputs = (Inputs *)&inputData[player * inputSize];
@@ -794,15 +881,22 @@ std::future<bool> startNetwork()
 				config::GGPODelay = dojo.current_delay;
 				std::cout << "Server " << config::ActAsServer.get() << " " << config::NetworkServer.get() << std::endl;
 				std::cout << "GGPO Delay " << config::GGPODelay.get() << std::endl; 
-				if (config::ActAsServer)
-					startSession(config::GGPOPort.get(), 0);
+				if (config::NumPlayers == 2)
+				{
+					if (config::ActAsServer)
+						startSession(config::GGPOPort.get(), 0);
+					else
+					{
+						if ((config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1") &&
+								config::GGPOPort.get() == config::GGPORemotePort.get())
+							startSession(config::GGPOPort.get() - 1, 1);
+						else
+							startSession(config::GGPOPort.get(), 1);
+					}
+				}
 				else
 				{
-					if ((config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1") &&
-							config::GGPOPort.get() == config::GGPORemotePort.get())
-						startSession(config::GGPOPort.get() - 1, 1);
-					else
-						startSession(config::GGPOPort.get(), 1);
+					startSession(config::GGPOPort.get(), config::PlayerNum.get());
 				}
 			} catch (...) {
 				//miniupnp.Term();
@@ -948,7 +1042,7 @@ void setMapleInput(MapleInputState inputState[4])
 
 	//std::cout << "INPUT SIZE " << inputSize << std::endl;
 
-	for (int player = 0; player < MAX_PLAYERS; player++)
+	for (int player = 0; player < config::NumPlayers; player++)
 	{
 		MapleInputState& state = inputState[player];
 		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
