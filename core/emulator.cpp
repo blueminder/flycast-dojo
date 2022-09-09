@@ -130,6 +130,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
+		// Tech Romancer
+		if (prod_id == "T1208N")
+		{
+			if (config::FixedFrequency == 1)
+				config::LimitFPS.override(true);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
