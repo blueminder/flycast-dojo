@@ -229,10 +229,9 @@ static void loadSpecialSettings()
 	else if (settings.platform.isArcade())
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
-		if (!strcmp("METAL SLUG 6", naomi_game_id))
+		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("HOKUTO NO KEN", naomi_game_id))
 		{
-			// Metal Slug 6 switches between 60 FPS in menus and 30 FPS in games
-			// Audio Sync accounts for difference when Auto Fixed Frequency is set
+			// enable audio sync for games with variable refresh rate
 			if (config::FixedFrequency == 1)
 				config::LimitFPS.override(true);
 		}
