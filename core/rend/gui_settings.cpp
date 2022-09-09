@@ -832,7 +832,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		}
 
 		ImGui::Spacing();
-		if (ImGui::CollapsingHeader("Widescreen", ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader("Widescreen##Section", ImGuiTreeNodeFlags_None))
 		{
 			OptionCheckbox("Widescreen", config::Widescreen,
 						   "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
