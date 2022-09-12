@@ -504,7 +504,7 @@ void DojoFile::OverwriteDataFolder(std::string new_root)
 
 		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator("data"))
 			ghc::filesystem::permissions(dirEntry,
-				ghc::filesystem::perms::owner_read,
+				ghc::filesystem::perms::owner_write,
 				ghc::filesystem::perm_options::replace);
 	}
 }
