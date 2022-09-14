@@ -545,5 +545,9 @@
     "flycast_dc_spawn": {
         "filename": "Spawn - In the Demon's Hand (USA).chd",
         "md5_checksum": "0870ddf791c87375c7de0b723a779fd6"
+    },
+    "flycast_dc_starwars_racer": {
+        "filename": "Star Wars - Episode I - Racer (USA).chd",
+        "md5_checksum": "f73b771859f5a6f895b350340029495c"
     }
 }
