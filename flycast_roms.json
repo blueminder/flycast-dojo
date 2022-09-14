@@ -537,5 +537,13 @@
     "flycast_dc_snowsurfers": {
         "filename": "Snow Surfers (Europe).chd",
         "md5_checksum": "429f584b2698e290cad3eb430c5a5de9"
+    },
+    "flycast_dc_golf_shiyou_yo_2": {
+        "filename": "Golf Shiyou yo 2 - Aratanaru Chousen (Japan).chd",
+        "md5_checksum": "5fa3491abffb6799f0e3620954985b61"
+    },
+    "flycast_dc_spawn": {
+        "filename": "Spawn - In the Demon's Hand (USA).chd",
+        "md5_checksum": "0870ddf791c87375c7de0b723a779fd6"
     }
 }
