@@ -130,8 +130,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
-		// Tech Romancer
-		if (prod_id == "T1208N")
+		// Tech Romancer (USA)
+		// Spawn - In the Demon's Hand (USA)
+		// Tony Hawk's Pro Skater 2 (USA)
+		// Star Wars - Episode I - Racer (USA)
+		if (prod_id == "T1208N" || prod_id == "T1216N" ||
+			prod_id == "T13006N" || prod_id == "T23001N")
 		{
 			if (config::FixedFrequency == 1)
 				config::LimitFPS.override(true);
