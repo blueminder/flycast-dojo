@@ -44,6 +44,9 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 #include "dojo/DojoGui.hpp"
 #include "dojo/DojoFile.hpp"
@@ -460,6 +463,17 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
+
+#if defined(USE_SDL)
+	if (io.WantTextInput && !SDL_IsTextInputActive())
+	{
+		SDL_StartTextInput();
+	}
+	else if (!io.WantTextInput && SDL_IsTextInputActive())
+	{
+		SDL_StopTextInput();
+	}
+#endif
 }
 
 static void delayedKeysUp()
