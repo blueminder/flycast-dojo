@@ -116,6 +116,15 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 		if (ImGui::Button("Change"))
 			gui_state = GuiState::Onboarding;
 #endif
+#if defined(__APPLE__) && TARGET_OS_OSX
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
+		if (ImGui::Button("Reveal in Finder"))
+		{
+		    char temp[512];
+		    sprintf(temp, "open \"%s\"", get_writable_config_path("").c_str());
+		    system(temp);
+		}
+#endif
 		ImGui::ListBoxFooter();
 	}
 	ImGui::SameLine();
@@ -303,7 +312,28 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 	ImGui::Spacing();
 	header("Other");
 	{
+		if (config::UseReios)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		OptionCheckbox("Online & Replays: Force Real DC BIOS", config::ForceRealBios, "Forces real Dreamcast BIOS when made available. Disabled by default for online & games and replays.");
+		if (config::UseReios)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+		if (config::ForceRealBios)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
 		OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+		if (config::ForceRealBios)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
 		OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
 					   "Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 		OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,

@@ -563,6 +563,7 @@ extern Option<bool> UseAnimeInputNotation;
 extern Option<bool> HideRandomInputSlot;
 extern Option<bool> BufferAutoResume;
 extern Option<bool> RecordOnFirstInput;
+extern Option<bool> ForceRealBios;
 
 // Maple
 

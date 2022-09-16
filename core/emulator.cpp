@@ -66,6 +66,16 @@ static void loadSpecialSettings()
 				config::ForceWindowsCE.override(true);
 		}
 
+		if (!config::ForceRealBios)
+		{
+			// Use HLE BIOS by default for online games & replays
+			// Exemptions made below on a per-game basis
+			if (config::GGPOEnable || config::DojoEnable || config::RecordMatches || dojo.PlayMatch)
+			{
+				config::UseReios.override(true);
+			}
+		}
+
 		// Tony Hawk's Pro Skater 2
 		if (prod_id == "T13008D" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
