@@ -413,9 +413,7 @@ extern AudioVolumeOption AudioVolume;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
-#ifdef USE_DX9
-		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
-#elif defined(TARGET_UWP)
+#if defined(_WIN32) or defined(TARGET_UWP)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
 #elif defined(__ANDROID__)
 		: Option<RenderType>("pvr.rend", RenderType::Vulkan) {}
