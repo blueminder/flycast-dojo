@@ -56,6 +56,9 @@ void display_refresh_thread()
 		else if (config::FixedFrequency == 4 ||
 				 (config::FixedFrequency == 1 && config::Cable == 3))
 			period = 20000; // 1/50
+		// Half Native NTSC/VGA
+		else if (config::FixedFrequency == 5)
+			period = 33333; // 1/30
 
 		auto now = std::chrono::steady_clock::now();
 		long long duration = std::chrono::duration_cast<std::chrono::microseconds>(now - dispStart).count();
