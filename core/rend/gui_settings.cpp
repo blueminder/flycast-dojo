@@ -534,7 +534,11 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 #endif
 #ifdef USE_VULKAN
 			graphapi.push_back(1);
+#ifdef __APPLE__
+			graphapiText.push_back("Vulkan (Metal)");
+#else
 			graphapiText.push_back("Vulkan");
+#endif
 #endif
 #ifdef USE_DX9
 			graphapi.push_back(2);
