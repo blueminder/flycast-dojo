@@ -129,15 +129,16 @@ void mainui_loop()
 
 	while (mainui_enabled)
 	{
-		if (config::FixedFrequency != 0 &&
-			!gui_is_open() &&
-			!settings.input.fastForwardMode)
+		if (mainui_rend_frame())
 		{
-			while(!display_refresh.load());
-			display_refresh.exchange(false);
+			if (config::FixedFrequency != 0 &&
+				!gui_is_open() &&
+				!settings.input.fastForwardMode)
+			{
+				while(!display_refresh.load());
+				display_refresh.exchange(false);
+			}
 		}
-
-		mainui_rend_frame();
 
 		imguiDriver->present();
 
