@@ -28,6 +28,10 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
@@ -38,7 +42,13 @@ std::atomic<bool> display_refresh(false);
 
 void display_refresh_thread()
 {
+#ifdef _WIN32
+	timeBeginPeriod(1);
+#endif
 	auto dispStart = std::chrono::steady_clock::now();
+#ifdef _WIN32
+	timeEndPeriod(1);
+#endif
 	long long period = 16683; // Native NTSC/VGA by default
 	while(1)
 	{
@@ -60,13 +70,22 @@ void display_refresh_thread()
 		else if (config::FixedFrequency == 5)
 			period = 33333; // 1/30
 
+#ifdef _WIN32
+		timeBeginPeriod(1);
+#endif
 		auto now = std::chrono::steady_clock::now();
 		long long duration = std::chrono::duration_cast<std::chrono::microseconds>(now - dispStart).count();
 		if (duration > period)
 		{
 			display_refresh.exchange(true);
 			dispStart = now;
+
+			if(!settings.input.fastForwardMode)
+				std::this_thread::sleep_for(std::chrono::microseconds(period / 2));
 		}
+#ifdef _WIN32
+		timeEndPeriod(1);
+#endif
 	}
 }
 
@@ -127,16 +146,39 @@ void mainui_loop()
 	if (config::FixedFrequency != 0)
 		start_display_refresh_thread();
 
+	long long period = 16683; // Native NTSC/VGA by default
+	std::chrono::time_point<std::chrono::steady_clock> start;
+
 	while (mainui_enabled)
 	{
 		if (mainui_rend_frame())
 		{
+			// Native NTSC/VGA
+			if (config::FixedFrequency == 2 ||
+				(config::FixedFrequency == 1 &&
+					(config::Cable == 0 || config::Cable == 1)) ||
+				(config::FixedFrequency == 1 && config::Cable == 3 &&
+					(config::Broadcast == 0 || config::Broadcast == 4)))
+				period = 16683; // 1/59.94
+			// Approximate VGA
+			else if (config::FixedFrequency == 3)
+				period = 16666; // 1/60
+			// PAL
+			else if (config::FixedFrequency == 4 ||
+					 (config::FixedFrequency == 1 && config::Cable == 3))
+				period = 20000; // 1/50
+			// Half Native NTSC/VGA
+			else if (config::FixedFrequency == 5)
+				period = 33333; // 1/30
+
 			if (config::FixedFrequency != 0 &&
 				!gui_is_open() &&
 				!settings.input.fastForwardMode)
 			{
 				while(!display_refresh.load());
 				display_refresh.exchange(false);
+
+				start = std::chrono::steady_clock::now();
 			}
 		}
 
@@ -152,6 +194,26 @@ void mainui_loop()
 			mainui_init();
 			forceReinit = false;
 			currentRenderer = config::RendererType;
+		}
+
+		if (config::FixedFrequency != 0 &&
+			!gui_is_open() &&
+			!settings.input.fastForwardMode)
+		{
+			auto end = std::chrono::steady_clock::now();
+			long long duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+			long long period_segment = period / 3;
+			if (duration < period_segment)
+			{
+#ifdef _WIN32
+				timeBeginPeriod(1);
+#endif
+				std::this_thread::sleep_for(std::chrono::microseconds(period_segment - duration));
+#ifdef _WIN32
+				timeEndPeriod(1);
+#endif
+			}
 		}
 	}
 
