@@ -71,8 +71,8 @@ void display_refresh_thread()
 			display_refresh.exchange(true);
 			dispStart = now;
 
-			if(!settings.input.fastForwardMode)
-				std::this_thread::sleep_for(std::chrono::microseconds(period / 2));
+			if(!settings.input.fastForwardMode && config::FixedFrequencyThreadSleep)
+				std::this_thread::sleep_for(std::chrono::microseconds(2000));
 		}
 	}
 }
@@ -170,7 +170,8 @@ void mainui_loop()
 				while(!display_refresh.load());
 				display_refresh.exchange(false);
 
-				start = std::chrono::steady_clock::now();
+				if (config::FixedFrequencyThreadSleep)
+					start = std::chrono::steady_clock::now();
 			}
 		}
 
@@ -188,17 +189,16 @@ void mainui_loop()
 			currentRenderer = config::RendererType;
 		}
 
-		if (config::FixedFrequency != 0 &&
+		if (config::FixedFrequencyThreadSleep &&
 			!gui_is_open() &&
 			!settings.input.fastForwardMode)
 		{
 			auto end = std::chrono::steady_clock::now();
 			long long duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
-			long long period_segment = period / 3;
-			if (duration < period_segment)
+			if (duration < period - 3000)
 			{
-				std::this_thread::sleep_for(std::chrono::microseconds(period_segment - duration));
+				std::this_thread::sleep_for(std::chrono::microseconds(1000));
 			}
 		}
 	}

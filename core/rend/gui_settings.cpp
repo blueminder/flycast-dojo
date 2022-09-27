@@ -833,6 +833,11 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			OptionRadioButton("30 Hz", config::FixedFrequency, 5, "Half NTSC/VGA frequency");
 			ImGui::Columns(1, nullptr, false);
 
+			if (config::FixedFrequency != 0)
+			{
+				OptionCheckbox("Fixed Frequency CPU Optimizations", config::FixedFrequencyThreadSleep, "Disable to improve Frame Pacing in exchange for increased CPU usage.");
+			}
+
 #ifndef TARGET_IPHONE
 			OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate.");
 			if (isVulkan(config::RendererType))

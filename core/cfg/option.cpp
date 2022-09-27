@@ -104,6 +104,7 @@ Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<int> FixedFrequency ("rend.FixedFrequency", 1);
+Option<bool> FixedFrequencyThreadSleep("rend.FixedFrequencyThreadSleep", true);
 
 // Misc
 
