@@ -42,13 +42,7 @@ std::atomic<bool> display_refresh(false);
 
 void display_refresh_thread()
 {
-#ifdef _WIN32
-	timeBeginPeriod(1);
-#endif
 	auto dispStart = std::chrono::steady_clock::now();
-#ifdef _WIN32
-	timeEndPeriod(1);
-#endif
 	long long period = 16683; // Native NTSC/VGA by default
 	while(1)
 	{
@@ -70,9 +64,6 @@ void display_refresh_thread()
 		else if (config::FixedFrequency == 5)
 			period = 33333; // 1/30
 
-#ifdef _WIN32
-		timeBeginPeriod(1);
-#endif
 		auto now = std::chrono::steady_clock::now();
 		long long duration = std::chrono::duration_cast<std::chrono::microseconds>(now - dispStart).count();
 		if (duration > period)
@@ -83,9 +74,6 @@ void display_refresh_thread()
 			if(!settings.input.fastForwardMode)
 				std::this_thread::sleep_for(std::chrono::microseconds(period / 2));
 		}
-#ifdef _WIN32
-		timeEndPeriod(1);
-#endif
 	}
 }
 
@@ -142,6 +130,10 @@ void mainui_loop()
 	mainui_enabled = true;
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
+
+#ifdef _WIN32
+	timeBeginPeriod(1);
+#endif
 
 	if (config::FixedFrequency != 0)
 		start_display_refresh_thread();
@@ -206,16 +198,14 @@ void mainui_loop()
 			long long period_segment = period / 3;
 			if (duration < period_segment)
 			{
-#ifdef _WIN32
-				timeBeginPeriod(1);
-#endif
 				std::this_thread::sleep_for(std::chrono::microseconds(period_segment - duration));
-#ifdef _WIN32
-				timeEndPeriod(1);
-#endif
 			}
 		}
 	}
+
+#ifdef _WIN32
+	timeEndPeriod(1);
+#endif
 
 	mainui_term();
 }
