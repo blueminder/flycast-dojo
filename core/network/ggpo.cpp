@@ -577,6 +577,9 @@ void startSession(int localPort, int localPlayerNum)
 		throw FlycastException("GGPO cannot add remote player");
 	}
 	DEBUG_LOG(NETWORK, "GGPO session started");
+
+	if (config::RecordMatches && !config::Receiving)
+		dojo.CreateReplayFile();
 #endif
 }
 

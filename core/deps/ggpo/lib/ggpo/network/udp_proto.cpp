@@ -530,11 +530,6 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
       SendSyncRequest();
    }
 
-   if (config::RecordMatches && !config::Receiving)
-   {
-     dojo.CreateReplayFile(dojo.game_name);
-   }
-
    reply->u.sync_reply.verification_failure = 0;
    SendMsg(reply);
 
