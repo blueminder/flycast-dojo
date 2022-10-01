@@ -490,7 +490,13 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
 
    if (!dojo.received_player_info)
    {
-      settings.dojo.OpponentName = std::string(opponent_name);
+      if (config::NumPlayers > 2)
+      {
+         dojo.opponent_names.emplace(std::string(opponent_name));
+         settings.dojo.OpponentName = dojo.CombineOpponentNames();
+      }
+      else
+         settings.dojo.OpponentName = std::string(opponent_name);
       dojo.AssignNames();
    }
 

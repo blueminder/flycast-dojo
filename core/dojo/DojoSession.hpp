@@ -321,6 +321,9 @@ public:
 	std::string current_gamepad;
 
 	bool lobby_host_screen = false;
+
+	std::set<std::string> opponent_names;
+	std::string CombineOpponentNames();
 };
 
 extern DojoSession dojo;

@@ -3307,6 +3307,7 @@ static void gui_network_start()
 void start_ggpo()
 {
 	settings.dojo.PlayerName = config::PlayerName.get();
+
 	dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;
@@ -3767,7 +3768,11 @@ void gui_display_osd()
 			}
 
 			if (config::EnablePlayerNameOverlay)
-				dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
+			{
+				if ((dojo.PlayMatch && dojo.replay_version < 4) ||
+					(!dojo.PlayMatch && config::NumPlayers == 2))
+					dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
+			}
 		}
 
 		if (settings.dojo.training && config::ShowInputDisplay)
@@ -3845,7 +3850,9 @@ void gui_display_osd()
 	{
 		if (config::EnablePlayerNameOverlay || config::Receiving)
 		{
-			dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
+			if ((dojo.PlayMatch && dojo.replay_version < 4) ||
+				(!dojo.PlayMatch && config::NumPlayers == 2))
+				dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
 		}
 	}
 }
