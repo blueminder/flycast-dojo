@@ -380,7 +380,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			detect_address = config::NetworkServer.get();
 
 			// if both player names are defaults, hide names
-			if (!config::GGPOEnable)
+			if (!config::GGPOEnable && config::NumPlayers == 2)
 			{
 				if (!(config::PlayerName.get().compare("Player") == 0 &&
 					config::PlayerName.get().compare(config::OpponentName.get()) == 0))

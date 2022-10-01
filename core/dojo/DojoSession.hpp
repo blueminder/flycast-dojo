@@ -318,6 +318,9 @@ public:
 	std::set<int> button_check_pressed[2];
 	std::set<std::string> training_p1_gamepads;
 	std::string current_gamepad;
+
+	std::set<std::string> opponent_names;
+	std::string CombineOpponentNames();
 };
 
 extern DojoSession dojo;

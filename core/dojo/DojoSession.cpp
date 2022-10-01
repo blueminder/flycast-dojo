@@ -746,6 +746,10 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 	// create timestamp string, iso8601 format
 	std::string timestamp = currentISO8601TimeUTC();
 	std::replace(timestamp.begin(), timestamp.end(), ':', '_');
+
+	if (!config::GGPOEnable)
+		settings.dojo.OpponentName = "";
+
 	std::string filename =
 		"replays/" + rom_name + "__" +
 		timestamp + "__" +
@@ -783,6 +787,10 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 
 	// version
 	u32 version = config::GGPOEnable ? 3 : 1;
+
+	if (config::NumPlayers > 2)
+		version = 4;
+
 	spectate_start.AppendInt(version);
 	if (rom_name == "")
 		spectate_start.AppendString(get_game_name());
@@ -799,10 +807,18 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 		analog = (u32)config::GGPOAnalogAxes.get();
 	spectate_start.AppendInt(analog);
 
-	if (version == 3)
+	if (version >= 3)
 	{
 		spectate_start.AppendString(settings.dojo.state_md5);
 		spectate_start.AppendString(settings.dojo.state_commit);
+	}
+
+	if (version >= 4)
+	{
+		u32 num_players = (u32)config::NumPlayers.get();
+		spectate_start.AppendInt(num_players);
+		spectate_start.AppendString("");
+		spectate_start.AppendString("");
 	}
 
 	std::vector<unsigned char> message = spectate_start.Msg();
@@ -990,6 +1006,17 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		{
 			settings.dojo.state_md5 = MessageReader::ReadString((const char*)buffer, offset);
 			settings.dojo.state_commit = MessageReader::ReadString((const char*)buffer, offset);
+		}
+
+		std::string P3Name;
+		std::string P4Name;
+
+		if (replay_version >= 4)
+		{
+			unsigned int num_players = MessageReader::ReadInt((const char*)buffer, offset);
+			config::NumPlayers.override((int)num_players);
+			P3Name = MessageReader::ReadString((const char*)buffer, offset);
+			P4Name = MessageReader::ReadString((const char*)buffer, offset);
 		}
 
 		std::cout << "Replay Version: " << replay_version << std::endl;
@@ -1788,6 +1815,20 @@ void DojoSession::AssignNames()
 		player_1 = settings.dojo.OpponentName;
 		player_2 = settings.dojo.PlayerName;
 	}
+}
+
+std::string DojoSession::CombineOpponentNames()
+{
+	std::string combined_names = "";
+	std::vector<std::string> names(opponent_names.begin(), opponent_names.end());
+	for (int i = 0; i< names.size(); i++)
+	{
+		combined_names += names.at(i);
+		if (i != names.size() - 1)
+			combined_names += "_";
+	}
+
+	return combined_names;
 }
 
 DojoSession dojo;
