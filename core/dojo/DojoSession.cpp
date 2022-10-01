@@ -753,11 +753,7 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 	else if (version >= 1)
 		filename.append(".flyr");
 
-#if defined(__APPLE__) || defined(__ANDROID__)
 	std::string path = get_writable_config_path("") + "/" + filename;
-#else
-	std::string path = filename;
-#endif
 
 	// create replay file itself
 	std::ofstream file;
