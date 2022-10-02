@@ -746,7 +746,7 @@ std::string DojoSession::CreateReplayFile(std::string rom_name, int version)
 		"replays/" + rom_name + "__" +
 		timestamp + "__" +
 		config::PlayerName.get() + "__" +
-		config::OpponentName.get() + "__";
+		settings.dojo.OpponentName + "__";
 
 	if (version == 0)
 		filename.append(".flyreplay");

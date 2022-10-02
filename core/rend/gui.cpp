@@ -3194,6 +3194,10 @@ static void gui_network_start()
 		try {
 			if (networkStatus.get())
 			{
+				// create replay file on network session start
+				if (config::RecordMatches && !config::Receiving)
+					dojo.CreateReplayFile();
+
 				gui_state = GuiState::Closed;
 			}
 			else
