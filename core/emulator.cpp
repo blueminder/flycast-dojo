@@ -155,7 +155,8 @@ static void loadSpecialSettings()
 		}
 		// GGPO Left Thumbstick Full
 		// Sonic Adventure 2 (USA)
-		if (prod_id == "MK-51117")
+		// Golf Shiyou yo 2 - Aratanaru Chousen (Japan)
+		if (prod_id == "MK-51117" || prod_id == "T44501M")
 		{
 			if (config::GGPOEnable)
 				config::GGPOAnalogAxes.override(2);
