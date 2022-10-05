@@ -112,6 +112,7 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 	}
 
 	std::string filename = "";
+	std::string chd_filename = "";
 	std::string dir_name = "ROMs";
 	std::string nested_dir = "";
 
@@ -128,9 +129,12 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 	{
 		// when rom not in reference json file
 		// default arcade rom name + .zip, ignore dc entries
+		// fall back to dreamcast chd file
 		filename = entry_name;
 		stringfix::replace(filename, "flycast_", "");
+		chd_filename = filename;
 		filename.append(".zip");
+		chd_filename.append(".chd");
 	}
 
 	auto rom_paths = config::ContentPath.get();
@@ -142,13 +146,24 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 	{
 		// check if destination filename exists, return if so
 		std::string target;
+		std::string chd_target = "";
 		if (nested_dir.empty())
+		{
 			target = rom_paths[i] + "/" + filename;
+			if (!chd_filename.empty())
+				chd_target = rom_paths[i] + "/" + chd_filename;
+		}
 		else
+		{
 			target = rom_paths[i] + "/" + nested_dir + "/" + filename;
+			if (!chd_filename.empty())
+				chd_target = rom_paths[i] + "/" + nested_dir + "/" + chd_filename;
+		}
 
 		if (ghc::filesystem::exists(target))
 			return target;
+		if (!chd_target.empty() && ghc::filesystem::exists(chd_target))
+			return chd_target;
 	}
 
 	return "";
