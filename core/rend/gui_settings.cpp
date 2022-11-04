@@ -132,6 +132,10 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 #endif // !linux
 #endif // !TARGET_IPHONE
 
+	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
+			"Display game covert art in the game list.");
+	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
+			"Fetch cover images from TheGamesDB.net.");
 	if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					   "Hide .bin, .dat and .lst files from the content browser"))
 		scanner_refresh();
@@ -875,7 +879,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		if (ImGui::CollapsingHeader("Widescreen##Section", ImGuiTreeNodeFlags_None))
 		{
 			OptionCheckbox("Widescreen", config::Widescreen,
-						   "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+						   "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 			if (!config::Widescreen)
 			{
 				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -883,7 +887,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			}
 			ImGui::Indent();
 			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-						   "Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+						   "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 			ImGui::Unindent();
 			if (!config::Widescreen)
 			{

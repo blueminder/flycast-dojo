@@ -2697,6 +2697,9 @@ static void gui_display_content()
 
 		int counter = 0;
 		int loadedImages = 0;
+		if (!settings.network.online && !config::RecordMatches && !settings.dojo.training &&
+			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
+		{
 		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
 		{
 			ImGui::PushID("bios");
@@ -2722,10 +2725,9 @@ static void gui_display_content()
 			}
 			if (pressed)
 				gui_start_game("");
-		}
-
 			ImGui::PopID();
 			counter++;
+		}
 		}
 		std::string checksum;
 		{

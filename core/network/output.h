@@ -79,7 +79,7 @@ public:
 		for (sock_t sock : clients)
 			if (::send(sock, msg.c_str(), msg.length(), 0) < 0)
 			{
-				int error = get_last_error();
+				int error = get_last_error_n();
 				if (error != L_EWOULDBLOCK && error != L_EAGAIN)
 					errorSockets.push_back(sock);
 			}
