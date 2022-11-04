@@ -252,41 +252,17 @@ if(NOT LIBRETRO)
 		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
 
-		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
-				COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
-				COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-			)
-		else()
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND sleep 20
-				COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo
-					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a x86_64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
-				COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
-				COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-			)
-		endif()
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND sleep 20
+			COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo
+				-o ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
+			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+				-a x86_64
+				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
+				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
+			COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
+			COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
+		)
 	endif()
 endif()
 
@@ -1458,12 +1434,12 @@ if(NOT LIBRETRO)
 			set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
-				OUTPUT_NAME "Flycast"
+				OUTPUT_NAME "Flycast Dojo"
 				MACOSX_BUNDLE YES
-				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast Dojo"
 				MACOSX_BUNDLE_INFO_STRING ""
-				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
-				MACOSX_BUNDLE_BUNDLE_NAME "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_GUI_IDENTIFIER "com.blueminder.FlycastDojo"
+				MACOSX_BUNDLE_BUNDLE_NAME "com.blueminder.FlycastDojo"
 				MACOSX_BUNDLE_LONG_VERSION_STRING "${GIT_VERSION}"
 				MACOSX_BUNDLE_SHORT_VERSION_STRING "${TAG_VERSION}"
 				MACOSX_BUNDLE_BUNDLE_VERSION "${GIT_HASH}"
@@ -1479,7 +1455,7 @@ if(NOT LIBRETRO)
 				XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
 				XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
 				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast")
+				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.blueminder.FlycastDojo")
 
 			find_library(UIKIT UIKit)
 			find_library(FOUNDATION Foundation)
@@ -1497,7 +1473,7 @@ if(NOT LIBRETRO)
 				${AUDIOTOOLBOX}
 				${AVFOUNDATION})
 
-			add_custom_target(Flycast.IPA ALL
+			add_custom_target(Flycast\ Dojo.IPA ALL
 				DEPENDS ${PROJECT_NAME}
 				COMMENT "Building IPA"
 				COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/Payload
@@ -1507,7 +1483,7 @@ if(NOT LIBRETRO)
 				COMMAND do xcrun bitcode_strip -r $lib -o $lib
 				COMMAND done
 				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast\ Dojo.app/Flycast
-				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
+				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast\ Dojo.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
@@ -1530,9 +1506,13 @@ if(NOT LIBRETRO)
 				COMMAND wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
 				COMMAND tar zxvf master.tar.gz
 				COMMAND rm master.tar.gz
-				COMMAND mv flycast-netplay-nvmem-master/ default/
+				COMMAND rm -rf default
+				COMMAND mkdir default
+				COMMAND mv flycast-netplay-nvmem-master/* default/
+				COMMAND rm -rf flycast-netplay-nvmem-master
 				COMMAND rm default/README.md
 				COMMAND zip default.zip default/*
+				COMMAND rm -rf data
 				COMMAND mv default data
 				COMMAND mv default.zip data/
 			)
@@ -1545,7 +1525,7 @@ if(NOT LIBRETRO)
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast Dojo"
 				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-osx/MacOSXBundleInfo.plist.in
-				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast Dojo"
 				MACOSX_BUNDLE_INFO_STRING ""
 				MACOSX_BUNDLE_ICON_FILE "AppIcon"
 				MACOSX_BUNDLE_GUI_IDENTIFIER "com.blueminder.FlycastDojo"
