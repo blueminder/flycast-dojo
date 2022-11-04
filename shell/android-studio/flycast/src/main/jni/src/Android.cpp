@@ -76,7 +76,7 @@ static thread_local JVMAttacher jvm_attacher;
 
 #include "android_gamepad.h"
 #include "android_keyboard.h"
-//#include "http_client.h"
+#include "http_client.h"
 
 extern "C" JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_getVirtualGamepadVibration(JNIEnv *env, jobject obj)
 {
@@ -302,6 +302,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
     }
+    gui_save();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)

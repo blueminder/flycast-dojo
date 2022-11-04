@@ -38,6 +38,8 @@ Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
+Option<bool> FetchBoxart("FetchBoxart", true);
+Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
 
 // Sound
 
@@ -139,6 +141,7 @@ Option<bool> GGPOChat("GGPOChat", true, "network");
 Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<bool> GGPOChatTimeoutToggleSend("GGPOChatTimeoutToggleSend", false, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
+Option<bool> NetworkOutput("NetworkOutput", false, "network");
 
 // Dojo
 

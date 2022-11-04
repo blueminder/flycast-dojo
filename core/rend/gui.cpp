@@ -44,6 +44,7 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "boxart/boxart.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -82,6 +83,7 @@ void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
+static Boxart boxart;
 static Chat chat;
 
 static int item_current_idx = 0;
@@ -2425,6 +2427,66 @@ inline static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 }
 
+static void gameTooltip(const std::string& tip)
+{
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+        ImGui::TextUnformatted(tip.c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+{
+	textureId = ImTextureID{};
+	if (art->boxartPath.empty())
+		return false;
+
+	// Get the boxart texture. Load it if needed.
+	textureId = imguiDriver->getTexture(art->boxartPath);
+	if (textureId == ImTextureID() && allowLoad)
+	{
+		int width, height;
+		u8 *imgData = loadImage(art->boxartPath, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+		return true;
+	}
+	return false;
+}
+
+static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, ImVec2 size)
+{
+	float ar = imguiDriver->getAspectRatio(textureId);
+	ImVec2 uv0 { 0.f, 0.f };
+	ImVec2 uv1 { 1.f, 1.f };
+	if (ar > 1)
+	{
+		uv0.y = -(ar - 1) / 2;
+		uv1.y = 1 + (ar - 1) / 2;
+	}
+	else if (ar != 0)
+	{
+		ar = 1 / ar;
+		uv0.x = -(ar - 1) / 2;
+		uv1.x = 1 + (ar - 1) / 2;
+	}
+	bool pressed = ImGui::ImageButton(textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	gameTooltip(tooltip);
+
+    return pressed;
+}
+
 static void gui_display_content()
 {
 	fullScreenWindow(false);
@@ -2624,18 +2686,47 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, -(ImGui::CalcTextSize("Foo").y + ImGui::GetStyle().FramePadding.y * 4.0f)), true, ImGuiWindowFlags_DragScrolling);
   {
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
+		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
+		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
+		
+		if (config::BoxartDisplayMode)
+			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
+		else
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
-		if (!settings.network.online && !config::RecordMatches && !settings.dojo.training &&
-			(file_exists("data/dc_boot.bin") || file_exists("data/dc_flash.bin") || file_exists("data/dc_bios.bin")))
+		int counter = 0;
+		int loadedImages = 0;
+		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
 		{
 			ImGui::PushID("bios");
-			if (ImGui::Selectable("Dreamcast BIOS"))
+			bool pressed;
+			if (config::BoxartDisplayMode)
+			{
+				ImTextureID textureId{};
+				GameMedia game;
+				const GameBoxart *art = boxart.getBoxart(game);
+				if (art != nullptr)
+				{
+					if (getGameImage(art, textureId, loadedImages < 10))
+						loadedImages++;
+				}
+				if (textureId != ImTextureID())
+					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
+				else
+					pressed = ImGui::Button("Dreamcast BIOS", responsiveBoxVec2);
+			}
+			else
+			{
+				pressed = ImGui::Selectable("Dreamcast BIOS");
+			}
+			if (pressed)
 				gui_start_game("");
 		}
 
-		ImGui::PopID();
-
+			ImGui::PopID();
+			counter++;
+		}
 		std::string checksum;
 		{
 			scanner.get_mutex().lock();
@@ -2649,7 +2740,15 @@ static void gui_display_content()
 						// Only dreamcast disks
 						continue;
 				}
-				if (filter.PassFilter(game.name.c_str()))
+				std::string gameName = game.name;
+				const GameBoxart *art = nullptr;
+				if (config::BoxartDisplayMode)
+				{
+					art = boxart.getBoxart(game);
+					if (art != nullptr)
+						gameName = art->name;
+				}
+				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
 					bool net_save_download = false;
@@ -2659,7 +2758,32 @@ static void gui_display_content()
 
 					if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 0, 1));
-					if (ImGui::Selectable(game.name.c_str()))
+					bool pressed;
+					if (config::BoxartDisplayMode)
+					{
+						if (counter % itemsPerLine != 0)
+							ImGui::SameLine();
+						counter++;
+						ImTextureID textureId{};
+						if (art != nullptr)
+						{
+							// Get the boxart texture. Load it if needed (max 10 per frame).
+							if (getGameImage(art, textureId, loadedImages < 10))
+								loadedImages++;
+						}
+						if (textureId != ImTextureID())
+							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
+						else
+						{
+							pressed = ImGui::Button(gameName.c_str(), responsiveBoxVec2);
+							gameTooltip(game.name);
+						}
+					}
+					else
+					{
+						pressed = ImGui::Selectable(gameName.c_str());
+					}
+					if (pressed)
 					{
 						if (gui_state == GuiState::SelectDisk)
 						{
@@ -2873,96 +2997,9 @@ static void gui_display_content()
 			scanner.get_mutex().unlock();
 		}
         ImGui::PopStyleVar();
-
-		/*
-		if (config::GameName.get().empty())
-		{
-			for (auto it = dojo_file.RemainingFileDefinitions.begin(); it != dojo_file.RemainingFileDefinitions.end(); ++it)
-			{
-				std::string filename = (*it)["filename"].get<std::string>();
-				if (!(*it).contains("download"))
-					continue;
-				std::string download_url = (*it)["download"].get<std::string>();
-				//ImGui::TextColored(ImVec4(255, 0, 0, 1), it.key().data());
-
-				auto game_found = std::find_if(
-					scanner.get_game_list().begin(),
-					scanner.get_game_list().end(),
-					[&filename](GameMedia const& c) {
-						return c.name.find(filename) != std::string::npos;
-					}
-				);
-
-				std::string short_game_name = stringfix::remove_extension(filename);
-
-				if (game_found == scanner.get_game_list().end() &&
-					filename.find("chd") == std::string::npos &&
-					filename.find("data") == std::string::npos &&
-					!download_url.empty())
-				{
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * settings.display.uiScale, 20 * settings.display.uiScale));		// from 8, 4
-					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 0, 0, 1));
-					ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(255, 145, 145, 1));
-
-					std::string game_name;
-					if (dojo_file.game_descriptions.count(short_game_name) == 1)
-						game_name = filename + " (" + dojo_file.game_descriptions.at(short_game_name) + ")";
-					else
-						game_name = filename;
-
-					if (filter.PassFilter(game_name.data()))
-					{
-						if (ImGui::Selectable(game_name.data()))
-						{
-							if (std::find(config::ContentPath.get().begin(), config::ContentPath.get().end(), "ROMs") == config::ContentPath.get().end())
-								config::ContentPath.get().push_back("ROMs");
-							ImGui::OpenPopup("Download");
-							dojo_file.entry_name = "flycast_" + short_game_name;
-							dojo_file.start_download = true;
-						}
-					}
-
-					ImGui::PopStyleColor();
-					ImGui::PopStyleColor();
-					ImGui::PopStyleVar();
-				}
-			}
-		}
-		*/
-
-		/*
-		if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
-		{
-			ImGui::Text(dojo_file.status_text.data());
-			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.download_ended)
-			{
-				ImGui::CloseCurrentPopup();
-				scanner.refresh();
-				dojo_file.start_download = false;
-				dojo_file.download_started = false;
-				dojo_file.download_ended = false;
-			}
-			else
-			{
-				float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-				char buf[32];
-				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
-			}
-			ImGui::EndPopup();
-		}
-
-		if (dojo_file.start_download && !dojo_file.download_started)
-		{
-			dojo_file.download_started = true;
-			std::thread t([&]() {
-				dojo_file.DownloadEntry(dojo_file.entry_name);
-			});
-			t.detach();
-		}
-		*/
-  }
-  windowDragScroll();
+    }
+    scrollWhenDraggingOnVoid();
+    windowDragScroll();
 	ImGui::EndChild();
 
 	if (item_current_idx == 0 || item_current_idx == 3)
@@ -3803,6 +3840,7 @@ void gui_term()
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
 	    EventManager::unlisten(Event::Terminate, emuEventCallback);
+		gui_save();
 	}
 }
 
@@ -3919,6 +3957,11 @@ void download_save_popup()
 
 		ImGui::EndPopup();
 	}
+}
+
+void gui_save()
+{
+	boxart.saveDatabase();
 }
 
 #ifdef TARGET_UWP
