@@ -597,6 +597,11 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			initMidiForceFeedback();
 		}
+		else if (gameId == "ROYAL RUMBLE")
+		{
+			if (config::FixedFrequency == 1)
+				config::LimitFPS.override(true);
+		}
 	}
 	else
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
