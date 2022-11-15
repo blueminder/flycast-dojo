@@ -18,7 +18,7 @@ jobs:
       matrix:
         config:
           - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, destDir: linux, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, destDir: linux, buildType: RelWithDebInfo}
           - {name: x86_64-w64-mingw32, os: windows-2019, shell: 'msys2 {0}', cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
@@ -113,7 +113,7 @@ jobs:
           ./configure
           make
           sudo make install
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Dump symbols (linux)
         shell: bash
@@ -123,7 +123,7 @@ jobs:
           mkdir -p symbols/flycast.elf/$BUILD_ID
           mv flycast.elf.sym symbols/flycast.elf/$BUILD_ID
           strip artifact/bin/flycast
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Dump symbols (windows)
         shell: msys2 {0}
@@ -162,7 +162,7 @@ jobs:
           wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
           cd ..
           tar czvf linux-$CURRENT_VERSION.tar.gz $CURRENT_VERSION/* --remove-files
-        if: matrix.config.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Package app (windows)
         shell: msys2 {0}
@@ -211,4 +211,4 @@ jobs:
       - name: Upload symbols to S3
         shell: bash
         run: aws s3 sync symbols s3://flycast-dojo-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-latest' || matrix.config.name == 'apple-darwin') }}
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.os == 'windows-2019' || matrix.config.os == 'ubuntu-22.04' || matrix.config.name == 'apple-darwin') }}
