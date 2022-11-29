@@ -3711,7 +3711,7 @@ void gui_display_osd()
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
 			ImGui::SetWindowFontScale(1.5);
-			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
 			ImGui::End();
 		}
 		imguiDriver->displayCrosshairs();
