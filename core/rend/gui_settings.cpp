@@ -755,8 +755,8 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
 			ImGui::Columns(1, nullptr, false);
 
-			const std::array<float, 5> aniso{1, 2, 4, 8, 16};
-			const std::array<std::string, 5> anisoText{"Disabled", "2x", "4x", "8x", "16x"};
+			const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
+			const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
 			u32 afSelected = 0;
 			for (u32 i = 0; i < aniso.size(); i++)
 			{
@@ -824,7 +824,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			ImGui::SameLine();
 			ShowHelpMarker("Set static frequency. Optimized for consistent input polling & frame rate. Recommended");
 			ImGui::Columns(3, "fixed_freq", false);
-			OptionRadioButton("Disabled", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
+			OptionRadioButton("Disabled##FF", config::FixedFrequency, 0, "Frame rate will be dependent on VSync or Audio Sync");
 			ImGui::NextColumn();
 			OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
 			ImGui::NextColumn();
