@@ -943,83 +943,173 @@ void displayStats()
 	if (!active())
 		return;
 	GGPONetworkStats stats;
-	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * settings.display.uiScale), ImGui::GetIO().DisplaySize.y - 40));
-	ImGui::SetNextWindowSize(ImVec2(590 * settings.display.uiScale, 0));
-	ImGui::SetNextWindowBgAlpha(0.5f);
-	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-
-	// Frame Delay
-	ImGui::Text("Delay");
-	std::string delay = std::to_string(config::GGPODelay.get());
-	ImGui::SameLine();
-	//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-	ImGui::Text("%s", delay.c_str());
-	ImGui::PopStyleColor();
-
-	ImGui::SameLine();
-	ImGui::Dummy(ImVec2(10.0f, 0.0f));
-	ImGui::SameLine();
-
-	// Ping
-	ImGui::Text("Ping");
-	std::string ping = std::to_string(stats.network.ping);
-	ImGui::SameLine();
-	//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
-	ImGui::Text("%s", ping.c_str());
-	ImGui::PopStyleColor();
-
-	ImGui::SameLine();
-	ImGui::Dummy(ImVec2(10.0f, 0.0f));
-	ImGui::SameLine();
-
-	// Send Queue
-	ImGui::Text("Send Q");
-	ImGui::SameLine();
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
-
-	ImGui::SameLine();
-	ImGui::Dummy(ImVec2(10.0f, 0.0f));
-	ImGui::SameLine();
-
-	// Predicted Frames
-	if (stats.sync.predicted_frames >= 7)
-		// red
-	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
-	else if (stats.sync.predicted_frames >= 5)
-		// yellow
-	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
-	ImGui::Text("Predicted");
-	ImGui::SameLine();
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
-	if (stats.sync.predicted_frames >= 5)
-		ImGui::PopStyleColor();
-
-	ImGui::SameLine();
-	ImGui::Dummy(ImVec2(10.0f, 0.0f));
-	ImGui::SameLine();
-	// Frames behind
-	int timesync = timesyncOccurred;
-	if (timesync > 0)
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-	ImGui::Text("Behind");
-	ImGui::SameLine();
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
-	if (timesync > 0)
+	// horizontal network stats bar for 2P game
+	if (config::NumPlayers == 2)
 	{
-		ImGui::PopStyleColor();
-		timesyncOccurred--;
-	}
+		ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
 
-	ImGui::PopStyleColor();
-	ImGui::End();
-	ImGui::PopStyleVar(2);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+		ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2.f) - (295 * settings.display.uiScale), ImGui::GetIO().DisplaySize.y - 40));
+		ImGui::SetNextWindowSize(ImVec2(590 * settings.display.uiScale, 0));
+		ImGui::SetNextWindowBgAlpha(0.5f);
+		ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+		// Frame Delay
+		ImGui::Text("Delay");
+		std::string delay = std::to_string(config::GGPODelay.get());
+		ImGui::SameLine();
+		//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+		ImGui::Text("%s", delay.c_str());
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 0.0f));
+		ImGui::SameLine();
+
+		// Ping
+		ImGui::Text("Ping");
+		std::string ping = std::to_string(stats.network.ping);
+		ImGui::SameLine();
+		//ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.594f, 0.806f, 0.912f, 1.f));
+		ImGui::Text("%s", ping.c_str());
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 0.0f));
+		ImGui::SameLine();
+
+		// Send Queue
+		ImGui::Text("Send Q");
+		ImGui::SameLine();
+		ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 0.0f));
+		ImGui::SameLine();
+
+		// Predicted Frames
+		if (stats.sync.predicted_frames >= 7)
+			// red
+		    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+		else if (stats.sync.predicted_frames >= 5)
+			// yellow
+		    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+		ImGui::Text("Predicted");
+		ImGui::SameLine();
+		ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
+		if (stats.sync.predicted_frames >= 5)
+			ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 0.0f));
+		ImGui::SameLine();
+		// Frames behind
+		int timesync = timesyncOccurred;
+		if (timesync > 0)
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+		ImGui::Text("Behind");
+		ImGui::SameLine();
+		ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(50.f * settings.display.uiScale, 10.f * settings.display.uiScale), "");
+		if (timesync > 0)
+		{
+			ImGui::PopStyleColor();
+			timesyncOccurred--;
+		}
+
+		ImGui::PopStyleColor();
+		ImGui::End();
+		ImGui::PopStyleVar(2);
+	}
+	else
+	{
+
+		const float winWidth = ImGui::GetIO().DisplaySize.x;
+		const float winHeight = ImGui::GetIO().DisplaySize.y;
+
+		for (int i = 0; i < config::NumPlayers; i++)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+			if (i == 0)
+				ImGui::SetNextWindowPos(ImVec2(10, 10));
+			else if (i == 1)
+				ImGui::SetNextWindowPos(ImVec2(winWidth - 100, 10));
+			else if (i == 2)
+				ImGui::SetNextWindowPos(ImVec2(10, winHeight - 150));
+			else if (i == 3)
+				ImGui::SetNextWindowPos(ImVec2(winWidth - 100, winHeight - 150));
+			ImGui::SetNextWindowSize(ImVec2(95 * settings.display.uiScale, 0));
+			ImGui::SetNextWindowBgAlpha(0.7f);
+			std::string ggpo_stats_name = "##ggpostats_" + i;
+			ImGui::Begin(ggpo_stats_name.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+
+			if (i == localPlayerNum)
+			{
+				ImGui::TextColored(ImVec4(0, 1, 0, 1), "P%d", localPlayerNum + 1);
+
+				ggpo_get_network_stats(ggpoSession, playerHandles[localPlayerNum + 1], &stats);
+				// Frame Delay
+				ImGui::Text("Delay");
+				std::string delay = std::to_string(config::GGPODelay.get());
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+				ImGui::Text("%s", delay.c_str());
+
+				// Predicted Frames
+				if (stats.sync.predicted_frames >= 7)
+					// red
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+				else if (stats.sync.predicted_frames >= 5)
+					// yellow
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+				ImGui::Text("Predicted");
+				ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+				if (stats.sync.predicted_frames >= 5)
+					ImGui::PopStyleColor();
+			}
+
+			if (i == localPlayerNum)
+				continue;
+
+			ggpo_get_network_stats(ggpoSession, playerHandles[i], &stats);
+
+			ImGui::Text("P%d", i+1);
+
+			// Ping
+			ImGui::Text("Ping");
+			std::string ping = std::to_string(stats.network.ping);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+			ImGui::Text("%s", ping.c_str());
+
+			// Send Queue
+			ImGui::Text("Send Q");
+			ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+
+			// Frames behind
+			int timesync = timesyncOccurred;
+			if (timesync > 0)
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+			ImGui::Text("Behind");
+			ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+			if (timesync > 0)
+			{
+				ImGui::PopStyleColor();
+				timesyncOccurred--;
+			}
+
+			ImGui::PopStyleColor();
+			ImGui::End();
+			ImGui::PopStyleVar(2);
+		}
+
+
+	}
 }
 
 void endOfFrame()
