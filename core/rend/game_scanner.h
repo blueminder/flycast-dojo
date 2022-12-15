@@ -189,12 +189,21 @@ public:
 				}
 
 				if (config::ContentPath.get().size() == 0)
-#if defined(__APPLE__) || defined(__ANDROID__)
+				{
+					// points "ROMs" directory in flycast dojo folder as default content location
 					config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
-#else
-					config::ContentPath.get().push_back("ROMs");
-#endif
-
+				}
+				else
+				{
+					// forces former default of relative "ROMs" directory to use full path
+					auto itr = std::find(config::ContentPath.get().begin(), config::ContentPath.get().end(), "ROMs");
+					if (itr != config::ContentPath.get().end())
+					{
+						config::ContentPath.get().erase(itr);
+						config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
+						config::Settings::instance().save();
+					}
+				}
 				for (const auto& path : config::ContentPath.get())
 				{
 					add_game_directory(path);
