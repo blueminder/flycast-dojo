@@ -2549,6 +2549,7 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 1)
 	{
+		config::PlayerNum = 0;
 		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
 		{
@@ -2569,6 +2570,7 @@ static void gui_display_content()
 	}
 	else if (item_current_idx == 2)
 	{
+		config::PlayerNum = 1;
 		config::DojoActAsServer = false;
 		config::NetworkServer = "";
 		if (config::NetplayMethod.get() == "GGPO")

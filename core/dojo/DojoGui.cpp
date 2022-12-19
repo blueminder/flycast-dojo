@@ -264,7 +264,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    					ImGui::CloseCurrentPopup();
    				}
-
+				
 				ImGui::SameLine();
 				if (ImGui::Button("Cancel"))
 				{
@@ -368,11 +368,23 @@ void DojoGui::gui_display_stream_wait(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	std::string title = config::EnableMatchCode ? "Select GGPO Frame Delay" : "Connect to GGPO Opponent";
+	std::string title;
+	if (config::EnableMatchCode)
+	{
+		title = "Select GGPO Frame Delay";
+	}
+	else
+	{
+		if (config::NumPlayers > 2)
+			title = "Connect to GGPO Opponents";
+		else
+			title = "Connect to GGPO Opponent";
+	}
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		static char si[128] = "";
+		static char sis[4][128] = { "", "", "", "" };
 		std::string detect_address = "";
 
 		if (config::EnableMatchCode)
@@ -423,22 +435,84 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 #endif
 				}
 
-				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
-				detect_address = std::string(si);
-#ifndef __ANDROID__
-				ImGui::SameLine();
-				if (ImGui::Button("Paste"))
+				std::string num_slider_desc = "Adjust number of players.";
+				if (!config::ActAsServer && config::NumPlayers > 2)
+					num_slider_desc = num_slider_desc + " . Select your player below.";
+				OptionSlider("# Players", config::NumPlayers, 2, 4, num_slider_desc.data());
+
+				if (config::NumPlayers == 2)
 				{
-					char* pasted_txt = SDL_GetClipboardText();
-					memcpy(si, pasted_txt, strlen(pasted_txt));
-				}
+					config::ManualPlayerAssign = false;
+					std::string player_hint = config::ActAsServer ? "P2" : "P1";
+					ImGui::Text("%s", player_hint.c_str());
+					ImGui::SameLine();
+					ImGui::InputTextWithHint("", "0.0.0.0", si, IM_ARRAYSIZE(si));
+					detect_address = std::string(si);
+#ifndef __ANDROID__
+					ImGui::SameLine();
+					if (ImGui::Button("Paste"))
+					{
+						char* pasted_txt = SDL_GetClipboardText();
+						memcpy(si, pasted_txt, strlen(pasted_txt));
+					}
 #endif
+				}
+				else
+				{
+					config::ManualPlayerAssign = true;
+					for (int i = 0; i < config::NumPlayers; i++)
+					{
+						if (config::ActAsServer && i == 0)
+							continue;
+
+						std::string player_hint = "P" + std::to_string(i + 1);
+						if (!config::ActAsServer)
+						{
+							if (i == 0)
+							{
+								ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+								ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+							}
+							OptionRadioButton(player_hint.c_str(), config::PlayerNum, i, nullptr);
+							if (i == 0)
+							{
+								ImGui::PopItemFlag();
+								ImGui::PopStyleVar();
+							}
+						}
+						else
+						{
+							ImGui::Text("%s", player_hint.c_str());
+						}
+
+						if (i == config::PlayerNum)
+							continue;
+
+						ImGui::SameLine();
+
+						std::string player_label = "##" + player_hint;
+						ImGui::PushItemWidth(240);
+						ImGui::InputTextWithHint(player_label.c_str(), "0.0.0.0:19713", sis[i], IM_ARRAYSIZE(sis[i]));
+						ImGui::PopItemWidth();
+#ifndef __ANDROID__
+						ImGui::SameLine();
+						std::string paste_label = "Paste##" + player_hint;
+						if (ImGui::Button(paste_label.c_str()))
+						{
+							char* pasted_txt = SDL_GetClipboardText();
+							memcpy(&sis[i], pasted_txt, strlen(pasted_txt));
+						}
+#endif
+					}
+				}
 			}
 		}
 
-		ImGui::SliderInt("", (int*)&dojo.current_delay, 0, 20);
+		ImGui::PushItemWidth(325);
+		ImGui::SliderInt("##Delay", (int*)&dojo.current_delay, 0, 20);
 		ImGui::SameLine();
 		ImGui::Text("Delay");
+		ImGui::PopItemWidth();
 
 		if (config::EnableMatchCode)
 		{
@@ -457,24 +531,80 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			if (dojo.lobby_active)
+			if (!config::EnableMatchCode)
 			{
-				if (dojo.host_status == 2)
-					dojo.host_status = 3;
-			}
-			else
-			{
-				if (!config::EnableMatchCode)
+				if (!dojo.commandLineStart)
 				{
-					if (!dojo.commandLineStart)
+					if (config::NumPlayers > 2)
 					{
-						config::NetworkServer.set(std::string(si, strlen(si)));
-						cfgSaveStr("network", "server", config::NetworkServer.get());
-					}
-				}
-			}
+						std::string servers[4];
+						int ports[4];
 
-			config::DojoEnable = false;
+						for (int i = 0; i < config::NumPlayers; i++)
+						{
+							if (strlen(sis[i]) > 0)
+							{
+								auto target = stringfix::split(":", std::string(sis[i]));
+								servers[i] = target[0];
+								if (target.size() > 1)
+									ports[i] = std::stoi(target[1]);
+								else
+								{
+									if (i == config::PlayerNum)
+										ports[i] = config::GGPOPort.get();
+									else
+										ports[i] = 0;
+								}
+							}
+							else
+							{
+								if (i == 0)
+									servers[i] = config::NetworkP0Server;
+								else if (i == 1)
+									servers[i] = config::NetworkP1Server;
+								else if (i == 2)
+									servers[i] = config::NetworkP2Server;
+								else if (i == 3)
+									servers[i] = config::NetworkP3Server;
+							}
+
+							if (i == 0)
+							{
+								config::NetworkP0Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP0Port.set(ports[i]);
+							}
+							else if (i == 1)
+							{
+								config::NetworkP1Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP1Port.set(ports[i]);
+							}
+							else if (i == 2)
+							{
+								config::NetworkP2Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP2Port.set(ports[i]);
+							}
+							else if (i == 3)
+							{
+								config::NetworkP3Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP3Port.set(ports[i]);
+							}
+
+						}
+					}
+
+					config::NetworkServer.set(std::string(si, strlen(si)));
+				}
+
+				config::DojoEnable = false;
+			}
 			ggpo_join_screen = false;
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
@@ -763,8 +893,8 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	if(!save_exists)
 	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
 	if (ImGui::Button("Delete Savestate", ImVec2(150 * scaling, 50 * scaling)))
@@ -775,8 +905,8 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	if(!save_exists)
 	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
 	}
 
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
@@ -808,17 +938,18 @@ void DojoGui::gui_display_test_game( float scaling)
 }
 
 std::vector<std::string> split(const std::string& text, char delimiter) {
-	std::string tmp;
-	std::vector<std::string> stk;
-	std::stringstream ss(text);
-	while(getline(ss,tmp, delimiter)) {
-		stk.push_back(tmp);
-	}
-	return stk;
+    std::string tmp;
+    std::vector<std::string> stk;
+    std::stringstream ss(text);
+    while(getline(ss,tmp, delimiter)) {
+        stk.push_back(tmp);
+    }
+    return stk;
 }
 
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 {
+#ifndef __ANDROID__
 	if (!dojo.lobby_active)
 	{
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
@@ -831,15 +962,13 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 	ImGui::Begin("LAN Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-
+	
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
-		dojo.presence.CloseLobby();
-
 		if (game_started)
-			gui_state = GuiState::Commands;
-		else
-			gui_state = GuiState::Main;
+    		gui_state = GuiState::Commands;
+    	else
+    		gui_state = GuiState::Main;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
@@ -878,16 +1007,15 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		std::string beacon_id = it->first;
 		std::vector<std::string> beacon_entry;
 
-		u32 beacon_duration = dojo.unix_timestamp() - dojo.presence.last_seen[beacon_id];
-		if (beacon_duration < 5000)
+		if (dojo.presence.last_seen[beacon_id] + 10000 > dojo.unix_timestamp())
 		{
 			size_t pos = 0;
 			std::string token;
 			while ((pos = s.find(delimiter)) != std::string::npos) {
-				token = s.substr(0, pos);
-				std::cout << token << std::endl;
+			    token = s.substr(0, pos);
+			    std::cout << token << std::endl;
 				beacon_entry.push_back(token);
-				s.erase(0, pos + delimiter.length());
+			    s.erase(0, pos + delimiter.length());
 			}
 
 			std::string beacon_ip = beacon_entry[0];
@@ -950,8 +1078,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 	lobby_player_wait_popup(game_list);
 
-	ImGui::End();
-	ImGui::PopStyleVar();
+    ImGui::End();
+    ImGui::PopStyleVar();
+#endif
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -1612,7 +1741,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10
+			font_size + (font_size / 2) + 10 
 		);
 
 		ImGui::TextUnformatted(dojo.player_1.c_str());
@@ -1635,7 +1764,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10
+			font_size + (font_size / 2) + 10 
 		);
 
 		ImGui::TextUnformatted(dojo.player_2.c_str());
@@ -1800,8 +1929,8 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		}
 	}
 
-	ImGui::End();
-	ImGui::PopStyleVar();
+    ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 inline static void header(const char *title)

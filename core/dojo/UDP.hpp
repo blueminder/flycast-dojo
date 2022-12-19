@@ -22,6 +22,7 @@ private:
 
 	sockaddr_in host_addr;
 	sockaddr_in opponent_addr;
+	sockaddr_in opponent_addrs[4];
 
 	sock_t local_socket = INVALID_SOCKET;
 	void CloseSocket(sock_t& socket) const { closesocket(socket); socket = INVALID_SOCKET; }
