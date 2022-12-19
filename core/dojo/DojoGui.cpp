@@ -368,11 +368,23 @@ void DojoGui::gui_display_stream_wait(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	std::string title = config::EnableMatchCode ? "Select GGPO Frame Delay" : "Connect to GGPO Opponent";
+	std::string title;
+	if (config::EnableMatchCode)
+	{
+		title = "Select GGPO Frame Delay";
+	}
+	else
+	{
+		if (config::NumPlayers > 2)
+			title = "Connect to GGPO Opponents";
+		else
+			title = "Connect to GGPO Opponent";
+	}
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		static char si[128] = "";
+		static char sis[4][128] = { "", "", "", "" };
 		std::string detect_address = "";
 
 		if (config::EnableMatchCode)
@@ -423,22 +435,84 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 #endif
 				}
 
-				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
-				detect_address = std::string(si);
-#ifndef __ANDROID__
-				ImGui::SameLine();
-				if (ImGui::Button("Paste"))
+				std::string num_slider_desc = "Adjust number of players.";
+				if (!config::ActAsServer && config::NumPlayers > 2)
+					num_slider_desc = num_slider_desc + " . Select your player below.";
+				OptionSlider("# Players", config::NumPlayers, 2, 4, num_slider_desc.data());
+
+				if (config::NumPlayers == 2)
 				{
-					char* pasted_txt = SDL_GetClipboardText();
-					memcpy(si, pasted_txt, strlen(pasted_txt));
-				}
+					config::ManualPlayerAssign = false;
+					std::string player_hint = config::ActAsServer ? "P2" : "P1";
+					ImGui::Text("%s", player_hint.c_str());
+					ImGui::SameLine();
+					ImGui::InputTextWithHint("", "0.0.0.0", si, IM_ARRAYSIZE(si));
+					detect_address = std::string(si);
+#ifndef __ANDROID__
+					ImGui::SameLine();
+					if (ImGui::Button("Paste"))
+					{
+						char* pasted_txt = SDL_GetClipboardText();
+						memcpy(si, pasted_txt, strlen(pasted_txt));
+					}
 #endif
+				}
+				else
+				{
+					config::ManualPlayerAssign = true;
+					for (int i = 0; i < config::NumPlayers; i++)
+					{
+						if (config::ActAsServer && i == 0)
+							continue;
+
+						std::string player_hint = "P" + std::to_string(i + 1);
+						if (!config::ActAsServer)
+						{
+							if (i == 0)
+							{
+								ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+								ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+							}
+							OptionRadioButton(player_hint.c_str(), config::PlayerNum, i, nullptr);
+							if (i == 0)
+							{
+								ImGui::PopItemFlag();
+								ImGui::PopStyleVar();
+							}
+						}
+						else
+						{
+							ImGui::Text("%s", player_hint.c_str());
+						}
+
+						if (i == config::PlayerNum)
+							continue;
+
+						ImGui::SameLine();
+
+						std::string player_label = "##" + player_hint;
+						ImGui::PushItemWidth(240);
+						ImGui::InputTextWithHint(player_label.c_str(), "0.0.0.0:19713", sis[i], IM_ARRAYSIZE(sis[i]));
+						ImGui::PopItemWidth();
+#ifndef __ANDROID__
+						ImGui::SameLine();
+						std::string paste_label = "Paste##" + player_hint;
+						if (ImGui::Button(paste_label.c_str()))
+						{
+							char* pasted_txt = SDL_GetClipboardText();
+							memcpy(&sis[i], pasted_txt, strlen(pasted_txt));
+						}
+#endif
+					}
+				}
 			}
 		}
 
-		ImGui::SliderInt("", (int*)&dojo.current_delay, 0, 20);
+		ImGui::PushItemWidth(325);
+		ImGui::SliderInt("##Delay", (int*)&dojo.current_delay, 0, 20);
 		ImGui::SameLine();
 		ImGui::Text("Delay");
+		ImGui::PopItemWidth();
 
 		if (config::EnableMatchCode)
 		{
@@ -461,8 +535,72 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			{
 				if (!dojo.commandLineStart)
 				{
+					if (config::NumPlayers > 2)
+					{
+						std::string servers[4];
+						int ports[4];
+
+						for (int i = 0; i < config::NumPlayers; i++)
+						{
+							if (strlen(sis[i]) > 0)
+							{
+								auto target = stringfix::split(":", std::string(sis[i]));
+								servers[i] = target[0];
+								if (target.size() > 1)
+									ports[i] = std::stoi(target[1]);
+								else
+								{
+									if (i == config::PlayerNum)
+										ports[i] = config::GGPOPort.get();
+									else
+										ports[i] = 0;
+								}
+							}
+							else
+							{
+								if (i == 0)
+									servers[i] = config::NetworkP0Server;
+								else if (i == 1)
+									servers[i] = config::NetworkP1Server;
+								else if (i == 2)
+									servers[i] = config::NetworkP2Server;
+								else if (i == 3)
+									servers[i] = config::NetworkP3Server;
+							}
+
+							if (i == 0)
+							{
+								config::NetworkP0Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP0Port.set(ports[i]);
+							}
+							else if (i == 1)
+							{
+								config::NetworkP1Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP1Port.set(ports[i]);
+							}
+							else if (i == 2)
+							{
+								config::NetworkP2Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP2Port.set(ports[i]);
+							}
+							else if (i == 3)
+							{
+								config::NetworkP3Server.set(servers[i]);
+
+								if (ports[i] > 0)
+									config::GGPOP3Port.set(ports[i]);
+							}
+
+						}
+					}
+
 					config::NetworkServer.set(std::string(si, strlen(si)));
-					cfgSaveStr("network", "server", config::NetworkServer.get());
 				}
 
 				config::DojoEnable = false;

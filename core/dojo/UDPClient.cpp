@@ -182,7 +182,10 @@ void UDPClient::StartSession()
 
 	std::string to_send_start = start_ss.str();
 
-	SendMsg(to_send_start, opponent_addr);
+	if (config::NumPlayers == 2)
+	{
+		SendMsg(to_send_start, opponent_addr);
+	}
 
 	INFO_LOG(NETWORK, "Session Started");
 }
