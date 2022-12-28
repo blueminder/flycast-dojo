@@ -66,7 +66,7 @@ private:
 	std::deque<std::string> last_inputs;
 
 	std::set<u32> local_input_keys;
-	std::set<u32> net_input_keys[2];
+	std::set<u32> net_input_keys[4];
 
 	bool started;
 

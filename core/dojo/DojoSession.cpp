@@ -202,11 +202,6 @@ void DojoSession::AddNetFrame(const char* received_data)
 
 	u32 frame_player = data[0];
 
-	if (frame_player > 1)
-		return;
-
-	u32 frame_player_opponent = frame_player == 0 ? 1 : 0;
-
 	std::string data_to_queue(data, data + FRAME_SIZE);
 
 	if (net_inputs[frame_player].count(effective_frame_num) == 0)
@@ -216,11 +211,16 @@ void DojoSession::AddNetFrame(const char* received_data)
 		net_input_keys[frame_player].insert(effective_frame_num);
 	}
 
-	if (net_inputs[frame_player].count(effective_frame_num) == 1 &&
-		net_inputs[frame_player_opponent].count(effective_frame_num) == 1)
+	if (config::MapleMainDevices[2] != MDT_None && config::MapleMainDevices[3] != MDT_None)
 	{
-		if (effective_frame_num == last_consecutive_common_frame + 1)
-			last_consecutive_common_frame++;
+		u32 frame_player_opponent = frame_player == 0 ? 1 : 0;
+
+		if (net_inputs[frame_player].count(effective_frame_num) == 1 &&
+			net_inputs[frame_player_opponent].count(effective_frame_num) == 1)
+		{
+			if (effective_frame_num == last_consecutive_common_frame + 1)
+				last_consecutive_common_frame++;
+		}
 	}
 }
 
@@ -1426,12 +1426,12 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 	}
 
 	u32 target_port = port;
-
+/*
 	if (player == 1 && delay > 0)
 	{
 		target_port = (port == 0 ? 1 : 0);
 	}
-
+*/
 	std::string current_frame_data;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST ||
 		settings.platform.system == DC_PLATFORM_ATOMISWAVE)
