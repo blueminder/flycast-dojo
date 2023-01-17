@@ -51,6 +51,7 @@
 #include "breakpad/client/windows/handler/exception_handler.h"
 #include "version.h"
 #endif
+#include "profiler/fc_profiler.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -269,6 +270,8 @@ static void setupPath()
 
 void UpdateInputState()
 {
+	FC_PROFILE_SCOPE;
+
 #if defined(USE_SDL)
 	input_sdl_handle();
 #else
@@ -731,6 +734,17 @@ static bool dumpCallback(const wchar_t* dump_path,
 		wchar_t s[MAX_PATH + 32];
 		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
+
+		nowide::stackstring path;
+		if (path.convert(dump_path))
+		{
+			std::string directory = path.c_str();
+			if (path.convert(minidump_id))
+			{
+				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
+				registerCrash(directory.c_str(), fullPath.c_str());
+			}
+		}
 	}
 	return succeeded;
 }
@@ -850,9 +864,12 @@ int main(int argc, char** argv)
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
 {
+	wchar_t *cmd_line = GetCommandLineW();
+	nowide::stackstring converter;
 	int argc = 0;
-	char* cmd_line = GetCommandLineA();
-	char** argv = commandLineToArgvA(cmd_line, &argc);
+	char **argv = nullptr;
+	if (converter.convert(cmd_line))
+		argv = commandLineToArgvA(converter.c_str(), &argc);
 #endif
 
 #ifdef USE_BREAKPAD
@@ -889,6 +906,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
+#ifdef USE_BREAKPAD
+	nowide::stackstring nws;
+	static std::string tempDir8;
+	if (nws.convert(tempDir))
+		tempDir8 = nws.c_str();
+	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
+#endif
+
 #ifdef TARGET_UWP
 	if (config::ContentPath.get().empty())
 		config::ContentPath.get().push_back(get_writable_config_path(""));
@@ -923,6 +948,8 @@ void os_DebugBreak()
 
 void os_DoEvents()
 {
+	FC_PROFILE_SCOPE;
+
 #ifndef TARGET_UWP
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))

@@ -375,7 +375,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		}
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-			return (T)sb_ReadMem(paddr, sz);
+			return (T)sb_ReadMem(paddr);
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
@@ -485,15 +485,16 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
 		{
-			sb_WriteMem(paddr, data, sz);
+			sb_WriteMem(paddr, data);
 			return;
 		}
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
-			verify(sz == 4);
-			pvr_WriteReg(paddr, data);
-			return;
+			if (sz == 4) {
+				pvr_WriteReg(paddr, data);
+				return;
+			}
 		}
 		break;
 	case 3:

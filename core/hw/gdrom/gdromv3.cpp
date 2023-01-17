@@ -1121,8 +1121,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz == 1);
-		if ((DriveSel & 0x10) == 0)
+		if (sz != 1)
+			INFO_LOG(GDROM, "GDROM: Bad size on GD_COMMAND reg");
+		else if ((DriveSel & 0x10) == 0)
 		{
 			if (data != ATA_NOP && data != ATA_SOFT_RESET)
 				verify(gd_state == gds_waitcmd);
@@ -1250,20 +1251,20 @@ static int GDRomschd(int i, int c, int j)
 }
 
 //DMA Start
-void GDROM_DmaStart(u32 addr, u32 data)
+static void GDROM_DmaStart(u32 addr, u32 data)
 {
-	if (SB_GDEN==0)
-	{
-		INFO_LOG(GDROM, "Invalid GD-DMA start, SB_GDEN=0. Ignoring it.");
-		return;
-	}
-	SB_GDST|=data&1;
+	SB_GDST |= data & 1;
 
-	if (SB_GDST==1)
+	if (SB_GDST == 1)
 	{
-		SB_GDSTARD=SB_GDSTAR;
-		SB_GDLEND=0;
-		DEBUG_LOG(GDROM, "GDROM-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+		if (SB_GDEN == 0)
+		{
+			INFO_LOG(GDROM, "Invalid GD-DMA start, SB_GDEN=0. Ignoring it.");
+			return;
+		}
+		SB_GDSTARD = SB_GDSTAR;
+		SB_GDLEND = 0;
+		DEBUG_LOG(GDROM, "GDROM-DMA start addr %08X len %d fad %x", SB_GDSTAR, SB_GDLEN, read_params.start_sector);
 
 		int ticks = getGDROMTicks();
 		if (ticks < SH4_TIMESLICE)
@@ -1276,9 +1277,9 @@ void GDROM_DmaStart(u32 addr, u32 data)
 	}
 }
 
-void GDROM_DmaEnable(u32 addr, u32 data)
+static void GDROM_DmaEnable(u32 addr, u32 data)
 {
-	SB_GDEN = (data & 1);
+	SB_GDEN = data & 1;
 	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
 		printf_spi("GD-DMA aborted");

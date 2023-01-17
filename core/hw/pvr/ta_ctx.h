@@ -6,8 +6,6 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 
-#include <mutex>
-
 class BaseTextureCacheData;
 struct N2LightModel;
 
@@ -174,6 +172,7 @@ struct RenderPass {
 	u32 pt_count;
 	u32 tr_count;
 	u32 mvo_tr_count;
+	u32 sorted_tr_count;
 };
 
 struct N2Matrix
@@ -218,6 +217,13 @@ struct N2LightModel
 	int bumpId2;				// Light index for vol1 bump mapping
 };
 
+struct SortedTriangle
+{
+	const PolyParam* ppid;
+	u32 first;
+	u32 count;
+};
+
 struct rend_context
 {
 	u8* proc_start;
@@ -228,13 +234,16 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isRenderFramebuffer;
 	
+	TA_GLOB_TILE_CLIP_type ta_GLOB_TILE_CLIP;
+	SCALER_CTL_type scaler_ctl;
 	FB_X_CLIP_type fb_X_CLIP;
 	FB_Y_CLIP_type fb_Y_CLIP;
 	u32 fb_W_LINESTRIDE;
 	u32 fb_W_SOF1;
 	FB_W_CTRL_type fb_W_CTRL;
+	u32 framebufferWidth;
+	u32 framebufferHeight;
 	
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;
@@ -249,6 +258,7 @@ struct rend_context
 	List<PolyParam>   global_param_pt;
 	List<PolyParam>   global_param_tr;
 	List<RenderPass>  render_passes;
+	std::vector<SortedTriangle> sortedTriangles;
 
 	List<N2Matrix> matrices;
 	List<N2LightModel> lightModels;
@@ -264,6 +274,7 @@ struct rend_context
 		global_param_mvo.Clear();
 		global_param_mvo_tr.Clear();
 		render_passes.Clear();
+		sortedTriangles.clear();
 
 		// Reserve space for background poly
 		global_param_op.Append()->init();
@@ -272,13 +283,13 @@ struct rend_context
 		Overrun = false;
 		fZ_min = 1000000.0f;
 		fZ_max = 1.0f;
-		isRenderFramebuffer = false;
 		matrices.Clear();
 		lightModels.Clear();
 	}
 
 	void newRenderPass();
 
+	// For RTT TODO merge with framebufferWidth/Height
 	u32 getFramebufferWidth() const {
 		u32 w = fb_X_CLIP.max + 1;
 		if (fb_W_LINESTRIDE != 0)
@@ -297,8 +308,6 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
-
-	std::mutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
@@ -352,10 +361,8 @@ struct TA_context
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		tad.Clear();
 		nextContext = nullptr;
-		rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-		rend_inuse.unlock();
 	}
 
 	~TA_context()
@@ -398,7 +405,6 @@ void FinishRender(TA_context* ctx);
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool rend_framePending();
 void SerializeTAContext(Serializer& ser);
 void DeserializeTAContext(Deserializer& deser);
 
@@ -415,6 +421,13 @@ void ta_set_tileclip(u32 tileclip);
 u32 ta_get_list_type();
 void ta_set_list_type(u32 listType);
 void ta_parse_reset();
+void getRegionTileAddrAndSize(u32& address, u32& size);
+//void sortTriangles(rend_context& ctx, int pass);
+void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previousPass);
+void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ctx);
+void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend_context& ctx);
+void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
+void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
 
 class TAParserException : public FlycastException
 {

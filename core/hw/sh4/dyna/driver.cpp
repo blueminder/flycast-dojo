@@ -147,8 +147,16 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 		}
 	}
+	else if (vaddr & 1)
+	{
+		// read address error
+		Do_Exception(vaddr, 0xE0, 0x100);
+		return false;
+	}
 	else
+	{
 		addr = vaddr;
+	}
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
@@ -244,6 +252,10 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
+	if (!rbi)
+		rbi = bm_GetStaleBlock(block_cpde);
+	verify(rbi != nullptr);
+
 	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
@@ -385,27 +397,19 @@ static void recSh4_Init()
 
 	
 	if (_nvmem_enabled())
-	{
-		if (!_nvmem_4gb_space())
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-		}
-		else
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x8C000000));
-		}
-	}
+		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
 	// Prepare some pointer to the pre-allocated code cache:
 	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = NULL;
-	#ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
-	#else
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache));
-	#endif
+#ifdef FEAT_NO_RWX_PAGES
+	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+#else
+	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+#endif
+	verify(rc);
 	// Ensure the pointer returned is non-null
 	verify(CodeCache != NULL);
 

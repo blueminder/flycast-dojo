@@ -165,6 +165,7 @@ static int framebufferWidth;
 static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
+static float framebufferAspectRatio = 4.f / 3.f;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -600,7 +601,7 @@ static bool set_variable_visibility(void)
 
 static void setGameGeometry(retro_game_geometry& geometry)
 {
-	geometry.aspect_ratio = getOutputFramebufferAspectRatio();
+	geometry.aspect_ratio = framebufferAspectRatio;
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
 	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
@@ -622,19 +623,18 @@ void setAVInfo(retro_system_av_info& avinfo)
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
 }
 
-void retro_resize_renderer(int w, int h)
+void retro_resize_renderer(int w, int h, float aspectRatio)
 {
-	if (w == framebufferWidth && h == framebufferHeight)
+	if (w == framebufferWidth && h == framebufferHeight && aspectRatio == framebufferAspectRatio)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
+	framebufferAspectRatio = aspectRatio;
 	bool avinfoNeeded = framebufferHeight > maxFramebufferHeight || framebufferWidth > maxFramebufferWidth;
 	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
 	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
 
-	if (avinfoNeeded
-			// TODO crash with dx11
-			&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
+	if (avinfoNeeded)
 	{
 		retro_system_av_info avinfo;
 		setAVInfo(avinfo);
@@ -769,7 +769,6 @@ static void update_variables(bool first_startup)
 	if (!first_startup && previous_renderer != config::RendererType) {
 		rend_term_renderer();
 		rend_init_renderer();
-		rend_resize_renderer();
 	}
 
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
@@ -1030,7 +1029,6 @@ static void update_variables(bool first_startup)
 			rotate_screen ^= rotate_game;
 		if (rotate_game)
 			config::Widescreen.override(false);
-		rend_resize_renderer();
 
 		if ((libretro_detect_vsync_swap_interval != prevDetectVsyncSwapInterval) &&
 			 !libretro_detect_vsync_swap_interval &&
@@ -1127,7 +1125,6 @@ void retro_reset()
 		config::Widescreen.override(false);
 	config::Rotate90 = false;
 
-	rend_resize_renderer();
 	retro_game_geometry geometry;
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
@@ -1147,7 +1144,6 @@ static void context_reset()
 	rend_term_renderer();
 	theGLContext.init();
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void context_destroy()
@@ -1613,7 +1609,6 @@ static void retro_vk_context_reset()
 	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void retro_vk_context_destroy()
@@ -1747,7 +1742,6 @@ static void dx11_context_reset()
 	else if (config::RendererType != RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::DirectX11;
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void dx11_context_destroy()
@@ -2235,10 +2229,7 @@ unsigned retro_api_version()
 void retro_rend_present()
 {
 	if (!config::ThreadedRendering)
-	{
 		is_dupe = false;
-		sh4_cpu.Stop();
-	}
 }
 
 static uint32_t get_time_ms()
@@ -2413,7 +2404,7 @@ static void updateLightgunCoordinates(u32 port)
 {
 	int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
 	int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
-	if (config::Widescreen && config::ScreenStretching == 100)
+	if (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer)
 		mo_x_abs[port] = 640.f * ((x + 0x8000) * 4.f / 3.f / 0x10000 - (4.f / 3.f - 1.f) / 2.f);
 	else
 		mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;

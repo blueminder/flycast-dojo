@@ -415,7 +415,9 @@ extern AudioVolumeOption AudioVolume;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
-#if defined(_WIN32) or defined(TARGET_UWP)
+#ifdef USE_DX9
+		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+#elif defined(USE_DX11)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
 #elif defined(__ANDROID__)
 		: Option<RenderType>("pvr.rend", RenderType::Vulkan) {}
@@ -468,11 +470,15 @@ extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<int> FixedFrequency; // 0: off, 1: auto, 2: 59.94Hz, 3: 60Hz, 4: 50Hz
 extern Option<bool> FixedFrequencyThreadSleep;
+extern Option<bool> EmulateFramebuffer;
 
 // Misc
 
 extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
+extern Option<bool> GDB;
+extern Option<int> GDBPort;
+extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
 
@@ -480,8 +486,14 @@ extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
+extern Option<bool> UploadCrashLogs;
 
 extern Option<bool> ShowEjectDisk;
+// Profiling
+extern Option<bool> ProfilerEnabled;
+extern Option<bool> ProfilerDrawToGUI;
+extern Option<bool> ProfilerOutputTTY;
+extern Option<float> ProfilerFrameWarningTime;
 
 // Network
 

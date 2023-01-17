@@ -14,6 +14,7 @@
 #include <fstream>
 
 #include "ConsoleListener.h"
+#include "InMemoryListener.h"
 #include "Log.h"
 #include "StringUtil.h"
 #include "cfg/cfg.h"
@@ -107,6 +108,7 @@ LogManager::LogManager()
 	m_log[LogTypes::INTERPRETER] = {"INTERPRETER", "SH4 Interpreter"};
 	m_log[LogTypes::MEMORY] = {"MEMORY", "Memory Management"};
 	m_log[LogTypes::NETWORK] = {"NETWORK", "Naomi Network"};
+	m_log[LogTypes::PROFILER] = { "PROFILER", "Performance Profiler" };
 	m_log[LogTypes::VMEM] = {"VMEM", "Virtual Memory Management"};
 	m_log[LogTypes::MODEM] = {"MODEM", "Modem and Network"};
 	m_log[LogTypes::NAOMI] = {"NAOMI", "Naomi"};
@@ -150,6 +152,8 @@ LogManager::LogManager()
 	}
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
 	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+	RegisterListener(LogListener::IN_MEMORY_LISTENER, new InMemoryListener());
+	EnableListener(LogListener::IN_MEMORY_LISTENER, true);
 
 	for (LogContainer& container : m_log)
 	{
@@ -164,6 +168,7 @@ LogManager::~LogManager()
 	// The log window listener pointer is owned by the GUI code.
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
 	delete m_listeners[LogListener::FILE_LISTENER];
+	delete m_listeners[LogListener::IN_MEMORY_LISTENER];
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds
@@ -265,3 +270,6 @@ void LogManager::Shutdown()
 	delete s_log_manager;
 	s_log_manager = nullptr;
 }
+
+// Another singleton
+InMemoryListener *InMemoryListener::instance;

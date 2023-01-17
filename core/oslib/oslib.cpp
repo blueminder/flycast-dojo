@@ -20,6 +20,9 @@
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "cfg/option.h"
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 namespace hostfs
 {
@@ -145,3 +148,110 @@ std::string getBiosFontPath()
 }
 
 }
+
+#ifdef USE_BREAKPAD
+
+#include "rend/boxart/http_client.h"
+#include "version.h"
+#include "log/InMemoryListener.h"
+#include "wsi/context.h"
+
+#define FLYCAST_CRASH_LIST "flycast-crashes.txt"
+
+void registerCrash(const char *directory, const char *path)
+{
+	char list[256];
+	// Register .dmp in crash list
+	snprintf(list, sizeof(list), "%s/%s", directory, FLYCAST_CRASH_LIST);
+	FILE *f = nowide::fopen(list, "at");
+	if (f != nullptr)
+	{
+		fprintf(f, "%s\n", path);
+		fclose(f);
+	}
+	// Save last log lines
+	InMemoryListener *listener = InMemoryListener::getInstance();
+	if (listener != nullptr)
+	{
+		strncpy(list, path, sizeof(list) - 1);
+		list[sizeof(list) - 1] = '\0';
+		char *p = strrchr(list, '.');
+		if (p != nullptr && (p - list) < (int)sizeof(list) - 4)
+		{
+			strcpy(p + 1, "log");
+			FILE *f = nowide::fopen(list, "wt");
+			if (f != nullptr)
+			{
+				std::vector<std::string> log = listener->getLog();
+				for (const auto& line : log)
+					fprintf(f, "%s", line.c_str());
+				fprintf(f, "Version: %s\n", GIT_VERSION);
+				fprintf(f, "Renderer: %d\n", (int)config::RendererType.get());
+				GraphicsContext *gctx = GraphicsContext::Instance();
+				if (gctx != nullptr)
+					fprintf(f, "GPU: %s %s\n", gctx->getDriverName().c_str(), gctx->getDriverVersion().c_str());
+				fprintf(f, "Game: %s\n", settings.content.gameId.c_str());
+				fclose(f);
+			}
+		}
+	}
+}
+
+void uploadCrashes(const std::string& directory)
+{
+	FILE *f = nowide::fopen((directory + "/" FLYCAST_CRASH_LIST).c_str(), "rt");
+	if (f == nullptr)
+		return;
+	http::init();
+	char line[256];
+	bool uploadFailure = false;
+	while (fgets(line, sizeof(line), f) != nullptr)
+	{
+		char *p = line + strlen(line) - 1;
+		if (*p == '\n')
+			*p = '\0';
+		if (file_exists(line))
+		{
+			std::string dmpfile(line);
+			std::string logfile = get_file_basename(dmpfile) + ".log";
+#ifdef SENTRY_UPLOAD
+			if (config::UploadCrashLogs)
+			{
+				NOTICE_LOG(COMMON, "Uploading minidump %s", line);
+				std::vector<http::PostField> fields;
+				fields.emplace_back("upload_file_minidump", dmpfile, "application/octet-stream");
+				fields.emplace_back("flycast_version", std::string(GIT_VERSION));
+				if (file_exists(logfile))
+					fields.emplace_back("flycast_log", logfile, "text/plain");
+				// TODO config, gpu/driver, ...
+				int rc = http::post(SENTRY_UPLOAD, fields);
+				if (rc >= 200 && rc < 300) {
+					nowide::remove(dmpfile.c_str());
+					nowide::remove(logfile.c_str());
+				}
+				else
+				{
+					WARN_LOG(COMMON, "Upload failed: HTTP error %d", rc);
+					uploadFailure = true;
+				}
+			}
+			else
+#endif
+			{
+				nowide::remove(dmpfile.c_str());
+				nowide::remove(logfile.c_str());
+			}
+		}
+	}
+	http::term();
+	fclose(f);
+	if (!uploadFailure)
+		nowide::remove((directory + "/" FLYCAST_CRASH_LIST).c_str());
+}
+
+#else
+
+void registerCrash(const char *directory, const char *path) {}
+void uploadCrashes(const std::string& directory) {}
+
+#endif

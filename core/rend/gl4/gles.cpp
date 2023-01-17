@@ -22,6 +22,7 @@
 #include "rend/osd.h"
 #include "glsl.h"
 #include "gl4naomi2.h"
+#include "rend/gles/postprocess.h"
 
 //Fragment and vertex shaders code
 
@@ -662,11 +663,86 @@ static bool gl_create_resources()
 	return true;
 }
 
+struct OpenGL4Renderer : OpenGLRenderer
+{
+	bool Init() override;
+
+	void Term() override
+	{
+		termABuffer();
+		glcache.DeleteTextures(1, &stencilTexId);
+		stencilTexId = 0;
+		glcache.DeleteTextures(1, &depthTexId);
+		depthTexId = 0;
+		glcache.DeleteTextures(1, &opaqueTexId);
+		opaqueTexId = 0;
+		glcache.DeleteTextures(1, &depthSaveTexId);
+		depthSaveTexId = 0;
+		glDeleteFramebuffers(1, &geom_fbo);
+		geom_fbo = 0;
+		glDeleteSamplers(2, texSamplers);
+		texSamplers[0] = texSamplers[1] = 0;
+		glDeleteFramebuffers(1, &depth_fbo);
+		depth_fbo = 0;
+
+		TexCache.Clear();
+		termGLCommon();
+		gl4_term();
+	}
+
+	bool Render() override
+	{
+		saveCurrentFramebuffer();
+		renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.isRTT) {
+			restoreCurrentFramebuffer();
+			return false;
+		}
+
+		if (!config::EmulateFramebuffer)
+		{
+			DrawOSD(false);
+			gl.ofbo2.ready = false;
+			frameRendered = true;
+		}
+		restoreCurrentFramebuffer();
+
+		return true;
+	}
+
+	GLenum getFogTextureSlot() const override {
+		return GL_TEXTURE5;
+	}
+	GLenum getPaletteTextureSlot() const override {
+		return GL_TEXTURE6;
+	}
+
+	bool renderFrame(int width, int height);
+
+#ifdef LIBRETRO
+	void DrawOSD(bool clearScreen) override
+	{
+		void gl4DrawVmuTexture(u8 vmu_screen_number);
+		void gl4DrawGunCrosshair(u8 port);
+
+		if (settings.platform.isConsole())
+		{
+			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if (vmu_lcd_status[vmu_screen_number * 2])
+					gl4DrawVmuTexture(vmu_screen_number);
+		}
+
+		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+			gl4DrawGunCrosshair(lightgun_port);
+	}
+#endif
+};
+
 //setup
 void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
 		const GLchar *message, const void *userParam);
 
-static bool gl4_init()
+bool OpenGL4Renderer::Init()
 {
 	findGLVersion();
 	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
@@ -733,26 +809,20 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 }
 
-static bool RenderFrame(int width, int height)
+bool OpenGL4Renderer::renderFrame(int width, int height)
 {
 	const bool is_rtt = pvrrc.isRTT;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
+			is_rtt ? pvrrc.getFramebufferHeight() : height);
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-#ifdef LIBRETRO
-	gl.ofbo.origFbo = glsm_get_current_framebuffer();
-#else
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
-#endif
-	if (!is_rtt)
+	if (!is_rtt && !config::EmulateFramebuffer)
 		gcflip = 0;
 	else
 		gcflip = 1;
@@ -796,21 +866,21 @@ static bool RenderFrame(int width, int height)
 	}
 	for (auto& it : gl4.shaders)
 		resetN2UniformCache(&it.second);
-
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	GLuint output_fbo;
+	glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
+	GLuint output_fbo;
 	//setup render target first
 	if (is_rtt)
 		output_fbo = BindRTT(false);
 	else
 	{
 #ifdef LIBRETRO
-		gl.ofbo.width = width;
-		gl.ofbo.height = height;
-		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+		if (config::PowerVR2Filter)
 			output_fbo = postProcessor.getFramebuffer(width, height);
+		else if (config::EmulateFramebuffer)
+			output_fbo = init_output_framebuffer(width, height);
 		else
 			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
@@ -833,7 +903,7 @@ static bool RenderFrame(int width, int height)
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	else if (!pvrrc.isRenderFramebuffer)
+	else
 	{
 		//Main VBO
 		//move vertex to gpu
@@ -861,7 +931,7 @@ static bool RenderFrame(int width, int height)
 		}
 		glCheck();
 
-		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
+		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
 		{
 			float fWidth;
 			float fHeight;
@@ -932,109 +1002,29 @@ static bool RenderFrame(int width, int height)
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
 		if (config::PowerVR2Filter && !is_rtt)
-			postProcessor.render(glsm_get_current_framebuffer());
+		{
+			if (config::EmulateFramebuffer)
+				postProcessor.render(init_output_framebuffer(width, height));
+			else
+				postProcessor.render(glsm_get_current_framebuffer());
+		}
 #endif
-	}
-	else
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (config::EmulateFramebuffer)
+		writeFramebufferToVRAM();
 #ifndef LIBRETRO
-	else
-		render_output_framebuffer();
+	else {
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+		RenderLastFrame();
+	}
 #endif
 	glBindVertexArray(0);
 
 	return !is_rtt;
 }
-
-struct OpenGL4Renderer : OpenGLRenderer
-{
-	bool Init() override
-	{
-		return gl4_init();
-	}
-
-	void Resize(int w, int h) override
-	{
-		width = w;
-		height = h;
-		resize(w, h);
-	}
-
-	void Term() override
-	{
-		termABuffer();
-		glcache.DeleteTextures(1, &stencilTexId);
-		stencilTexId = 0;
-		glcache.DeleteTextures(1, &depthTexId);
-		depthTexId = 0;
-		glcache.DeleteTextures(1, &opaqueTexId);
-		opaqueTexId = 0;
-		glcache.DeleteTextures(1, &depthSaveTexId);
-		depthSaveTexId = 0;
-		glDeleteFramebuffers(1, &geom_fbo);
-		geom_fbo = 0;
-		glDeleteSamplers(2, texSamplers);
-		texSamplers[0] = texSamplers[1] = 0;
-		glDeleteFramebuffers(1, &depth_fbo);
-		depth_fbo = 0;
-
-		TexCache.Clear();
-		termGLCommon();
-		gl4_term();
-	}
-
-	bool Render() override
-	{
-		RenderFrame(width, height);
-		if (pvrrc.isRTT)
-			return false;
-
-		DrawOSD(false);
-		frameRendered = true;
-
-		return true;
-	}
-
-	bool RenderLastFrame() override
-	{
-		return render_output_framebuffer();
-	}
-
-	GLenum getFogTextureSlot() const override {
-		return GL_TEXTURE5;
-	}
-	GLenum getPaletteTextureSlot() const override {
-		return GL_TEXTURE6;
-	}
-
-#ifdef LIBRETRO
-	void DrawOSD(bool clearScreen) override
-	{
-		void gl4DrawVmuTexture(u8 vmu_screen_number);
-		void gl4DrawGunCrosshair(u8 port);
-
-		if (settings.platform.isConsole())
-		{
-			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-				if (vmu_lcd_status[vmu_screen_number * 2])
-					gl4DrawVmuTexture(vmu_screen_number);
-		}
-
-		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			gl4DrawGunCrosshair(lightgun_port);
-	}
-#endif
-};
 
 Renderer* rend_GL4()
 {

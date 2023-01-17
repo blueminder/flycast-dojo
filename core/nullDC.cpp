@@ -51,9 +51,13 @@ int flycast_init(int argc, char* argv[])
 	os_CreateWindow();
 	os_SetupInput();
 
-	debugger::init();
+	if(config::GDB)
+		debugger::init(config::GDBPort);
 	if (!settings.network.online)
 		lua::init();
+
+	if(config::ProfilerEnabled)
+		LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);
 
 	return 0;
 }

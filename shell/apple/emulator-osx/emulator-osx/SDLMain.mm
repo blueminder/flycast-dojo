@@ -9,6 +9,7 @@
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
 #include "rend/gui.h"
+#include "oslib/oslib.h"
 
 #ifdef USE_BREAKPAD
 #include "client/mac/handler/exception_handler.h"
@@ -245,7 +246,13 @@ static void CustomApplicationMain (int argc, char **argv)
 #ifdef USE_BREAKPAD
 static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
 {
-    printf("Minidump saved to '%s/%s.dmp'\n", dump_dir, minidump_id);
+	if (succeeded)
+	{
+	    char path[512];
+	    sprintf(path, "%s/%s.dmp", dump_dir, minidump_id);
+	    printf("Minidump saved to '%s'\n", path);
+	    registerCrash(dump_dir, path);
+	}
     return succeeded;
 }
 #endif

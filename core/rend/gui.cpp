@@ -44,7 +44,9 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "implot/implot.h"
 #include "boxart/boxart.h"
+#include "profiler/fc_profiler.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -85,6 +87,8 @@ static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Boxart boxart;
 static Chat chat;
+static std::recursive_mutex guiMutex;
+using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 static int item_current_idx = 0;
 
@@ -106,6 +110,8 @@ static void emuEventCallback(Event event, void *)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
+		break;
 	case Event::Terminate:
 		GamepadDevice::load_system_mappings();
 		if (config::GGPOEnable ||
@@ -141,6 +147,7 @@ static void emuEventCallback(Event event, void *)
 				}
 			}
 		}
+		game_started = false;
 		break;
 	default:
 		break;
@@ -156,6 +163,9 @@ void gui_init()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+#if FC_PROFILER
+	ImPlot::CreateContext();
+#endif
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.IniFilename = NULL;
@@ -487,10 +497,10 @@ static void delayedKeysUp()
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
 }
 
-static void gui_endFrame()
+static void gui_endFrame(bool gui_open)
 {
     ImGui::Render();
-    imguiDriver->renderDrawData(ImGui::GetDrawData());
+    imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
     delayedKeysUp();
 }
 
@@ -608,6 +618,7 @@ void gui_open_pause()
 
 void gui_open_settings()
 {
+	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
@@ -655,6 +666,8 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	const LockGuard lock(guiMutex);
+
 	dojo.CleanUp();
 	std::string filename = path.substr(path.find_last_of("/\\") + 1);
 	auto game_name = stringfix::remove_extension(filename);
@@ -757,6 +770,7 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	const LockGuard lock(guiMutex);
 	dojo.CleanUp();
 
 	if (dojo.PlayMatch && dojo.replay_version > 1)
@@ -767,7 +781,6 @@ void gui_stop_game(const std::string& message)
 		// Exit to main menu
 		emu.unloadGame();
 		gui_state = GuiState::Main;
-		game_started = false;
 		reset_vmus();
 		if (!message.empty())
 			gui_error("Flycast has stopped.\n\n" + message);
@@ -2439,22 +2452,22 @@ static void gameTooltip(const std::string& tip)
     }
 }
 
-static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+static bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
 {
 	textureId = ImTextureID{};
-	if (art->boxartPath.empty())
+	if (art.boxartPath.empty())
 		return false;
 
 	// Get the boxart texture. Load it if needed.
-	textureId = imguiDriver->getTexture(art->boxartPath);
+	textureId = imguiDriver->getTexture(art.boxartPath);
 	if (textureId == ImTextureID() && allowLoad)
 	{
 		int width, height;
-		u8 *imgData = loadImage(art->boxartPath, width, height);
+		u8 *imgData = loadImage(art.boxartPath, width, height);
 		if (imgData != nullptr)
 		{
 			try {
-				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
 			} catch (...) {
 				// vulkan can throw during resizing
 			}
@@ -2708,12 +2721,9 @@ static void gui_display_content()
 			{
 				ImTextureID textureId{};
 				GameMedia game;
-				const GameBoxart *art = boxart.getBoxart(game);
-				if (art != nullptr)
-				{
-					if (getGameImage(art, textureId, loadedImages < 10))
-						loadedImages++;
-				}
+				GameBoxart art = boxart.getBoxart(game);
+				if (getGameImage(art, textureId, loadedImages < 10))
+					loadedImages++;
 				if (textureId != ImTextureID())
 					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
 				else
@@ -2743,12 +2753,11 @@ static void gui_display_content()
 						continue;
 				}
 				std::string gameName = game.name;
-				const GameBoxart *art = nullptr;
+				GameBoxart art;
 				if (config::BoxartDisplayMode)
 				{
 					art = boxart.getBoxart(game);
-					if (art != nullptr)
-						gameName = art->name;
+					gameName = art.name;
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
@@ -2767,12 +2776,9 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						ImTextureID textureId{};
-						if (art != nullptr)
-						{
-							// Get the boxart texture. Load it if needed (max 10 per frame).
-							if (getGameImage(art, textureId, loadedImages < 10))
-								loadedImages++;
-						}
+						// Get the boxart texture. Load it if needed (max 10 per frame).
+						if (getGameImage(art, textureId, loadedImages < 10))
+							loadedImages++;
 						if (textureId != ImTextureID())
 							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
 						else
@@ -3245,7 +3251,8 @@ static void gui_network_start()
 				gui_state = GuiState::Main;
 			}
 		} catch (const FlycastException& e) {
-			NetworkHandshake::instance->stop();
+			if (NetworkHandshake::instance != nullptr)
+				NetworkHandshake::instance->stop();
 			emu.unloadGame();
 			gui_error(e.what());
 			gui_state = GuiState::Main;
@@ -3266,7 +3273,7 @@ static void gui_network_start()
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
-	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -3281,7 +3288,7 @@ static void gui_network_start()
 
 	ImGui::End();
 
-	if ((kcode[0] & DC_BTN_START) == 0)
+	if ((kcode[0] & DC_BTN_START) == 0 && NetworkHandshake::instance != nullptr)
 		NetworkHandshake::instance->startNow();
 }
 
@@ -3305,6 +3312,15 @@ static void gui_display_loadscreen()
 	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
 	try {
+		const char *label = gameLoader.getProgress().label;
+		if (label == nullptr)
+		{
+			if (gameLoader.ready())
+				label = "Starting...";
+			else
+				label = "Loading...";
+		}
+
 		if (gameLoader.ready())
 		{
 			if (settings.network.online && config::EnableUPnP)
@@ -3381,7 +3397,7 @@ static void gui_display_loadscreen()
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("Starting...");
+				ImGui::Text("%s", label);
 			}
 			settings.dojo.GameEntry = "";
 		}
@@ -3393,9 +3409,6 @@ static void gui_display_loadscreen()
 			}
 			else
 			{
-				const char *label = gameLoader.getProgress().label;
-				if (label == nullptr)
-					label = "Loading...";
 				ImGui::Text("%s", label);
 				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 				ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
@@ -3424,6 +3437,9 @@ static void gui_display_loadscreen()
 
 void gui_display_ui()
 {
+	FC_PROFILE_SCOPE;
+	const LockGuard lock(guiMutex);
+
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;
 	if (gui_state == GuiState::Main)
@@ -3549,6 +3565,7 @@ void gui_display_ui()
 	gui_newFrame();
 	ImGui::NewFrame();
 	error_msg_shown = false;
+	bool gui_open = gui_is_open();
 
 	if (dojo.buffering)
 	{
@@ -3659,7 +3676,7 @@ void gui_display_ui()
 		break;
 	}
 	error_popup();
-	gui_endFrame();
+	gui_endFrame(gui_open);
 
 	if (gui_state == GuiState::Closed)
 		emu.start();
@@ -3775,7 +3792,7 @@ void gui_display_osd()
 		if (dojo.buffering)
 			gui_state = GuiState::ReplayPause;
 
-		gui_endFrame();
+		gui_endFrame(gui_is_open());
 	}
 
 	if (dojo.PlayMatch && !config::Receiving)
@@ -3821,6 +3838,42 @@ void gui_display_osd()
 			dojo_gui.show_player_name_overlay(settings.display.uiScale, false);
 		}
 	}
+}
+
+void gui_display_profiler()
+{
+#if FC_PROFILER
+	gui_newFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
+
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+
+	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
+	
+	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		char text[256];
+		std::snprintf(text, 256, "%.3f : Thread %s", (float)profileThread->cachedTime, profileThread->threadName.c_str());
+		ImGui::TreeNode(text);
+
+		ImGui::Indent();
+		fc_profiler::drawGUI(profileThread->cachedResultTree);
+		ImGui::Unindent();
+	}
+
+	ImGui::PopStyleColor();
+	
+	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		fc_profiler::drawGraph(*profileThread);
+	}
+
+	ImGui::End();
+
+	gui_endFrame(true);
+#endif
 }
 
 void gui_open_onboarding()

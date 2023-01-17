@@ -16,10 +16,17 @@ option(USE_GLES2 "Use GLES2 API" OFF)
 option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+option(USE_DX9 "Build with Direct3D 9 support" ON)
+option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
+option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
+option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
+
+set(SENTRY_UPLOAD_URL "" CACHE STRING "Sentry upload URL")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -141,6 +148,9 @@ elseif(ANDROID)
 	set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(WIN32)
 	add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
+	if(MSVC)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+	endif()
 elseif(APPLE)
 	add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
 else()
@@ -192,6 +202,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb 
 if(ANDROID OR APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/dojo/deps/asio-1.22.0/include)
 endif()
+if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
+endif()
+
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -252,17 +267,35 @@ if(NOT LIBRETRO)
 		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
 		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
 
-		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-			COMMAND sleep 20
-			COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo
-				-o ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-				-a x86_64
-				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > Flycast\ Dojo.sym
-			COMMAND mkdir -p ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-			COMMAND mv Flycast\ Dojo.sym ../symbols/Flycast\ Dojo/`head -1 Flycast\ Dojo.sym | awk '{ print $4 }'`
-		)
+		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a x86_64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-x64.sym
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a arm64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-arm64.sym
+			)
+		else()
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
+				COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo
+					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a x86_64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-x64.sym
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a arm64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast > ../symbols/Flycast\ Dojo-arm64.sym
+			)
+		endif()
 	endif()
 endif()
 
@@ -489,20 +522,20 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 endif()
 
 if(ASAN)
-	target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
+	if(ANDROID)
+		target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -fsanitize=address)
+	else()
+		target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
+	endif()
 endif()
 
 if(ANDROID AND NOT LIBRETRO)
-	find_package(oboe CONFIG)
-	if(OBOE_FOUND)
-		target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
-	else()
-		include("core/deps/oboe/gamesdk.cmake")
-		add_gamesdk_target(PACKAGE_DIR core/deps/oboe ANDROID_API_LEVEL 28 ANDROID_NDK_VERSION 21.0.0)
-		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES)
-	endif()
+	set(BUILD_SHARED_LIBS OFF)
+	add_subdirectory(core/deps/oboe)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
+	target_link_libraries(${PROJECT_NAME} PRIVATE oboe)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -625,7 +658,19 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7zBuf.c core/deps/lzma/7zCrc.c core/deps/lzma/7zCrcOpt.c core/deps/lzma/7zDec.c core/deps/lzma/7zFile.c core/deps/lzma/7zStream.c core/deps/lzma/Alloc.c core/deps/lzma/Bcj2.c core/deps/lzma/Bra86.c core/deps/lzma/Bra.c core/deps/lzma/BraIA64.c core/deps/lzma/CpuArch.c core/deps/lzma/Delta.c core/deps/lzma/LzFind.c core/deps/lzma/Lzma2Dec.c core/deps/lzma/Lzma86Dec.c core/deps/lzma/Lzma86Enc.c core/deps/lzma/LzmaDec.c core/deps/lzma/LzmaEnc.c core/deps/lzma/LzmaLib.c core/deps/lzma/Sort.c)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/libelf/elf32.cpp core/deps/libelf/elf64.cpp core/deps/libelf/elf.cpp)
 if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE core/deps/imgui/imgui.cpp core/deps/imgui/imgui_demo.cpp core/deps/imgui/imgui_draw.cpp core/deps/imgui/imgui_widgets.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/deps/imgui/imgui.cpp
+		core/deps/imgui/imgui_demo.cpp
+		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_widgets.cpp)
+
+	if(ENABLE_FC_PROFILER)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/implot/implot.h
+			core/deps/implot/implot.cpp
+			core/deps/implot/implot_internal.h
+			core/deps/implot/implot_items.cpp)
+	endif()
 endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
@@ -795,6 +840,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/pvr/ta_ctx.h
 		core/hw/pvr/ta.h
 		core/hw/pvr/ta_structs.h
+		core/hw/pvr/ta_util.cpp
 		core/hw/pvr/ta_vtx.cpp
 		core/hw/sh4/dyna/blockmanager.cpp
 		core/hw/sh4/dyna/blockmanager.h
@@ -987,9 +1033,21 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/lua/lua.cpp
 		core/lua/lua.h)
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/profiler.cpp
-		core/profiler/profiler.h)
+if (ENABLE_DC_PROFILER)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/profiler/dc_profiler.cpp
+		core/profiler/dc_profiler.h)
+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE DC_PROFILER)
+endif()
+
+if (ENABLE_FC_PROFILER)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/profiler/fc_profiler.cpp
+		core/profiler/fc_profiler.h)
+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-cpp/rec_cpp.cpp)
@@ -1089,7 +1147,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/sorter.h
 		core/rend/tileclip.h
 		core/rend/TexCache.cpp
-		core/rend/TexCache.h)
+		core/rend/TexCache.h
+		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/game_scanner.h
@@ -1187,7 +1246,7 @@ if(USE_VULKAN)
 	endif()
 endif()
 
-if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	set(REND_DX9_FILES
 		core/rend/dx9/d3d_overlay.h
 		core/rend/dx9/d3d_overlay.cpp
@@ -1213,13 +1272,12 @@ if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 		endif()
 	endif()
 
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DX9)
 	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
 endif()
 
-if(WIN32)
-	if(LIBRETRO)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
-	else()
+if(WIN32 AND USE_DX11)
+	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/dx11/imgui_impl_dx11.cpp
 			core/rend/dx11/imgui_impl_dx11.h)
@@ -1247,7 +1305,17 @@ if(WIN32)
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
 		core/rend/dx11/oit/dx11_oitshaders.cpp
 		core/rend/dx11/oit/dx11_oitshaders.h)
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
+endif()
+
+if(ENABLE_GDB_SERVER)
+
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/debug/gdb_server.cpp)
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GDB_SERVER)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
@@ -1364,8 +1432,6 @@ if(NOT LIBRETRO)
 		core/deps/ggpo/lib/ggpo/game_input.h
 		core/deps/ggpo/lib/ggpo/input_queue.cpp
 		core/deps/ggpo/lib/ggpo/input_queue.h
-		core/deps/ggpo/lib/ggpo/log.cpp
-		core/deps/ggpo/lib/ggpo/log.h
 		core/deps/ggpo/lib/ggpo/main.cpp
 		core/deps/ggpo/lib/ggpo/platform_linux.cpp
 		core/deps/ggpo/lib/ggpo/platform_linux.h

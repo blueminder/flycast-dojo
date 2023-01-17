@@ -27,6 +27,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <mutex>
 
 void loadGameSpecificSettings();
 void SaveSettings();
@@ -142,6 +143,10 @@ public:
 	 */
 	void step();
 	/**
+	 * Execute instructions while PC is with range.
+	 */
+	void stepRange(u32 from, u32 to);
+	/**
 	 * Return whether the emulator is currently running.
 	 */
 	bool running() const {
@@ -185,6 +190,10 @@ private:
 	bool singleStep = false;
 	u64 startTime = 0;
 	bool renderTimeout = false;
+	u32 stepRangeFrom = 0;
+	u32 stepRangeTo = 0;
+	bool stopRequested = false;
+	std::mutex mutex;
 };
 extern Emulator emu;
 

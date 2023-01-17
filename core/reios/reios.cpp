@@ -120,7 +120,8 @@ static bool reios_locate_bootfile(const char* bootfile)
 
 	// system settings
 	flash_syscfg_block syscfg{};
-	verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
+	int rc = static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+	verify(rc != 0);
 	memcpy(&data[16], &syscfg.time_lo, 8);
 
 	memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
@@ -663,7 +664,13 @@ void DYNACALL reios_trap(u32 op) {
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
-	hooks[mapd]();
+	auto it = hooks.find(mapd);
+	if (it == hooks.end()) {
+		ERROR_LOG(REIOS, "Unknown trap vector %08x pc %08x", mapd, pc);
+		return;
+	}
+
+	it->second();
 
 	// Return from syscall, except if pc was modified
 	if (pc == next_pc - 2)
