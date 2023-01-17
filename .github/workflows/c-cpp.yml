@@ -96,8 +96,6 @@ jobs:
         env:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
-        run: |
-
       # - name: Unit Tests
       #   run: |
       #     mkdir -p build/tests
