@@ -234,7 +234,7 @@ void GuiSettings::settings_body_audio(ImVec2 normal_padding)
 					cfgSaveStr(current_backend->slug, options->name,
 							   check ? "1" : "0");
 			}
-			else if (options->type == AudioBackend::Option::::list)
+			else if (options->type == AudioBackend::Option::list)
 			{
 				if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 				{
