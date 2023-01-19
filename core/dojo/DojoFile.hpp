@@ -33,6 +33,7 @@
 struct GameMedia {
 	std::string name;
 	std::string path;
+	std::string gameName;	// for arcade games, from the rom list
 };
 #endif
 
