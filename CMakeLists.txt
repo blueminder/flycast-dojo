@@ -274,11 +274,7 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a x86_64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-arm64.sym
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo.sym
 			)
 		else()
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -289,11 +285,7 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a x86_64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo-x64.sym
-				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-					-a arm64
-					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast > ../symbols/Flycast\ Dojo-arm64.sym
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast\ Dojo.app/Contents/MacOS/Flycast\ Dojo > ../symbols/Flycast\ Dojo.sym
 			)
 		endif()
 	endif()
