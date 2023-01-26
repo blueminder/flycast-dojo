@@ -460,6 +460,8 @@ static inline void get_window_state()
 
 HWND getNativeHwnd()
 {
+	if (window == nullptr)
+		return NULL;
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	SDL_GetWindowWMInfo(window, &wmInfo);
@@ -518,7 +520,10 @@ bool sdl_recreate_window(u32 flags)
 		get_window_state();
 #endif
 	if (window != nullptr)
+	{
 		SDL_DestroyWindow(window);
+		window = nullptr;
+	}
 
 #if !defined(GLES)
 	flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
@@ -662,6 +667,7 @@ void sdl_window_destroy()
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);
+	window = nullptr;
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 

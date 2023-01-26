@@ -984,48 +984,40 @@ static void gui_display_commands()
 	if (!config::DojoEnable)
 	{
 
-    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	// Load State
-	if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_loadstate(config::SavestateSlot);
-	}
-	ImGui::SameLine();
-
-	// Slot #
-	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
-		ImGui::OpenPopup("slot_select_popup");
-    if (ImGui::BeginPopup("slot_select_popup"))
     {
-        for (int i = 0; i < 10; i++)
-            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-                config::SavestateSlot = i;
-                SaveSettings();
-            }
-        ImGui::EndPopup();
-    }
-	ImGui::SameLine();
+    	DisabledScope scope(settings.content.path.empty() || settings.network.online);
 
-	// Save State
-	if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_savestate(config::SavestateSlot);
-	}
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
+		// Load State
+		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate(config::SavestateSlot);
+		}
+		ImGui::SameLine();
+
+		// Slot #
+		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+			ImGui::OpenPopup("slot_select_popup");
+		if (ImGui::BeginPopup("slot_select_popup"))
+		{
+			for (int i = 0; i < 10; i++)
+				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					config::SavestateSlot = i;
+					SaveSettings();
+				}
+			ImGui::EndPopup();
+		}
+		ImGui::SameLine();
+
+		// Save State
+		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_savestate(config::SavestateSlot);
+		}
+    }
 
 	} // if !config::DojoEnable
 
