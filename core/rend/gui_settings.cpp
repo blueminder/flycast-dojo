@@ -24,27 +24,21 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 				   "BIOS region");
 
 	const char *cable[] = {"VGA", "RGB Component", "TV Composite"};
-	if (config::Cable.isReadOnly())
 	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
-	{
-		for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+		DisabledScope scope(config::Cable.isReadOnly());
+
+		if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
 		{
-			bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
-			if (ImGui::Selectable(cable[i], &is_selected))
-				config::Cable = i == 0 ? 0 : i + 1;
-			if (is_selected)
-				ImGui::SetItemDefaultFocus();
+			for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+			{
+				bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
+				if (ImGui::Selectable(cable[i], &is_selected))
+					config::Cable = i == 0 ? 0 : i + 1;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
 		}
-		ImGui::EndCombo();
-	}
-	if (config::Cable.isReadOnly())
-	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
 	}
 	ImGui::SameLine();
 	ShowHelpMarker("Video connection type");
@@ -285,8 +279,12 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 	ImGui::Spacing();
 	header("Network");
 	{
-		OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-					   "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		{
+			DisabledScope scope(game_started);
+
+			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+						   "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		}
 		OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 					   "Enable networking for supported Naomi games");
 		if (config::NetworkEnable)
@@ -851,16 +849,9 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 			if (isVulkan(config::RendererType))
 			{
 				ImGui::Indent();
-				if (!config::VSync)
 				{
-					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-					ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-				}
-				OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-				if (!config::VSync)
-				{
-					ImGui::PopItemFlag();
-					ImGui::PopStyleVar();
+					DisabledScope scope(!config::VSync);
+					OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
 				}
 				ImGui::Unindent();
 			}
@@ -884,19 +875,17 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		{
 			OptionCheckbox("Widescreen", config::Widescreen,
 						   "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
-			if (!config::Widescreen)
 			{
-				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			}
-			ImGui::Indent();
-			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-						   "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
-			ImGui::Unindent();
-			if (!config::Widescreen)
-			{
-				ImGui::PopItemFlag();
-				ImGui::PopStyleVar();
+				DisabledScope scope(!config::Widescreen);
+
+				ImGui::Indent();
+				{
+					DisabledScope scope(!config::Widescreen);
+
+					OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+								   "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					ImGui::Unindent();
+				}
 			}
 			OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 						   "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
