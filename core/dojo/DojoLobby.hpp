@@ -7,6 +7,7 @@
 #include <cstdlib>
 
 #include "stdclass.h"
+#include "cfg/option.h"
 
 class DojoLobby
 {

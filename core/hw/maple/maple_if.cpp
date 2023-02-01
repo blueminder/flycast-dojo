@@ -5,6 +5,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
+#include "cfg/option.h"
 #include "network/ggpo.h"
 #include <dojo/DojoSession.hpp>
 
