@@ -186,7 +186,10 @@ void mainui_loop()
 			}
 		}
 
-		imguiDriver->present();
+		if (imguiDriver == nullptr)
+			forceReinit = true;
+		else
+			imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
