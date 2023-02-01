@@ -268,7 +268,7 @@ static void loadSpecialSettings()
 	}
 	else if (settings.platform.isArcade())
 	{
-		if (prod_id == "METAL SLUG 6")
+		if (prod_id == "METAL SLUG 6"
 			|| prod_id == "HOKUTO NO KEN"
 			|| prod_id == "JINGI STORM THE ARCADE")
 		{
