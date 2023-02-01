@@ -3,6 +3,7 @@
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
+#include "network/ggpo.h"
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
@@ -230,7 +231,7 @@ private:
 		if (renderer->Present())
 		{
 			presented = true;
-			if (!config::ThreadedRendering)
+			if (!config::GGPOEnable && !ggpo::active() && !config::ThreadedRendering)
 				sh4_cpu.Stop();
 #ifdef LIBRETRO
 			retro_rend_present();
