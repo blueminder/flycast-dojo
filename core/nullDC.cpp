@@ -160,6 +160,9 @@ void dc_savestate(std::string filename)
 
 void dc_savestate(int index, std::string filename)
 {
+	if (settings.network.online)
+		return;
+
 	Serializer ser;
 	dc_serialize(ser);
 

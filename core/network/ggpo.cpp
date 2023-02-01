@@ -256,14 +256,14 @@ static bool advance_frame(int)
 {
 	INFO_LOG(NETWORK, "advance_frame");
 	settings.aica.muteAudio = true;
-	settings.disableRenderer = true;
+	rend_enable_renderer(false);
 	inRollback = true;
 
 	emu.run();
 	ggpo_advance_frame(ggpoSession);
 
 	settings.aica.muteAudio = false;
-	settings.disableRenderer = false;
+	rend_enable_renderer(true);
 	inRollback = false;
 	_endOfFrame = false;
 
@@ -592,6 +592,8 @@ void stopSession()
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
 	emu.setNetworkState(false);
+	memwatch::unprotect();
+	memwatch::reset();
 	gui_state = GuiState::Disconnected;
 }
 

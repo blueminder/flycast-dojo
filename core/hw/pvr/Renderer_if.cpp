@@ -9,6 +9,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
 #include "profiler/fc_profiler.h"
+#include "network/ggpo.h"
 
 #include <mutex>
 #include <deque>
@@ -33,6 +34,7 @@ u32 fb_watch_addr_end;
 bool fb_dirty;
 
 static bool pend_rend;
+static bool rendererEnabled = true;
 
 TA_context* _pvrrc;
 
@@ -231,7 +233,7 @@ private:
 		if (renderer->Present())
 		{
 			presented = true;
-			if (!config::GGPOEnable && !ggpo::active() && !config::ThreadedRendering)
+			if (!config::ThreadedRendering && !ggpo::active() && !config::GGPOEnable)
 				sh4_cpu.Stop();
 #ifdef LIBRETRO
 			retro_rend_present();
@@ -312,6 +314,7 @@ static void rend_create_renderer()
 
 bool rend_init_renderer()
 {
+	rendererEnabled = true;
 	if (renderer == nullptr)
 		rend_create_renderer();
 	bool success = renderer->Init();
@@ -341,6 +344,7 @@ void rend_reset()
 	FrameCount = 1;
 	fb_w_cur = 1;
 	pvrQueue.reset();
+	rendererEnabled = true;
 }
 
 void rend_start_render()
@@ -427,12 +431,15 @@ void rend_vblank()
 	if (config::EmulateFramebuffer
 			|| (!render_called && fb_dirty && FB_R_CTRL.fb_enable))
 	{
-		FramebufferInfo fbInfo;
-		fbInfo.update();
-		pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
-		pvrQueue.enqueue(PvrMessageQueue::Present);
-		if (!config::EmulateFramebuffer)
-			DEBUG_LOG(PVR, "Direct framebuffer write detected");
+		if (rend_is_enabled())
+		{
+			FramebufferInfo fbInfo;
+			fbInfo.update();
+			pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
+			pvrQueue.enqueue(PvrMessageQueue::Present);
+			if (!config::EmulateFramebuffer)
+				DEBUG_LOG(PVR, "Direct framebuffer write detected");
+		}
 		fb_dirty = false;
 	}
 	render_called = false;
@@ -471,7 +478,7 @@ void rend_set_fb_write_addr(u32 fb_w_sof1)
 
 void rend_swap_frame(u32 fb_r_sof)
 {
-	if (!config::EmulateFramebuffer && fb_r_sof == fb_w_cur)
+	if (!config::EmulateFramebuffer && fb_r_sof == fb_w_cur && rend_is_enabled())
 		pvrQueue.enqueue(PvrMessageQueue::Present);
 }
 
@@ -489,6 +496,14 @@ void rend_start_rollback()
 {
 	if (config::ThreadedRendering)
 		vramRollback.Wait();
+}
+
+void rend_enable_renderer(bool enabled) {
+	rendererEnabled = enabled;
+}
+
+bool rend_is_enabled() {
+	return rendererEnabled;
 }
 
 void rend_serialize(Serializer& ser)

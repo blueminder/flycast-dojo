@@ -312,8 +312,6 @@ struct settings_t
 		std::string state_md5;
 		std::string state_commit;
 	} dojo;
-
-	bool disableRenderer;
 };
 
 extern settings_t settings;
