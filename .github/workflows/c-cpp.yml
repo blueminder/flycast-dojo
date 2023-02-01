@@ -169,7 +169,7 @@ jobs:
           mkdir $CURRENT_VERSION
           mv flycast.exe $CURRENT_VERSION/flycast.exe
           cd $CURRENT_VERSION
-          cp /mingw64/bin/{zlib1.dll,libssl-1_1-x64.dll,libcrypto-1_1-x64.dll} .
+          cp /mingw64/bin/{zlib1.dll} .
           wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
           tar zxvf master.tar.gz
           rm master.tar.gz
