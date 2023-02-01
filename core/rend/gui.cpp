@@ -3232,13 +3232,11 @@ static void gui_network_start()
 		ImGui::Text("Starting...");
 		try {
 			if (networkStatus.get())
-			{
 				// create replay file on network session start
 				if (config::RecordMatches && !config::Receiving)
 					dojo.CreateReplayFile();
 
 				gui_state = GuiState::Closed;
-			}
 			else
 				gui_stop_game();
 		} catch (const FlycastException& e) {

@@ -23,9 +23,9 @@
 #include "input/keyboard_device.h"
 #include "input/mouse.h"
 #include "cfg/option.h"
-#include <dojo/DojoSession.hpp>
 #include "version.h"
 #include <algorithm>
+#include <dojo/DojoSession.hpp>
 
 void UpdateInputState();
 
