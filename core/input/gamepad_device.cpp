@@ -24,11 +24,10 @@
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/naomi/card_reader.h"
-#include "stdclass.h"
 
 #include <algorithm>
-#include <climits>
-#include <fstream>
+#include <mutex>
+#include <vector>
 
 #include "dojo/DojoSession.hpp"
 
@@ -53,6 +52,7 @@ bool loadSaveStateDisabled;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
+#include <cstdio>
 static FILE *record_input;
 #endif
 

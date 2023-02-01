@@ -16,9 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <atomic>
-#include <chrono>
-#include <thread>
+
 #include "mainui.h"
 #include "hw/pvr/Renderer_if.h"
 #include "gui.h"
@@ -28,7 +26,10 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 #include "profiler/fc_profiler.h"
+
+#include <atomic>
 #include <chrono>
+#include <thread>
 
 #ifdef _WIN32
 #include "windows.h"
