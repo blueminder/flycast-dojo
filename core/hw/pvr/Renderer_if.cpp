@@ -396,12 +396,15 @@ void rend_start_render()
 	ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 	ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 
+	bool present = !config::DelayFrameSwapping && !ctx->rend.isRTT && !config::EmulateFramebuffer;
+	if (present)
+		ggpo::endOfFrame();
 	if (QueueRender(ctx))
 	{
 		palette_update();
 		pend_rend = true;
 		pvrQueue.enqueue(PvrMessageQueue::Render);
-		if (!config::DelayFrameSwapping && !ctx->rend.isRTT && !config::EmulateFramebuffer)
+		if (present)
 			pvrQueue.enqueue(PvrMessageQueue::Present);
 	}
 }
@@ -437,6 +440,7 @@ void rend_vblank()
 			fbInfo.update();
 			pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
 			pvrQueue.enqueue(PvrMessageQueue::Present);
+			ggpo::endOfFrame();
 			if (!config::EmulateFramebuffer)
 				DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		}
@@ -479,7 +483,11 @@ void rend_set_fb_write_addr(u32 fb_w_sof1)
 void rend_swap_frame(u32 fb_r_sof)
 {
 	if (!config::EmulateFramebuffer && fb_r_sof == fb_w_cur && rend_is_enabled())
+	{
 		pvrQueue.enqueue(PvrMessageQueue::Present);
+		if (config::DelayFrameSwapping)
+			ggpo::endOfFrame();
+	}
 }
 
 void rend_disable_rollback()
