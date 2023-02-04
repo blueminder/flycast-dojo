@@ -6,6 +6,7 @@
 #include "oslib/oslib.h"
 #include "hw/maple/maple_if.h"
 #include "serialize.h"
+#include "network/ggpo.h"
 #include "hw/pvr/Renderer_if.h"
 
 #ifdef TEST_AUTOMATION
@@ -112,6 +113,7 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 				SB_MDST = 0;
 			}
 			asic_RaiseInterrupt(holly_SCANINT1);
+			ggpo::endOfFrame();
 		}
 
 		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
