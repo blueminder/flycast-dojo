@@ -894,6 +894,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/sh4_sched.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+		core/dojo/deps/base64/base64.cpp
+		core/dojo/deps/base64/base64.h
 		core/dojo/deps/filesystem.hpp
 		core/dojo/deps/json.hpp
 		core/dojo/deps/md5/md5.cpp
