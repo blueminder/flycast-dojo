@@ -1,5 +1,6 @@
 #include "DojoGui.hpp"
 #include <hw/naomi/naomi_cart.h>
+#include <regex>
 namespace fs = ghc::filesystem;
 
 void DojoGui::gui_display_bios_rom_warning(float scaling)
@@ -366,6 +367,27 @@ void DojoGui::gui_display_stream_wait(float scaling)
 	}
 }
 
+std::string longestCommonPrefix(std::vector<std::string>& str) {
+	int n = str.size();
+	if(n==0) return "";
+
+	std::string ans  = "";
+	sort(begin(str), end(str));
+	std::string a = str[0];
+	std::string b = str[n-1];
+
+	for(int i=0; i<a.size(); i++){
+		if(a[i]==b[i]){
+			ans = ans + a[i];
+		}
+		else{
+			break;
+		}
+	}
+
+	return ans;
+}
+
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
 	std::string title;
@@ -525,6 +547,102 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				ImGui::Text("Current Ping: %d ms", dojo.OpponentPing);
 			}
 		}
+
+#ifndef __ANDROID__
+		if (!dojo.commandLineStart && config::NumPlayers > 2)
+		{
+			if (ImGui::Button("Copy as Session Code"))
+			{
+				std::string ex_code = "|";
+
+				std::vector<std::string> local_ips;
+				std::vector<std::string> ip_prefixes;
+
+				for (int i = 0; i < config::NumPlayers.get(); i++)
+				{
+					if (config::ActAsServer && i == 0)
+						continue;
+
+					std::string ip_str = std::string(sis[i]);
+					ip_prefixes.push_back(ip_str);
+				}
+
+				std::string lcp = longestCommonPrefix(ip_prefixes);
+				lcp = lcp.substr(0, lcp.find_last_of("."));
+
+				auto iadd = dojo.get_local_interfaces();
+				for (auto ia : iadd)
+				{
+					auto ip_str = ia.to_string();
+					auto dot_found = ip_str.find(".");
+					if (dot_found == std::string::npos)
+						continue;
+
+					DEBUG_LOG(NETWORK, "IP: %s\n", ip_str.data());
+					local_ips.push_back(ip_str);
+				}
+
+				std::string assigned_ip = "";
+
+				auto substring = lcp;
+				const auto iter = std::find_if(local_ips.begin(), local_ips.end(),
+					[&substring](std::string str) {
+						return str.find(substring) == 0;
+					}
+				);
+
+				if (iter != local_ips.end())
+				{
+					assigned_ip = *iter;
+				}
+
+				if (assigned_ip == "")
+					assigned_ip = dojo.GetExternalIP();
+
+				assigned_ip = assigned_ip + ":" + std::to_string(config::GGPOPort.get());
+
+				memcpy(sis[0], assigned_ip.data(), assigned_ip.size());
+				NOTICE_LOG(NETWORK, "ASSIGNED: %s\n", assigned_ip.data());
+
+				for (int i = 0; i < config::NumPlayers.get(); i++)
+				{
+					ex_code = ex_code + std::string(sis[i]) + "|";
+				}
+
+				std::string encoded_ex = base64_encode(reinterpret_cast<const unsigned char*>(ex_code.data()), ex_code.length());
+				SDL_SetClipboardText(encoded_ex.data());
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Paste from Session Code"))
+			{
+				char* pasted_txt = SDL_GetClipboardText();
+				auto pasted_txt_str = std::string(pasted_txt);
+
+				// validate base64
+				std::string base64_regex = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$";
+				std::regex rx(base64_regex);
+				if (pasted_txt_str.size() % 4 == 0 && std::regex_match(pasted_txt_str.data(), rx))
+				{
+					NOTICE_LOG(NETWORK, "Pasted Session Code: %s", pasted_txt);
+					std::string decoded_paste = base64_decode(std::string(pasted_txt));
+
+					// validate inclusion of delimiter
+					if (decoded_paste.find("|") != std::string::npos)
+					{
+						auto targets = stringfix::split("|", decoded_paste);
+						for (int i = 0; i < targets.size(); i++)
+						{
+							memcpy(sis[i], targets[i].data(), targets[i].size());
+						}
+					}
+				}
+			}
+
+			ImGui::SameLine();
+			ShowHelpMarker("Populate address entries from Session Code for easy sharing among opponents.");
+		}
+#endif
 
 		if (ImGui::Button("Start Session"))
 		{
