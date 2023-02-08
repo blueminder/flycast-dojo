@@ -112,9 +112,6 @@ static void emuEventCallback(Event event, void *)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		break;
-	case Event::Terminate:
-		GamepadDevice::load_system_mappings();
 		if (config::GGPOEnable ||
 			config::Receiving && dojo.replay_version >= 2 ||
 			dojo.PlayMatch && dojo.replay_version >=2 && !dojo.offline_replay)
@@ -148,6 +145,9 @@ static void emuEventCallback(Event event, void *)
 				}
 			}
 		}
+		break;
+	case Event::Terminate:
+		GamepadDevice::load_system_mappings();
 		game_started = false;
 		break;
 	default:
