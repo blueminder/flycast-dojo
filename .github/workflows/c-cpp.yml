@@ -39,8 +39,10 @@ jobs:
 
       - name: Set up build environment (Linux)
         run: |
+          sudo add-apt-repository ppa:christianrauch/libdecoration
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev libasio-dev wget
+          sudo apt-get -y install libwayland-dev libdecor-0-dev libaudio-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
         if: runner.os == 'Linux'
 
       - uses: actions/cache@v2
@@ -132,34 +134,34 @@ jobs:
           strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
+      - name: Build breakpad (linux)
+        working-directory: core/deps/breakpad
+        run: |
+          ./configure
+          make
+          sudo make install
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - name: Dump symbols and make AppImage (linux)
+        run: |
+          mkdir -p symbols
+          dump_syms artifact/bin/flycast > symbols/flycast.sym 2>/dev/null
+          strip artifact/bin/flycast
+          shell/linux/make-appimage.sh . artifact/bin appimage
+          mv flycast-x86_64.AppImage artifact/bin
+          rm artifact/bin/flycast
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: flycast-${{ matrix.config.name }}
+          path: artifact/bin
+
       - name: Package app (macos)
         run: |
           cd artifact/bin
           zip -rm flycast.app.zip "Flycast Dojo.app"
         if: matrix.config.name == 'apple-darwin'
-
-      - name: Package app (linux)
-        shell: bash
-        run: |
-          CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
-          cd artifact/bin
-          mkdir $CURRENT_VERSION
-          mv flycast $CURRENT_VERSION/flycast.elf
-          cd $CURRENT_VERSION
-          wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
-          tar zxvf master.tar.gz
-          rm master.tar.gz
-          mv flycast-netplay-nvmem-master/ default/
-          rm default/README.md
-          zip -r default.zip default/*
-          mv default data
-          mv default.zip data/
-          mkdir replays
-          mkdir ROMs
-          wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
-          cd ..
-          tar czvf linux-$CURRENT_VERSION.tar.gz $CURRENT_VERSION/* --remove-files
-        if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Package app (windows)
         shell: msys2 {0}
@@ -221,14 +223,14 @@ jobs:
           project: minidump
         if: ${{ env.SENTRY_TOKEN != '' }}
       
-      - name: Upload symbols to Sentry (Windows, macOS)
+      - name: Upload symbols to Sentry (Windows, macOS, Linux)
         run: |
           VERSION=$(git describe --tags --always)
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
-          sentry-cli upload-dif symbols 
+          sentry-cli upload-dif symbols
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin' || matrix.config.name == 'x86_64-pc-linux-gnu') }}
         

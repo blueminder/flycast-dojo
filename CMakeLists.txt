@@ -352,7 +352,7 @@ if(NOT LIBRETRO)
 	endif()
 
 	if(NOT ANDROID AND NOT IOS)
-		if(NOT APPLE)
+		if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 			find_package(SDL2)
 		endif()
 		if(NOT SDL2_FOUND)
