@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Flycast
+Name=Flycast Dojo
 GenericName=Dreamcast Emulator
 GenericName[de]=Dreamcast-Emulator
 GenericName[fr]=Émulateur Dreamcast
@@ -16,8 +16,8 @@ Comment[pt]=Jogue seus jogos favoritos Dreamcast no seu PC
 Comment[it]=Gioca i tuoi giochi preferiti Dreamcast sul PC
 Comment[gr]=Παίξτε τα αγαπημένα σας παιχνίδια Dreamcast στο PC σας
 Comment[ru]=Играйте в любимые игры Dreamcast на вашем компьютере
-Exec=flycast %f
-Icon=flycast
+Exec=sh -c "FLYCAST_ROOT\=\$HOME/.local/share/flycast-dojo flycast %f"
+Icon=dojo
 Terminal=false
 Type=Application
 StartupNotify=false

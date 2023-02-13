@@ -131,7 +131,17 @@ for so in $(find "$OUTDIR/usr/lib" -maxdepth 1); do
 	fi
 done
 
-cp -a "$SRCDIR/shell/linux/flycast.desktop" "$SRCDIR/shell/linux/flycast.png" "$OUTDIR"
+echo "Copying shared files"
+SHAREDIR="$OUTDIR/usr/share/flycast-dojo/"
+mkdir -p $SHAREDIR
+wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+tar zxvf master.tar.gz
+rm master.tar.gz
+mv flycast-netplay-nvmem-master/* $SHAREDIR
+rm -rf flycast-netplay-nvmem-master
+cp flycast_roms.json $SHAREDIR
+
+cp -a "$SRCDIR/shell/linux/flycast.desktop" "$SRCDIR/shell/linux/dojo.png" "$OUTDIR"
 
 echo "Creating AppRun..."
 cat > "$OUTDIR/AppRun" << EOF
@@ -151,5 +161,5 @@ EOF
 chmod +x "$OUTDIR/AppRun"
 
 echo "Generate AppImage"
-ARCH=x86_64 ./appimagetool-x86_64.AppImage -v "$OUTDIR" "flycast-x86_64.AppImage"
+ARCH=x86_64 ./appimagetool-x86_64.AppImage -v "$OUTDIR" "flycast-dojo-x86_64.AppImage"
 

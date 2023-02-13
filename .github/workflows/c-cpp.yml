@@ -148,14 +148,9 @@ jobs:
           dump_syms artifact/bin/flycast > symbols/flycast.sym 2>/dev/null
           strip artifact/bin/flycast
           shell/linux/make-appimage.sh . artifact/bin appimage
-          mv flycast-x86_64.AppImage artifact/bin
+          mv flycast-dojo-x86_64.AppImage artifact/bin
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: flycast-${{ matrix.config.name }}
-          path: artifact/bin
 
       - name: Package app (macos)
         run: |

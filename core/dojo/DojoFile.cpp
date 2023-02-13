@@ -30,16 +30,12 @@ void DojoFile::RefreshFileDefinitions()
 	TCHAR szPath[MAX_PATH];
 	GetModuleFileName(0, szPath, MAX_PATH);
 	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
-#elif defined(__APPLE__) || defined(__ANDROID__)
-	root_path = get_writable_config_path("") + "/";
 #else
-	char result[PATH_MAX];
-	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-	if (count != -1)
-		root_path = ghc::filesystem::path(result).parent_path().string() + "/";
+	root_path = get_writable_data_path("");
 #endif
-	LoadedFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
-	RemainingFileDefinitions = LoadJsonFromFile(root_path + "flycast_roms.json");
+	std::string json_filename = root_path + "flycast_roms.json";
+	LoadedFileDefinitions = LoadJsonFromFile(json_filename);
+	RemainingFileDefinitions = LoadJsonFromFile(json_filename);
 }
 
 nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
@@ -105,6 +101,7 @@ std::string DojoFile::GetEntryFilename(std::string entry_name)
 
 std::string DojoFile::GetEntryPath(std::string entry_name)
 {
+	RefreshFileDefinitions();
 	if (!LoadedFileDefinitions.contains(entry_name) &&
 		entry_name.rfind("flycast_", 0) != 0)
 	{
@@ -671,11 +668,7 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	if (!commit.empty())
 	{
 		commit_net_state_file = net_state_file + "." + commit;
-#if defined(__APPLE__) || defined(__ANDROID__)
-		ghc::filesystem::copy(filename, get_writable_config_path("") + "/data/" + net_state_file);
-#else
-		ghc::filesystem::copy(filename, "data/" + commit_net_state_file);
-#endif
+		ghc::filesystem::copy(filename, get_writable_data_path("") + commit_net_state_file);
 	}
 
 	//std::FILE* file = std::fopen(filename.data(), "rb");
@@ -698,8 +691,10 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 {
 	auto filename = stringfix::split("//", download_url).back();
 	std::string path = filename;
-	if (!dest_folder.empty())
-		path = get_writable_config_path("") + "//" + dest_folder + "//" + filename;
+	if (dest_folder == "data")
+		path = get_writable_data_path("") + "//" + filename;
+	else if (!dest_folder.empty())
+		path = get_writable_data_path("") + "//" + dest_folder + "//" + filename;
 
 	// if file already exists, delete before starting new download
 	if (file_exists(path.c_str()))

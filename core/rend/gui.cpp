@@ -342,6 +342,7 @@ void gui_initFonts()
 				try {
 					std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
 					settings.content.path = entry_path;
+					settings.dojo.GameEntry = "";
 				}
 				catch (...) { }
 			}

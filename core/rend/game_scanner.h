@@ -189,8 +189,15 @@ public:
 
 				if (config::ContentPath.get().size() == 0)
 				{
+#ifdef __LINUX__
 					// points "ROMs" directory in flycast dojo folder as default content location
+					if(nowide::getenv("FLYCAST_ROOT") != nullptr)
+						config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
+					else
+						config::ContentPath.get().push_back(get_writable_data_path("ROMs"));
+#else
 					config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
+#endif
 				}
 				else
 				{
@@ -199,7 +206,7 @@ public:
 					if (itr != config::ContentPath.get().end())
 					{
 						config::ContentPath.get().erase(itr);
-						config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
+						config::ContentPath.get().push_back(get_writable_data_path("ROMs"));
 						config::Settings::instance().save();
 					}
 				}

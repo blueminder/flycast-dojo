@@ -1719,10 +1719,10 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 	ImGui::Text("Game"); ImGui::NextColumn();
 	ImGui::Separator();
 
-#if defined(__APPLE__) || defined(__ANDROID__)
-	fs::path path = get_writable_config_path("") + "/replays";
-#else
+#if defined(__WIN32__)
 	fs::path path = fs::current_path() / "replays";
+#else
+	fs::path path = get_writable_data_path("") + "/replays";
 #endif
 
 	if (!ghc::filesystem::exists(path))
