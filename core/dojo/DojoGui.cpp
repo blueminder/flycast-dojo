@@ -1811,9 +1811,8 @@ inline static void header(const char *title)
 
 void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 {
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-
 		OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
 			"Display network statistics on screen");
 
@@ -2040,9 +2039,9 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		ImGui::PopStyleVar();
-		ImGui::EndTabItem();
 	}
+
+	ImGui::PopStyleVar();
 }
 
 void DojoGui::insert_replays_tab(ImVec2 normal_padding)
@@ -2097,6 +2096,8 @@ void DojoGui::insert_replays_tab(ImVec2 normal_padding)
 		ImGui::SameLine();
 		ShowHelpMarker("# of frames to cache before playing received match stream");
 	}
+
+	ImGui::PopStyleVar();
 }
 
 void DojoGui::insert_training_tab(ImVec2 normal_padding)
@@ -2122,6 +2123,8 @@ void DojoGui::insert_training_tab(ImVec2 normal_padding)
 		ImGui::SameLine();
 		ShowHelpMarker("Delay dummy recording until the first input is registered");
 	}
+
+	ImGui::PopStyleVar();
 }
 
 void DojoGui::update_action()
