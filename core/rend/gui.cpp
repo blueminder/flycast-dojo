@@ -2675,15 +2675,15 @@ static void gui_display_content()
 #ifdef _WIN32
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
-			ShellExecute(0, 0, "http://flycast.dojo.ooo/faq.html", 0, 0 , SW_SHOW );
+			ShellExecute(0, 0, "https://dojo-project.gitbook.io/flycast-dojo/", 0, 0 , SW_SHOW );
 #elif defined(__APPLE__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
-			system("open http://flycast.dojo.ooo/faq.html");
+			system("open https://dojo-project.gitbook.io/flycast-dojo/");
 #elif defined(__linux__)
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 		if (ImGui::Button("Help"))
-			system("xdg-open http://flycast.dojo.ooo/faq.html");
+			system("xdg-open https://dojo-project.gitbook.io/flycast-dojo/");
 #endif
 #endif
 
