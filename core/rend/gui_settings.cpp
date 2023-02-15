@@ -501,6 +501,63 @@ void GuiSettings::settings_body_about(ImVec2 normal_padding)
 	ImGui::PopStyleVar();
 }
 
+void GuiSettings::settings_body_credits(ImVec2 normal_padding)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	{
+		ImGui::Text("Flycast Dojo is maintained by blueminder");
+		ImGui::Text("Based on the Flycast emulator maintained by flyinghead");
+		std::string contributors_url = "https://github.com/blueminder/flycast-dojo/graphs/contributors";
+#if !defined(__ANDROID__)
+		if (ImGui::Button("GitHub Contributors"))
+#ifdef _WIN32
+			ShellExecute(0, 0, contributors_url.c_str(), 0, 0 , SW_SHOW );
+#elif defined(__APPLE__)
+			system(std::string("open " + contributors_url).c_str());
+#elif defined(__linux__)
+			system(std::string("xdg-open " + contributors_url).c_str());
+#endif
+#endif
+	}
+	ImGui::Spacing();
+	header("Special Thanks");
+	{
+		ImGui::BulletText("flyinghead");
+		ImGui::SameLine();
+		ShowHelpMarker("For making Flycast possible. Thank you for your continued maintenance and guidance.");
+
+		ImGui::BulletText("vkedwardli");
+		ImGui::SameLine();
+		ShowHelpMarker("For regular feedback and Mac OS optimizations.");
+
+		ImGui::BulletText("pof & shine");
+		ImGui::SameLine();
+		ShowHelpMarker("For consistently giving good advice and integrating Flycast Dojo into Fightcade.");
+	}
+	ImGui::Spacing();
+	header("Champion Patrons");
+	{
+		ImGui::BulletText("styroteqe");
+		ImGui::BulletText("The Code Always Wins");
+		ImGui::BulletText("Jasen Parayno");
+		ImGui::BulletText("Carmine Macchia");
+		ImGui::Spacing();
+		std::string patreon_url = "https://www.patreon.com/projectdojo";
+#if !defined(__ANDROID__)
+		if (ImGui::Button("Support on Patreon"))
+#ifdef _WIN32
+			ShellExecute(0, 0, patreon_url.c_str(), 0, 0 , SW_SHOW );
+#elif defined(__APPLE__)
+			system(std::string("open " + patreon_url).c_str());
+#elif defined(__linux__)
+			system(std::string("xdg-open " + patreon_url).c_str());
+#endif
+#endif
+	}
+
+	ImGui::PopStyleVar();
+}
+
 void GuiSettings::settings_body_video(ImVec2 normal_padding)
 {
 	int renderApi;
