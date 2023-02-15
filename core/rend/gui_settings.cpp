@@ -92,10 +92,32 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 	{
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("%s", get_writable_data_path("").c_str());
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Open").x - ImGui::GetStyle().FramePadding.x);
+		if (ImGui::Button("Open"))
+		{
+		    char temp[512];
+		    sprintf(temp, "xdg-open \"%s\"", get_writable_data_path("").c_str());
+		    system(temp);
+		}
 		ImGui::ListBoxFooter();
 	}
 	ImGui::SameLine();
 	ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
+	if (ImGui::ListBoxHeader("Config Directory", 1))
+	{
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("%s", get_writable_config_path("").c_str());
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Open").x - ImGui::GetStyle().FramePadding.x);
+		if (ImGui::Button("Open"))
+		{
+		    char temp[512];
+		    sprintf(temp, "xdg-open \"%s\"", get_writable_config_path("").c_str());
+		    system(temp);
+		}
+		ImGui::ListBoxFooter();
+	}
+	ImGui::SameLine();
+	ShowHelpMarker("The directory where Flycast saves configuration files and controller mappings");
 #else
 #ifdef __ANDROID__
 	if (ImGui::ListBoxHeader("Home Directory", 2))
