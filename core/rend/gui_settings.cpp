@@ -121,6 +121,12 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 #else
 #ifdef __ANDROID__
 	if (ImGui::ListBoxHeader("Home Directory", 2))
+#elif defined(__WIN32)
+	ImVec2 home_size;
+	home_size.x = 0.0f;
+	home_size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f) * 2;
+
+	if (ImGui::ListBoxHeader("Home Directory", home_size))
 #else
 	if (ImGui::ListBoxHeader("Home Directory", 1))
 #endif
@@ -140,6 +146,11 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 		    sprintf(temp, "open \"%s\"", get_writable_config_path("").c_str());
 		    system(temp);
 		}
+#elif defined(__WIN32)
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+		if (ImGui::Button("Open"))
+			ShellExecute(0, "open", get_writable_config_path("").c_str(), 0, 0 , SW_SHOW );
+		ImGui::PopStyleVar();
 #endif
 		ImGui::ListBoxFooter();
 	}
