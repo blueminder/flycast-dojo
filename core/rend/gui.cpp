@@ -1184,16 +1184,18 @@ static void gui_display_commands()
 #if !defined(__ANDROID__)
 	if (dojo.current_gamepad.find("keyboard") == std::string::npos)
 	{
-		ImGui::NextColumn();
-
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
-		std::string quick_map_title = "Quick Mapping\n(" + gamepad->name() + ")";
-		if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
+		if (gamepad != nullptr)
 		{
-			dojo_gui.current_map_button = 0;
-			gui_state = GuiState::QuickMapping;
+			ImGui::NextColumn();
+			std::string quick_map_title = "Quick Mapping\n(" + gamepad->name() + ")";
+			if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
+			{
+				dojo_gui.current_map_button = 0;
+				gui_state = GuiState::QuickMapping;
+			}
+			displayed_button_count++;
 		}
-		displayed_button_count++;
 	}
 #endif
 
