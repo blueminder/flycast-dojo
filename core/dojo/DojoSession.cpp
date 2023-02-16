@@ -201,6 +201,10 @@ void DojoSession::AddNetFrame(const char* received_data)
 		return;
 
 	u32 frame_player = data[0];
+
+	if (frame_player > 1)
+		return;
+
 	u32 frame_player_opponent = frame_player == 0 ? 1 : 0;
 
 	std::string data_to_queue(data, data + FRAME_SIZE);
