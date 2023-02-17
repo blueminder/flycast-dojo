@@ -828,6 +828,9 @@ static std::string getMappedControl(const std::shared_ptr<GamepadDevice>& gamepa
 
 static void displayHotkey(std::string title, DreamcastKey key, std::shared_ptr<GamepadDevice> key_gamepad)
 {
+	if (key_gamepad == nullptr)
+		return;
+
 	std::string mapped_btns = "";
 	ImGui::Text("%s", title.c_str());
 	mapped_btns = getMappedControl(key_gamepad, key);
