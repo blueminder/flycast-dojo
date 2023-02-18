@@ -160,6 +160,7 @@ public:
 	bool receiver_ended;
 
 	bool lobby_active;
+	bool beacon_active;
 
 	std::string PrintFrameData(const char* prefix, u8* data);
 	void ClientReceiveAction(const char* data);
@@ -214,7 +215,7 @@ public:
 	std::string ReplayFilename;
 
 	bool disconnect_toggle;
-	
+
 	std::deque<std::string> transmission_frames;
 	std::atomic<bool> write_out;
 
@@ -318,6 +319,8 @@ public:
 	std::set<int> button_check_pressed[2];
 	std::set<std::string> training_p1_gamepads;
 	std::string current_gamepad;
+
+	bool lobby_host_screen = false;
 };
 
 extern DojoSession dojo;

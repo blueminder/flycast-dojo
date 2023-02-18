@@ -264,7 +264,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    					ImGui::CloseCurrentPopup();
    				}
-				
+
 				ImGui::SameLine();
 				if (ImGui::Button("Cancel"))
 				{
@@ -456,16 +456,24 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			if (!config::EnableMatchCode)
+			if (dojo.lobby_active)
 			{
-				if (!dojo.commandLineStart)
-				{
-					config::NetworkServer.set(std::string(si, strlen(si)));
-					cfgSaveStr("network", "server", config::NetworkServer.get());
-				}
-
-				config::DojoEnable = false;
+				if (dojo.host_status == 2)
+					dojo.host_status = 3;
 			}
+			else
+			{
+				if (!config::EnableMatchCode)
+				{
+					if (!dojo.commandLineStart)
+					{
+						config::NetworkServer.set(std::string(si, strlen(si)));
+						cfgSaveStr("network", "server", config::NetworkServer.get());
+					}
+				}
+			}
+
+			config::DojoEnable = false;
 			ggpo_join_screen = false;
 			ImGui::CloseCurrentPopup();
 			start_ggpo();
@@ -810,7 +818,6 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
 
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 {
-#ifndef __ANDROID__
 	if (!dojo.lobby_active)
 	{
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
@@ -821,11 +828,13 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	ImGui::SetNextWindowSize(ImVec2(settings.display.width, settings.display.height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	ImGui::Begin("Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("LAN Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-	
+
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
+		dojo.presence.CloseLobby();
+
 		if (game_started)
     		gui_state = GuiState::Commands;
     	else
@@ -833,11 +842,21 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
-	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
+	if (!dojo.lobby_host_screen && !dojo.beacon_active)
 	{
-		config::ActAsServer = true;
-		cfgSaveBool("dojo", "ActAsServer", config::ActAsServer);
-		gui_state = GuiState::Main;
+		if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
+		{
+			dojo.lobby_host_screen = true;
+			config::ActAsServer = true;
+			gui_state = GuiState::Main;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Cancel Host", ImVec2(100 * scaling, 30 * scaling)))
+		{
+			dojo.presence.CancelHost();
+		}
 	}
 
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
@@ -858,7 +877,8 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		std::string beacon_id = it->first;
 		std::vector<std::string> beacon_entry;
 
-		if (dojo.presence.last_seen[beacon_id] + 10000 > dojo.unix_timestamp())
+		u32 beacon_duration = dojo.unix_timestamp() - dojo.presence.last_seen[beacon_id];
+		if (beacon_duration < 5000)
 		{
 			size_t pos = 0;
 			std::string token;
@@ -875,8 +895,6 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 			std::string beacon_game = beacon_entry[3].c_str();
 			std::string beacon_game_path = "";
-
-			std::string beacon_remaining_spectators = beacon_entry[5];
 
 			std::vector<GameMedia> games = game_list;
 			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
@@ -896,47 +914,29 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_ping > 0)
 				beacon_ping_str = std::to_string(beacon_ping);
 
-			if (beacon_status == "Hosting, Waiting" &&
+			if (//beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				dojo.PlayMatch = false;
+				dojo.presence.SendJoin(beacon_ip.c_str());
 
+				config::EnableMatchCode.set(false);
+				dojo.commandLineStart = true;
+
+				dojo.PlayMatch = false;
+				config::Receiving = false;
+
+				config::DojoActAsServer = false;
+				config::DojoEnable = true;
+				config::GGPOEnable = true;
 				config::ActAsServer = false;
-				config::DojoServerIP = beacon_ip;
-				config::DojoServerPort = beacon_server_port;
 
 				SaveSettings();
 
+				config::NetworkServer = beacon_ip;
+				cfgSaveStr("network", "server", beacon_ip.c_str());
+
 				gui_state = GuiState::Closed;
 				gui_start_game(beacon_game_path);
-			}
-
-			std::string popup_name = "Options " + beacon_id;
-			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 1))
-			{
-				if (beacon_remaining_spectators == "0")
-				{
-					ImGui::MenuItem("Spectate", NULL, false, false);
-				}
-				else
-				{
-					if (ImGui::MenuItem("Spectate"))
-					{
-						dojo.PlayMatch = false;
-
-						config::Receiving = true;
-						dojo.receiving = true;
-
-						config::ActAsServer = false;
-						dojo.hosting = false;
-
-						dojo.RequestSpectate(beacon_ip, beacon_server_port);
-
-						gui_start_game(beacon_game_path);
-					}
-				}
-
-				ImGui::EndPopup();
 			}
 
 			ImGui::NextColumn();
@@ -949,7 +949,6 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
     ImGui::End();
     ImGui::PopStyleVar();
-#endif
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -1610,7 +1609,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_1.c_str());
@@ -1633,7 +1632,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_2.c_str());

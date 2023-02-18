@@ -2265,7 +2265,7 @@ static void gui_display_settings()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About", "Credits" };
- 
+
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
@@ -2522,7 +2522,13 @@ static void gui_display_content()
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
-	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+	if (dojo.lobby_host_screen)
+	{
+		ImGui::Text("HOST");
+		item_current_idx = 1;
+	}
+	else
+		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
 	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
@@ -2640,15 +2646,15 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 32 * settings.display.uiScale);
+	ImGui::SameLine(0, 14 * settings.display.uiScale);
 	filter.Draw("Filter");
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
-		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
+		if (config::EnableLobby && !config::Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-			if (ImGui::Button("Lobby"))
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("LAN").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+			if (ImGui::Button("LAN"))
 				gui_state = GuiState::Lobby;
 		}
 
@@ -2705,7 +2711,7 @@ static void gui_display_content()
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
-		
+
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -2805,6 +2811,17 @@ static void gui_display_content()
 							} catch (const FlycastException& e) {
 								gui_error(e.what());
 							}
+						}
+						else if (dojo.lobby_host_screen)
+						{
+							if (!dojo.beacon_active)
+							{
+								std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
+								t3.detach();
+							}
+							settings.content.path = game.path;
+							dojo.host_status = 1;
+							gui_state = GuiState::Lobby;
 						}
 						else
 						{
@@ -3844,7 +3861,7 @@ void gui_display_profiler()
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
 
 	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
-	
+
 	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		char text[256];
@@ -3857,7 +3874,7 @@ void gui_display_profiler()
 	}
 
 	ImGui::PopStyleColor();
-	
+
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		fc_profiler::drawGraph(*profileThread);
