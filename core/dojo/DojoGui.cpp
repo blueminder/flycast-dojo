@@ -914,7 +914,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_ping > 0)
 				beacon_ping_str = std::to_string(beacon_ping);
 
-			if (//beacon_status == "Hosting, Waiting" &&
+			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				dojo.presence.SendJoin(beacon_ip.c_str());
