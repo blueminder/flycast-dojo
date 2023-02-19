@@ -30,11 +30,15 @@ struct GameMedia {
 };
 #endif
 
+#include "rend/boxart/boxart.h"
+
 class DojoGui
 {
 private:
 	void gui_open_host_delay();
 
+	void displayGameImage(std::string game_name, ImVec2 size, std::vector<GameMedia> game_list);
+	bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad);
 public:
 	void gui_display_bios_rom_warning(float scaling);
 
@@ -90,7 +94,7 @@ public:
 	bool net_save_download = false;
 	bool buffer_captured = false;
 
-	void lobby_player_wait_popup();
+	void lobby_player_wait_popup(std::vector<GameMedia> game_list);
 
 };
 

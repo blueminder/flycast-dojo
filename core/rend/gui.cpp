@@ -2647,7 +2647,7 @@ static void gui_display_content()
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
 	ImGui::SameLine(0, 14 * settings.display.uiScale);
-	filter.Draw("Filter");
+	filter.Draw(" ");
 #endif
     if (gui_state != GuiState::SelectDisk)
     {

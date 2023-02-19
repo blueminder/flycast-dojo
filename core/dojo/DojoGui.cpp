@@ -762,8 +762,8 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	if(!save_exists)
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
 	if (ImGui::Button("Delete Savestate", ImVec2(150 * scaling, 50 * scaling)))
@@ -774,8 +774,8 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	if(!save_exists)
 	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
 	}
 
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
@@ -807,13 +807,13 @@ void DojoGui::gui_display_test_game( float scaling)
 }
 
 std::vector<std::string> split(const std::string& text, char delimiter) {
-    std::string tmp;
-    std::vector<std::string> stk;
-    std::stringstream ss(text);
-    while(getline(ss,tmp, delimiter)) {
-        stk.push_back(tmp);
-    }
-    return stk;
+	std::string tmp;
+	std::vector<std::string> stk;
+	std::stringstream ss(text);
+	while(getline(ss,tmp, delimiter)) {
+		stk.push_back(tmp);
+	}
+	return stk;
 }
 
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
@@ -836,9 +836,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		dojo.presence.CloseLobby();
 
 		if (game_started)
-    		gui_state = GuiState::Commands;
-    	else
-    		gui_state = GuiState::Main;
+			gui_state = GuiState::Commands;
+		else
+			gui_state = GuiState::Main;
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
@@ -883,10 +883,10 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			size_t pos = 0;
 			std::string token;
 			while ((pos = s.find(delimiter)) != std::string::npos) {
-			    token = s.substr(0, pos);
-			    std::cout << token << std::endl;
+				token = s.substr(0, pos);
+				std::cout << token << std::endl;
 				beacon_entry.push_back(token);
-			    s.erase(0, pos + delimiter.length());
+				s.erase(0, pos + delimiter.length());
 			}
 
 			std::string beacon_ip = beacon_entry[0];
@@ -947,10 +947,10 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		}
 	}
 
-	lobby_player_wait_popup();
+	lobby_player_wait_popup(game_list);
 
-    ImGui::End();
-    ImGui::PopStyleVar();
+	ImGui::End();
+	ImGui::PopStyleVar();
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -1799,8 +1799,8 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 		}
 	}
 
-    ImGui::End();
-    ImGui::PopStyleVar();
+	ImGui::End();
+	ImGui::PopStyleVar();
 }
 
 inline static void header(const char *title)
@@ -2191,25 +2191,74 @@ void DojoGui::update_action()
 
 }
 
-void DojoGui::lobby_player_wait_popup()
+void TextCenter(std::string text)
 {
+	float font_size = ImGui::GetFontSize() * text.size();
+
+	ImGui::SameLine(
+		ImGui::GetContentRegionAvail().x / 2 -
+		font_size + (font_size / 2)
+	);
+
+	ImGui::Text(text.c_str());
+}
+
+void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
+{
+	std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
+	auto game_name = stringfix::remove_extension(filename);
+
+	std::vector<GameMedia> games = game_list;
+	std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
+		[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+
+	std::string game_fullname = it->name;
+
+	std::string host_title = "Hosting " + game_fullname;
+
 	if (dojo.host_status == 1)
 	{
-		ImGui::OpenPopup("Lobby Host");
+		ImGui::OpenPopup(host_title.c_str());
 	}
 
-	if (ImGui::BeginPopupModal("Lobby Host", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	//centerNextWindow();
+	ImGui::SetNextWindowSize(ScaledVec2(ImGui::CalcTextSize(host_title.c_str()).x + 20, 0));
+
+	if (ImGui::BeginPopupModal(host_title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 		ImGui::AlignTextToFramePadding();
 		ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			200 + (200 / 2)
+		);
+		displayGameImage(game_name, ImVec2(200, 200), game_list);
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x + 30) / 2 -
+			ImGui::CalcTextSize("Waiting for Players...").x + (ImGui::CalcTextSize("Waiting for Players...").x / 2)
+		);
 		ImGui::Text("Waiting for Players...");
 
-		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		ImGui::SetCursorPosY(126.f * settings.display.uiScale);
-		if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			ImGui::CalcTextSize("    ").x + (ImGui::CalcTextSize("    ").x / 2)
+		);
+		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_ONE);
+		ImGui::SameLine();
+		ImGui::Text("%s", ICON_KI_BUTTON_TWO);
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x + 20) / 2 -
+			ImGui::CalcTextSize("Cancel").x + (ImGui::CalcTextSize("Cancel").x / 2)
+		);
+		if (ImGui::Button("Cancel"))
 		{
 			dojo.presence.CancelHost();
 			ImGui::CloseCurrentPopup();
@@ -2219,6 +2268,62 @@ void DojoGui::lobby_player_wait_popup()
 		ImGui::EndPopup();
 	}
 
+}
+
+void DojoGui::displayGameImage(std::string game_name, ImVec2 size, std::vector<GameMedia> game_list)
+{
+		std::vector<GameMedia> games = game_list;
+		std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
+			[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+
+		GameMedia game = *it;
+		ImTextureID textureId{};
+		Boxart boxart;
+		GameBoxart art = boxart.getBoxart(game);
+		getGameImage(art, textureId, true);
+
+		float ar = imguiDriver->getAspectRatio(textureId);
+		ImVec2 uv0 { 0.f, 0.f };
+		ImVec2 uv1 { 1.f, 1.f };
+		if (ar > 1)
+		{
+			uv0.y = -(ar - 1) / 2;
+			uv1.y = 1 + (ar - 1) / 2;
+		}
+		else if (ar != 0)
+		{
+			ar = 1 / ar;
+			uv0.x = -(ar - 1) / 2;
+			uv1.x = 1 + (ar - 1) / 2;
+		}
+
+		ImGui::Image(textureId, ImVec2(250, 250), uv0, uv1);
+}
+
+bool DojoGui::getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
+{
+	textureId = ImTextureID{};
+	if (art.boxartPath.empty())
+		return false;
+
+	// Get the boxart texture. Load it if needed.
+	textureId = imguiDriver->getTexture(art.boxartPath);
+	if (textureId == ImTextureID() && allowLoad)
+	{
+		int width, height;
+		u8 *imgData = loadImage(art.boxartPath, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+		return true;
+	}
+	return false;
 }
 
 DojoGui dojo_gui;
