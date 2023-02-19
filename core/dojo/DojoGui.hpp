@@ -90,6 +90,8 @@ public:
 	bool net_save_download = false;
 	bool buffer_captured = false;
 
+	void lobby_player_wait_popup();
+
 };
 
 extern DojoGui dojo_gui;

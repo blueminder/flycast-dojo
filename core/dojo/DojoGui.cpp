@@ -947,6 +947,8 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		}
 	}
 
+	lobby_player_wait_popup();
+
     ImGui::End();
     ImGui::PopStyleVar();
 }
@@ -2185,6 +2187,36 @@ void DojoGui::update_action()
 			dojo_file.Update();
 		});
 		t.detach();
+	}
+
+}
+
+void DojoGui::lobby_player_wait_popup()
+{
+	if (dojo.host_status == 1)
+	{
+		ImGui::OpenPopup("Lobby Host");
+	}
+
+	if (ImGui::BeginPopupModal("Lobby Host", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+		ImGui::AlignTextToFramePadding();
+		ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+
+		ImGui::Text("Waiting for Players...");
+
+		float currentwidth = ImGui::GetContentRegionAvail().x;
+		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+		if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+		{
+			dojo.presence.CancelHost();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::PopStyleVar();
+
+		ImGui::EndPopup();
 	}
 
 }

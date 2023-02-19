@@ -209,7 +209,7 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 				last_seen[beacon_id] = dojo.unix_timestamp();
 			}
 		}
-		else if (memcmp(msgbuf, "JOIN", strlen("JOIN")) == 0)
+		else if (dojo.host_status == 1 && memcmp(msgbuf, "JOIN", strlen("JOIN")) == 0)
 		{
 			NOTICE_LOG(NETWORK, "LISTENER %s %s", ip_str, msgbuf);
 			try {
@@ -330,6 +330,7 @@ int DojoLobby::SendJoin(const char* ip)
 
 int DojoLobby::CancelHost()
 {
+	dojo.host_status = 0;
 	dojo.lobby_host_screen = false;
 	settings.content.path = "";
 
