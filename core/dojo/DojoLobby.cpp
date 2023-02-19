@@ -213,6 +213,8 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 		{
 			NOTICE_LOG(NETWORK, "LISTENER %s %s", ip_str, msgbuf);
 			try {
+				config::OpponentName = std::string(msgbuf + strlen("JOIN") + 1);
+
 				dojo.commandLineStart = true;
 
 				dojo.PlayMatch = false;
@@ -306,12 +308,12 @@ int DojoLobby::SendJoin(const char* ip)
 	addr.sin_addr.s_addr = inet_addr(ip);
 	addr.sin_port = htons(52001);
 
-	const char* message = "JOIN";
+	std::string join_message = "JOIN " + config::PlayerName.get();
 
 	int nbytes = sendto(
 		send_sock,
-		message,
-		strlen(message),
+		join_message.data(),
+		strlen(join_message.data()),
 		0,
 		(struct sockaddr*) &addr,
 		sizeof(addr)
