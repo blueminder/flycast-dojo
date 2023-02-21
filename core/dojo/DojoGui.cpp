@@ -265,7 +265,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    					ImGui::CloseCurrentPopup();
    				}
-				
+
 				ImGui::SameLine();
 				if (ImGui::Button("Cancel"))
 				{
@@ -426,11 +426,12 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				}
 			}
 		}
-		else
+		else if (!dojo.commandLineStart)
 		{
 			if ((!config::ManualPlayerAssign && config::NetworkServer.get().empty()) ||
 				(config::ManualPlayerAssign && config::NetworkP0Server.get().empty()))
 			{
+
 				if (config::ShowPublicIP)
 				{
 					static char external_ip[128] = "";
@@ -1080,7 +1081,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 	ImGui::Begin("Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-	
+
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
 		if (game_started)
@@ -1867,7 +1868,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_1.c_str());
@@ -1890,7 +1891,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_2.c_str());
