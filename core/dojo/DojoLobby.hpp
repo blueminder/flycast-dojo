@@ -41,7 +41,10 @@ public:
 
     int CancelHost();
 
+    int SendMsg(const char* ip, int port, const char* msg);
     int SendJoin(const char* ip);
+    int SendConnected(const char* ip, const char* joined_name, const char* joined_ip);
+    int SendGameStart(const char* ip);
     int CloseLobby();
 
 

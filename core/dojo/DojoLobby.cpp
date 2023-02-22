@@ -217,6 +217,9 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 			dojo.joined_players.push_back(player_name);
 			dojo.joined_ips.push_back(player_ip);
 
+			for (int i=1; i<dojo.joined_ips.size() - 1; i++)
+				dojo.presence.SendConnected(dojo.joined_ips[i].c_str(), player_name.data(), player_ip.data());
+
 			if(dojo.joined_players.size() == config::NumPlayers.get())
 			{
 				if (config::NumPlayers == 2)
@@ -324,7 +327,7 @@ int DojoLobby::listener(char* group, int port)
 	return 0;
 }
 
-int DojoLobby::SendJoin(const char* ip)
+int DojoLobby::SendMsg(const char* ip, int port, const char* msg)
 {
 	int send_sock = Init();
 
@@ -333,14 +336,12 @@ int DojoLobby::SendJoin(const char* ip)
 	addr.sin_family = AF_INET;
 
 	addr.sin_addr.s_addr = inet_addr(ip);
-	addr.sin_port = htons(52001);
-
-	std::string join_message = "JOIN " + config::PlayerName.get();
+	addr.sin_port = htons(port);
 
 	int nbytes = sendto(
 		send_sock,
-		join_message.data(),
-		strlen(join_message.data()),
+		msg,
+		strlen(msg),
 		0,
 		(struct sockaddr*) &addr,
 		sizeof(addr)
@@ -353,6 +354,25 @@ int DojoLobby::SendJoin(const char* ip)
 	CloseSocket(send_sock);
 
 	return 0;
+}
+
+int DojoLobby::SendJoin(const char* ip)
+{
+	std::string join_msg = "JOIN " + config::PlayerName.get();
+	SendMsg(ip, 52001, join_msg.data());
+}
+
+int DojoLobby::SendConnected(const char* ip, const char* joined_name, const char* joined_ip)
+{
+	std::string joined_msg = "CONNECTED " + std::string(joined_name, strlen(joined_name)) + ":" + std::string(joined_ip, strlen(joined_ip));
+	SendMsg(ip, 8001, joined_msg.data());
+}
+
+int DojoLobby::SendGameStart(const char* ip)
+{
+	std::string player_ips = std::accumulate(dojo.joined_ips.begin(), dojo.joined_ips.end(), std::string("_"));
+	std::string start_msg = "START " + player_ips;
+	SendMsg(ip, 8001, start_msg.data());
 }
 
 int DojoLobby::CancelHost()
