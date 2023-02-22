@@ -212,30 +212,57 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 		else if (dojo.host_status == 1 && memcmp(msgbuf, "JOIN", strlen("JOIN")) == 0)
 		{
 			NOTICE_LOG(NETWORK, "LISTENER %s %s", ip_str, msgbuf);
-			try {
-				config::OpponentName = std::string(msgbuf + strlen("JOIN") + 1);
+			std::string player_name = std::string(msgbuf + strlen("JOIN") + 1);
+			std::string player_ip = std::string(ip_str, strlen(ip_str));
+			dojo.joined_players.push_back(player_name);
+			dojo.joined_ips.push_back(player_ip);
 
-				dojo.commandLineStart = true;
+			if(dojo.joined_players.size() == config::NumPlayers.get())
+			{
+				if (config::NumPlayers == 2)
+					config::OpponentName = player_name;
+				else
+					config::OpponentName = std::accumulate(dojo.joined_players.begin(), dojo.joined_players.end(), std::string("_"));
 
-				dojo.PlayMatch = false;
-				config::Receiving = false;
+				try
+				{
+					if (config::NumPlayers == 2)
+						config::NetworkServer = dojo.joined_ips[1];
+					else if (config::NumPlayers > 2)
+						config::NetworkP1Server = dojo.joined_ips[1];
 
-				config::DojoActAsServer = true;
-				config::DojoEnable = true;
-				config::GGPOEnable = true;
-				config::ActAsServer = true;
+					if (config::NumPlayers == 3)
+						config::NetworkP2Server = dojo.joined_ips[2];
+					else if (config::NumPlayers == 4)
+					{
+						config::NetworkP2Server = dojo.joined_ips[2];
+						config::NetworkP3Server = dojo.joined_ips[3];
+					}
 
-				dojo.lobby_active = true;
-				config::NetworkServer = std::string(ip_str, strlen(ip_str));
+					dojo.commandLineStart = true;
 
-				SaveSettings();
+					dojo.PlayMatch = false;
+					config::Receiving = false;
 
-				dojo.host_status = 2;
+					config::DojoActAsServer = true;
+					config::DojoEnable = true;
+					config::GGPOEnable = true;
+					config::ActAsServer = true;
 
-				gui_state = GuiState::Closed;
-				gui_start_game(settings.content.path);
+					dojo.lobby_active = true;
+
+					SaveSettings();
+
+					dojo.host_status = 2;
+
+					gui_state = GuiState::Closed;
+					gui_start_game(settings.content.path);
+				}
+				catch (...) { }
+
+				dojo.joined_players.clear();
+				dojo.joined_ips.clear();
 			}
-			catch (...) { }
 		}
 	}
 

@@ -426,7 +426,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				}
 			}
 		}
-		else if (!dojo.commandLineStart)
+		else if (!dojo.commandLineStart && !dojo.lobby_host_screen)
 		{
 			if ((!config::ManualPlayerAssign && config::NetworkServer.get().empty()) ||
 				(config::ManualPlayerAssign && config::NetworkP0Server.get().empty()))
@@ -550,7 +550,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 
 #ifndef __ANDROID__
-		if (!dojo.commandLineStart && config::NumPlayers > 2)
+		if (!dojo.commandLineStart && !dojo.lobby_host_screen && config::NumPlayers > 2)
 		{
 			if (ImGui::Button("Copy as Session Code"))
 			{
@@ -2493,14 +2493,41 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 		);
 		ImGui::Text("Waiting for Players...");
 
+		std::string space = "  ";
+		for (int i=0; i<config::NumPlayers; i++)
+		{
+			space += "  ";
+		}
+
 		ImGui::Text(" ");
 		ImGui::SameLine(
 			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
-			ImGui::CalcTextSize("    ").x + (ImGui::CalcTextSize("    ").x / 2)
+			ImGui::CalcTextSize(space.c_str()).x + (ImGui::CalcTextSize(space.c_str()).x / 2)
 		);
 		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_ONE);
 		ImGui::SameLine();
-		ImGui::Text("%s", ICON_KI_BUTTON_TWO);
+		if (dojo.joined_players.size() >= 2)
+			ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_TWO);
+		else
+			ImGui::Text("%s", ICON_KI_BUTTON_TWO);
+
+		if (config::NumPlayers >= 3)
+		{
+			ImGui::SameLine();
+			if (dojo.joined_players.size() >= 3)
+				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_THREE);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_THREE);
+		}
+
+		if (config::NumPlayers == 4)
+		{
+			ImGui::SameLine();
+			if (dojo.joined_players.size() == 4)
+				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_FOUR);
+			else
+				ImGui::Text("%s", ICON_KI_BUTTON_FOUR);
+		}
 
 		ImGui::Text(" ");
 		ImGui::SameLine(

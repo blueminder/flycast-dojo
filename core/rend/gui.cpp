@@ -2823,6 +2823,8 @@ static void gui_display_content()
 							}
 							settings.content.path = game.path;
 							dojo.host_status = 1;
+							dojo.joined_players.push_back(config::PlayerName.get());
+							dojo.joined_ips.push_back("0.0.0.0");
 							gui_state = GuiState::Lobby;
 						}
 						else

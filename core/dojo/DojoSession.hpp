@@ -326,6 +326,9 @@ public:
 	std::string CombineOpponentNames();
 
 	std::vector<asio::ip::address> get_local_interfaces();
+
+	std::vector<std::string> joined_players;
+	std::vector<std::string> joined_ips;
 };
 
 extern DojoSession dojo;

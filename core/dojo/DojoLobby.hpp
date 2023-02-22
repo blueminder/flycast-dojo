@@ -44,6 +44,7 @@ public:
     int SendJoin(const char* ip);
     int CloseLobby();
 
+
 private:
     int beacon(char* group, int port, int delay_secs);
     int listener(char* group, int port);
@@ -60,4 +61,5 @@ private:
 
     int ListenerLoop(sockaddr_in addr);
     void CloseSocket(int sock);
+
 };
