@@ -607,7 +607,20 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 				for (int i = 0; i < config::NumPlayers.get(); i++)
 				{
-					ex_code = ex_code + std::string(sis[i]) + "|";
+					std::string player_entry = std::string(sis[i], strlen(sis[i]));
+					if (player_entry.find(':') == std::string::npos)
+					{
+						int player_port = config::GGPOP0Port;
+						if (i == 1)
+							player_port = config::GGPOP1Port.get();
+						else if (i == 2)
+							player_port = config::GGPOP2Port.get();
+						else if (i == 3)
+							player_port = config::GGPOP3Port.get();
+
+						player_entry = player_entry + ":" + std::to_string(player_port);
+					}
+					ex_code = ex_code + player_entry + "|";
 				}
 
 				std::string encoded_ex = base64_encode(reinterpret_cast<const unsigned char*>(ex_code.data()), ex_code.length());
