@@ -29,11 +29,24 @@
 
 #define MSGBUFSIZE 256
 
+#include "LobbyClient.hpp"
+
+
+typedef struct m_player {
+    std::string name;
+    std::string ip;
+    int listen_port;
+    int port_num;
+    int ggpo_port;
+} Player;
+
 class DojoLobby
 {
 public:
     void BeaconThread();
     void ListenerThread();
+
+    LobbyClient client;
 
     std::map<std::string, std::string> active_beacons;
     std::map<std::string, int> active_beacon_ping;
@@ -47,6 +60,16 @@ public:
     int SendGameStart(const char* ip);
     int CloseLobby();
 
+    bool lobby_disconnect_toggle = false;
+    bool hosting_lobby = false;
+    int player_count = 0;
+
+    std::vector<std::string> player_names = { "", "", "", "" };
+    std::vector<std::string> player_ips = { "", "", "", "" };
+    std::vector<int> player_ggpo_ports = { 0, 0, 0, 0 };
+
+    std::set<std::string> targets;
+    std::vector<Player> players;
 
 private:
     int beacon(char* group, int port, int delay_secs);

@@ -550,7 +550,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 
 #ifndef __ANDROID__
-		if (!dojo.commandLineStart && !dojo.lobby_host_screen && config::NumPlayers > 2)
+		if (!dojo.commandLineStart && !(dojo.host_status == 2 || dojo.host_status == 5) && config::NumPlayers > 2)
 		{
 			if (ImGui::Button("Copy as Session Code"))
 			{
@@ -610,7 +610,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 					std::string player_entry = std::string(sis[i], strlen(sis[i]));
 					if (player_entry.find(':') == std::string::npos)
 					{
-						int player_port = config::GGPOP0Port;
+						int player_port = config::GGPOP0Port.get();
 						if (i == 1)
 							player_port = config::GGPOP1Port.get();
 						else if (i == 2)
@@ -1084,8 +1084,13 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 #ifndef __ANDROID__
 	if (!dojo.lobby_active)
 	{
+		dojo.lobby_active = true;
+
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
 		t4.detach();
+
+		std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+		t5.detach();
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -1097,6 +1102,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
+		dojo.presence.lobby_disconnect_toggle = true;
+		dojo.lobby_active = false;
+
 		if (game_started)
     		gui_state = GuiState::Commands;
     	else
@@ -1108,6 +1116,12 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	{
 		if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 		{
+			dojo.presence.client.EndSession();
+			dojo.presence.player_count = 1;
+			dojo.presence.hosting_lobby = true;
+			std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+			t5.detach();
+
 			dojo.lobby_host_screen = true;
 			config::ActAsServer = true;
 			gui_state = GuiState::Main;
@@ -1117,6 +1131,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	{
 		if (ImGui::Button("Cancel Host", ImVec2(100 * scaling, 30 * scaling)))
 		{
+			dojo.presence.lobby_disconnect_toggle = true;
 			dojo.presence.CancelHost();
 		}
 	}
@@ -1145,7 +1160,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			std::string token;
 			while ((pos = s.find(delimiter)) != std::string::npos) {
 			    token = s.substr(0, pos);
-			    std::cout << token << std::endl;
+			    //std::cout << token << std::endl;
 				beacon_entry.push_back(token);
 			    s.erase(0, pos + delimiter.length());
 			}
@@ -1178,8 +1193,13 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				dojo.presence.SendJoin(beacon_ip.c_str());
+				settings.content.path = beacon_game_path;
+				config::NetworkServer = beacon_ip;
 
+				dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, 6000);
+				dojo.host_status = 4;
+
+				/*
 				config::EnableMatchCode.set(false);
 				dojo.commandLineStart = true;
 
@@ -1193,11 +1213,11 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 				SaveSettings();
 
-				config::NetworkServer = beacon_ip;
 				cfgSaveStr("network", "server", beacon_ip.c_str());
 
 				gui_state = GuiState::Closed;
 				gui_start_game(beacon_game_path);
+				*/
 			}
 
 			ImGui::NextColumn();
@@ -2478,7 +2498,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 	std::string host_title = "Hosting " + game_fullname;
 
-	if (dojo.host_status == 1)
+	if (dojo.host_status == 1 || dojo.host_status == 4)
 	{
 		ImGui::OpenPopup(host_title.c_str());
 	}
@@ -2488,6 +2508,12 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 	if (ImGui::BeginPopupModal(host_title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
+		int joined_player_count;
+		if (dojo.host_status == 1)
+			joined_player_count = dojo.presence.player_count;
+		else
+			joined_player_count = dojo.presence.player_count + 1;
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 		ImGui::AlignTextToFramePadding();
 		ImGui::SetCursorPosX(20.f * settings.display.uiScale);
@@ -2519,7 +2545,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 		);
 		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_ONE);
 		ImGui::SameLine();
-		if (dojo.joined_players.size() >= 2)
+		if (joined_player_count >= 2)
 			ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_TWO);
 		else
 			ImGui::Text("%s", ICON_KI_BUTTON_TWO);
@@ -2527,7 +2553,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 		if (config::NumPlayers >= 3)
 		{
 			ImGui::SameLine();
-			if (dojo.joined_players.size() >= 3)
+			if (joined_player_count >= 3)
 				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_THREE);
 			else
 				ImGui::Text("%s", ICON_KI_BUTTON_THREE);
@@ -2536,7 +2562,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 		if (config::NumPlayers == 4)
 		{
 			ImGui::SameLine();
-			if (dojo.joined_players.size() == 4)
+			if (joined_player_count == 4)
 				ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_FOUR);
 			else
 				ImGui::Text("%s", ICON_KI_BUTTON_FOUR);
