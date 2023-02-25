@@ -30,6 +30,8 @@ private:
 	std::string random_hex_string(int length, int seed);
 
 	void StartSessionOnReady(bool hosting);
+
+	std::string longestCommonPrefix(std::vector<std::string>& str);
 public:
 	LobbyClient();
 	void ClientThread();

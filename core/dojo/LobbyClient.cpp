@@ -167,6 +167,27 @@ else
 	return CreateLocalSocket(0);
 }
 
+std::string LobbyClient::longestCommonPrefix(std::vector<std::string>& str) {
+	int n = str.size();
+	if(n==0) return "";
+
+	std::string ans  = "";
+	sort(begin(str), end(str));
+	std::string a = str[0];
+	std::string b = str[n-1];
+
+	for(int i=0; i<a.size(); i++){
+		if(a[i]==b[i]){
+			ans = ans + a[i];
+		}
+		else{
+			break;
+		}
+	}
+
+	return ans;
+}
+
 void LobbyClient::ClientLoop()
 {
 	isLoopStarted = true;
@@ -311,7 +332,45 @@ void LobbyClient::ClientLoop()
 
 				if (dojo.presence.player_count == config::NumPlayers)
 				{
-					Player host_player = { config::PlayerName, "127.0.0.1", 6000, 0, config::GGPOPort.get() };
+					// find common IP prefix with host, share with guests
+					std::string lcp = longestCommonPrefix(dojo.presence.player_ips);
+					lcp = lcp.substr(0, lcp.find_last_of("."));
+
+					std::vector<std::string> local_ips;
+
+					auto iadd = dojo.get_local_interfaces();
+					for (auto ia : iadd)
+					{
+						auto ip_str = ia.to_string();
+						auto dot_found = ip_str.find(".");
+						if (dot_found == std::string::npos)
+							continue;
+
+						DEBUG_LOG(NETWORK, "IP: %s\n", ip_str.data());
+						local_ips.push_back(ip_str);
+					}
+
+					std::string assigned_ip = "";
+
+					auto substring = lcp;
+					const auto iter = std::find_if(local_ips.begin(), local_ips.end(),
+						[&substring](std::string str) {
+							return str.find(substring) == 0;
+						}
+					);
+
+					if (iter != local_ips.end())
+					{
+						assigned_ip = *iter;
+					}
+
+					if (assigned_ip == "")
+					{
+						//assigned_ip = dojo.GetExternalIP();
+						assigned_ip = "127.0.0.1";
+					}
+
+					Player host_player = { config::PlayerName, assigned_ip, 6000, 0, config::GGPOPort.get() };
 					dojo.presence.players.push_back(host_player);
 
 					for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
