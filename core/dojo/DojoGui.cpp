@@ -571,7 +571,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				std::string lcp = longestCommonPrefix(ip_prefixes);
 				lcp = lcp.substr(0, lcp.find_last_of("."));
 
-				auto iadd = dojo.get_local_interfaces();
+				auto iadd = dojo.GetLocalInterfaces();
 				for (auto ia : iadd)
 				{
 					auto ip_str = ia.to_string();

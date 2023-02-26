@@ -36,7 +36,12 @@ private:
 
 	std::set<std::string> join_msg_uids;
 	std::set<std::string> joined_msg_uids;
+	std::set<int> used_port_nums;
 
+	std::vector<std::string> local_ips;
+
+	// used to change rand seed
+	int msgs_sent = 0;
 public:
 	LobbyClient();
 	void ClientThread();

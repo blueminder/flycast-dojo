@@ -1831,6 +1831,7 @@ std::string DojoSession::CombineOpponentNames()
 	return combined_names;
 }
 
+// adapted from https://stackoverflow.com/a/62303963
 asio::ip::address_v6 sinaddr_to_asio(sockaddr_in6 *addr) {
     asio::ip::address_v6::bytes_type buf;
     memcpy(buf.data(), addr->sin6_addr.s6_addr, sizeof(addr->sin6_addr));
@@ -1840,15 +1841,13 @@ asio::ip::address_v6 sinaddr_to_asio(sockaddr_in6 *addr) {
 #if defined(_WIN32)
 #undef UNICODE
 #include <winsock2.h>
-// Headers that need to be included after winsock2.h:
 #include <iphlpapi.h>
 #include <ws2ipdef.h>
 
 typedef IP_ADAPTER_UNICAST_ADDRESS_LH Addr;
 typedef IP_ADAPTER_ADDRESSES *AddrList;
 
-std::vector<asio::ip::address> DojoSession::get_local_interfaces() {
-    // It's a windows machine, we assume it has 512KB free memory
+std::vector<asio::ip::address> DojoSession::GetLocalInterfaces() {
     DWORD outBufLen = 1 << 19;
     AddrList ifaddrs = (AddrList) new char[outBufLen];
 
@@ -1863,7 +1862,7 @@ std::vector<asio::ip::address> DojoSession::get_local_interfaces() {
             if (addr->OperStatus != IfOperStatusUp) continue;
             // if (addr->NoMulticast) continue;
 
-            // Find the first IPv4 address
+            // find first ipv4 address
             if (addr->Ipv4Enabled) {
                 for (Addr *uaddr = addr->FirstUnicastAddress; uaddr != 0; uaddr = uaddr->Next) {
                     if (uaddr->Address.lpSockaddr->sa_family != AF_INET) continue;
@@ -1890,17 +1889,17 @@ std::vector<asio::ip::address> DojoSession::get_local_interfaces() {
 #include <net/if.h>
 #include <sys/types.h>
 
-std::vector<asio::ip::address> DojoSession::get_local_interfaces() {
+std::vector<asio::ip::address> DojoSession::GetLocalInterfaces() {
     std::vector<asio::ip::address> res;
     ifaddrs *ifs;
     if (getifaddrs(&ifs)) {
         return res;
     }
     for (auto addr = ifs; addr != nullptr; addr = addr->ifa_next) {
-        // No address? Skip.
+        // skip if no address found
         if (addr->ifa_addr == nullptr) continue;
 
-        // Interface isn't active? Skip.
+        // skip if interface is not active
         if (!(addr->ifa_flags & IFF_UP)) continue;
 
         if(addr->ifa_addr->sa_family == AF_INET) {
@@ -1916,7 +1915,6 @@ std::vector<asio::ip::address> DojoSession::get_local_interfaces() {
 #else
 #error "..."
 #endif
-
 
 DojoSession dojo;
 

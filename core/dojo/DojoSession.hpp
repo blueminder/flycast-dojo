@@ -325,7 +325,7 @@ public:
 	std::set<std::string> opponent_names;
 	std::string CombineOpponentNames();
 
-	std::vector<asio::ip::address> get_local_interfaces();
+	std::vector<asio::ip::address> GetLocalInterfaces();
 
 	std::vector<std::string> joined_players;
 	std::vector<std::string> joined_ips;
