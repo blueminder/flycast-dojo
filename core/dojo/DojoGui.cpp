@@ -1272,6 +1272,9 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
+				std::string filename = beacon_game_path.substr(beacon_game_path.find_last_of("/\\") + 1);
+				auto game_name = stringfix::remove_extension(filename);
+
 				settings.content.path = beacon_game_path;
 				config::NetworkServer = beacon_ip;
 
@@ -1281,8 +1284,15 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 				else
 					config::ManualPlayerAssign = true;
 
-				dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, 6000);
-				dojo.host_status = 4;
+				if (!ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
+				{
+					dojo_gui.invoke_download_save_popup(beacon_game_path, &dojo_gui.net_save_download, true);
+				}
+				else
+				{
+					dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, std::stoi(config::DojoServerPort.get()));
+					dojo.host_status = 4;
+				}
 			}
 
 			ImGui::NextColumn();
@@ -1295,9 +1305,49 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 	lobby_player_wait_popup(game_list);
 
+	if (dojo_gui.net_save_download)
+	{
+		ImGui::OpenPopup("Download Netplay Savestate");
+	}
+
+	dojo_gui.download_save_popup();
+
     ImGui::End();
     ImGui::PopStyleVar();
 #endif
+
+	if (dojo_file.start_save_download && !dojo_file.save_download_started)
+	{
+		dojo_file.save_download_started = true;
+		std::thread s([&]() {
+			if (config::Receiving)
+			{
+				if (dojo.replay_version == 2)
+				{
+					if(dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8").empty())
+					{
+						// fall back to current savestate if commit not found
+						dojo_file.DownloadNetSave(dojo_file.entry_name);
+					}
+				}
+				else if (!settings.dojo.state_commit.empty())
+				{
+					std::cout << "state commit: " << settings.dojo.state_commit << std::endl;
+					if(dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit).empty())
+					{
+						// fall back to current savestate if commit not found
+						dojo_file.DownloadNetSave(dojo_file.entry_name);
+					}
+				}
+				else
+					dojo_file.DownloadNetSave(dojo_file.entry_name);
+			}
+			else
+				dojo_file.DownloadNetSave(dojo_file.entry_name);
+		});
+		s.detach();
+	}
+
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -2706,6 +2756,114 @@ bool DojoGui::getGameImage(const GameBoxart& art, ImTextureID& textureId, bool a
 		return true;
 	}
 	return false;
+}
+
+
+void DojoGui::invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game)
+{
+	std::string filename = game_path.substr(game_path.find_last_of("/\\") + 1);
+	std::string short_game_name = stringfix::remove_extension(filename);
+	dojo_file.entry_name = short_game_name;
+	dojo_file.post_save_launch = launch_game;
+	dojo_file.start_save_download = true;
+	dojo_file.game_path = game_path;
+
+	*net_save_download = true;
+}
+
+void DojoGui::download_save_popup()
+{
+	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		if(!dojo_file.save_download_ended)
+		{
+			ImGui::TextUnformatted(dojo_file.status_text.data());
+			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
+				|| dojo_file.status_text.find("not found") != std::string::npos)
+			{
+				dojo_file.start_save_download = false;
+				dojo_file.save_download_started = false;
+			}
+			else
+			{
+				float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+				char buf[32];
+				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+			}
+
+			if (dojo_file.status_text.find("not found") != std::string::npos)
+			{
+				for (int i = 0; i < 16; i++)
+				{
+					settings.network.md5.savestate[i] = 0;
+				}
+			}
+		}
+
+		if (dojo_file.save_download_ended || dojo_file.status_text.find("not found") != std::string::npos)
+		{
+			ImGui::TextUnformatted("Savestate successfully downloaded. ");
+			if (config::Receiving)
+			{
+				ImGui::TextUnformatted("Please open the replay link again to continue.");
+				if (ImGui::Button("Exit"))
+				{
+					exit(0);
+				}
+			}
+			else if (dojo_file.post_save_launch)
+			{
+				if (dojo.lobby_host_screen)
+				{
+					if (ImGui::Button("Host Game"))
+					{
+						std::string game_path = dojo_file.game_path;
+						dojo_file.game_path = "";
+						settings.content.path = game_path;
+						dojo.host_status = 1;
+						//dojo.joined_players.push_back(config::PlayerName.get());
+						//dojo.joined_ips.push_back("0.0.0.0");
+						gui_state = GuiState::Lobby;
+					}
+				}
+				else if (gui_state == GuiState::Lobby)
+				{
+					if (ImGui::Button("Join Game"))
+					{
+						dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), config::NetworkServer.get(), std::stoi(config::DojoServerPort.get()));
+						dojo.host_status = 4;
+					}
+				}
+				else
+				{
+					if (ImGui::Button("Launch Game"))
+					{
+						dojo_file.entry_name = "";
+						dojo_file.save_download_ended = false;
+						dojo_file.post_save_launch = false;
+						std::string game_path = dojo_file.game_path;
+						settings.content.path = game_path;
+						dojo_file.game_path = "";
+						ImGui::CloseCurrentPopup();
+						gui_start_game(game_path);
+					}
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Close"))
+				{
+					dojo_file.entry_name = "";
+					dojo_file.save_download_ended = false;
+					ImGui::CloseCurrentPopup();
+					scanner_refresh();
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 DojoGui dojo_gui;

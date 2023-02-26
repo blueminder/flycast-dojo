@@ -99,6 +99,9 @@ public:
 
 	void lobby_player_wait_popup(std::vector<GameMedia> game_list);
 
+	void invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game);
+	void download_save_popup();
+
 };
 
 extern DojoGui dojo_gui;

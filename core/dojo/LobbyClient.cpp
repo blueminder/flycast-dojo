@@ -111,7 +111,7 @@ void LobbyClient::SendMsg(std::string msg, std::string ip, int port)
 
 void LobbyClient::EndSession()
 {
-	dojo.presence.player_count = 1;
+	dojo.presence.player_count = 0;
 	isLoopStarted = false;
 
 	CloseSocket(local_socket);
@@ -435,7 +435,7 @@ void LobbyClient::ClientLoop()
 							assigned_ip = "127.0.0.1";
 						}
 
-						Player host_player = { config::PlayerName, assigned_ip, 6000, 0, config::GGPOPort.get() };
+						Player host_player = { config::PlayerName, assigned_ip, std::stoi(config::DojoServerPort.get()), 0, config::GGPOPort.get() };
 						dojo.presence.players.push_back(host_player);
 						std::cout << "PLAYER " << std::to_string(host_player.port_num) << " ADDED: " << host_player.ip << ":" << std::to_string(host_player.ggpo_port) << " " << std::to_string(host_player.listen_port) << "  " << std::to_string(dojo.presence.players.size()) << std::endl;
 
