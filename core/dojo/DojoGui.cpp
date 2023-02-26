@@ -663,7 +663,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			if (!config::EnableMatchCode)
+			if (!config::EnableMatchCode && !dojo.lobby_launch && !dojo.commandLineStart)
 			{
 				if (!dojo.commandLineStart)
 				{
@@ -1079,6 +1079,46 @@ std::vector<std::string> split(const std::string& text, char delimiter) {
     return stk;
 }
 
+void DojoGui::gui_display_lobby_host_player_select(float scaling)
+{
+	std::string title = "Select # of Players";
+	ImGui::OpenPopup(title.data());
+	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		std::string num_slider_desc = "Adjust number of players.";
+		if (!config::ActAsServer && config::NumPlayers > 2)
+			num_slider_desc = num_slider_desc + " . Select your player below.";
+		OptionSlider("# Players", config::NumPlayers, 2, 4, num_slider_desc.data());
+
+		if (config::NumPlayers == 2)
+		{
+			config::ManualPlayerAssign = false;
+		}
+		else
+		{
+			config::ManualPlayerAssign = true;
+		}
+
+		if (ImGui::Button("Select Game"))
+		{
+			dojo.presence.client.EndSession();
+			dojo.presence.player_count = 1;
+			dojo.presence.hosting_lobby = true;
+			std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+			t5.detach();
+
+			dojo.lobby_host_screen = true;
+			config::ActAsServer = true;
+			gui_state = GuiState::Main;
+		}
+
+		if (ImGui::Button("Cancel"))
+		{
+			gui_state = GuiState::Lobby;
+		}
+	}
+}
+
 void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 {
 #ifndef __ANDROID__
@@ -1114,17 +1154,50 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
 	if (!dojo.lobby_host_screen && !dojo.beacon_active)
 	{
+		std::string title = "Select # of Players";
 		if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
 		{
-			dojo.presence.client.EndSession();
-			dojo.presence.player_count = 1;
-			dojo.presence.hosting_lobby = true;
-			std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
-			t5.detach();
+			ImGui::OpenPopup(title.data());
+		}
 
-			dojo.lobby_host_screen = true;
-			config::ActAsServer = true;
-			gui_state = GuiState::Main;
+		if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			std::string num_slider_desc = "Adjust number of players.";
+			OptionSlider("# Players", config::NumPlayers, 2, 4, num_slider_desc.data());
+
+			if (config::NumPlayers == 2)
+			{
+				config::ManualPlayerAssign = false;
+			}
+			else
+			{
+				config::ManualPlayerAssign = true;
+				config::PlayerNum = 0;
+			}
+
+			if (ImGui::Button("Select Game"))
+			{
+				dojo.presence.client.EndSession();
+				dojo.presence.player_count = 1;
+				dojo.presence.hosting_lobby = true;
+				std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+				t5.detach();
+
+				dojo.lobby_host_screen = true;
+				config::ActAsServer = true;
+				gui_state = GuiState::Main;
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Cancel"))
+			{
+				config::NumPlayers = 2;
+				config::ManualPlayerAssign = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
 		}
 	}
 	else
@@ -1184,6 +1257,12 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 			std::string beacon_player = beacon_entry[4];
 
+			int beacon_player_num = std::stoi(beacon_entry[5]);
+			if (beacon_player_num > 4)
+				beacon_player_num = 4;
+			else if (beacon_player_num < 2)
+				beacon_player_num = 2;
+
 			bool is_selected;
 			int beacon_ping = dojo.presence.active_beacon_ping[beacon_id];
 			std::string beacon_ping_str = "";
@@ -1196,28 +1275,14 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 				settings.content.path = beacon_game_path;
 				config::NetworkServer = beacon_ip;
 
+				config::NumPlayers = beacon_player_num;
+				if (beacon_player_num == 2)
+					config::ManualPlayerAssign = false;
+				else
+					config::ManualPlayerAssign = true;
+
 				dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, 6000);
 				dojo.host_status = 4;
-
-				/*
-				config::EnableMatchCode.set(false);
-				dojo.commandLineStart = true;
-
-				dojo.PlayMatch = false;
-				config::Receiving = false;
-
-				config::DojoActAsServer = false;
-				config::DojoEnable = true;
-				config::GGPOEnable = true;
-				config::ActAsServer = false;
-
-				SaveSettings();
-
-				cfgSaveStr("network", "server", beacon_ip.c_str());
-
-				gui_state = GuiState::Closed;
-				gui_start_game(beacon_game_path);
-				*/
 			}
 
 			ImGui::NextColumn();
@@ -2575,6 +2640,8 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 		);
 		if (ImGui::Button("Cancel"))
 		{
+			config::NumPlayers = 2;
+			config::ManualPlayerAssign = false;
 			dojo.presence.CancelHost();
 			ImGui::CloseCurrentPopup();
 		}

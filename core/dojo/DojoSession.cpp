@@ -104,8 +104,8 @@ void DojoSession::CleanUp()
 	if (!config::MatchCode.get().empty())
 		dojo.MatchCode = "";
 
-	if (!config::NetworkServer.get().empty())
-		config::NetworkServer = "";
+	//if (!config::NetworkServer.get().empty())
+		//config::NetworkServer = "";
 
 	if (!config::DojoServerIP.get().empty())
 		config::DojoServerIP = "";
@@ -155,7 +155,7 @@ uint64_t DojoSession::DetectGGPODelay(const char* ipAddr)
 uint64_t DojoSession::unix_timestamp()
 {
 	using namespace std::chrono;
-	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); 
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 int DojoSession::PayloadSize()
@@ -273,8 +273,8 @@ void DojoSession::AddBackFrames(const char* initial_frame, const char* back_inpu
 			net_inputs[initial_player].count(initial_frame_num - i) == 0)
 		{
 			char frame_fill[FRAME_SIZE] = { 0 };
-			std::string new_frame = 
-				CreateFrame(initial_frame_num - initial_delay - i, initial_player, 
+			std::string new_frame =
+				CreateFrame(initial_frame_num - initial_delay - i, initial_player,
 					initial_delay, all_inputs + (i * INPUT_SIZE));
 			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
@@ -952,7 +952,7 @@ void DojoSession::LoadReplayFileV0(std::string path)
 	AssignNames();
 
 	// add string in increments of FRAME_SIZE to net_inputs
-	std::ifstream fin(path, 
+	std::ifstream fin(path,
 		std::ios::in | std::ios::binary);
 
 	char* buffer = new char[FRAME_SIZE];
@@ -976,7 +976,7 @@ void DojoSession::LoadReplayFileV0(std::string path)
 		{
 			net_inputs[player_num][frame_num] = std::string(buffer, FRAME_SIZE);
 			net_input_keys[player_num].insert(frame_num);
-		}	
+		}
 
 		if (!count)
 			break;

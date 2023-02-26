@@ -86,6 +86,7 @@ int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
 		{
 			message_ss << "__";
 		}
+        message_ss << config::NumPlayers.get() << "__";
 		std::string message_str = message_ss.str();
 		message = message_str.data();
 

@@ -32,6 +32,11 @@ private:
 	void StartSessionOnReady(bool hosting);
 
 	std::string longestCommonPrefix(std::vector<std::string>& str);
+	std::string join_rand;
+
+	std::set<std::string> join_msg_uids;
+	std::set<std::string> joined_msg_uids;
+
 public:
 	LobbyClient();
 	void ClientThread();

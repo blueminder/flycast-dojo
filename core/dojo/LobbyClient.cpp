@@ -87,15 +87,22 @@ uint64_t LobbyClient::GetAvgPing(const char * ip_addr, int port)
 
 void LobbyClient::SendMsg(std::string msg, std::string ip, int port)
 {
+	unsigned long add_to_seed = (unsigned long)msg.size();
+	unsigned long seed = mix(clock(), time(NULL), getpid());
+	srand(seed + add_to_seed);
+
+	std::string uid_rand = random_hex_string(16, seed);
+	if (msg.rfind("JOIN", 0) == 0)
+		join_rand = uid_rand;
+	msg += ":" + uid_rand;
+
 	sockaddr_in target_addr;
 	target_addr.sin_family = AF_INET;
 	target_addr.sin_port = htons((u16)port);
 	inet_pton(AF_INET, ip.data(), &target_addr.sin_addr);
 
 	for (int i = 0; i < config::PacketsPerFrame; i++)
-	{
 		sendto(local_socket, (const char*)msg.data(), strlen(msg.data()), 0, (const struct sockaddr*)&target_addr, sizeof(target_addr));
-	}
 
 	INFO_LOG(NETWORK, "Message Sent: %s", msg.data());
 }
@@ -244,7 +251,6 @@ void LobbyClient::ClientLoop()
 			// guests
 			if (dojo.host_status == 4 && memcmp("JOINED", buffer, 6) == 0)
 			{
-				std::cout << "RECEIVED: " << std::string(buffer, strlen(buffer)) << std::endl;
 				if (dojo.presence.hosting_lobby)
 					continue;
 
@@ -255,34 +261,53 @@ void LobbyClient::ClientLoop()
 				auto player_name = args[1];
 				auto player_ip = args[2];
 				auto player_ggpo_port = std::stoi(args[3]);
+				auto uid_rand = args[4];
+
+				if (joined_msg_uids.count(uid_rand) == 1)
+					continue;
+
+				joined_msg_uids.insert(uid_rand);
+
+				std::cout << "RECEIVED: " << std::string(buffer, strlen(buffer)) << std::endl;
 
 				Player joined = { player_name, player_ip, 0, player_num, player_ggpo_port };
 
 				auto it = std::find_if(dojo.presence.players.begin(), dojo.presence.players.end(),
-					[player_ip, player_ggpo_port](Player& p){ return p.ip == player_ip && p.ggpo_port == player_ggpo_port; } );
-				if (it != dojo.presence.players.end())
-					continue;
-
-				dojo.presence.players.push_back(joined);
-				dojo.presence.player_count++;
-
-				if (dojo.presence.player_count == config::NumPlayers)
-				{
-					for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+					[player_ip, player_ggpo_port](Player& p)
 					{
-						dojo.presence.player_ips[it->port_num] = it->ip;
-						dojo.presence.player_ggpo_ports[it->port_num] = it->ggpo_port;
-						dojo.presence.player_names[it->port_num] = it->name;
+						return p.ip == player_ip && p.ggpo_port == player_ggpo_port;
+					});
+
+				if (it == dojo.presence.players.end())
+				{
+					dojo.presence.players.push_back(joined);
+					std::cout << "PLAYER " << std::to_string(joined.port_num) << " ADDED: " << joined.ip << ":" << std::to_string(joined.ggpo_port) << " " << std::to_string(joined.listen_port) << "  " << std::to_string(dojo.presence.players.size()) << std::endl;
+
+					if (uid_rand == join_rand)
+					{
+						config::PlayerNum = player_num;
+						std::cout << "ASSIGNED PLAYER NUMBER " << std::to_string(config::PlayerNum.get()) << std::endl;
 					}
 
-					StartSessionOnReady(false);
+					dojo.presence.player_count++;
+
+					if (dojo.presence.player_count == config::NumPlayers)
+					{
+						for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+						{
+							dojo.presence.player_ips[it->port_num] = it->ip;
+							dojo.presence.player_ggpo_ports[it->port_num] = it->ggpo_port;
+							dojo.presence.player_names[it->port_num] = it->name;
+						}
+
+						StartSessionOnReady(false);
+					}
 				}
 			}
 
 			// host
 			if (dojo.host_status == 1 && memcmp("JOIN", buffer, 4) == 0)
 			{
-				std::cout << "RECEIVED: " << std::string(buffer, strlen(buffer)) << std::endl;
 
 				if (dojo.presence.player_count >= config::NumPlayers)
 					continue;
@@ -291,104 +316,114 @@ void LobbyClient::ClientLoop()
 				auto listen_port = htons(sender.sin_port);
 				auto current_target = ip + ":" + std::to_string(listen_port);
 
-				if (dojo.presence.targets.count(current_target) == 1)
-					continue;
-
-				dojo.presence.targets.insert(current_target);
-
-				std::string data = std::string(buffer + 5, strlen(buffer + 5));
-				std::vector<std::string> args = stringfix::split(":", data);
-
-				auto name = args[0];
-				auto ggpo_port = std::stoi(args[1]);
-
-				Player player;
-				player = { name, ip, listen_port, dojo.presence.player_count, ggpo_port };
-
-				// send previously joined players to newly joined one
-				if (player.port_num > 1)
+				if (dojo.presence.targets.count(current_target) == 0)
 				{
-					for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+					dojo.presence.targets.insert(current_target);
+
+					std::string data = std::string(buffer + 5, strlen(buffer + 5));
+					std::vector<std::string> args = stringfix::split(":", data);
+
+					auto name = args[0];
+					auto ggpo_port = std::stoi(args[1]);
+
+					auto uid_rand = args[2];
+					if (join_msg_uids.count(uid_rand) == 1)
+						continue;
+
+					join_msg_uids.insert(uid_rand);
+
+					std::cout << "RECEIVED: " << std::string(buffer, strlen(buffer)) << std::endl;
+
+					Player player;
+					player = { name, ip, listen_port, dojo.presence.player_count, ggpo_port };
+
+					// send previously joined players to newly joined one
+					if (player.port_num > 1)
 					{
-						std::string prev_response = std::string("JOINED " + std::to_string(it->port_num) + ":" + it->name + ":" + it->ip + ":" + std::to_string(it->ggpo_port));
-						for (int i = 0; i<config::PacketsPerFrame; i++)
-							SendMsg(prev_response, ip, listen_port);
-					}
-				}
-
-				dojo.presence.players.push_back(player);
-
-				std::string response = std::string("JOINED " + std::to_string(player.port_num) + ":" + player.name + ":" + player.ip + ":" + std::to_string(player.ggpo_port));
-
-				//sendto(local_socket, (const char*)response.data(), strlen(response.data()), 0, (struct sockaddr*)&sender, senderlen);
-				for (auto it = dojo.presence.targets.begin(); it != dojo.presence.targets.end(); ++it)
-				{
-					std::vector<std::string> ip_port = stringfix::split(":", *it);
-					for (int i = 0; i<config::PacketsPerFrame; i++)
-						SendMsg(response, ip_port[0], std::stoi(ip_port[1]));
-				}
-
-				dojo.presence.player_count++;
-
-				if (dojo.presence.player_count == config::NumPlayers)
-				{
-					// find common IP prefix with host, share with guests
-					std::string lcp = longestCommonPrefix(dojo.presence.player_ips);
-					lcp = lcp.substr(0, lcp.find_last_of("."));
-
-					std::vector<std::string> local_ips;
-
-					auto iadd = dojo.get_local_interfaces();
-					for (auto ia : iadd)
-					{
-						auto ip_str = ia.to_string();
-						auto dot_found = ip_str.find(".");
-						if (dot_found == std::string::npos)
-							continue;
-
-						DEBUG_LOG(NETWORK, "IP: %s\n", ip_str.data());
-						local_ips.push_back(ip_str);
-					}
-
-					std::string assigned_ip = "";
-
-					auto substring = lcp;
-					const auto iter = std::find_if(local_ips.begin(), local_ips.end(),
-						[&substring](std::string str) {
-							return str.find(substring) == 0;
+						for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+						{
+							std::string prev_response = std::string("JOINED " + std::to_string(it->port_num) + ":" + it->name + ":" + it->ip + ":" + std::to_string(it->ggpo_port));
+							//for (int i = 0; i<config::PacketsPerFrame; i++)
+								SendMsg(prev_response, ip, listen_port);
 						}
-					);
-
-					if (iter != local_ips.end())
-					{
-						assigned_ip = *iter;
 					}
 
-					if (assigned_ip == "")
+					dojo.presence.players.push_back(player);
+					std::cout << "PLAYER " << std::to_string(player.port_num) << " ADDED: " << player.ip << ":" << std::to_string(player.ggpo_port) << " " << std::to_string(player.listen_port) << "  " << std::to_string(dojo.presence.players.size()) << std::endl;
+
+					std::string response = std::string("JOINED " + std::to_string(player.port_num) + ":" + player.name + ":" + player.ip + ":" + std::to_string(player.ggpo_port) + ":" + uid_rand);
+
+					//sendto(local_socket, (const char*)response.data(), strlen(response.data()), 0, (struct sockaddr*)&sender, senderlen);
+					for (auto it = dojo.presence.targets.begin(); it != dojo.presence.targets.end(); ++it)
 					{
-						//assigned_ip = dojo.GetExternalIP();
-						assigned_ip = "127.0.0.1";
+						std::vector<std::string> ip_port = stringfix::split(":", *it);
+						//for (int i = 0; i<config::PacketsPerFrame; i++)
+							SendMsg(response, ip_port[0], std::stoi(ip_port[1]));
 					}
 
-					Player host_player = { config::PlayerName, assigned_ip, 6000, 0, config::GGPOPort.get() };
-					dojo.presence.players.push_back(host_player);
+					dojo.presence.player_count++;
 
-					for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+					if (dojo.presence.player_count == config::NumPlayers)
 					{
-						std::string host_response = std::string("JOINED " + std::to_string(host_player.port_num) + ":" + host_player.name + ":" + host_player.ip + ":" + std::to_string(host_player.ggpo_port));
-						for (int i = 0; i<config::PacketsPerFrame; i++)
-							SendMsg(host_response, it->ip, it->listen_port);
+						// find common IP prefix with host, share with guests
+						std::string lcp = longestCommonPrefix(dojo.presence.player_ips);
+						lcp = lcp.substr(0, lcp.find_last_of("."));
+
+						std::vector<std::string> local_ips;
+
+						auto iadd = dojo.get_local_interfaces();
+						for (auto ia : iadd)
+						{
+							auto ip_str = ia.to_string();
+							auto dot_found = ip_str.find(".");
+							if (dot_found == std::string::npos)
+								continue;
+
+							DEBUG_LOG(NETWORK, "IP: %s\n", ip_str.data());
+							local_ips.push_back(ip_str);
+						}
+
+						std::string assigned_ip = "";
+
+						auto substring = lcp;
+						const auto iter = std::find_if(local_ips.begin(), local_ips.end(),
+							[&substring](std::string str) {
+								return str.find(substring) == 0;
+							}
+						);
+
+						if (iter != local_ips.end())
+						{
+							assigned_ip = *iter;
+						}
+
+						if (assigned_ip == "")
+						{
+							//assigned_ip = dojo.GetExternalIP();
+							assigned_ip = "127.0.0.1";
+						}
+
+						Player host_player = { config::PlayerName, assigned_ip, 6000, 0, config::GGPOPort.get() };
+						dojo.presence.players.push_back(host_player);
+						std::cout << "PLAYER " << std::to_string(host_player.port_num) << " ADDED: " << host_player.ip << ":" << std::to_string(host_player.ggpo_port) << " " << std::to_string(host_player.listen_port) << "  " << std::to_string(dojo.presence.players.size()) << std::endl;
+
+						for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+						{
+							std::string host_response = std::string("JOINED " + std::to_string(host_player.port_num) + ":" + host_player.name + ":" + host_player.ip + ":" + std::to_string(host_player.ggpo_port));
+							//for (int i = 0; i<config::PacketsPerFrame; i++)
+								SendMsg(host_response, it->ip, it->listen_port);
+						}
+
+						for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
+						{
+							dojo.presence.player_ips[it->port_num] = it->ip;
+							dojo.presence.player_ggpo_ports[it->port_num] = it->ggpo_port;
+							dojo.presence.player_names[it->port_num] = it->name;
+						}
 					}
 
-					for (auto it = dojo.presence.players.begin(); it != dojo.presence.players.end(); ++it)
-					{
-						dojo.presence.player_ips[it->port_num] = it->ip;
-						dojo.presence.player_ggpo_ports[it->port_num] = it->ggpo_port;
-						dojo.presence.player_names[it->port_num] = it->name;
-					}
+					StartSessionOnReady(true);
 				}
-
-				StartSessionOnReady(true);
 			}
 		}
 	}
@@ -480,6 +515,7 @@ void LobbyClient::StartSessionOnReady(bool hosting)
 
 			dojo.lobby_active = false;
 			dojo.presence.lobby_disconnect_toggle = true;
+			dojo.lobby_launch = true;
 
 			gui_state = GuiState::Closed;
 			gui_start_game(settings.content.path);

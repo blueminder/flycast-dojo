@@ -66,6 +66,8 @@ public:
 	void gui_display_lobby(float scaling, std::vector<GameMedia> game_list);
 	void gui_display_replays(float scaling, std::vector<GameMedia> game_list);
 
+	void gui_display_lobby_host_player_select(float scaling);
+
 	void insert_netplay_tab(ImVec2 normal_padding);
 	void insert_replays_tab(ImVec2 normal_padding);
 	void insert_training_tab(ImVec2 normal_padding);
