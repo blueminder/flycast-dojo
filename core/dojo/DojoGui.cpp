@@ -1275,21 +1275,21 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 				std::string filename = beacon_game_path.substr(beacon_game_path.find_last_of("/\\") + 1);
 				auto game_name = stringfix::remove_extension(filename);
 
-				settings.content.path = beacon_game_path;
-				config::NetworkServer = beacon_ip;
-
-				config::NumPlayers = beacon_player_num;
-				if (beacon_player_num == 2)
-					config::ManualPlayerAssign = false;
-				else
-					config::ManualPlayerAssign = true;
-
 				if (!ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 				{
 					dojo_gui.invoke_download_save_popup(beacon_game_path, &dojo_gui.net_save_download, true);
 				}
 				else
 				{
+					settings.content.path = beacon_game_path;
+					config::NetworkServer = beacon_ip;
+
+					config::NumPlayers = beacon_player_num;
+					if (beacon_player_num == 2)
+						config::ManualPlayerAssign = false;
+					else
+						config::ManualPlayerAssign = true;
+
 					dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, std::stoi(config::DojoServerPort.get()));
 					dojo.host_status = 4;
 				}
@@ -2824,10 +2824,10 @@ void DojoGui::download_save_popup()
 				}
 				else if (gui_state == GuiState::Lobby)
 				{
-					if (ImGui::Button("Join Game"))
+					if (ImGui::Button("Back to Join Game Selection"))
 					{
-						dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), config::NetworkServer.get(), std::stoi(config::DojoServerPort.get()));
-						dojo.host_status = 4;
+						net_save_download = false;
+						ImGui::CloseCurrentPopup();
 					}
 				}
 				else
