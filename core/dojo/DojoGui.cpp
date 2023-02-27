@@ -2816,15 +2816,10 @@ void DojoGui::download_save_popup()
 			{
 				if (dojo.lobby_host_screen)
 				{
-					if (ImGui::Button("Host Game"))
+					if (ImGui::Button("Back to Host Game Selection"))
 					{
-						std::string game_path = dojo_file.game_path;
-						dojo_file.game_path = "";
-						settings.content.path = game_path;
-						dojo.host_status = 1;
-						//dojo.joined_players.push_back(config::PlayerName.get());
-						//dojo.joined_ips.push_back("0.0.0.0");
-						gui_state = GuiState::Lobby;
+						net_save_download = false;
+						ImGui::CloseCurrentPopup();
 					}
 				}
 				else if (gui_state == GuiState::Lobby)

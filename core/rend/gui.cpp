@@ -2773,7 +2773,7 @@ static void gui_display_content()
 				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
-					bool net_save_download = false;
+					dojo_gui.net_save_download = false;
 
 					std::string filename = game.path.substr(game.path.find_last_of("/\\") + 1);
 					auto game_name = stringfix::remove_extension(filename);
@@ -2886,7 +2886,7 @@ static void gui_display_content()
 						}
 						if (ImGui::MenuItem("Download Netplay Savestate"))
 						{
-							dojo_gui.invoke_download_save_popup(game.path, &net_save_download, false);
+							dojo_gui.invoke_download_save_popup(game.path, &dojo_gui.net_save_download, false);
 						}
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 						std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(game.path);
@@ -2992,7 +2992,7 @@ static void gui_display_content()
 						ImGui::EndPopup();
 					}
 
-					if (net_save_download)
+					if (dojo_gui.net_save_download)
 					{
 						ImGui::OpenPopup("Download Netplay Savestate");
 					}
