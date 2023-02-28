@@ -1,5 +1,22 @@
 #pragma once
 
+#pragma comment(lib, "Ws2_32.lib")
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
+
+#ifdef _WIN32
+    #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
+    #include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
+    #include <Windows.h>
+#else
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <time.h>
+#endif
+
+#define SOCKET_ERROR -1
+
 #include <map>
 
 #include <cstring>
@@ -9,55 +26,66 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 
+#define MSGBUFSIZE 256
+
+#include "LobbyClient.hpp"
+
+constexpr int MAX_PLAYERS = 2;
+
+typedef struct m_player {
+    std::string name;
+    std::string ip;
+    int listen_port;
+    int port_num;
+    int ggpo_port;
+} Player;
+
 class DojoLobby
 {
 public:
-	DojoLobby() {};
+    void BeaconThread();
+    void ListenerThread();
 
-	void BeaconThread();
-	void ListenerThread();
-	void ListenerAction(asio::ip::udp::endpoint beacon_endpoint, char* msgbuf, int length);
+    LobbyClient client;
 
-	std::string ConstructMsg();
+    std::map<std::string, std::string> active_beacons;
+    std::map<std::string, int> active_beacon_ping;
+    std::map<std::string, long> last_seen;
 
-	std::map<std::string, std::string> active_beacons;
-	std::map<std::string, uint64_t> active_beacon_ping;
-	std::map<std::string, uint64_t> last_seen;
+    int CancelHost();
 
-	short multicast_port;
-};
+    int SendMsg(const char* ip, int port, const char* msg);
+    int SendJoin(const char* ip);
+    int SendConnected(const char* ip, const char* joined_name, const char* joined_ip);
+    int SendGameStart(const char* ip);
+    int CloseLobby();
 
+    bool lobby_disconnect_toggle = false;
+    bool hosting_lobby = false;
+    int player_count = 0;
 
-class Beacon
-{
-public:
-	Beacon(asio::io_context& io_context,
-		const asio::ip::address& multicast_address);
+    std::vector<std::string> player_names = { "", "", "", "" };
+    std::vector<std::string> player_ips = { "", "", "", "" };
+    std::vector<int> player_ggpo_ports = { 0, 0, 0, 0 };
 
-private:
-	void do_send();
-	void do_timeout();
-
-private:
-	asio::ip::udp::endpoint endpoint_;
-	asio::ip::udp::socket socket_;
-	asio::steady_timer timer_;
-	int message_count_;
-	std::string message_;
-};
-
-class Listener
-{
-public:
-	Listener(asio::io_context& io_context,
-		const asio::ip::address& listen_address,
-		const asio::ip::address& multicast_address);
+    std::set<std::string> targets;
+    std::vector<Player> players;
 
 private:
-	void do_receive();
+    int beacon(char* group, int port, int delay_secs);
+    int listener(char* group, int port);
 
-	asio::ip::udp::socket socket_;
-	asio::ip::udp::endpoint beacon_endpoint_;
-	std::array<char, 1024> data_;
+    int listener_sock;
+    int beacon_sock;
+
+    int Init();
+
+    sockaddr_in SetDestination(char* group, short port);
+
+    int BeaconLoop(sockaddr_in addr, int delay_secs);
+    std::string ConstructMsg();
+
+    int ListenerLoop(sockaddr_in addr);
+    void CloseSocket(int sock);
+
 };
-

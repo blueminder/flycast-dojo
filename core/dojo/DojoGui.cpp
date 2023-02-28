@@ -264,7 +264,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
    					ImGui::CloseCurrentPopup();
    				}
-				
+
 				ImGui::SameLine();
 				if (ImGui::Button("Cancel"))
 				{
@@ -392,7 +392,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				}
 			}
 		}
-		else
+		else if (!dojo.commandLineStart && !dojo.lobby_host_screen)
 		{
 			if (config::NetworkServer.get().empty())
 			{
@@ -439,7 +439,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		ImGui::SameLine();
 		ImGui::Text("Delay");
 
-		if (config::EnableMatchCode)
+		if (config::EnableMatchCode && !dojo.lobby_active)
 		{
 			if (ImGui::Button("Detect Delay"))
 				dojo.OpponentPing = dojo.DetectGGPODelay(detect_address.data());
@@ -453,15 +453,18 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
+			if (dojo.lobby_launch && config::ActAsServer)
+				dojo.host_status = 3;
+
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			if (!config::EnableMatchCode)
+			if (!config::EnableMatchCode && !dojo.lobby_launch && !dojo.commandLineStart)
 			{
 				if (!dojo.commandLineStart)
 				{
 					config::NetworkServer.set(std::string(si, strlen(si)));
-					cfgSaveStr("network", "server", config::NetworkServer.get());
+					//cfgSaveStr("network", "server", config::NetworkServer.get());
 				}
 
 				config::DojoEnable = false;
@@ -813,19 +816,27 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 #ifndef __ANDROID__
 	if (!dojo.lobby_active)
 	{
+		dojo.lobby_active = true;
+
 		std::thread t4(&DojoLobby::ListenerThread, std::ref(dojo.presence));
 		t4.detach();
+
+		std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+		t5.detach();
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(settings.display.width, settings.display.height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	ImGui::Begin("Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("LAN Lobby", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-	
+
 	if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 	{
+		dojo.presence.lobby_disconnect_toggle = true;
+		dojo.lobby_active = false;
+
 		if (game_started)
     		gui_state = GuiState::Commands;
     	else
@@ -833,11 +844,28 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	}
 
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Host Game").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
-	if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
+	if (!dojo.lobby_host_screen && !dojo.beacon_active)
 	{
-		config::ActAsServer = true;
-		cfgSaveBool("dojo", "ActAsServer", config::ActAsServer);
-		gui_state = GuiState::Main;
+		if (ImGui::Button("Host Game", ImVec2(100 * scaling, 30 * scaling)))
+		{
+			dojo.presence.client.EndSession();
+			dojo.presence.player_count = 1;
+			dojo.presence.hosting_lobby = true;
+			std::thread t5(&LobbyClient::ClientThread, std::ref(dojo.presence.client));
+			t5.detach();
+
+			dojo.lobby_host_screen = true;
+			config::ActAsServer = true;
+			gui_state = GuiState::Main;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Cancel Host", ImVec2(100 * scaling, 30 * scaling)))
+		{
+			dojo.presence.lobby_disconnect_toggle = true;
+			dojo.presence.CancelHost();
+		}
 	}
 
 	ImGui::Columns(4, "mycolumns"); // 4-ways, with border
@@ -864,7 +892,7 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			std::string token;
 			while ((pos = s.find(delimiter)) != std::string::npos) {
 			    token = s.substr(0, pos);
-			    std::cout << token << std::endl;
+			    //std::cout << token << std::endl;
 				beacon_entry.push_back(token);
 			    s.erase(0, pos + delimiter.length());
 			}
@@ -875,8 +903,6 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 			std::string beacon_game = beacon_entry[3].c_str();
 			std::string beacon_game_path = "";
-
-			std::string beacon_remaining_spectators = beacon_entry[5];
 
 			std::vector<GameMedia> games = game_list;
 			std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
@@ -890,6 +916,8 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 
 			std::string beacon_player = beacon_entry[4];
 
+			int beacon_player_num = std::stoi(beacon_entry[5]);
+
 			bool is_selected;
 			int beacon_ping = dojo.presence.active_beacon_ping[beacon_id];
 			std::string beacon_ping_str = "";
@@ -899,44 +927,21 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 			if (beacon_status == "Hosting, Waiting" &&
 				ImGui::Selectable(beacon_ping_str.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				dojo.PlayMatch = false;
+				std::string filename = beacon_game_path.substr(beacon_game_path.find_last_of("/\\") + 1);
+				auto game_name = stringfix::remove_extension(filename);
 
-				config::ActAsServer = false;
-				config::DojoServerIP = beacon_ip;
-				config::DojoServerPort = beacon_server_port;
+				settings.content.path = beacon_game_path;
+				config::NetworkServer = beacon_ip;
 
-				SaveSettings();
-
-				gui_state = GuiState::Closed;
-				gui_start_game(beacon_game_path);
-			}
-
-			std::string popup_name = "Options " + beacon_id;
-			if (ImGui::BeginPopupContextItem(popup_name.c_str(), 1))
-			{
-				if (beacon_remaining_spectators == "0")
+				if (!ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 				{
-					ImGui::MenuItem("Spectate", NULL, false, false);
+					dojo_gui.invoke_download_save_popup(beacon_game_path, &dojo_gui.net_save_download, true);
 				}
 				else
 				{
-					if (ImGui::MenuItem("Spectate"))
-					{
-						dojo.PlayMatch = false;
-
-						config::Receiving = true;
-						dojo.receiving = true;
-
-						config::ActAsServer = false;
-						dojo.hosting = false;
-
-						dojo.RequestSpectate(beacon_ip, beacon_server_port);
-
-						gui_start_game(beacon_game_path);
-					}
+					dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), beacon_ip, std::stoi(config::DojoServerPort.get()));
+					dojo.host_status = 4;
 				}
-
-				ImGui::EndPopup();
 			}
 
 			ImGui::NextColumn();
@@ -947,9 +952,51 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 		}
 	}
 
+	lobby_player_wait_popup(game_list);
+
+	if (dojo_gui.net_save_download)
+	{
+		ImGui::OpenPopup("Download Netplay Savestate");
+	}
+
+	dojo_gui.download_save_popup();
+
     ImGui::End();
     ImGui::PopStyleVar();
 #endif
+
+	if (dojo_file.start_save_download && !dojo_file.save_download_started)
+	{
+		dojo_file.save_download_started = true;
+		std::thread s([&]() {
+			if (config::Receiving)
+			{
+				if (dojo.replay_version == 2)
+				{
+					if(dojo_file.DownloadNetSave(dojo_file.entry_name, "9bd1161ec81a6636b1be9f7eabff381e70ad3ab8").empty())
+					{
+						// fall back to current savestate if commit not found
+						dojo_file.DownloadNetSave(dojo_file.entry_name);
+					}
+				}
+				else if (!settings.dojo.state_commit.empty())
+				{
+					std::cout << "state commit: " << settings.dojo.state_commit << std::endl;
+					if(dojo_file.DownloadNetSave(dojo_file.entry_name, settings.dojo.state_commit).empty())
+					{
+						// fall back to current savestate if commit not found
+						dojo_file.DownloadNetSave(dojo_file.entry_name);
+					}
+				}
+				else
+					dojo_file.DownloadNetSave(dojo_file.entry_name);
+			}
+			else
+				dojo_file.DownloadNetSave(dojo_file.entry_name);
+		});
+		s.detach();
+	}
+
 }
 
 void DojoGui::show_playback_menu(float scaling, bool paused)
@@ -1610,7 +1657,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_1.c_str());
@@ -1633,7 +1680,7 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10 
+			font_size + (font_size / 2) + 10
 		);
 
 		ImGui::TextUnformatted(dojo.player_2.c_str());
@@ -2188,6 +2235,262 @@ void DojoGui::update_action()
 		t.detach();
 	}
 
+}
+
+void TextCenter(std::string text)
+{
+	float font_size = ImGui::GetFontSize() * text.size();
+
+	ImGui::SameLine(
+		ImGui::GetContentRegionAvail().x / 2 -
+		font_size + (font_size / 2)
+	);
+
+	ImGui::Text(text.c_str());
+}
+
+void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
+{
+	std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
+	auto game_name = stringfix::remove_extension(filename);
+
+	std::vector<GameMedia> games = game_list;
+	std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
+		[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+
+	std::string game_fullname = it->name;
+
+	std::string host_title = "Hosting " + game_fullname;
+
+	if (dojo.host_status == 1 || dojo.host_status == 4)
+	{
+		ImGui::OpenPopup(host_title.c_str());
+	}
+
+	//centerNextWindow();
+	ImGui::SetNextWindowSize(ScaledVec2(ImGui::CalcTextSize(host_title.c_str()).x + 20, 0));
+
+	if (ImGui::BeginPopupModal(host_title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		int joined_player_count;
+		if (dojo.host_status == 1)
+			joined_player_count = dojo.presence.player_count;
+		else
+			joined_player_count = dojo.presence.player_count + 1;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+		ImGui::AlignTextToFramePadding();
+		ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			200 + (200 / 2)
+		);
+		displayGameImage(game_name, ImVec2(200, 200), game_list);
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x + 30) / 2 -
+			ImGui::CalcTextSize("Waiting for Players...").x + (ImGui::CalcTextSize("Waiting for Players...").x / 2)
+		);
+		ImGui::Text("Waiting for Players...");
+
+		std::string space = "  ";
+		for (int i=0; i<MAX_PLAYERS; i++)
+		{
+			space += "  ";
+		}
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			ImGui::CalcTextSize(space.c_str()).x + (ImGui::CalcTextSize(space.c_str()).x / 2)
+		);
+		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_ONE);
+		ImGui::SameLine();
+		if (joined_player_count >= 2)
+			ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_TWO);
+		else
+			ImGui::Text("%s", ICON_KI_BUTTON_TWO);
+
+		ImGui::Text(" ");
+		ImGui::SameLine(
+			(ImGui::CalcTextSize(host_title.c_str()).x + 20) / 2 -
+			ImGui::CalcTextSize("Cancel").x + (ImGui::CalcTextSize("Cancel").x / 2)
+		);
+		if (ImGui::Button("Cancel"))
+		{
+			dojo.presence.CancelHost();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::PopStyleVar();
+
+		ImGui::EndPopup();
+	}
+
+}
+
+void DojoGui::displayGameImage(std::string game_name, ImVec2 size, std::vector<GameMedia> game_list)
+{
+		std::vector<GameMedia> games = game_list;
+		std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
+			[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
+
+		GameMedia game = *it;
+		ImTextureID textureId{};
+		Boxart boxart;
+		GameBoxart art = boxart.getBoxart(game);
+		getGameImage(art, textureId, true);
+
+		float ar = imguiDriver->getAspectRatio(textureId);
+		ImVec2 uv0 { 0.f, 0.f };
+		ImVec2 uv1 { 1.f, 1.f };
+		if (ar > 1)
+		{
+			uv0.y = -(ar - 1) / 2;
+			uv1.y = 1 + (ar - 1) / 2;
+		}
+		else if (ar != 0)
+		{
+			ar = 1 / ar;
+			uv0.x = -(ar - 1) / 2;
+			uv1.x = 1 + (ar - 1) / 2;
+		}
+
+		ImGui::Image(textureId, ImVec2(250, 250), uv0, uv1);
+}
+
+bool DojoGui::getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
+{
+	textureId = ImTextureID{};
+	if (art.boxartPath.empty())
+		return false;
+
+	// Get the boxart texture. Load it if needed.
+	textureId = imguiDriver->getTexture(art.boxartPath);
+	if (textureId == ImTextureID() && allowLoad)
+	{
+		int width, height;
+		u8 *imgData = loadImage(art.boxartPath, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+		return true;
+	}
+	return false;
+}
+
+
+void DojoGui::invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game)
+{
+	std::string filename = game_path.substr(game_path.find_last_of("/\\") + 1);
+	std::string short_game_name = stringfix::remove_extension(filename);
+	dojo_file.entry_name = short_game_name;
+	dojo_file.post_save_launch = launch_game;
+	dojo_file.start_save_download = true;
+	dojo_file.game_path = game_path;
+
+	*net_save_download = true;
+}
+
+void DojoGui::download_save_popup()
+{
+	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		if(!dojo_file.save_download_ended)
+		{
+			ImGui::TextUnformatted(dojo_file.status_text.data());
+			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
+				|| dojo_file.status_text.find("not found") != std::string::npos)
+			{
+				dojo_file.start_save_download = false;
+				dojo_file.save_download_started = false;
+			}
+			else
+			{
+				float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+				char buf[32];
+				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+			}
+
+			if (dojo_file.status_text.find("not found") != std::string::npos)
+			{
+				for (int i = 0; i < 16; i++)
+				{
+					settings.network.md5.savestate[i] = 0;
+				}
+			}
+		}
+
+		if (dojo_file.save_download_ended || dojo_file.status_text.find("not found") != std::string::npos)
+		{
+			ImGui::TextUnformatted("Savestate successfully downloaded. ");
+			if (config::Receiving)
+			{
+				ImGui::TextUnformatted("Please open the replay link again to continue.");
+				if (ImGui::Button("Exit"))
+				{
+					exit(0);
+				}
+			}
+			else if (dojo_file.post_save_launch)
+			{
+				if (dojo.lobby_host_screen)
+				{
+					if (ImGui::Button("Host Game"))
+					{
+						std::string game_path = dojo_file.game_path;
+						dojo_file.game_path = "";
+						settings.content.path = game_path;
+						dojo.host_status = 1;
+						gui_state = GuiState::Lobby;
+					}
+				}
+				else if (gui_state == GuiState::Lobby)
+				{
+					if (ImGui::Button("Join Game"))
+					{
+						dojo.presence.client.SendMsg(std::string("JOIN " + config::PlayerName.get() + ":" + std::to_string(config::GGPOPort.get())), config::NetworkServer.get(), std::stoi(config::DojoServerPort.get()));
+						dojo.host_status = 4;
+					}
+				}
+				else
+				{
+					if (ImGui::Button("Launch Game"))
+					{
+						dojo_file.entry_name = "";
+						dojo_file.save_download_ended = false;
+						dojo_file.post_save_launch = false;
+						std::string game_path = dojo_file.game_path;
+						settings.content.path = game_path;
+						dojo_file.game_path = "";
+						ImGui::CloseCurrentPopup();
+						gui_start_game(game_path);
+					}
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Close"))
+				{
+					dojo_file.entry_name = "";
+					dojo_file.save_download_ended = false;
+					ImGui::CloseCurrentPopup();
+					scanner_refresh();
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 DojoGui dojo_gui;

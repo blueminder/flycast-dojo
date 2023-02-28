@@ -911,6 +911,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/dojo/DojoSession.cpp
 		core/dojo/DojoSession.hpp
 		core/dojo/EmulatorHooks.cpp
+		core/dojo/LobbyClient.cpp
+		core/dojo/LobbyClient.hpp
 		core/dojo/MessageReader.hpp
 		core/dojo/MessageWriter.hpp
 		core/dojo/UDPClient.cpp

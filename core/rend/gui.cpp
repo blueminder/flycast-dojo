@@ -2265,7 +2265,7 @@ static void gui_display_settings()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About", "Credits" };
- 
+
     static int selected = 0;
 
 #if defined(__ANDROID__) || defined(__APPLE__)
@@ -2522,7 +2522,13 @@ static void gui_display_content()
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
-	ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+	if (dojo.lobby_host_screen)
+	{
+		ImGui::Text("HOST");
+		item_current_idx = 1;
+	}
+	else
+		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
 
 	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
@@ -2640,15 +2646,15 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 32 * settings.display.uiScale);
-	filter.Draw("Filter");
+	ImGui::SameLine(0, 14 * settings.display.uiScale);
+	filter.Draw(" ");
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
-		if (config::DojoEnable && config::EnableLobby && !config::Receiving)
+		if (config::EnableLobby && !config::Receiving)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-			if (ImGui::Button("Lobby"))
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("LAN").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+			if (ImGui::Button("LAN"))
 				gui_state = GuiState::Lobby;
 		}
 
@@ -2705,7 +2711,7 @@ static void gui_display_content()
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
-		
+
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -2806,6 +2812,25 @@ static void gui_display_content()
 								gui_error(e.what());
 							}
 						}
+						else if (dojo.lobby_host_screen)
+						{
+							if (!dojo.beacon_active)
+							{
+								std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
+								t3.detach();
+							}
+
+							if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
+							{
+								dojo_gui.invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
+							}
+							else
+							{
+								settings.content.path = game.path;
+								dojo.host_status = 1;
+								gui_state = GuiState::Lobby;
+							}
+						}
 						else
 						{
 							std::string gamePath(game.path);
@@ -2813,7 +2838,7 @@ static void gui_display_content()
 							scanner.get_mutex().unlock();
 							if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 							{
-								invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
+								dojo_gui.invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
 							}
 							else
 							{
@@ -2857,7 +2882,7 @@ static void gui_display_content()
 						}
 						if (ImGui::MenuItem("Download Netplay Savestate"))
 						{
-							invoke_download_save_popup(game.path, &net_save_download, false);
+							dojo_gui.invoke_download_save_popup(game.path, &net_save_download, false);
 						}
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 						std::map<std::string, std::string> game_links = dojo_file.GetFileResourceLinks(game.path);
@@ -2968,7 +2993,7 @@ static void gui_display_content()
 						ImGui::OpenPopup("Download Netplay Savestate");
 					}
 
-					download_save_popup();
+					dojo_gui.download_save_popup();
 
 					if (dojo_file.start_save_download && !dojo_file.save_download_started)
 					{
@@ -3132,7 +3157,7 @@ static void gui_display_content()
 					(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended))
 				{
 					if (!dojo_file.start_save_download)
-						invoke_download_save_popup(entry_path, &net_save_download, true);
+						dojo_gui.invoke_download_save_popup(entry_path, &net_save_download, true);
 				}
 				else
 				{
@@ -3161,7 +3186,7 @@ static void gui_display_content()
 		ImGui::OpenPopup("Download Netplay Savestate");
 	}
 
-	download_save_popup();
+	dojo_gui.download_save_popup();
 }
 
 static bool systemdir_selected_callback(bool cancelled, std::string selection)
@@ -3531,7 +3556,7 @@ void gui_display_ui()
 								dojo_file.save_download_ended && dojo_file.post_save_launch))
 						{
 							if (!dojo_file.start_save_download)
-								invoke_download_save_popup(entry_path, &dojo_gui.net_save_download, true);
+								dojo_gui.invoke_download_save_popup(entry_path, &dojo_gui.net_save_download, true);
 						}
 						else
 						{
@@ -3844,7 +3869,7 @@ void gui_display_profiler()
 	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
 
 	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
-	
+
 	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		char text[256];
@@ -3857,7 +3882,7 @@ void gui_display_profiler()
 	}
 
 	ImGui::PopStyleColor();
-	
+
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		fc_profiler::drawGraph(*profileThread);
@@ -3884,7 +3909,7 @@ void gui_term()
 	if (inited)
 	{
 		inited = false;
-		scanner.stop();
+		//scanner.stop();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
@@ -3923,89 +3948,6 @@ static void reset_vmus()
 void gui_error(const std::string& what)
 {
 	error_msg = what;
-}
-
-void invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game)
-{
-	std::string filename = game_path.substr(game_path.find_last_of("/\\") + 1);
-	std::string short_game_name = stringfix::remove_extension(filename);
-	dojo_file.entry_name = short_game_name;
-	dojo_file.post_save_launch = launch_game;
-	dojo_file.start_save_download = true;
-	dojo_file.game_path = game_path;
-
-	*net_save_download = true;
-}
-
-void download_save_popup()
-{
-	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
-	{
-		if(!dojo_file.save_download_ended)
-		{
-			ImGui::TextUnformatted(dojo_file.status_text.data());
-			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
-				|| dojo_file.status_text.find("not found") != std::string::npos)
-			{
-				dojo_file.start_save_download = false;
-				dojo_file.save_download_started = false;
-			}
-			else
-			{
-				float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-				char buf[32];
-				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
-			}
-
-			if (dojo_file.status_text.find("not found") != std::string::npos)
-			{
-				for (int i = 0; i < 16; i++)
-				{
-					settings.network.md5.savestate[i] = 0;
-				}
-			}
-		}
-
-		if (dojo_file.save_download_ended || dojo_file.status_text.find("not found") != std::string::npos)
-		{
-			ImGui::TextUnformatted("Savestate successfully downloaded. ");
-			if (config::Receiving)
-			{
-				ImGui::TextUnformatted("Please open the replay link again to continue.");
-				if (ImGui::Button("Exit"))
-				{
-					exit(0);
-				}
-			}
-			else if (dojo_file.post_save_launch)
-			{
-				if (ImGui::Button("Launch Game"))
-				{
-					dojo_file.entry_name = "";
-					dojo_file.save_download_ended = false;
-					dojo_file.post_save_launch = false;
-					std::string game_path = dojo_file.game_path;
-					settings.content.path = game_path;
-					dojo_file.game_path = "";
-					ImGui::CloseCurrentPopup();
-					gui_start_game(game_path);
-				}
-			}
-			else
-			{
-				if (ImGui::Button("Close"))
-				{
-					dojo_file.entry_name = "";
-					dojo_file.save_download_ended = false;
-					ImGui::CloseCurrentPopup();
-					scanner.refresh();
-				}
-			}
-		}
-
-		ImGui::EndPopup();
-	}
 }
 
 void gui_save()

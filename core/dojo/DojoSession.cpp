@@ -104,8 +104,8 @@ void DojoSession::CleanUp()
 	if (!config::MatchCode.get().empty())
 		dojo.MatchCode = "";
 
-	if (!config::NetworkServer.get().empty())
-		config::NetworkServer = "";
+	//if (!config::NetworkServer.get().empty())
+		//config::NetworkServer = "";
 
 	if (!config::DojoServerIP.get().empty())
 		config::DojoServerIP = "";
@@ -155,7 +155,7 @@ uint64_t DojoSession::DetectGGPODelay(const char* ipAddr)
 uint64_t DojoSession::unix_timestamp()
 {
 	using namespace std::chrono;
-	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); 
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 int DojoSession::PayloadSize()
@@ -273,8 +273,8 @@ void DojoSession::AddBackFrames(const char* initial_frame, const char* back_inpu
 			net_inputs[initial_player].count(initial_frame_num - i) == 0)
 		{
 			char frame_fill[FRAME_SIZE] = { 0 };
-			std::string new_frame = 
-				CreateFrame(initial_frame_num - initial_delay - i, initial_player, 
+			std::string new_frame =
+				CreateFrame(initial_frame_num - initial_delay - i, initial_player,
 					initial_delay, all_inputs + (i * INPUT_SIZE));
 			memcpy((void*)frame_fill, new_frame.data(), FRAME_SIZE);
 			AddNetFrame(frame_fill);
@@ -936,7 +936,7 @@ void DojoSession::LoadReplayFileV0(std::string path)
 	AssignNames();
 
 	// add string in increments of FRAME_SIZE to net_inputs
-	std::ifstream fin(path, 
+	std::ifstream fin(path,
 		std::ios::in | std::ios::binary);
 
 	char* buffer = new char[FRAME_SIZE];
@@ -960,7 +960,7 @@ void DojoSession::LoadReplayFileV0(std::string path)
 		{
 			net_inputs[player_num][frame_num] = std::string(buffer, FRAME_SIZE);
 			net_input_keys[player_num].insert(frame_num);
-		}	
+		}
 
 		if (!count)
 			break;
@@ -1789,6 +1789,91 @@ void DojoSession::AssignNames()
 		player_2 = settings.dojo.PlayerName;
 	}
 }
+
+// adapted from https://stackoverflow.com/a/62303963
+asio::ip::address_v6 sinaddr_to_asio(sockaddr_in6 *addr) {
+    asio::ip::address_v6::bytes_type buf;
+    memcpy(buf.data(), addr->sin6_addr.s6_addr, sizeof(addr->sin6_addr));
+    return asio::ip::make_address_v6(buf, addr->sin6_scope_id);
+}
+
+#if defined(_WIN32)
+#undef UNICODE
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <ws2ipdef.h>
+
+typedef IP_ADAPTER_UNICAST_ADDRESS_LH Addr;
+typedef IP_ADAPTER_ADDRESSES *AddrList;
+
+std::vector<asio::ip::address> DojoSession::GetLocalInterfaces() {
+    DWORD outBufLen = 1 << 19;
+    AddrList ifaddrs = (AddrList) new char[outBufLen];
+
+    std::vector<asio::ip::address> res;
+
+    ULONG err = GetAdaptersAddresses(AF_UNSPEC,
+        GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_DNS_SERVER, NULL, ifaddrs,
+        &outBufLen);
+
+    if (err == NO_ERROR) {
+        for (AddrList addr = ifaddrs; addr != 0; addr = addr->Next) {
+            if (addr->OperStatus != IfOperStatusUp) continue;
+            // if (addr->NoMulticast) continue;
+
+            // find first ipv4 address
+            if (addr->Ipv4Enabled) {
+                for (Addr *uaddr = addr->FirstUnicastAddress; uaddr != 0; uaddr = uaddr->Next) {
+                    if (uaddr->Address.lpSockaddr->sa_family != AF_INET) continue;
+                    res.push_back(asio::ip::make_address_v4(ntohl(reinterpret_cast<sockaddr_in *>(uaddr->Address.lpSockaddr)->sin_addr.s_addr)));
+                }
+            }
+
+            if (addr->Ipv6Enabled) {
+                for (Addr *uaddr = addr->FirstUnicastAddress; uaddr != 0; uaddr = uaddr->Next) {
+                    if (uaddr->Address.lpSockaddr->sa_family != AF_INET6) continue;
+                    res.push_back(sinaddr_to_asio(reinterpret_cast<sockaddr_in6 *>(uaddr->Address.lpSockaddr)));
+                }
+            }
+        }
+    } else {
+
+    }
+    delete[]((char *)ifaddrs);
+    return res;
+}
+#elif defined(__APPLE__) || defined(__linux__)
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <sys/types.h>
+
+std::vector<asio::ip::address> DojoSession::GetLocalInterfaces() {
+    std::vector<asio::ip::address> res;
+    ifaddrs *ifs;
+    if (getifaddrs(&ifs)) {
+        return res;
+    }
+    for (auto addr = ifs; addr != nullptr; addr = addr->ifa_next) {
+        // skip if no address found
+        if (addr->ifa_addr == nullptr) continue;
+
+        // skip if interface is not active
+        if (!(addr->ifa_flags & IFF_UP)) continue;
+
+        if(addr->ifa_addr->sa_family == AF_INET) {
+            res.push_back(asio::ip::make_address_v4(ntohl(
+                reinterpret_cast<sockaddr_in *>(addr->ifa_addr)->sin_addr.s_addr)));
+        } else if(addr->ifa_addr->sa_family == AF_INET6) {
+            res.push_back(sinaddr_to_asio(reinterpret_cast<sockaddr_in6 *>(addr->ifa_addr)));
+        } else continue;
+    }
+    freeifaddrs(ifs);
+    return res;
+}
+#else
+#error "..."
+#endif
 
 DojoSession dojo;
 
