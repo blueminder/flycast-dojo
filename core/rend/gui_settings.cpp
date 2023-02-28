@@ -343,6 +343,8 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 		OptionCheckbox("Enable UPnP", config::EnableUPnP);
 		ImGui::SameLine();
 		ShowHelpMarker("Automatically configure your network router for netplay");
+		OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
+						"Compatible with the \"-output network\" MAME option. Arcade games only.");
 	}
 	ImGui::Spacing();
 	header("Other");
