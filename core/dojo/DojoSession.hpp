@@ -327,9 +327,6 @@ public:
 
 	std::vector<asio::ip::address> GetLocalInterfaces();
 
-	std::vector<std::string> joined_players;
-	std::vector<std::string> joined_ips;
-
 	bool lobby_launch = false;
 };
 
