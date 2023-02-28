@@ -660,6 +660,9 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
+			if (dojo.lobby_launch && config::ActAsServer)
+				dojo.host_status = 3;
+
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
