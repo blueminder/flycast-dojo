@@ -2283,17 +2283,21 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 	std::string game_fullname = it->name;
 
-	std::string host_title = "Hosting " + game_fullname;
+	std::string lobby_title;
+	if (dojo.host_status == 1)
+		lobby_title = "Hosting " + game_fullname;
+	else if (dojo.host_status == 4)
+		lobby_title = "Joining " + game_fullname;
 
 	if (dojo.host_status == 1 || dojo.host_status == 4)
 	{
-		ImGui::OpenPopup(host_title.c_str());
+		ImGui::OpenPopup(lobby_title.c_str());
 	}
 
 	//centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(ImGui::CalcTextSize(host_title.c_str()).x + 20, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(ImGui::CalcTextSize(lobby_title.c_str()).x + 20, 0));
 
-	if (ImGui::BeginPopupModal(host_title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::BeginPopupModal(lobby_title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		int joined_player_count;
 		if (dojo.host_status == 1)
@@ -2307,14 +2311,14 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 		ImGui::Text(" ");
 		ImGui::SameLine(
-			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			(ImGui::CalcTextSize(lobby_title.c_str()).x) / 2 -
 			200 + (200 / 2)
 		);
 		displayGameImage(game_name, ImVec2(200, 200), game_list);
 
 		ImGui::Text(" ");
 		ImGui::SameLine(
-			(ImGui::CalcTextSize(host_title.c_str()).x + 30) / 2 -
+			(ImGui::CalcTextSize(lobby_title.c_str()).x + 30) / 2 -
 			ImGui::CalcTextSize("Waiting for Players...").x + (ImGui::CalcTextSize("Waiting for Players...").x / 2)
 		);
 		ImGui::Text("Waiting for Players...");
@@ -2327,7 +2331,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 		ImGui::Text(" ");
 		ImGui::SameLine(
-			(ImGui::CalcTextSize(host_title.c_str()).x) / 2 -
+			(ImGui::CalcTextSize(lobby_title.c_str()).x) / 2 -
 			ImGui::CalcTextSize(space.c_str()).x + (ImGui::CalcTextSize(space.c_str()).x / 2)
 		);
 		ImGui::TextColored(ImVec4(0, 255, 0, 1), "%s", ICON_KI_BUTTON_ONE);
@@ -2339,7 +2343,7 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 
 		ImGui::Text(" ");
 		ImGui::SameLine(
-			(ImGui::CalcTextSize(host_title.c_str()).x + 20) / 2 -
+			(ImGui::CalcTextSize(lobby_title.c_str()).x + 20) / 2 -
 			ImGui::CalcTextSize("Cancel").x + (ImGui::CalcTextSize("Cancel").x / 2)
 		);
 		if (ImGui::Button("Cancel"))
