@@ -177,7 +177,8 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 
 		get_ip_str((struct sockaddr *) &addr, ip_str, 128);
 		NOTICE_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
-		NOTICE_LOG(NETWORK, msgbuf);
+
+		NOTICE_LOG(NETWORK, "%s", msgbuf);
 
 		if (memcmp(msgbuf, "2001_", strlen("2001_")) == 0)
 		{

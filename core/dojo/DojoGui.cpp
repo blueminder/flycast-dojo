@@ -2246,7 +2246,7 @@ void TextCenter(std::string text)
 		font_size + (font_size / 2)
 	);
 
-	ImGui::Text(text.c_str());
+	ImGui::Text("%s", text.c_str());
 }
 
 void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
