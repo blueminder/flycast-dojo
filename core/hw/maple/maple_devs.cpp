@@ -62,10 +62,13 @@ struct maple_sega_controller: maple_base
 
 	virtual u32 transform_kcode(u32 kcode)
 	{
-		// match hitbox SOCD behavior (up + down = up)
-		if ((kcode & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
-			kcode |= DC_DPAD_DOWN;
-		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		if (!config::EnableDiagonalCorrection)
+		{
+			// match hitbox SOCD behavior (up + down = up)
+			if ((kcode & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
+				kcode |= DC_DPAD_DOWN;
+			mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		}
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
@@ -234,8 +237,11 @@ struct maple_atomiswave_controller: maple_sega_controller
 
 	u32 transform_kcode(u32 kcode) override
 	{
-		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
-		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
+		if (!config::EnableDiagonalCorrection)
+		{
+			mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
+			mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
+		}
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
@@ -401,7 +407,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		
+
 		std::string apath = hostfs::getVmuPath(logical_port);
 		if(!config::GGPOEnable || (dojo.PlayMatch && dojo.replay_version < 2))
 			if (config::DojoEnable)

@@ -39,7 +39,7 @@ public:
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	virtual bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() = default;
-	
+
 	void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
 	void detectButtonOrAxisInput(input_detected_cb input_changed);
@@ -113,6 +113,13 @@ protected:
 	int rumblePower = 100;
 
 private:
+
+	u32 Opposite(u32 dir);
+	std::string DirStr(u32 dir);
+	bool CorrectDiag(std::tuple<u32, u32> diag, int port);
+	std::tuple<u32, u32> CorrectDiags(int port);
+	void CorrectCardinals(int port);
+
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
@@ -158,7 +165,7 @@ private:
 	std::map<DreamcastKey, int> lastAxisValue[4];
 	bool perGameMapping = false;
 	bool instanceMapping = false;
-	
+
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
 };

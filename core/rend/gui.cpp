@@ -2160,6 +2160,7 @@ static void settings_body_controls(ImVec2 normal_padding)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	    	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
+			OptionCheckbox("Enable Diagonal Correction", config::EnableDiagonalCorrection, "Smooths out transitions from detected diagonal inputs to adjacent directions. Ideal for keyboard players.");
 
 			ImGui::Spacing();
 			if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_None))
