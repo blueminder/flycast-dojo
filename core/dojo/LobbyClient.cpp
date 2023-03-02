@@ -172,6 +172,8 @@ bool LobbyClient::Init(bool hosting)
 
 if (hosting)
 {
+
+#ifndef __ANDROID__
 	auto iadd = dojo.GetLocalInterfaces();
 	for (auto ia : iadd)
 	{
@@ -183,6 +185,7 @@ if (hosting)
 		DEBUG_LOG(NETWORK, "IP: %s\n", ip_str.data());
 		local_ips.push_back(ip_str);
 	}
+#endif
 
 	return CreateLocalSocket(stoi(config::DojoServerPort));
 }

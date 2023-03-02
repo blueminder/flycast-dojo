@@ -1790,6 +1790,7 @@ void DojoSession::AssignNames()
 	}
 }
 
+#ifndef __ANDROID__
 // adapted from https://stackoverflow.com/a/62303963
 asio::ip::address_v6 sinaddr_to_asio(sockaddr_in6 *addr) {
     asio::ip::address_v6::bytes_type buf;
@@ -1874,6 +1875,7 @@ std::vector<asio::ip::address> DojoSession::GetLocalInterfaces() {
 #else
 #error "..."
 #endif
+#endif // ifndef __ANDROID__
 
 DojoSession dojo;
 
