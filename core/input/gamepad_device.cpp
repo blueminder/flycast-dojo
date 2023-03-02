@@ -35,6 +35,8 @@
 
 // Gamepads
 u32 kcode[4] = { ~0u, ~0u, ~0u, ~0u };
+u32 kcode_prev[4] = { ~0u, ~0u, ~0u, ~0u };
+u32 kcode_next[4] = { ~0u, ~0u, ~0u, ~0u };
 s8 joyx[4];
 s8 joyy[4];
 s8 joyrx[4];
@@ -56,6 +58,97 @@ bool loadSaveStateDisabled;
 static FILE *record_input;
 #endif
 
+u32 GamepadDevice::Opposite(u32 dir)
+{
+	switch(dir)
+	{
+		case DC_DPAD_LEFT:
+			return DC_DPAD_RIGHT;
+		case DC_DPAD_RIGHT:
+			return DC_DPAD_LEFT;
+		case DC_DPAD_UP:
+			return DC_DPAD_DOWN;
+		case DC_DPAD_DOWN:
+			return DC_DPAD_UP;
+	}
+
+	return 0;
+}
+
+std::string GamepadDevice::DirStr(u32 dir)
+{
+	switch(dir)
+	{
+		case DC_DPAD_LEFT:
+			return "LEFT";
+		case DC_DPAD_RIGHT:
+			return "RIGHT";
+		case DC_DPAD_UP:
+			return "UP";
+		case DC_DPAD_DOWN:
+			return "DOWN";
+	}
+
+	return "";
+}
+
+bool GamepadDevice::CorrectDiag(std::tuple<u32, u32> diag, int port)
+{
+	u32 x = std::get<0>(diag);
+	u32 y = std::get<1>(diag);
+
+	if ((~kcode[port] & x) && (~kcode[port] & y))
+	{
+		if ((~kcode_prev[port] & Opposite(x)) && (~kcode_prev[port] & y))
+		{
+			NOTICE_LOG(INPUT, "CORRECTED DIAGONAL *%s %s to %s %s", DirStr(Opposite(x)).c_str(), DirStr(y).c_str(), DirStr(x).c_str(), DirStr(y).c_str());
+			kcode[port] |= x;
+			kcode[port] |= Opposite(x);
+			kcode_next[port] = ~(x | y);
+
+			return true;
+		}
+		else if ((~kcode_prev[port] & x) && (~kcode_prev[port] & Opposite(y)))
+		{
+			NOTICE_LOG(INPUT, "CORRECTED DIAGONAL %s *%s to %s %s", DirStr(x).c_str(), DirStr(Opposite(y)).c_str(), DirStr(x).c_str(), DirStr(y).c_str());
+			kcode[port] |= y;
+			kcode[port] |= Opposite(y);
+			kcode_next[port] = ~(x | y);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+std::tuple<u32, u32> GamepadDevice::CorrectDiags(int port)
+{
+	std::vector<std::tuple<u32, u32>> diags {
+		std::tuple<u32, u32> { DC_DPAD_LEFT, DC_DPAD_DOWN },
+		std::tuple<u32, u32> { DC_DPAD_RIGHT, DC_DPAD_DOWN },
+		std::tuple<u32, u32> { DC_DPAD_LEFT, DC_DPAD_UP },
+		std::tuple<u32, u32> { DC_DPAD_RIGHT, DC_DPAD_UP },
+	};
+
+	for (auto it = diags.begin(); it != diags.end(); ++it)
+	{
+		if (CorrectDiag(*it, port))
+			return *it;
+	}
+
+	return std::tuple<u32, u32> { 0, 0 };
+}
+
+void GamepadDevice::CorrectCardinals(int port)
+{
+	if ((kcode[port] & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == 0)
+		kcode[port] |= (DC_DPAD_LEFT | DC_DPAD_RIGHT);
+	// match hitbox SOCD behavior (up + down = up)
+	if ((kcode[port] & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
+		kcode[port] |= DC_DPAD_DOWN;
+}
+
 bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 {
 	if (key == EMU_BTN_NONE)
@@ -65,10 +158,23 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	{
 		if (port >= 0)
 		{
+			if (config::EnableDiagonalCorrection)
+			{
+				kcode[port] &= kcode_next[port];
+				kcode_next[port] = ~0u;
+			}
+
 			if (pressed)
 				kcode[port] &= ~key;
 			else
 				kcode[port] |= key;
+
+			if (config::EnableDiagonalCorrection)
+			{
+				CorrectDiags(port);
+				CorrectCardinals(port);
+				kcode_prev[port] = kcode[port];
+			}
 		}
 #ifdef TEST_AUTOMATION
 		if (record_input != NULL)

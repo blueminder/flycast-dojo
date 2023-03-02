@@ -590,6 +590,8 @@ extern Option<bool> BufferAutoResume;
 extern Option<bool> RecordOnFirstInput;
 extern Option<bool> ForceRealBios;
 
+extern Option<bool> EnableDiagonalCorrection;
+
 // Maple
 
 extern Option<int> MouseSensitivity;

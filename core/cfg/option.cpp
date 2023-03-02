@@ -220,6 +220,7 @@ Option<bool> RecordOnFirstInput("RecordOnFirstInput", false, "dojo");
 Option<bool> ForceRealBios("ForceRealBios", false, "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
+Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", true, "input");
 
 
 #ifdef SUPPORT_DISPMANX
