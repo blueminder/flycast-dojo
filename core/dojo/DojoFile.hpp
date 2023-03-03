@@ -109,6 +109,8 @@ public:
 	std::string get_savestate_commit(std::string filename);
 
 	void RefreshFileDefinitions();
+
+	void WriteStringToOut(std::string name, std::string contents);
 };
 
 extern DojoFile dojo_file;

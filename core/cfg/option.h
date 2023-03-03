@@ -578,6 +578,7 @@ extern Option<bool> HideRandomInputSlot;
 extern Option<bool> BufferAutoResume;
 extern Option<bool> RecordOnFirstInput;
 extern Option<bool> ForceRealBios;
+extern Option<bool> OutputStreamTxt;
 
 extern Option<bool> EnableDiagonalCorrection;
 
