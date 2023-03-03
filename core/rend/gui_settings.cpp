@@ -349,6 +349,7 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 	ImGui::Spacing();
 	header("Other");
 	{
+		OptionCheckbox("Output Session Details to Text Files", config::OutputStreamTxt, "Outputs in-game overlay details to external text files (in the 'out' folder). Useful for online streams.");
 		if (config::UseReios)
 		{
 			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);

@@ -921,3 +921,17 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 #endif
 	return sha;
 }
+
+void DojoFile::WriteStringToOut(std::string name, std::string contents)
+{
+#ifndef __ANDROID__
+	auto dir_name = get_writable_config_path("out/");
+	if (!ghc::filesystem::exists(dir_name))
+		ghc::filesystem::create_directory(dir_name);
+
+	std::string path = dir_name + name + ".txt";
+	std::ofstream fout(path);
+	fout << contents;
+	fout.close();
+#endif
+}
