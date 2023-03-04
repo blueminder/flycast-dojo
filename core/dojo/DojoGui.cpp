@@ -537,7 +537,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		ImGui::Text("Delay");
 		ImGui::PopItemWidth();
 
-		if (config::EnableMatchCode)
+		if (config::EnableMatchCode && dojo.host_status < 1)
 		{
 			if (ImGui::Button("Detect Delay"))
 				dojo.OpponentPing = dojo.DetectGGPODelay(detect_address.data());
