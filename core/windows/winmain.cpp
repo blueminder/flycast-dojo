@@ -57,6 +57,10 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include <shlobj.h>
+#include <iostream>
+
+#include "dojo/deps/filesystem.hpp"
 
 #if !defined(USE_SDL) && !defined(DEF_CONSOLE)
 static PCHAR*
@@ -452,7 +456,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			}
 		}
 		break;
-	
+
 	case WM_SYSKEYDOWN:
 		if (wParam == VK_RETURN)
 		{
@@ -565,17 +569,17 @@ static void toggleFullscreen()
 			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
 
 			SetWindowPos(hWnd, HWND_TOPMOST, mi.rcMonitor.left, mi.rcMonitor.top,
-				mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, 
+				mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top,
 				SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS);
 		}
 	}
 	else {
-		
+
 		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
 		SetWindowLongPtr(hWnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0));
 
 		SetWindowPos(hWnd, NULL, rSaved.left, rSaved.top,
-			rSaved.right - rSaved.left, rSaved.bottom - rSaved.top, 
+			rSaved.right - rSaved.left, rSaved.bottom - rSaved.top,
 			SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS|SWP_NOZORDER);
 	}
 
@@ -924,6 +928,23 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef TARGET_UWP
 	if (config::ContentPath.get().empty())
 		config::ContentPath.get().push_back(get_writable_config_path(""));
+#else
+	ghc::filesystem::path path;
+	PWSTR path_tmp;
+
+	auto get_folder_path_ret = SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &path_tmp);
+
+	if (get_folder_path_ret != S_OK) {
+		CoTaskMemFree(path_tmp);
+		return 1;
+	}
+
+	path = path_tmp;
+	CoTaskMemFree(path_tmp);
+
+	auto fightcade_rom_path = path.string() + "\\Fightcade\\emulator\\flycast\\ROMs";
+	if (config::ContentPath.get().empty() && ghc::filesystem::exists(fightcade_rom_path))
+		config::ContentPath.get().push_back(fightcade_rom_path);
 #endif
 	os_InstallFaultHandler();
 

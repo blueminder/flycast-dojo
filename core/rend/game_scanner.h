@@ -76,7 +76,7 @@ class GameScanner
         {
             if (!running)
                 break;
-            
+
             if (game_list.empty())
             {
                 if(item.parentPath.compare(emptyParentPath))
@@ -91,7 +91,7 @@ class GameScanner
             {
                 content_path_looks_incorrect = false;
             }
-            
+
         	if (item.name.substr(0, 2) == "._")
         		// Ignore Mac OS turds
         		continue;
