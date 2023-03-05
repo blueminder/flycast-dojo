@@ -102,6 +102,10 @@ public:
 	void invoke_download_save_popup(std::string game_path, bool* net_save_download, bool launch_game);
 	void download_save_popup();
 
+
+	int item_current_idx = 0;
+	int last_item_current_idx = 4;
+
 };
 
 extern DojoGui dojo_gui;

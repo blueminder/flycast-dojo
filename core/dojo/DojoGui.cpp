@@ -757,7 +757,23 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			settings.content.path = "";
 			dc_reset(true);
 
+			if (dojo.host_status > 0)
+			{
+				dojo.host_status = 0;
+				dojo.lobby_host_screen = false;
+				settings.content.path = "";
+
+				dojo.beacon_active = false;
+				dojo.lobby_launch = false;
+
+				dojo_gui.item_current_idx = 0;
+			}
+
 			config::NetworkServer.set("");
+			config::NetworkP0Server.set("");
+			config::NetworkP1Server.set("");
+			config::NetworkP2Server.set("");
+			config::NetworkP3Server.set("");
 		}
 
 		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
@@ -1147,6 +1163,21 @@ void DojoGui::gui_display_lobby(float scaling, std::vector<GameMedia> game_list)
 	{
 		dojo.presence.lobby_disconnect_toggle = true;
 		dojo.lobby_active = false;
+
+		dojo.host_status = 0;
+		dojo.lobby_host_screen = false;
+		settings.content.path = "";
+
+		dojo.beacon_active = false;
+		dojo.lobby_launch = false;
+
+		dojo_gui.item_current_idx = 0;
+
+		config::NetworkServer.set("");
+		config::NetworkP0Server.set("");
+		config::NetworkP1Server.set("");
+		config::NetworkP2Server.set("");
+		config::NetworkP3Server.set("");
 
 		if (game_started)
     		gui_state = GuiState::Commands;
