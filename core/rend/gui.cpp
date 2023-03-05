@@ -91,8 +91,6 @@ static Chat chat;
 static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;
 
-static int item_current_idx = 0;
-
 void scanner_stop()
 {
 	scanner.stop();
@@ -2523,22 +2521,21 @@ static void gui_display_content()
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
 	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
-	static int last_item_current_idx = 4;
 
 	// Here our selection data is an index.
-	const char* combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
 	if (dojo.lobby_host_screen)
 	{
 		ImGui::Text("HOST");
-		item_current_idx = 1;
+		dojo_gui.item_current_idx = 1;
 	}
 	else
-		ImGui::Combo("", &item_current_idx, items, IM_ARRAYSIZE(items));
+		ImGui::Combo("", &dojo_gui.item_current_idx, items, IM_ARRAYSIZE(items));
 
-	if (last_item_current_idx == 4 && gui_state != GuiState::Replays)
+	if (dojo_gui.last_item_current_idx == 4 && gui_state != GuiState::Replays)
 	{
 		// set default offline delay to 0
 		config::Delay = 0;
@@ -2549,13 +2546,13 @@ static void gui_display_content()
 	if (gui_state == GuiState::Replays)
 		config::DojoEnable = true;
 
-	if (item_current_idx == 0)
+	if (dojo_gui.item_current_idx == 0)
 	{
 		settings.dojo.training = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
-	else if (item_current_idx == 1)
+	else if (dojo_gui.item_current_idx == 1)
 	{
 		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
@@ -2575,7 +2572,7 @@ static void gui_display_content()
 			settings.dojo.training = false;
 		}
 	}
-	else if (item_current_idx == 2)
+	else if (dojo_gui.item_current_idx == 2)
 	{
 		config::DojoActAsServer = false;
 		config::NetworkServer = "";
@@ -2602,7 +2599,7 @@ static void gui_display_content()
 			config::DojoServerIP = "";
 		}
 	}
-	else if (item_current_idx == 3)
+	else if (dojo_gui.item_current_idx == 3)
 	{
 		settings.dojo.training = true;
 		config::DojoEnable = false;
@@ -2610,7 +2607,7 @@ static void gui_display_content()
 	}
 	// RECEIVE menu option
 	/*
-	else if (item_current_idx == 4)
+	else if (dojo_gui.item_current_idx == 4)
 	{
 		config::DojoEnable = true;
 		config::DojoActAsServer = true;
@@ -2620,16 +2617,16 @@ static void gui_display_content()
 
 		config::DojoServerIP = "";
 	}*/
-	else if (item_current_idx == 4)
+	else if (dojo_gui.item_current_idx == 4)
 	{
 		config::DojoEnable = false;
 		settings.dojo.training = false;
 	}
 
-	if (item_current_idx != last_item_current_idx)
+	if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
 	{
 		SaveSettings();
-		last_item_current_idx = item_current_idx;
+		dojo_gui.last_item_current_idx = dojo_gui.item_current_idx;
 	}
 
 	ImGui::SameLine();
@@ -3046,7 +3043,7 @@ static void gui_display_content()
     windowDragScroll();
 	ImGui::EndChild();
 
-	if (item_current_idx == 0 || item_current_idx == 3)
+	if (dojo_gui.item_current_idx == 0 || dojo_gui.item_current_idx == 3)
 	{
 #if !defined(__ANDROID__)
 		int delay_min = 0;
@@ -3075,7 +3072,7 @@ static void gui_display_content()
 #endif
 		ImGui::Text(" ");
 	}
-	else if (item_current_idx == 1 || item_current_idx == 2)
+	else if (dojo_gui.item_current_idx == 1 || dojo_gui.item_current_idx == 2)
 	{
 		char PlayerName[256] = { 0 };
 		strcpy(PlayerName, config::PlayerName.get().c_str());

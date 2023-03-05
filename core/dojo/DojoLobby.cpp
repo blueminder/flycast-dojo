@@ -51,7 +51,7 @@ int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
 	std::string data;
 
 	// sendto() destination
-	while (dojo.host_status < 4) {
+	while (dojo.beacon_active && dojo.host_status < 4) {
 		const char* message;
 
 		switch (dojo.host_status)
