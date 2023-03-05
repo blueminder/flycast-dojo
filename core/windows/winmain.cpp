@@ -62,6 +62,11 @@
 
 #include "dojo/deps/filesystem.hpp"
 
+#include <string>
+#include "firewall.h"
+
+void ApplyFirewallPolicy();
+
 #if !defined(USE_SDL) && !defined(DEF_CONSOLE)
 static PCHAR*
 	commandLineToArgvA(
@@ -929,6 +934,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (config::ContentPath.get().empty())
 		config::ContentPath.get().push_back(get_writable_config_path(""));
 #else
+	ApplyFirewallPolicy();
+
 	ghc::filesystem::path path;
 	PWSTR path_tmp;
 
@@ -993,4 +1000,112 @@ void os_DoEvents()
 		DispatchMessage(&msg);
 	}
 #endif
+}
+
+void ApplyFirewallPolicy()
+{
+	HRESULT hr = S_OK;
+	HRESULT comInit = E_FAIL;
+	INetFwProfile* fwProfile = NULL;
+
+	comInit = CoInitializeEx(
+				0,
+				COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE
+				);
+
+   if (comInit != RPC_E_CHANGED_MODE)
+   {
+		hr = comInit;
+		if (FAILED(hr))
+		{
+			printf("CoInitializeEx failed: 0x%08lx\n", hr);
+
+			WindowsFirewallCleanup(fwProfile);
+
+			if (SUCCEEDED(comInit))
+			{
+				CoUninitialize();
+			}
+			return;
+		}
+   }
+
+	hr = WindowsFirewallInitialize(&fwProfile);
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallInitialize failed: 0x%08lx\n", hr);
+
+		WindowsFirewallCleanup(fwProfile);
+
+		if (SUCCEEDED(comInit))
+		{
+			CoUninitialize();
+		}
+		return;
+	}
+
+	TCHAR szExeFileName[MAX_PATH];
+	GetModuleFileName(NULL, szExeFileName, MAX_PATH);
+
+	wchar_t* file_name = (wchar_t*)calloc(MAX_PATH, sizeof(wchar_t));
+	mbstowcs(file_name, szExeFileName, strlen(szExeFileName));
+
+	hr = WindowsFirewallAddApp(
+			fwProfile,
+			file_name,
+			L"Flycast Dojo"
+			);
+
+	free(file_name);
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallAddApp failed: 0x%08lx\n", hr);
+
+		WindowsFirewallCleanup(fwProfile);
+
+		if (SUCCEEDED(comInit))
+		{
+			CoUninitialize();
+		}
+		return;
+	}
+
+	hr = WindowsFirewallPortAdd(fwProfile, (long)config::GGPOPort.get(), NET_FW_IP_PROTOCOL_UDP, L"Flycast Dojo GGPO");
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallPortAdd failed: 0x%08lx\n", hr);
+		WindowsFirewallCleanup(fwProfile);
+
+		if (SUCCEEDED(comInit))
+		{
+			CoUninitialize();
+		}
+		return;
+	}
+
+	hr = WindowsFirewallPortAdd(fwProfile, (long)std::stoi(config::DojoServerPort.get()), NET_FW_IP_PROTOCOL_UDP, L"Flycast Dojo Lobby");
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallPortAdd failed: 0x%08lx\n", hr);
+		WindowsFirewallCleanup(fwProfile);
+
+		if (SUCCEEDED(comInit))
+		{
+			CoUninitialize();
+		}
+		return;
+	}
+
+	hr = WindowsFirewallPortAdd(fwProfile, (long)std::stoi(config::LobbyMulticastPort.get()), NET_FW_IP_PROTOCOL_UDP, L"Flycast Dojo Lobby Listener");
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallPortAdd failed: 0x%08lx\n", hr);
+		WindowsFirewallCleanup(fwProfile);
+
+		if (SUCCEEDED(comInit))
+		{
+			CoUninitialize();
+		}
+		return;
+	}
 }
