@@ -515,6 +515,7 @@ extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<bool> GGPOChatTimeoutToggleSend;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
+extern Option<bool> EnableWinFWPolicy;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

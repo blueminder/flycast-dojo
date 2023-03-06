@@ -934,7 +934,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (config::ContentPath.get().empty())
 		config::ContentPath.get().push_back(get_writable_config_path(""));
 #else
-	ApplyFirewallPolicy();
+	if (config::EnableWinFWPolicy)
+		ApplyFirewallPolicy();
 
 	ghc::filesystem::path path;
 	PWSTR path_tmp;

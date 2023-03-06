@@ -153,6 +153,7 @@ Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<bool> GGPOChatTimeoutToggleSend("GGPOChatTimeoutToggleSend", false, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
+Option<bool> EnableWinFWPolicy("EnableWinFWPolicy", true, "network");
 
 // Dojo
 

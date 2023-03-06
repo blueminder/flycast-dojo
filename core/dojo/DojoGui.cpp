@@ -1916,7 +1916,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		header("Connection Method");
+		header("Connection Methods");
 		{
 			int cxnMethod;
 			if (!config::EnableMatchCode)
@@ -1946,24 +1946,24 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (!config::EnableLobby)
+		OptionCheckbox("Enable LAN Lobby", config::EnableLobby,
+			"Enable LAN Lobby interface. Works over any LAN or virtual LAN with multicast support.");
+
+		if (config::EnableMatchCode)
 		{
-			if (config::EnableMatchCode)
+			if (ImGui::CollapsingHeader("Match Codes##MCHeader", ImGuiTreeNodeFlags_None))
 			{
-				if (ImGui::CollapsingHeader("Match Codes", ImGuiTreeNodeFlags_None))
-				{
-					char MatchmakingServerAddress[256];
+				char MatchmakingServerAddress[256];
 
-					strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
-					ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					config::MatchmakingServerAddress = MatchmakingServerAddress;
+				strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
+				ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				config::MatchmakingServerAddress = MatchmakingServerAddress;
 
-					char MatchmakingServerPort[256];
+				char MatchmakingServerPort[256];
 
-					strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
-					ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					config::MatchmakingServerPort = MatchmakingServerPort;
-				}
+				strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
+				ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				config::MatchmakingServerPort = MatchmakingServerPort;
 			}
 		}
 
@@ -2020,7 +2020,15 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 				OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only. Used for racing games.");
 				ImGui::SameLine();
 				OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes. Used for games that require full analog to function.");
+			}
 
+			if (ImGui::CollapsingHeader("Permissions", ImGuiTreeNodeFlags_None))
+			{
+#ifdef _WIN32
+				OptionCheckbox("Enable Windows Firewall Policy", config::EnableWinFWPolicy);
+				ImGui::SameLine();
+				ShowHelpMarker("Enables programmatic Windows Defender Firewall policies. Authorizes application. Opens ports used for GGPO & LAN Lobby/Match Codes.");
+#endif
 				OptionCheckbox("Enable UPnP", config::EnableUPnP);
 				ImGui::SameLine();
 				ShowHelpMarker("Enable Universal Plug & Play for game sessions.");
