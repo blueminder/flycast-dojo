@@ -526,6 +526,7 @@ extern Option<bool> NetworkOutput;
 extern Option<int> NumPlayers;
 extern Option<int> PlayerNum;
 extern Option<bool> ManualPlayerAssign;
+extern Option<bool> EnableWinFWPolicy;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

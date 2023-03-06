@@ -164,6 +164,7 @@ Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> NumPlayers("NumPlayers", 2, "network");
 Option<int> PlayerNum("PlayerNum", 0, "network");
 Option<bool> ManualPlayerAssign("ManualPlayerAssign", false, "network");
+Option<bool> EnableWinFWPolicy("EnableWinFWPolicy", true, "network");
 
 // Dojo
 
