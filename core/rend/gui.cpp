@@ -3363,6 +3363,13 @@ static void gui_display_loadscreen()
 					// use dojo session for match codes & initial handshake
 					dojo.StartDojoSession();
 
+					if (config::GGPOPort.get() != 19713 || config::GGPORemotePort.get() != 19713)
+					{
+						// set to default port designation when using match codes
+						config::GGPOPort = 19713;
+						config::GGPORemotePort = 19713;
+					}
+
 					if (config::ActAsServer)
 						gui_open_host_wait();
 					else
