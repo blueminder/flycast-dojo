@@ -273,6 +273,7 @@ int DojoLobby::listener(char* group, int port)
 
 int DojoLobby::CancelHost()
 {
+	active_beacons.clear();
 	dojo.host_status = 0;
 	dojo.lobby_host_screen = false;
 	settings.content.path = "";

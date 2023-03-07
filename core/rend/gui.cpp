@@ -2819,18 +2819,18 @@ static void gui_display_content()
 						}
 						else if (dojo.lobby_host_screen)
 						{
-							if (!dojo.beacon_active)
-							{
-								std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
-								t3.detach();
-							}
-
 							if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 							{
 								dojo_gui.invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
 							}
 							else
 							{
+								if (!dojo.beacon_active)
+								{
+									std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
+									t3.detach();
+								}
+
 								settings.content.path = game.path;
 								dojo.host_status = 1;
 								gui_state = GuiState::Lobby;
