@@ -1949,6 +1949,24 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 		OptionCheckbox("Enable LAN Lobby", config::EnableLobby,
 			"Enable LAN Lobby interface. Works over any LAN or virtual LAN with multicast support.");
 
+		if (config::EnableLobby)
+		{
+			if (ImGui::CollapsingHeader("LAN Lobby", ImGuiTreeNodeFlags_None))
+			{
+				char LobbyMulticastAddress[256];
+
+				strcpy(LobbyMulticastAddress, config::LobbyMulticastAddress.get().c_str());
+				ImGui::InputText("Multicast Address", LobbyMulticastAddress, sizeof(LobbyMulticastAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				config::LobbyMulticastAddress = LobbyMulticastAddress;
+
+				char LobbyMulticastPort[256];
+
+				strcpy(LobbyMulticastPort, config::LobbyMulticastPort.get().c_str());
+				ImGui::InputText("Multicast Port", LobbyMulticastPort, sizeof(LobbyMulticastPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				config::LobbyMulticastPort = LobbyMulticastPort;
+			}
+		}
+
 		if (config::EnableMatchCode)
 		{
 			if (ImGui::CollapsingHeader("Match Codes##MCHeader", ImGuiTreeNodeFlags_None))
