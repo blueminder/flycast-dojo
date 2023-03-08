@@ -86,7 +86,7 @@ int DojoLobby::BeaconLoop(sockaddr_in addr, int delay_secs)
 		{
 			message_ss << "__";
 		}
-        message_ss << config::NumPlayers.get() << "__";
+		message_ss << config::NumPlayers.get() << "__";
 		std::string message_str = message_ss.str();
 		message = message_str.data();
 
@@ -177,7 +177,8 @@ int DojoLobby::ListenerLoop(sockaddr_in addr)
 
 		get_ip_str((struct sockaddr *) &addr, ip_str, 128);
 		NOTICE_LOG(NETWORK, "%s %u", ip_str, addr.sin_port);
-		NOTICE_LOG(NETWORK, msgbuf);
+
+		NOTICE_LOG(NETWORK, "%s", msgbuf);
 
 		if (memcmp(msgbuf, "2001_", strlen("2001_")) == 0)
 		{
@@ -272,6 +273,7 @@ int DojoLobby::listener(char* group, int port)
 
 int DojoLobby::CancelHost()
 {
+	active_beacons.clear();
 	dojo.host_status = 0;
 	dojo.lobby_host_screen = false;
 	settings.content.path = "";

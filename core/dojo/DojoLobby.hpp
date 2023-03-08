@@ -1,9 +1,9 @@
 #pragma once
 
-#pragma comment(lib, "Ws2_32.lib")
-#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
-
 #ifdef _WIN32
+    #pragma comment(lib, "Ws2_32.lib")
+    #define _WINSOCK_DEPRECATED_NO_WARNINGS 1
+
     #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
     #include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
     #include <Windows.h>
@@ -31,6 +31,7 @@
 
 #include "LobbyClient.hpp"
 
+constexpr int MAX_PLAYERS = 2;
 
 typedef struct m_player {
     std::string name;

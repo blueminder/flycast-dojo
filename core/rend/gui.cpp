@@ -2827,15 +2827,14 @@ static void gui_display_content()
 							}
 							else
 							{
-								settings.content.path = game.path;
-								dojo.host_status = 1;
-
 								if (!dojo.beacon_active)
 								{
 									std::thread t3(&DojoLobby::BeaconThread, std::ref(dojo.presence));
 									t3.detach();
 								}
 
+								settings.content.path = game.path;
+								dojo.host_status = 1;
 								gui_state = GuiState::Lobby;
 							}
 						}
@@ -3366,6 +3365,13 @@ static void gui_display_loadscreen()
 				{
 					// use dojo session for match codes & initial handshake
 					dojo.StartDojoSession();
+
+					if (config::GGPOPort.get() != 19713 || config::GGPORemotePort.get() != 19713)
+					{
+						// set to default port designation when using match codes
+						config::GGPOPort = 19713;
+						config::GGPORemotePort = 19713;
+					}
 
 					if (config::ActAsServer)
 						gui_open_host_wait();
@@ -3924,7 +3930,7 @@ void gui_term()
 	if (inited)
 	{
 		inited = false;
-		scanner.stop();
+		//scanner.stop();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);

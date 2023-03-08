@@ -549,5 +549,71 @@
     "flycast_dc_starwars_racer": {
         "filename": "Star Wars - Episode I - Racer (USA).chd",
         "md5_checksum": "f73b771859f5a6f895b350340029495c"
-    }
+    },
+	"flycast_dc_nbashowtime": {
+		"filename": "NBA Showtime - NBA on NBC (USA).chd",
+		"md5_checksum": "e2082ed0499967d24bc92e9ba9c716e2"
+	},
+	"flycast_dc_testdrive_lemans": {
+		"filename": "Test Drive Le Mans (USA) (En,Fr,Es).chd",
+		"md5_checksum": "b9d1317edfffb07bfd5e0449a7f95b5c"
+	},
+	"flycast_dc_testdrive_vrally": {
+		"filename": "Test Drive V-Rally (USA) (En,Fr,De).chd",
+		"md5_checksum": "f3f7d6c5fe5d048fef8d9b9165d51c9a"
+	},
+	"flycast_dc_msr": {
+		"filename": "MSR - Metropolis Street Racer (USA) (Rev A).chd",
+		"md5_checksum": "edf05bf80dee93b37713787801341746"
+	},
+	"flycast_dc_hydrothunder": {
+		"filename": "Hydro Thunder (USA) (Rev 1).chd",
+		"md5_checksum": "3346edf38b29cd3d453f83464f82e01c"
+	},
+	"flycast_dc_daytona_usa_2001": {
+		"filename": "Daytona USA 2001 (Japan).chd",
+		"md5_checksum": "d42d4bc33c309ef96e3368de01f88730"
+	},
+	"flycast_dc_segagt": {
+		"filename": "Sega GT (USA).chd",
+		"md5_checksum": "4b1b899db29c38903642ff35fc368cf7"
+	},
+	"flycast_dc_segarally2": {
+		"filename": "Sega Rally 2 (USA).chd",
+		"md5_checksum": "547093d1c95b0d37fe84a94cc6f7769b"
+	},
+	"flycast_dc_popnmusic": {
+		"filename": "Pop'n Music (Japan).chd",
+		"md5_checksum": "0793a42caeb571b0b39f21102b9082ff"
+	},
+	"flycast_dc_bombermanonline": {
+		"filename": "Bomberman Online (USA).chd",
+		"md5_checksum": "1a178d9da3e81f944fb08d6c1fa692eb"
+	},
+	"flycast_dc_wormsarmageddon": {
+		"filename": "Worms Armageddon (USA) (En,Fr,De,Nl,Sv,No,Da).chd",
+		"md5_checksum": "24bdeac4a84121dd2f78ab8a55a8444d"
+	},
+	"flycast_dc_wormsworldparty": {
+		"filename": "Worms World Party (USA) (En,Fr,De,Es,It,Nl,Sv,Da).chd",
+		"md5_checksum": "e8d9eae48f7f947d3161fccb41a52de2"
+	},
+	"flycast_dc_gauntletlegends": {
+		"filename": "Gauntlet Legends (USA).chd",
+		"md5_checksum": "64f230e5008a1b6646fa044147971be0"
+	},
+	"flycast_dc_tokyoxtremeracer": {
+		"filename": "Tokyo Xtreme Racer (USA).chd",
+		"md5_checksum": "cfbd78057b1c65dbe3e7e689dfc6a1e2"
+	},
+	"flycast_dc_tokyoxtremeracer2": {
+		"filename": "Tokyo Xtreme Racer 2 (USA).chd",
+		"md5_checksum": "91eb06164794b56703261ca36cdd01b1"
+	},
+	"flycast_dc_sfz3_saikyoryudojo": {
+		"filename": "Street Fighter Zero 3 - Saikyo-ryu Dojo (Japan).chd",
+		"md5_checksum": "7599965c52e6c778889ab38451296768"
+	}
 }
+
+
