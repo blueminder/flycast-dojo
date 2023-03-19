@@ -573,8 +573,24 @@ void gui_open_disconnected()
 	gui_state = GuiState::Disconnected;
 }
 
+void gui_open_step()
+{
+	const LockGuard lock(guiMutex);
+	if (dojo.PlayMatch || (!config::ThreadedRendering && settings.dojo.training))
+	{
+		if (!dojo.stepping)
+			dojo.stepping = true;
+		else
+		{
+			emu.start();
+			gui_state = GuiState::Closed;
+		}
+	}
+}
+
 void gui_open_pause()
 {
+	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed)
 	{
 		if (dojo.PlayMatch && dojo.stepping)
@@ -589,19 +605,22 @@ void gui_open_pause()
 			emu.start();
 			return;
 		}
+		if (dojo.PlayMatch && dojo.manual_pause)
+		{
+			dojo.stepping = false;
+			dojo.manual_pause = false;
+			emu.start();
+			return;
+		}
 		if (!ggpo::active() || dojo.PlayMatch || settings.dojo.training)
 		{
 			if (dojo.stepping)
 				dojo.stepping = false;
-			//if (dojo.PlayMatch)
-			//{
+			if (dojo.PlayMatch)
+			{
 				dojo.manual_pause = true;
 				gui_state = GuiState::ReplayPause;
-			//}
-			//else
-				//gui_state = GuiState::Commands;
-			HideOSD();
-			emu.stop();
+			}
 		}
 	}
 	else if (gui_state == GuiState::ReplayPause)
@@ -623,11 +642,7 @@ void gui_open_settings()
 	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
-		{
 			gui_state = GuiState::Commands;
-			HideOSD();
-			emu.stop();
-		}
 		else
 			chat.toggle();
 	}
