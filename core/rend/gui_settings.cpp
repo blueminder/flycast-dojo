@@ -929,7 +929,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 
 			if (config::FixedFrequency != 0)
 			{
-				OptionCheckbox("Fixed Frequency CPU Optimizations", config::FixedFrequencyThreadSleep, "Disable to improve Frame Pacing in exchange for increased CPU usage.");
+				OptionCheckbox("FF CPU Optimizations", config::FixedFrequencyThreadSleep, "Improves CPU Usage in exchange for less precise frame timing. Only enable on older PCs.");
 			}
 
 #ifndef TARGET_IPHONE
