@@ -27,7 +27,10 @@ void GuiSettings::settings_body_general(ImVec2 normal_padding)
 	{
 		DisabledScope scope(config::Cable.isReadOnly());
 
-		if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
+		const char *value = config::Cable == 0 ? cable[0]
+				: config::Cable > 0 && config::Cable <= ARRAY_SIZE(cable) ? cable[config::Cable - 1]
+				: "?";
+		if (ImGui::BeginCombo("Cable", value, ImGuiComboFlags_None))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 			{
@@ -926,7 +929,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 
 			if (config::FixedFrequency != 0)
 			{
-				OptionCheckbox("Fixed Frequency CPU Optimizations", config::FixedFrequencyThreadSleep, "Disable to improve Frame Pacing in exchange for increased CPU usage.");
+				OptionCheckbox("FF CPU Optimizations", config::FixedFrequencyThreadSleep, "Improves CPU Usage in exchange for less precise frame timing. Only enable on older PCs.");
 			}
 
 #ifndef TARGET_IPHONE

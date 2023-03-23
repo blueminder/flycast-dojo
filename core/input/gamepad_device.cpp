@@ -142,9 +142,16 @@ std::tuple<u32, u32> GamepadDevice::CorrectDiags(int port)
 
 void GamepadDevice::CorrectCardinals(int port)
 {
+	// X Axis SOCD behavior: last input
 	if ((kcode[port] & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == 0)
-		kcode[port] |= (DC_DPAD_LEFT | DC_DPAD_RIGHT);
-	// match hitbox SOCD behavior (up + down = up)
+	{
+		if ((kcode_prev[port] & DC_DPAD_LEFT) == 0)
+			kcode[port] |= DC_DPAD_LEFT;
+		else if ((kcode_prev[port] & DC_DPAD_RIGHT) == 0)
+			kcode[port] |= DC_DPAD_RIGHT;
+	}
+
+	// Y Axis SOCD behavior: hitbox default (up + down = up)
 	if ((kcode[port] & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
 		kcode[port] |= DC_DPAD_DOWN;
 }
@@ -228,16 +235,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_STEP:
 			if (pressed)
 			{
-				if (dojo.PlayMatch || (!config::ThreadedRendering && settings.dojo.training))
-				{
-					if (!dojo.stepping)
-						dojo.stepping = true;
-					else
-					{
-						gui_state = GuiState::Closed;
-						emu.start();
-					}
-				}
+				//gui_open_step();
 			}
 			break;
 		case EMU_BTN_QUICK_SAVE:
