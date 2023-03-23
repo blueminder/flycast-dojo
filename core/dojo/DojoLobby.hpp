@@ -50,7 +50,7 @@ public:
 
     std::map<std::string, std::string> active_beacons;
     std::map<std::string, int> active_beacon_ping;
-    std::map<std::string, long> last_seen;
+    std::map<std::string, uint64_t> last_seen;
 
     int CancelHost();
 
