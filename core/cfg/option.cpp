@@ -242,8 +242,8 @@ Option<int> VirtualGamepadVibration("VirtualGamepadVibration", 20, "input");
 std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
 	Option<MapleDeviceType>("device1", MDT_SegaController, "input"),
 	Option<MapleDeviceType>("device2", MDT_SegaController, "input"),
-	Option<MapleDeviceType>("device3", MDT_None, "input"),
-	Option<MapleDeviceType>("device4", MDT_None, "input"),
+	Option<MapleDeviceType>("device3", MDT_SegaController, "input"),
+	Option<MapleDeviceType>("device4", MDT_SegaController, "input"),
 };
 std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device1.1", MDT_SegaVMU, "input"),
