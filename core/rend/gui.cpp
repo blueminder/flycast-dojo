@@ -3371,7 +3371,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !dojo.PlayMatch)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch)
 			{
 				if (config::EnableMatchCode)
 				{
