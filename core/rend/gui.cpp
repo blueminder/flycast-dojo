@@ -642,7 +642,11 @@ void gui_open_settings()
 	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
+		{
 			gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
 		else
 			chat.toggle();
 	}
