@@ -642,7 +642,11 @@ void gui_open_settings()
 	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
 		if (!ggpo::active() || dojo.PlayMatch)
+		{
 			gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
 		else
 			chat.toggle();
 	}
@@ -1101,7 +1105,7 @@ static void gui_display_commands()
 
 	if (settings.dojo.training && config::Delay == 0 || dojo.PlayMatch)
 	{
-		if (!dojo.PlayMatch)
+		if (!dojo.PlayMatch && !settings.dojo.training)
 			ImGui::NextColumn();
 
 		std::ostringstream input_display_text;
@@ -3374,7 +3378,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !dojo.PlayMatch)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame)
 			{
 				if (config::EnableMatchCode)
 				{
