@@ -1105,7 +1105,7 @@ static void gui_display_commands()
 
 	if (settings.dojo.training && config::Delay == 0 || dojo.PlayMatch)
 	{
-		if (!dojo.PlayMatch)
+		if (!dojo.PlayMatch && !settings.dojo.training)
 			ImGui::NextColumn();
 
 		std::ostringstream input_display_text;
@@ -3375,7 +3375,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame)
 			{
 				if (config::EnableMatchCode)
 				{
