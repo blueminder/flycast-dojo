@@ -3643,6 +3643,7 @@ void gui_display_ui()
 		dojo_gui.gui_display_replay_pause(settings.display.uiScale);
 		break;
 	case GuiState::TestGame:
+		cfgSaveBool("network", "GGPO", false);
 #if defined(__APPLE__)
 	dojo_file.RefreshFileDefinitions();
 #endif
