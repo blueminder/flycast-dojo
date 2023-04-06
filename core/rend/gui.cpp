@@ -3121,14 +3121,21 @@ static void gui_display_content()
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(GIT_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 
 #ifdef _WIN32
+	if (config::UpdateChannel.get() != "stable")
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.5f, 0.2f, 1.0f));
 	if (ImGui::Button(GIT_VERSION))
 	{
-		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
+		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(config::UpdateChannel);
 		ImGui::OpenPopup("Update?");
 	}
+	if (config::UpdateChannel.get() != "stable")
+		ImGui::PopStyleColor(1);
 
 	ImGui::SameLine();
-	ShowHelpMarker("Current Flycast Dojo version. Click to check for new updates.");
+	std::string current_channel = config::UpdateChannel.get();
+	current_channel[0] = toupper(current_channel[0]);
+	std::string update_desc = "Current Flycast Dojo version. Click to check for new updates. (" + current_channel + " Channel)";
+	ShowHelpMarker(update_desc.c_str());
 
 	dojo_gui.update_action();
 #else

@@ -543,14 +543,18 @@ size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
     return size * nmemb;
 }
 
-std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
+std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl(std::string channel)
 {
 	status_text = "Checking For Updates";
 
 	std::string tag_name = "";
 	std::string download_url = "";
 
-	std::string latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
+	std::string latest_url;
+	if (channel == "stable")
+		latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
+	else if (channel == "preview")
+		latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases";
 
 #ifndef ANDROID
 	auto curl = curl_easy_init();
@@ -576,13 +580,35 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl()
 		if (!body.empty())
 		{
 			nlohmann::json j = nlohmann::json::parse(body);
-			tag_name = j["tag_name"].get<std::string>();
-			for (nlohmann::json::iterator it = j["assets"].begin(); it != j["assets"].end(); ++it)
+			if (channel == "stable")
 			{
-				if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
-					(*it)["content_type"] == "application/x-zip-compressed")
+				tag_name = j["tag_name"].get<std::string>();
+				for (nlohmann::json::iterator it = j["assets"].begin(); it != j["assets"].end(); ++it)
 				{
-					download_url = (*it)["browser_download_url"].get<std::string>();
+					if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
+						(*it)["content_type"] == "application/x-zip-compressed")
+					{
+						download_url = (*it)["browser_download_url"].get<std::string>();
+					}
+				}
+			}
+			else if (channel == "preview")
+			{
+				for (int i = 0; i < j.size(); i++)
+				{
+					if (!j[i]["prerelease"].get<bool>())
+						continue;
+
+					tag_name = j[i]["tag_name"].get<std::string>();
+					for (nlohmann::json::iterator it = j[i]["assets"].begin(); it != j[i]["assets"].end(); ++it)
+					{
+						if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
+							(*it)["content_type"] == "application/x-zip-compressed")
+						{
+							download_url = (*it)["browser_download_url"].get<std::string>();
+						}
+					}
+					break;
 				}
 			}
 		}

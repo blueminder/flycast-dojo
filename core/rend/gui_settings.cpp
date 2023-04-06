@@ -427,20 +427,60 @@ void GuiSettings::settings_body_about(ImVec2 normal_padding)
 	header("Flycast Dojo");
 	{
 		ImGui::Text("Version: %s", GIT_VERSION);
-#ifdef _WIN32
-		ImGui::SameLine();
-		if (ImGui::Button("Update"))
-		{
-			dojo_file.tag_download = dojo_file.GetLatestDownloadUrl();
-			ImGui::OpenPopup("Update?");
-		}
-
-		dojo_gui.update_action();
-#endif
 		ImGui::Text("Git Hash: %s", GIT_HASH);
 		ImGui::Text("Build Date: %s", BUILD_DATE);
 	}
 	ImGui::Spacing();
+#ifdef _WIN32
+	header("Update");
+	{
+		static int channel_current_idx = 0;
+		const char* channels[] = { "Stable", "Preview" };
+
+		update_channel = config::UpdateChannel.get();
+		if (update_channel == "stable")
+			channel_current_idx = 0;
+		else if (update_channel == "preview")
+			channel_current_idx = 1;
+
+		if(ImGui::Combo("Update Channel", &channel_current_idx, channels, IM_ARRAYSIZE(channels)))
+		{
+			latest = "";
+			update_channel = channels[channel_current_idx];
+			update_channel[0] = tolower(update_channel[0]);
+
+			config::UpdateChannel = update_channel;
+		}
+
+		if (ImGui::Button("Check for Latest Version"))
+		{
+			dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
+			latest = std::get<0>(dojo_file.tag_download);
+		}
+
+		if (latest.size() > 0)
+		{
+			ImGui::Text("Latest %s Release: %s", channels[channel_current_idx], latest.c_str());
+
+			char buffer[40] = { 0 };
+			snprintf(buffer, 40, "%s", GIT_VERSION);
+			if(strcmp(buffer, latest.c_str()) != 0)
+			{
+				if (ImGui::Button("Update##btn"))
+				{
+					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
+					ImGui::OpenPopup("Update?");
+				}
+			}
+			else
+			{
+				ImGui::TextColored(ImVec4(0, 128, 0, 1), "You are already on the latest version.");
+			}
+		}
+
+		dojo_gui.update_action();
+	}
+#endif
 	header("Platform");
 	{
 		ImGui::Text("CPU: %s",

@@ -25,4 +25,7 @@ public:
     void settings_body_about(ImVec2 normal_padding);
     void settings_body_video(ImVec2 normal_padding);
     void settings_body_credits(ImVec2 normal_padding);
+
+    std::string update_channel = "";
+    std::string latest = "";
 };

@@ -580,6 +580,7 @@ extern Option<bool> BufferAutoResume;
 extern Option<bool> RecordOnFirstInput;
 extern Option<bool> ForceRealBios;
 extern Option<bool> OutputStreamTxt;
+extern OptionString UpdateChannel;
 
 extern Option<bool> EnableDiagonalCorrection;
 

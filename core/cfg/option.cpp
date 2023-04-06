@@ -209,6 +209,7 @@ Option<bool> BufferAutoResume("BufferAutoResume", true, "dojo");
 Option<bool> RecordOnFirstInput("RecordOnFirstInput", false, "dojo");
 Option<bool> ForceRealBios("ForceRealBios", false, "dojo");
 Option<bool> OutputStreamTxt("OutputStreamTxt", false, "dojo");
+OptionString UpdateChannel("UpdateChannel", "stable", "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", true, "input");
