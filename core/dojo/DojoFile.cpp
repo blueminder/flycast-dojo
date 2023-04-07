@@ -553,7 +553,7 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl(std::string 
 	std::string latest_url;
 	if (channel == "stable")
 		latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases/latest";
-	else if (channel == "preview")
+	else
 		latest_url = "https://api.github.com/repos/blueminder/flycast-dojo/releases";
 
 #ifndef ANDROID
@@ -600,6 +600,35 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl(std::string 
 						continue;
 
 					tag_name = j[i]["tag_name"].get<std::string>();
+
+					// ignore feature preview releases
+					if (tag_name.find("preview") != std::string::npos)
+						continue;
+
+					for (nlohmann::json::iterator it = j[i]["assets"].begin(); it != j[i]["assets"].end(); ++it)
+					{
+						if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
+							(*it)["content_type"] == "application/x-zip-compressed")
+						{
+							download_url = (*it)["browser_download_url"].get<std::string>();
+						}
+					}
+					break;
+				}
+			}
+			// feature preview releases
+			else
+			{
+				for (int i = 0; i < j.size(); i++)
+				{
+					if (!j[i]["prerelease"].get<bool>())
+						continue;
+
+					tag_name = j[i]["tag_name"].get<std::string>();
+
+					if (tag_name.find(channel) == std::string::npos)
+						continue;
+
 					for (nlohmann::json::iterator it = j[i]["assets"].begin(); it != j[i]["assets"].end(); ++it)
 					{
 						if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
