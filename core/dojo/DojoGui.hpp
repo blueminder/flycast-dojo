@@ -70,6 +70,7 @@ public:
 	void insert_training_tab(ImVec2 normal_padding);
 
 	void update_action();
+	void switch_action();
 
 	std::string current_filename;
 	std::string current_checksum;

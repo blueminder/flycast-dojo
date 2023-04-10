@@ -534,7 +534,17 @@ void DojoFile::CopyNewFlycast(std::string new_root)
 		ghc::filesystem::copy_file(new_root + "/flycast_roms.json", "flycast_roms.json",
 			ghc::filesystem::copy_options::overwrite_existing);
 
-		//exit(0);
+		// copy included dlls if nonexistent
+		for (const auto& dirEntry : ghc::filesystem::recursive_directory_iterator(new_root))
+		{
+			if (stringfix::get_extension(dirEntry.path().string()) == "dll")
+			{
+				if(!ghc::filesystem::exists(dirEntry.path().filename()))
+					ghc::filesystem::copy_file(dirEntry.path(), dirEntry.path().filename(),
+						ghc::filesystem::copy_options::overwrite_existing);
+			}
+		}
+
 	}
 }
 
@@ -946,6 +956,48 @@ void DojoFile::Update()
 	CopyNewFlycast("flycast-" + tag_name);
 
 	status_text = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+
+	ghc::filesystem::remove_all(dirname);
+}
+
+// extracts download tag from release zip file names
+std::string DojoFile::ExtractTag(std::string path)
+{
+	std::string extracted = path.substr(path.find("dojo-"));
+	return extracted.substr(0, extracted.find(".zip"));
+}
+
+// lists downloaded versions in flycast dir, commonly previous updates
+std::vector<std::string> DojoFile::ListVersions()
+{
+	std::vector<std::string> versions;
+
+	wchar_t szPath[MAX_PATH];
+	GetModuleFileNameW( NULL, szPath, MAX_PATH );
+	std::string path = ghc::filesystem::path{ szPath }.parent_path().string();
+
+	for (const auto & entry : ghc::filesystem::directory_iterator(path))
+	{
+		if (entry.path().string().find("dojo-") != std::string::npos)
+			versions.push_back(entry.path().string());
+	}
+
+	return versions;
+}
+
+// switches active version of flycast dojo to specified tag
+void DojoFile::SwitchVersion(std::string tag_name)
+{
+	switch_started = true;
+	status_text = "Switching active version to " + tag_name;
+	std::string filename = "flycast-" + tag_name + ".zip";
+	auto dirname = stringfix::remove_extension(filename);
+	safe_create_dir(dirname.c_str());
+	Unzip(filename);
+	OverwriteDataFolder("flycast-" + tag_name);
+	CopyNewFlycast("flycast-" + tag_name);
+
+	status_text = "Version switch complete.\nPlease restart Flycast Dojo to use new version.";
 
 	ghc::filesystem::remove_all(dirname);
 }

@@ -480,6 +480,45 @@ void GuiSettings::settings_body_about(ImVec2 normal_padding)
 
 		dojo_gui.update_action();
 	}
+
+	if (ImGui::CollapsingHeader("Switch Version", ImGuiTreeNodeFlags_None))
+	{
+		static int switch_current_idx = 0;
+
+		if (dojo_file.versions.size() == 0)
+		{
+			dojo_file.versions = dojo_file.ListVersions();
+
+		}
+		if (dojo_file.versions.size() > 0)
+		{
+			if(ImGui::BeginCombo("Downloaded Versions", dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx)).c_str(), 0)) {
+			    for (int i = 0; i < dojo_file.versions.size(); ++i) {
+			        const bool isSelected = (switch_current_idx == i);
+			        if (ImGui::Selectable(dojo_file.ExtractTag(dojo_file.versions[i]).c_str(), isSelected)) {
+			            switch_current_idx = i;
+			        }
+
+			        if (isSelected) {
+			            ImGui::SetItemDefaultFocus();
+			        }
+			    }
+			    ImGui::EndCombo();
+			}
+
+			if (ImGui::Button("Switch Version##btn"))
+			{
+				dojo_file.switch_version = dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx));
+				ImGui::OpenPopup("Switch?");
+			}
+		}
+		else
+		{
+			ImGui::Text("No other Flycast Dojo versions found.\nRun update or drop release package in your program directory.");
+		}
+
+		dojo_gui.switch_action();
+	}
 #endif
 	header("Platform");
 	{

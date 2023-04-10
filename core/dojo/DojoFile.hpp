@@ -83,6 +83,11 @@ public:
 	std::string GetEntryFilename(std::string entry_name);
 	std::map<std::string, std::string> GetFileResourceLinks(std::string file_path);
 
+	std::string ExtractTag(std::string path);
+	std::vector<std::string> ListVersions();
+	void SwitchVersion(std::string tag_name);
+	std::string switch_version = "";
+
 	std::unordered_map<std::string, std::string> game_descriptions;
 
 	std::string status_text = "Idle";
@@ -95,6 +100,9 @@ public:
 	bool save_download_started;
 	bool save_download_ended;
 	std::tuple<std::string, std::string> tag_download;
+
+	bool start_switch;
+	bool switch_started;
 
 	size_t total_size;
 	size_t downloaded_size;
@@ -111,6 +119,8 @@ public:
 	void RefreshFileDefinitions();
 
 	void WriteStringToOut(std::string name, std::string contents);
+
+	std::vector<std::string> versions;
 };
 
 extern DojoFile dojo_file;

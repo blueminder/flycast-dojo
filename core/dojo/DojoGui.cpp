@@ -2285,7 +2285,53 @@ void DojoGui::update_action()
 		});
 		t.detach();
 	}
+}
 
+void DojoGui::switch_action()
+{
+	if (ImGui::BeginPopupModal("Switch?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		if (strcmp(dojo_file.switch_version.data(), GIT_VERSION) != 0)
+		{
+			std::string prompt = "Would you like to switch to version " + dojo_file.switch_version + "?";
+			ImGui::Text(prompt.c_str());
+
+			if (ImGui::BeginPopupModal("Switch", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				ImGui::TextUnformatted(dojo_file.status_text.data());
+				if (strcmp(dojo_file.status_text.data(), "Version switch complete.\nPlease restart Flycast Dojo to use new version.") == 0)
+				{
+					if (ImGui::Button("Exit"))
+					{
+						exit(0);
+					}
+				}
+				ImGui::EndPopup();
+			}
+
+			if (ImGui::Button("Switch"))
+			{
+				ImGui::OpenPopup("Switch");
+				dojo_file.start_switch = true;
+			}
+			ImGui::SameLine();
+		}
+
+		if (ImGui::Button("Close"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (dojo_file.start_switch && !dojo_file.switch_started)
+	{
+		std::thread t([&]() {
+			dojo_file.SwitchVersion(dojo_file.switch_version);
+		});
+		t.detach();
+	}
 }
 
 void TextCenter(std::string text)
