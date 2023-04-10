@@ -431,95 +431,6 @@ void GuiSettings::settings_body_about(ImVec2 normal_padding)
 		ImGui::Text("Build Date: %s", BUILD_DATE);
 	}
 	ImGui::Spacing();
-#ifdef _WIN32
-	header("Update");
-	{
-		static int channel_current_idx = 0;
-		const char* channels[] = { "Stable", "Preview" };
-
-		update_channel = config::UpdateChannel.get();
-		if (update_channel == "stable")
-			channel_current_idx = 0;
-		else if (update_channel == "preview")
-			channel_current_idx = 1;
-
-		if(ImGui::Combo("Update Channel", &channel_current_idx, channels, IM_ARRAYSIZE(channels)))
-		{
-			latest = "";
-			update_channel = channels[channel_current_idx];
-			update_channel[0] = tolower(update_channel[0]);
-
-			config::UpdateChannel = update_channel;
-		}
-
-		if (ImGui::Button("Check for Latest Version"))
-		{
-			dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
-			latest = std::get<0>(dojo_file.tag_download);
-		}
-
-		if (latest.size() > 0)
-		{
-			ImGui::Text("Latest %s Release: %s", channels[channel_current_idx], latest.c_str());
-
-			char buffer[40] = { 0 };
-			snprintf(buffer, 40, "%s", GIT_VERSION);
-			if(strcmp(buffer, latest.c_str()) != 0)
-			{
-				if (ImGui::Button("Update##btn"))
-				{
-					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
-					ImGui::OpenPopup("Update?");
-				}
-			}
-			else
-			{
-				ImGui::TextColored(ImVec4(0, 128, 0, 1), "You are already on the latest version.");
-			}
-		}
-
-		dojo_gui.update_action();
-	}
-
-	if (ImGui::CollapsingHeader("Switch Version", ImGuiTreeNodeFlags_None))
-	{
-		static int switch_current_idx = 0;
-
-		if (dojo_file.versions.size() == 0)
-		{
-			dojo_file.versions = dojo_file.ListVersions();
-
-		}
-		if (dojo_file.versions.size() > 0)
-		{
-			if(ImGui::BeginCombo("Downloaded Versions", dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx)).c_str(), 0)) {
-			    for (int i = 0; i < dojo_file.versions.size(); ++i) {
-			        const bool isSelected = (switch_current_idx == i);
-			        if (ImGui::Selectable(dojo_file.ExtractTag(dojo_file.versions[i]).c_str(), isSelected)) {
-			            switch_current_idx = i;
-			        }
-
-			        if (isSelected) {
-			            ImGui::SetItemDefaultFocus();
-			        }
-			    }
-			    ImGui::EndCombo();
-			}
-
-			if (ImGui::Button("Switch Version##btn"))
-			{
-				dojo_file.switch_version = dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx));
-				ImGui::OpenPopup("Switch?");
-			}
-		}
-		else
-		{
-			ImGui::Text("No other Flycast Dojo versions found.\nRun update or drop release package in your program directory.");
-		}
-
-		dojo_gui.switch_action();
-	}
-#endif
 	header("Platform");
 	{
 		ImGui::Text("CPU: %s",
@@ -574,7 +485,6 @@ void GuiSettings::settings_body_about(ImVec2 normal_padding)
 		header("DirectX");
 	ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 	ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
-
 	ImGui::PopStyleVar();
 }
 
@@ -633,6 +543,101 @@ void GuiSettings::settings_body_credits(ImVec2 normal_padding)
 	}
 
 	ImGui::PopStyleVar();
+}
+
+void GuiSettings::settings_body_update(ImVec2 normal_padding)
+{
+#ifdef _WIN32
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	header("Update");
+	{
+		static int channel_current_idx = 0;
+		const char* channels[] = { "Stable", "Preview" };
+
+		update_channel = config::UpdateChannel.get();
+		if (update_channel == "stable")
+			channel_current_idx = 0;
+		else if (update_channel == "preview")
+			channel_current_idx = 1;
+
+		if(ImGui::Combo("Update Channel", &channel_current_idx, channels, IM_ARRAYSIZE(channels)))
+		{
+			latest = "";
+			update_channel = channels[channel_current_idx];
+			update_channel[0] = tolower(update_channel[0]);
+
+			config::UpdateChannel = update_channel;
+		}
+
+		if (ImGui::Button("Check for Latest Version"))
+		{
+			dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
+			latest = std::get<0>(dojo_file.tag_download);
+		}
+
+		if (latest.size() > 0)
+		{
+			ImGui::Text("Latest %s Release: %s", channels[channel_current_idx], latest.c_str());
+
+			char buffer[40] = { 0 };
+			snprintf(buffer, 40, "%s", GIT_VERSION);
+			if(strcmp(buffer, latest.c_str()) != 0)
+			{
+				if (ImGui::Button("Update##btn"))
+				{
+					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
+					ImGui::OpenPopup("Update?");
+				}
+			}
+			else
+			{
+				ImGui::TextColored(ImVec4(0, 128, 0, 1), "You are already on the latest version.");
+			}
+		}
+
+		dojo_gui.update_action();
+	}
+
+	header("Switch Version");
+	{
+		static int switch_current_idx = 0;
+
+		if (dojo_file.versions.size() == 0)
+		{
+			dojo_file.versions = dojo_file.ListVersions();
+
+		}
+		if (dojo_file.versions.size() > 0)
+		{
+			if(ImGui::BeginCombo("Downloaded Versions", dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx)).c_str(), 0)) {
+			    for (int i = 0; i < dojo_file.versions.size(); ++i) {
+			        const bool isSelected = (switch_current_idx == i);
+			        if (ImGui::Selectable(dojo_file.ExtractTag(dojo_file.versions[i]).c_str(), isSelected)) {
+			            switch_current_idx = i;
+			        }
+
+			        if (isSelected) {
+			            ImGui::SetItemDefaultFocus();
+			        }
+			    }
+			    ImGui::EndCombo();
+			}
+
+			if (ImGui::Button("Switch Version##btn"))
+			{
+				dojo_file.switch_version = dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx));
+				ImGui::OpenPopup("Switch?");
+			}
+		}
+		else
+		{
+			ImGui::Text("No other Flycast Dojo versions found.\nRun update or drop release package in your program directory.");
+		}
+
+		dojo_gui.switch_action();
+	}
+	ImGui::PopStyleVar();
+#endif
 }
 
 void GuiSettings::settings_body_video(ImVec2 normal_padding)

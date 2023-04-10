@@ -2289,7 +2289,11 @@ static void gui_display_settings()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
+#ifdef _WIN32
+	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About", "Update", "Credits" };
+#else
 	std::vector<std::string> sections = { "General", "Controls", "Video", "Audio", "Netplay", "Replays", "Training", "Advanced", "About", "Credits" };
+#endif
 
     static int selected = 0;
 
@@ -2392,6 +2396,11 @@ static void gui_display_settings()
 
 	if (sections[selected] == "About")
 		gui_settings.settings_body_about(normal_padding);
+
+#ifdef _WIN32
+	if (sections[selected] == "Update")
+		gui_settings.settings_body_update(normal_padding);
+#endif
 
 	if (sections[selected] == "Credits")
 		gui_settings.settings_body_credits(normal_padding);
