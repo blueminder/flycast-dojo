@@ -2227,6 +2227,8 @@ void DojoGui::insert_training_tab(ImVec2 normal_padding)
 
 void DojoGui::update_action()
 {
+	bool download_only = false;
+
 	if (ImGui::BeginPopupModal("Update?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		std::string tag_name;
@@ -2272,6 +2274,64 @@ void DojoGui::update_action()
 
 		if (ImGui::Button("Close"))
 		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Download?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		std::string tag_name;
+		std::string download_url;
+
+		std::tie(tag_name, download_url) = dojo_file.tag_download;
+
+		std::string prompt = "Would you like to download version " + tag_name + "?";
+
+		if (ImGui::BeginPopupModal("Download", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			ImGui::TextUnformatted(dojo_file.status_text.data());
+			if (strcmp(dojo_file.status_text.data(), "Download complete.\nTo change to this version, use the 'Switch Version' menu.") == 0)
+			{
+					ImGui::CloseCurrentPopup();
+			}
+			else
+			{
+				float progress 	= float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+				char buf[32];
+				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+			}
+			ImGui::EndPopup();
+		}
+
+		if (strcmp(dojo_file.status_text.data(), "Download complete.\nTo change to this version, use the 'Switch Version' menu.") == 0)
+		{
+			dojo_file.versions = dojo_file.ListVersions();
+			prompt = dojo_file.status_text;
+		}
+
+		ImGui::Text(prompt.c_str());
+
+		if (!dojo_file.start_update)
+		{
+			if (ImGui::Button("Download##btn"))
+			{
+				dojo_file.download_only = true;
+				dojo_file.start_update = true;
+				ImGui::OpenPopup("Download");
+			}
+
+			ImGui::SameLine();
+		}
+
+		if (ImGui::Button("Close"))
+		{
+			dojo_file.start_update = false;
+			dojo_file.update_started = false;
+			dojo_file.download_only = false;
+			dojo_file.status_text = "";
 			ImGui::CloseCurrentPopup();
 		}
 

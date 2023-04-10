@@ -549,7 +549,7 @@ void GuiSettings::settings_body_update(ImVec2 normal_padding)
 {
 #ifdef _WIN32
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-	header("Update");
+	//header("Update");
 	{
 		static int channel_current_idx = 0;
 		const char* channels[] = { "Stable", "Preview" };
@@ -583,7 +583,15 @@ void GuiSettings::settings_body_update(ImVec2 normal_padding)
 			snprintf(buffer, 40, "%s", GIT_VERSION);
 			if(strcmp(buffer, latest.c_str()) != 0)
 			{
-				if (ImGui::Button("Update##btn"))
+				if (ImGui::Button("Download"))
+				{
+					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
+					ImGui::OpenPopup("Download?");
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button("Download & Update"))
 				{
 					dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(update_channel);
 					ImGui::OpenPopup("Update?");
@@ -605,8 +613,8 @@ void GuiSettings::settings_body_update(ImVec2 normal_padding)
 		if (dojo_file.versions.size() == 0)
 		{
 			dojo_file.versions = dojo_file.ListVersions();
-
 		}
+
 		if (dojo_file.versions.size() > 0)
 		{
 			if(ImGui::BeginCombo("Downloaded Versions", dojo_file.ExtractTag(dojo_file.versions.at(switch_current_idx)).c_str(), 0)) {
@@ -631,7 +639,19 @@ void GuiSettings::settings_body_update(ImVec2 normal_padding)
 		}
 		else
 		{
-			ImGui::Text("No other Flycast Dojo versions found.\nRun update or drop release package in your program directory.");
+			ImGui::Text("No other Flycast Dojo versions found.\n\nYou can either:\n1. Download from an update channel above.\n2. Drop a release package into your program directory.");
+			std::string releases_url = "https://github.com/blueminder/flycast-dojo/releases";
+			if (ImGui::Button("GitHub Releases"))
+				ShellExecute(0, 0, releases_url.c_str(), 0, 0 , SW_SHOW );
+
+			ImGui::SameLine();
+
+			wchar_t szPath[MAX_PATH];
+			GetModuleFileNameW( NULL, szPath, MAX_PATH );
+			std::string path = ghc::filesystem::path{ szPath }.parent_path().string();
+
+			if (ImGui::Button("Open Program Directory"))
+				ShellExecute(0, "open", path.c_str(), 0, 0 , SW_SHOW );
 		}
 
 		dojo_gui.switch_action();

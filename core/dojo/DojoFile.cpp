@@ -947,23 +947,31 @@ void DojoFile::Update()
 	update_started = true;
 	auto tag_name = std::get<0>(tag_download);
 	auto download_url = std::get<1>(tag_download);
-	status_text = "Downloading Latest Update";
+	status_text = "Downloading " + tag_name;
 	std::string filename = dojo_file.DownloadFile(download_url, "");
-	auto dirname = stringfix::remove_extension(filename);
-	safe_create_dir(dirname.c_str());
-	Unzip(filename);
-	OverwriteDataFolder("flycast-" + tag_name);
-	CopyNewFlycast("flycast-" + tag_name);
 
-	status_text = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+	if (download_only)
+	{
+		status_text = "Download complete.\nTo change to this version, use the 'Switch Version' menu.";
+	}
+	else
+	{
+		auto dirname = stringfix::remove_extension(filename);
+		safe_create_dir(dirname.c_str());
+		Unzip(filename);
+		OverwriteDataFolder("flycast-" + tag_name);
+		CopyNewFlycast("flycast-" + tag_name);
 
-	ghc::filesystem::remove_all(dirname);
+		status_text = "Update complete.\nPlease restart Flycast Dojo to use new version.";
+		ghc::filesystem::remove_all(dirname);
+	}
 }
 
 // extracts download tag from release zip file names
 std::string DojoFile::ExtractTag(std::string path)
 {
-	std::string extracted = path.substr(path.find("dojo-"));
+	std::string extracted = path.substr(path.find_last_of("/\\") + 1);
+	extracted = extracted.substr(extracted.find("dojo-"));
 	return extracted.substr(0, extracted.find(".zip"));
 }
 
@@ -971,17 +979,17 @@ std::string DojoFile::ExtractTag(std::string path)
 std::vector<std::string> DojoFile::ListVersions()
 {
 	std::vector<std::string> versions;
-
+#ifdef _WIN32
 	wchar_t szPath[MAX_PATH];
 	GetModuleFileNameW( NULL, szPath, MAX_PATH );
 	std::string path = ghc::filesystem::path{ szPath }.parent_path().string();
 
 	for (const auto & entry : ghc::filesystem::directory_iterator(path))
 	{
-		if (entry.path().string().find("dojo-") != std::string::npos)
-			versions.push_back(entry.path().string());
+		if (entry.path().filename().string().find("dojo-") != std::string::npos)
+			versions.push_back(entry.path().filename().string());
 	}
-
+#endif
 	return versions;
 }
 
