@@ -193,7 +193,8 @@ std::string find_user_data_dir()
 			if (count != -1)
 				root_path = ghc::filesystem::path(result).parent_path().string() + "/";
 			// Copy shared data to local folder
-			ghc::filesystem::copy(root_path + "../share/flycast-dojo", datapath, ghc::filesystem::copy_options::recursive);
+			if (ghc::filesystem::exists(root_path + "../share/flycast-dojo"))
+				ghc::filesystem::copy(root_path + "../share/flycast-dojo", datapath, ghc::filesystem::copy_options::recursive);
 #endif
 		}
 		if (flycast::stat(rompath.c_str(), &info) != 0 || (info.st_mode & S_IFDIR) == 0)
@@ -220,7 +221,8 @@ std::string find_user_data_dir()
 			if (count != -1)
 				root_path = ghc::filesystem::path(result).parent_path().string() + "/";
 			// Copy shared data to local folder
-			ghc::filesystem::copy(root_path + "../share/flycast-dojo", fullpath, ghc::filesystem::copy_options::recursive);
+			if (ghc::filesystem::exists(root_path + "../share/flycast-dojo"))
+				ghc::filesystem::copy(root_path + "../share/flycast-dojo", fullpath, ghc::filesystem::copy_options::recursive);
 #endif
 		}
 

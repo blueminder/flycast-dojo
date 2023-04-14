@@ -1,0 +1,108 @@
+.\" flycast-dojo.1:
+
+.TH  "flycast-dojo" "1" "November 21, 2020" "FLYCAST" "Flycast"
+
+.SH NAME
+
+flycast-dojo \- The Sega Dreamcast, Atomiswave and Naomi emulator.
+
+.SH SYNOPSIS
+
+\fBflycast-dojo\fR [OPTIONS]... [IMAGE FILE]
+
+.SH "DESCRIPTION"
+
+\fBflycast-dojo\fR is a fork of Flycast, a multiplatform Sega Dreamcast, Naomi and Atomiswave emulator. Intended for netplay, game training, and online tournament play.
+
+.SH "EXAMPLE COMMANDLINE"
+
+.TP
+\fBNo command line options will start flycast-dojo and load all values from the config file.\fR
+flycast-dojo
+
+.TP
+\fBOverride the image specified in the config file to load a specific image.\fR
+flycast-dojo /path/to/your/image.gdi
+
+.TP
+\fBStart flycast-dojo in full screen.\fR
+flycast-dojo -config window:fullscreen=yes
+
+.SH "CONFIG FILE"
+
+.TP
+The config file for \fBflycast-dojo\fR can be found at:
+
+.IP
+~/.config/flycast-dojo/emu.cfg
+.LP
+
+.SH "VMU SAVE FILE"
+
+.TP
+The VMU save files can be found at ~/.local/share/flycast-dojo/, by default \fBflycast\fR will create two VMU files for the first controller:
+
+.IP
+~/.local/share/flycast-dojo/vmu_save_A1.bin
+.br
+~/.local/share/flycast-dojo/vmu_save_A2.bin
+.LP
+
+.SH "BIOS AND FLASH ROMS"
+
+.TP
+\fBflycast-dojo\fR needs the original Atomiswave or Naomi BIOS files. The Dreamcast BIOS isn't needed in most cases but is recommended. For copyright reasons it is not possible to distribute them bundled with \fBflycast\fR, so you have to dump them from your own Dreamcast. \fBflycast\fR will look for these files in:
+
+.IP
+~/.local/share/flycast-dojo/data/dc_boot.bin
+.br
+~/.local/share/flycast-dojo/data/naomi.zip
+.br
+~/.local/share/flycast-dojo/data/awbios.zip
+.LP
+
+.SH "CONTROLS"
+
+.TP
+\fBflycast-dojo\fR uses the kernel event devices for capturing input. You can define the evdev device id in the config file:
+.IP
+[input]
+.br
+evdev_device_id_1 = X
+.br
+evdev_mapping_1 = my_mapping.cfg
+.LP
+
+If your version of \fBflycast-dojo\fR is compiled against X11, you might want to disable the built-in X11 keyboard support as this can interfere if your controller is detected as a keyboard:
+.IP
+[input]
+.br
+enable_x11_keyboard = -1
+.LP
+
+.SH "GENERAL OPTIONS"
+
+.TP
+\fB-config section:option=value\fR
+Temporarily override a value of the config file.
+
+.TP
+\fB[IMAGE FILE]\fR
+Load a specific image file.
+
+Although \fBflycast-dojo\fR supports images in GDI, CHD, CUE and CDI format, you should avoid CDI images since they often have issues.
+
+If no image is given on the command line, flycast-dojo will display the list of available content.
+
+.SH "AUTHOR"
+
+.TP
+\fBflycast-dojo\fR is developed by a number of people. A list of contributors can be obtained at:
+\fIhttps://github.com/blueminder/flycast-dojo/graphs/contributors\fP
+
+.TP
+Head over to flycast-dojo's git repository if you want to contibute:
+\fIhttps://github.com/blueminder/flycast-dojo\fP
+
+.TP
+This is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License (Version 2).

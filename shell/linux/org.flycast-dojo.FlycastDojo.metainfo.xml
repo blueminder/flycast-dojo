@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.flycast-dojo.FlycastDojo</id>
+  <name>Flycast Dojo</name>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0</project_license>
+  <summary>A fork of Flycast, a multiplatform Sega Dreamcast, Naomi and Atomiswave emulator. Intended for netplay, game training, and online tournament play.</summary>
+  <description>
+    <p></p>
+  </description>
+  <content_rating type="oars-1.1" />
+  <launchable type="desktop-id">flycast-dojo.desktop</launchable>
+  <provides>
+    <binary>flycast-dojo</binary>
+  </provides>
+  <screenshots>
+	  <screenshot type="default"><image>https://raw.githubusercontent.com/blueminder/flycast-dojo/master/shell/imgs/screenshot1.png</image></screenshot>
+    <screenshot><image>https://raw.githubusercontent.com/blueminder/flycast-dojo/master/shell/imgs/screenshot2.png</image></screenshot>
+    <screenshot><image>https://raw.githubusercontent.com/blueminder/flycast-dojo/master/shell/imgs/screenshot3.png</image></screenshot>
+    <screenshot><image>https://raw.githubusercontent.com/blueminder/flycast-dojo/master/shell/imgs/screenshot4.jpg</image></screenshot>
+  </screenshots>
+  <categories>
+    <category>Game</category>
+    <category>Emulator</category>
+  </categories>
+  <url type="homepage">https://github.com/blueminder/flycast-dojo</url>
+  <url type="bugtracker">https://github.com/blueminder/flycast-dojo/issues</url>
+  <url type="help">https://dojo-project.gitbook.io/flycast-dojo</url>
+  <url type="faq">https://dojo-project.gitbook.io/flycast-dojo/overview/frequently-asked-questions</url>
+  <developer_name>blueminder</developer_name>
+  <releases>
+    <release date="2023-04-15" version="nightly" />
+  </releases>
+</component>

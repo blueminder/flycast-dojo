@@ -102,8 +102,8 @@ if [ ! -f "$OUTDIR/usr/optional/checkrt" ]; then
 fi
 "$OUTDIR/usr/optional/checkrt" --copy-libraries
 
-cp -a "$ARTDIR/flycast" "$OUTDIR/usr/bin"
-patchelf --set-rpath '$ORIGIN/../lib' "$OUTDIR/usr/bin/flycast"
+cp -a "$ARTDIR/flycast-dojo" "$OUTDIR/usr/bin/flycast-dojo"
+patchelf --set-rpath '$ORIGIN/../lib' "$OUTDIR/usr/bin/flycast-dojo"
 
 echo "Copying system shared libraries"
 for lib in "${SHLIBS[@]}"; do
@@ -141,7 +141,7 @@ mv flycast-netplay-nvmem-master/* $SHAREDIR
 rm -rf flycast-netplay-nvmem-master
 cp flycast_roms.json $SHAREDIR
 
-cp -a "$SRCDIR/shell/linux/flycast.desktop" "$SRCDIR/shell/linux/dojo.png" "$OUTDIR"
+cp -a "$SRCDIR/shell/linux/flycast-dojo.desktop" "$SRCDIR/shell/linux/flycast-dojo.png" "$OUTDIR"
 
 echo "Creating AppRun..."
 cat > "$OUTDIR/AppRun" << EOF
@@ -157,7 +157,7 @@ if [ -n "\$extra_libs" ]; then
 		export LD_PRELOAD="\$APPDIR/usr/optional/exec.so:\${LD_PRELOAD}"
 	fi
 fi
-exec "\$APPDIR/usr/bin/flycast" "\$@"
+exec "\$APPDIR/usr/bin/flycast-dojo" "\$@"
 EOF
 chmod +x "$OUTDIR/AppRun"
 

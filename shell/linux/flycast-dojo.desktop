@@ -16,8 +16,8 @@ Comment[pt]=Jogue seus jogos favoritos Dreamcast no seu PC
 Comment[it]=Gioca i tuoi giochi preferiti Dreamcast sul PC
 Comment[gr]=Παίξτε τα αγαπημένα σας παιχνίδια Dreamcast στο PC σας
 Comment[ru]=Играйте в любимые игры Dreamcast на вашем компьютере
-Exec=sh -c "FLYCAST_ROOT\=\$HOME/.local/share/flycast-dojo flycast %f"
-Icon=dojo
+Exec=flycast-dojo %f
+Icon=flycast-dojo
 Terminal=false
 Type=Application
 StartupNotify=false

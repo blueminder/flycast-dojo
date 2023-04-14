@@ -23,7 +23,7 @@ endif()
 if(LIBRETRO)
 	project(flycast_libretro)
 else()
-	project(flycast)
+	project(flycast-dojo)
 endif()
 
 set(USE_HOST_SDL_DEFAULT OFF)
@@ -1745,7 +1745,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 	install(FILES shell/linux/${PROJECT_NAME}.png
 		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pixmaps"
 	)
-	install(FILES shell/linux/org.${PROJECT_NAME}.Flycast.metainfo.xml
+	install(FILES shell/linux/org.${PROJECT_NAME}.FlycastDojo.metainfo.xml
 		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
 	)
 	foreach(size 16 32 64 128 256 512)

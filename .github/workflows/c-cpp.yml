@@ -117,21 +117,21 @@ jobs:
       - name: Dump symbols (linux)
         shell: bash
         run: |
-          dump_syms artifact/bin/flycast > flycast.elf.sym 2>/dev/null
-          BUILD_ID=`head -1 flycast.elf.sym | awk '{ print $4 }'`
-          mkdir -p symbols/flycast.elf/$BUILD_ID
-          mv flycast.elf.sym symbols/flycast.elf/$BUILD_ID
-          strip artifact/bin/flycast
+          dump_syms artifact/bin/flycast-dojo > flycast-dojo.elf.sym 2>/dev/null
+          BUILD_ID=`head -1 flycast-dojo.elf.sym | awk '{ print $4 }'`
+          mkdir -p symbols/flycast-dojo.elf/$BUILD_ID
+          mv flycast-dojo.elf.sym symbols/flycast-dojo.elf/$BUILD_ID
+          strip artifact/bin/flycast-dojo
         if: matrix.config.os == 'ubuntu-22.04'
 
       - name: Dump symbols (windows)
         shell: msys2 {0}
         run: |
-          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
-          BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
-          mkdir -p symbols/flycast.exe/$BUILD_ID
-          mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
-          strip artifact/bin/flycast.exe
+          core/deps/breakpad/bin/dump_syms artifact/bin/flycast-dojo.exe > flycast-dojo.exe.sym 2>/dev/null
+          BUILD_ID=`head -1 flycast-dojo.exe.sym | awk '{ print $4 }'`
+          mkdir -p symbols/flycast-dojo.exe/$BUILD_ID
+          mv flycast-dojo.exe.sym symbols/flycast-dojo.exe/$BUILD_ID
+          strip artifact/bin/flycast-dojo.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - name: Build breakpad (linux)
@@ -145,17 +145,17 @@ jobs:
       - name: Dump symbols and make AppImage (linux)
         run: |
           mkdir -p symbols
-          dump_syms artifact/bin/flycast > symbols/flycast.sym 2>/dev/null
-          strip artifact/bin/flycast
+          dump_syms artifact/bin/flycast-dojo > symbols/flycast-dojo.sym 2>/dev/null
+          strip artifact/bin/flycast-dojo
           shell/linux/make-appimage.sh . artifact/bin appimage
           mv flycast-dojo-x86_64.AppImage artifact/bin
-          rm artifact/bin/flycast
+          rm artifact/bin/flycast-dojo
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Package app (macos)
         run: |
           cd artifact/bin
-          zip -rm flycast.app.zip "Flycast Dojo.app"
+          zip -rm flycast-dojo.app.zip "Flycast Dojo.app"
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
@@ -164,7 +164,7 @@ jobs:
           CURRENT_VERSION=flycast-`cat core/version.h | awk 'NR==3 { print $3 }' | tr -d '"' | tr -d '\r'`
           cd artifact/bin
           mkdir $CURRENT_VERSION
-          mv flycast.exe $CURRENT_VERSION/flycast.exe
+          mv flycast-dojo.exe $CURRENT_VERSION/flycast.exe
           cd $CURRENT_VERSION
           cp /mingw64/bin/{zlib1.dll,libssl-3-x64.dll,libcrypto-3-x64.dll} .
           wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
