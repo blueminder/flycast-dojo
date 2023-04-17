@@ -185,17 +185,6 @@ std::string find_user_data_dir()
 		{
 			// Create local data folder
 			flycast::mkdir(datapath.c_str(), 0755);
-
-#ifdef __LINUX__
-			std::string root_path;
-			char result[PATH_MAX];
-			ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-			if (count != -1)
-				root_path = ghc::filesystem::path(result).parent_path().string() + "/";
-			// Copy shared data to local folder
-			if (ghc::filesystem::exists(root_path + "../share/flycast-dojo"))
-				ghc::filesystem::copy(root_path + "../share/flycast-dojo", datapath, ghc::filesystem::copy_options::recursive);
-#endif
 		}
 		if (flycast::stat(rompath.c_str(), &info) != 0 || (info.st_mode & S_IFDIR) == 0)
 		{
@@ -213,17 +202,6 @@ std::string find_user_data_dir()
 		{
 			// Create .local/share/flycast
 			flycast::mkdir(fullpath.c_str(), 0755);
-
-#ifdef __LINUX__
-			std::string root_path;
-			char result[PATH_MAX];
-			ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-			if (count != -1)
-				root_path = ghc::filesystem::path(result).parent_path().string() + "/";
-			// Copy shared data to local folder
-			if (ghc::filesystem::exists(root_path + "../share/flycast-dojo"))
-				ghc::filesystem::copy(root_path + "../share/flycast-dojo", fullpath, ghc::filesystem::copy_options::recursive);
-#endif
 		}
 
 		std::string rompath = fullpath + "/ROMs/";

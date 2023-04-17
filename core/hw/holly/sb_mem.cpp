@@ -194,7 +194,7 @@ static bool nvmem_load()
 		if (settings.platform.isConsole())
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin.net", "nvram");
 		else
-			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem.net");
+			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath(".nvmem.net"));
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 		fixUpDCFlash();
@@ -203,7 +203,7 @@ static bool nvmem_load()
 	
 		if (settings.platform.isAtomiswave())
 		{
-			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2.net");
+			sys_rom->Load(hostfs::getArcadeFlashPath(".nvmem2.net"));
 			if (config::GGPOEnable)
 				sys_nvmem->digest(settings.network.md5.nvmem2);
 		}
@@ -213,7 +213,7 @@ static bool nvmem_load()
 		if (settings.platform.isConsole())
 			rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 		else
-			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
+			rc = sys_nvmem->Load(hostfs::getArcadeFlashPath(".nvmem"));
 		if (!rc)
 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 		fixUpDCFlash();
@@ -222,7 +222,7 @@ static bool nvmem_load()
 	
 		if (settings.platform.isAtomiswave())
 		{
-			sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
+			sys_rom->Load(hostfs::getArcadeFlashPath(".nvmem2"));
 			if (config::GGPOEnable)
 				sys_nvmem->digest(settings.network.md5.nvmem2);
 		}

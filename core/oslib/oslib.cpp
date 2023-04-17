@@ -25,6 +25,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef __linux__
+#include "dojo/deps/filesystem.hpp"
+#endif
+
 namespace hostfs
 {
 
@@ -43,6 +47,35 @@ std::string getArcadeFlashPath()
 {
 	std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 	return get_game_save_prefix() + nvmemSuffix;
+}
+
+std::string getArcadeFlashPath(std::string suffix)
+{
+	std::string flashPath = get_game_save_prefix() + suffix;
+
+#ifdef __linux__
+	// copy shared flash memory if available
+	if (!file_exists(flashPath))
+	{
+		std::string filename = settings.content.path + suffix;
+		size_t lastindex = get_last_slash_pos(filename);
+		if (lastindex != std::string::npos)
+			filename = filename.substr(lastindex + 1);
+
+		ghc::filesystem::path root_path;
+		char result[PATH_MAX];
+		ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+		if (count != -1)
+			root_path = ghc::filesystem::path(result).parent_path().parent_path();
+
+		auto roFlashPath = root_path / "share" / "flycast-dojo" / filename;
+
+		if (file_exists(roFlashPath))
+			ghc::filesystem::copy(roFlashPath, flashPath);
+	}
+#endif
+
+	return flashPath;
 }
 
 std::string findFlash(const std::string& prefix, const std::string& names)
