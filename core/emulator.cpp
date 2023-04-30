@@ -276,7 +276,8 @@ static void loadSpecialSettings()
 	{
 		if (prod_id == "METAL SLUG 6"
 			|| prod_id == "HOKUTO NO KEN"
-			|| prod_id == "JINGI STORM THE ARCADE")
+			|| prod_id == "JINGI STORM THE ARCADE"
+			|| prod_id == "DEMOLISH FIST")
 		{
 			// enable audio sync for games with variable refresh rate
 			if (config::FixedFrequency == 1)
