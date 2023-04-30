@@ -1086,7 +1086,7 @@ void GuiSettings::settings_body_video(ImVec2 normal_padding)
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Geometry", ImGuiTreeNodeFlags_None))
 		{
-			OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+			OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
 						 "Stretch the screen horizontally");
 
 			OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
