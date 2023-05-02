@@ -2312,7 +2312,7 @@ void DojoGui::update_action()
 			prompt = dojo_file.status_text;
 		}
 
-		ImGui::Text(prompt.c_str());
+		ImGui::Text("%s", prompt.c_str());
 
 		if (!dojo_file.start_update)
 		{
@@ -2354,7 +2354,7 @@ void DojoGui::switch_action()
 		if (strcmp(dojo_file.switch_version.data(), GIT_VERSION) != 0)
 		{
 			std::string prompt = "Would you like to switch to version " + dojo_file.switch_version + "?";
-			ImGui::Text(prompt.c_str());
+			ImGui::Text("%s", prompt.c_str());
 
 			if (ImGui::BeginPopupModal("Switch", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 			{
