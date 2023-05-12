@@ -212,7 +212,7 @@ Option<bool> OutputStreamTxt("OutputStreamTxt", false, "dojo");
 OptionString UpdateChannel("UpdateChannel", "stable", "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
-Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", true, "input");
+Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", false, "input");
 
 
 #ifdef SUPPORT_DISPMANX
