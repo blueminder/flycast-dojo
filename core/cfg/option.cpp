@@ -213,7 +213,7 @@ OptionString UpdateChannel("UpdateChannel", "stable", "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", false, "input");
-
+Option<int> SOCDResolution ("SOCDResolution", 1);
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

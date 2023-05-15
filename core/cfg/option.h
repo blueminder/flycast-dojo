@@ -583,6 +583,7 @@ extern Option<bool> OutputStreamTxt;
 extern OptionString UpdateChannel;
 
 extern Option<bool> EnableDiagonalCorrection;
+extern Option<int> SOCDResolution;
 
 // Maple
 

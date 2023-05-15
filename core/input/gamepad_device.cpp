@@ -140,20 +140,37 @@ std::tuple<u32, u32> GamepadDevice::CorrectDiags(int port)
 	return std::tuple<u32, u32> { 0, 0 };
 }
 
+static inline void mutualExclusion(u32& keycode, u32 mask)
+{
+	if ((keycode & mask) == 0)
+		keycode |= mask;
+}
+
 void GamepadDevice::CorrectCardinals(int port)
 {
-	// X Axis SOCD behavior: last input
-	if ((kcode[port] & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == 0)
-	{
-		if ((kcode_prev[port] & DC_DPAD_LEFT) == 0)
-			kcode[port] |= DC_DPAD_LEFT;
-		else if ((kcode_prev[port] & DC_DPAD_RIGHT) == 0)
-			kcode[port] |= DC_DPAD_RIGHT;
-	}
+	if (config::SOCDResolution < 1 || config::SOCDResolution > 4)
+		config::SOCDResolution = 1;
 
-	// Y Axis SOCD behavior: hitbox default (up + down = up)
-	if ((kcode[port] & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
-		kcode[port] |= DC_DPAD_DOWN;
+	if (config::SOCDResolution == 4 ||
+		config::SOCDResolution == 1 && config::EnableDiagonalCorrection)
+	{
+		// last input
+		if ((kcode[port] & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == 0)
+		{
+			if ((kcode_prev[port] & DC_DPAD_LEFT) == 0)
+				kcode[port] |= DC_DPAD_LEFT;
+			else if ((kcode_prev[port] & DC_DPAD_RIGHT) == 0)
+				kcode[port] |= DC_DPAD_RIGHT;
+		}
+
+		if ((kcode[port] & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
+		{
+			if ((kcode_prev[port] & DC_DPAD_UP) == 0)
+				kcode[port] |= DC_DPAD_UP;
+			else if ((kcode_prev[port] & DC_DPAD_DOWN) == 0)
+				kcode[port] |= DC_DPAD_DOWN;
+		}
+	}
 }
 
 bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
@@ -179,9 +196,9 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (config::EnableDiagonalCorrection)
 			{
 				CorrectDiags(port);
-				CorrectCardinals(port);
-				kcode_prev[port] = kcode[port];
 			}
+			CorrectCardinals(port);
+			kcode_prev[port] = kcode[port];
 		}
 #ifdef TEST_AUTOMATION
 		if (record_input != NULL)

@@ -62,7 +62,17 @@ struct maple_sega_controller: maple_base
 
 	virtual u32 transform_kcode(u32 kcode)
 	{
-		if (!config::EnableDiagonalCorrection)
+		if (config::SOCDResolution < 1 || config::SOCDResolution > 4)
+			config::SOCDResolution = 1;
+
+		if (config::SOCDResolution == 2)
+		{
+			// all neutral
+			mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+			mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		}
+		else if (config::SOCDResolution == 3 ||
+			config::SOCDResolution == 1 && !config::EnableDiagonalCorrection)
 		{
 			// match hitbox SOCD behavior (up + down = up)
 			if ((kcode & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0)
@@ -237,11 +247,24 @@ struct maple_atomiswave_controller: maple_sega_controller
 
 	u32 transform_kcode(u32 kcode) override
 	{
-		if (!config::EnableDiagonalCorrection)
+		if (config::SOCDResolution < 1 || config::SOCDResolution > 4)
+			config::SOCDResolution = 1;
+
+		if (config::SOCDResolution == 2)
 		{
+			// all neutral
 			mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
 			mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		}
+		else if (config::SOCDResolution == 3 ||
+			config::SOCDResolution == 1 && !config::EnableDiagonalCorrection)
+		{
+			// match hitbox SOCD behavior (up + down = up)
+			if ((kcode & (AWAVE_UP_KEY | AWAVE_DOWN_KEY)) == 0)
+				kcode |= AWAVE_DOWN_KEY;
+			mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
+		}
+
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 

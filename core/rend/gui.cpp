@@ -2186,6 +2186,22 @@ static void settings_body_controls(ImVec2 normal_padding)
 #endif
 			OptionCheckbox("Enable Diagonal Correction", config::EnableDiagonalCorrection, "Smooths out transitions from detected diagonal inputs to adjacent directions. Ideal for keyboard players.");
 
+			if (config::SOCDResolution < 1 || config::SOCDResolution > 4)
+				config::SOCDResolution = 1;
+
+			ImGui::Text("SOCD Resolution:");
+			ImGui::SameLine();
+			ShowHelpMarker("Simultaneous Opposing Cardinal Direction Resolution");
+			ImGui::Columns(2, "socd", false);
+			OptionRadioButton("Auto##SOCD", config::SOCDResolution, 1, "Last Input w/ Diagonal Correction, Hitbox otherwise");
+			ImGui::NextColumn();
+			OptionRadioButton("Regular SOCD", config::SOCDResolution, 2, "U+D=N, L+R=N");
+			ImGui::NextColumn();
+			OptionRadioButton("Hitbox SOCD", config::SOCDResolution, 3, "U+D=U, L+R=N");
+			ImGui::NextColumn();
+			OptionRadioButton("Last Input Priority", config::SOCDResolution, 4, "Most recent direction overrides the first");
+			ImGui::Columns(1, nullptr, false);
+
 			ImGui::Spacing();
 			if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_None))
 		    {
