@@ -100,7 +100,7 @@ constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
 #pragma pack(push, 1)
 struct VerificationData
 {
-	const int protocol = 2;
+	const int protocol = 3;
 	u8 gameMD5[16] { };
 	u8 stateMD5[16] { };
 } ;
@@ -793,7 +793,7 @@ std::future<bool> startNetwork()
 			try {
 				config::GGPODelay = dojo.current_delay;
 				std::cout << "Server " << config::ActAsServer.get() << " " << config::NetworkServer.get() << std::endl;
-				std::cout << "GGPO Delay " << config::GGPODelay.get() << std::endl; 
+				std::cout << "GGPO Delay " << config::GGPODelay.get() << std::endl;
 				if (config::ActAsServer)
 					startSession(config::GGPOPort.get(), 0);
 				else
@@ -819,7 +819,7 @@ std::future<bool> startNetwork()
 				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
 				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
 				{
-					error_msg = "Peer verification failed.\n\nMake sure you have the same savestate as your opponent.\nIf in doubt, delete your existing one in the Test Game menu.\nA new one will be downloaded the next time you join a match.";
+					error_msg = "Peer verification failed.\n\nMake sure you have the same emulator version and savestate as your opponent.\n\nIf in doubt, delete your existing savestate in the Test Game menu. A new one will be downloaded the next time you join a match.";
 					gui_state = GuiState::Disconnected;
 					//throw FlycastException("Peer verification failed");
 				}
