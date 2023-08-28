@@ -117,7 +117,7 @@ static const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxMeshViewCountNV = */ 4,
     /* .maxDualSourceDrawBuffersEXT = */ 1,
 
-    /* .limits = */ {
+    /* .limits = */
         /* .nonInductiveForLoops = */ 1,
         /* .whileLoops = */ 1,
         /* .doWhileLoops = */ 1,
@@ -127,7 +127,7 @@ static const TBuiltInResource DefaultTBuiltInResource = {
         /* .generalSamplerIndexing = */ 1,
         /* .generalVariableIndexing = */ 1,
         /* .generalConstantMatrixVectorIndexing = */ 1,
-}};
+};
 
 int ShaderCompiler::initCount;
 

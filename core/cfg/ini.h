@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <map>
 #include <string>
+#include <stdint.h>
 
 namespace emucfg {
 

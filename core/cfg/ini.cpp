@@ -2,6 +2,7 @@
 #include "types.h"
 #include <sstream>
 #include "stdclass.h"
+#include <stdint.h>
 
 namespace emucfg {
 
