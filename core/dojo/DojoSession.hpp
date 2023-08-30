@@ -325,6 +325,15 @@ public:
 	std::vector<asio::ip::address> GetLocalInterfaces();
 
 	bool lobby_launch = false;
+
+	uint32_t p1_wins = 0;
+	uint32_t p2_wins = 0;
+
+	uint32_t current_p1_wins = 0;
+	uint32_t current_p2_wins = 0;
+
+	bool ScoreAvailable();
+	void UpdateScore();
 };
 
 extern DojoSession dojo;

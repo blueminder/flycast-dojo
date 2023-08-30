@@ -785,11 +785,16 @@ void gui_start_game(const std::string& path)
 	if (config::Transmitting)
 		dojo.StartTransmitterThread();
 
+	dojo.p1_wins = 0;
+	dojo.p2_wins = 0;
+
 	if (config::OutputStreamTxt)
 	{
 		dojo_file.WriteStringToOut("p1name", dojo.player_1);
 		dojo_file.WriteStringToOut("p2name", dojo.player_2);
 		dojo_file.WriteStringToOut("game", dojo.game_name);
+		dojo_file.WriteStringToOut("p1wins", std::to_string(dojo.p1_wins));
+		dojo_file.WriteStringToOut("p2wins", std::to_string(dojo.p2_wins));
 	}
 
 	gameLoader.load(path);

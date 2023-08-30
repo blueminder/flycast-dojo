@@ -1669,46 +1669,57 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 
 	if (dojo.player_1.length() > 1)
 	{
-		float font_size = ImGui::CalcTextSize(dojo.player_1.data()).x;
+		float font_size = ImGui::CalcTextSize(dojo.player_1.data()).x + 10;
 
-		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size + 20) / 2), 0));
+		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 4) - ((font_size + 25) / 2), 0));
 #if defined(__APPLE__) || defined(__ANDROID__)
-		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 42));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 42));
 #else
-		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 35));
 #endif
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#one", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10
+			font_size + (font_size / 2) + 5
 		);
 
 		ImGui::TextUnformatted(dojo.player_1.c_str());
+		if (dojo.ScoreAvailable())
+		{
+			ImGui::SameLine();
+			ImGui::TextUnformatted(std::to_string(dojo.p1_wins).c_str());
+		}
 
 		ImGui::End();
 	}
 
 	if (dojo.player_2.length() > 1)
 	{
-		float font_size = ImGui::CalcTextSize(dojo.player_2.data()).x;
+		float font_size = ImGui::CalcTextSize(dojo.player_2.data()).x + 10;
 
-		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size + 20) / 2), 0));
+		ImGui::SetNextWindowPos(ImVec2(((settings.display.width / 4) * 3) - ((font_size + 25) / 2), 0));
 #if defined(__APPLE__) || defined(__ANDROID__)
-		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 42));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 42));
 #else
-		ImGui::SetNextWindowSize(ImVec2(font_size + 20, 35));
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 35));
 #endif
 		ImGui::SetNextWindowBgAlpha(0.5f);
 		ImGui::Begin("#two", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 
 		ImGui::SameLine(
 			(ImGui::GetContentRegionAvail().x / 2) -
-			font_size + (font_size / 2) + 10
+			font_size + (font_size / 2) + 5
 		);
 
 		ImGui::TextUnformatted(dojo.player_2.c_str());
+		if (dojo.ScoreAvailable())
+		{
+			ImGui::SameLine();
+			ImGui::TextUnformatted(std::to_string(dojo.p2_wins).c_str());
+		}
+
 		ImGui::End();
 	}
 

@@ -1,6 +1,8 @@
 #include "DojoSession.hpp"
 #include <oslib/audiostream.h>
 #include <input/gamepad_device.h>
+#include "hw/sh4/sh4_mem.h"
+#include "dojo/DojoFile.hpp"
 
 DojoSession::DojoSession()
 {
@@ -918,6 +920,108 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 	}
 }
 
+bool DojoSession::ScoreAvailable()
+{
+	bool score_available = false;
+
+	std::string score_games[] =
+	{
+		"AKATSUKI BK AUSF. ACHSE",
+		"CAPCOM VS SNK  JAPAN",
+		"CAPCOM VS SNK 2  JAPAN",
+		"HOKUTO NO KEN",
+		"JINGI STORM THE ARCADE",
+		" POWER SMASH 2 -----------",
+		"THE KING OF FIGHTERS XI",
+		"The Rumble Fish 2",
+		"TOY FIGHTER",
+	};
+
+	for (auto it = std::begin(score_games); it != std::end(score_games); ++it)
+	{
+		if (settings.content.gameId.find(*it) != std::string::npos)
+		{
+			score_available = true;
+		}
+	}
+
+	return score_available;
+}
+
+void DojoSession::UpdateScore()
+{
+	if (ScoreAvailable())
+	{
+		uint32_t detected_p1_wins;
+		uint32_t detected_p2_wins;
+
+		if (settings.content.gameId == "AKATSUKI BK AUSF. ACHSE")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C19609C);
+			detected_p2_wins = ReadMem8_nommu(0x8C196388);
+		}
+		else if (settings.content.gameId == "CAPCOM VS SNK  JAPAN")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C2357A3);
+			detected_p2_wins = ReadMem8_nommu(0x8C235DAF);
+		}
+		else if (settings.content.gameId == "CAPCOM VS SNK 2  JAPAN")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C241D3F);
+			detected_p2_wins = ReadMem8_nommu(0x8C24230B);
+		}
+		else if (settings.content.gameId == "HOKUTO NO KEN")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C4939BE);
+			detected_p2_wins = ReadMem8_nommu(0x8C4939CA);
+		}
+		else if (settings.content.gameId == "JINGI STORM THE ARCADE")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C1C996C);
+			detected_p2_wins = ReadMem8_nommu(0x8C1C9970);
+		}
+		else if (settings.content.gameId == " POWER SMASH 2 -----------")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C23DE6C);
+			detected_p2_wins = ReadMem8_nommu(0x8C23DEE4);
+		}
+		else if (settings.content.gameId == "THE KING OF FIGHTERS XI")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C27CBB8);
+			detected_p2_wins = ReadMem8_nommu(0x8C27CDB0);
+		}
+		else if (settings.content.gameId == "The Rumble Fish 2")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C3A59B0);
+			detected_p2_wins = ReadMem8_nommu(0x8C3A59B4);
+		}
+		else if (settings.content.gameId == "TOY FIGHTER")
+		{
+			detected_p1_wins = ReadMem8_nommu(0x8C0F8BCC);
+			detected_p2_wins = ReadMem8_nommu(0x8C0F8BCD);
+		}
+
+		if (current_p1_wins + 1 == detected_p1_wins) {
+			NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
+			p1_wins++;
+
+			if (config::OutputStreamTxt)
+				dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
+		}
+
+		if (current_p2_wins + 1 == detected_p2_wins) {
+			NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
+			p2_wins++;
+
+			if (config::OutputStreamTxt)
+				dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+		}
+
+		current_p1_wins = detected_p1_wins;
+		current_p2_wins = detected_p2_wins;
+	}
+}
+
 void DojoSession::LoadReplayFile(std::string path)
 {
 	if (stringfix::get_extension(path) == "flyreplay")
@@ -1476,6 +1580,8 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 			AppendToReplayFile(p1_frame);
 			AppendToReplayFile(p2_frame);
 		}
+
+		UpdateScore();
 
 		if (settings.dojo.training)
 		{
