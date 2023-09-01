@@ -931,10 +931,12 @@ bool DojoSession::ScoreAvailable()
 		"CAPCOM VS SNK 2  JAPAN",
 		"HOKUTO NO KEN",
 		"JINGI STORM THE ARCADE",
+		"MOERO JUSTICE GAKUEN  JAPAN",
 		" POWER SMASH 2 -----------",
 		"THE KING OF FIGHTERS XI",
 		"The Rumble Fish 2",
 		"TOY FIGHTER",
+		"VF4 FINAL TUNED JAPAN",
 	};
 
 	for (auto it = std::begin(score_games); it != std::end(score_games); ++it)
@@ -954,6 +956,58 @@ void DojoSession::UpdateScore()
 	{
 		uint32_t detected_p1_wins;
 		uint32_t detected_p2_wins;
+
+		if (settings.content.gameId == "MOERO JUSTICE GAKUEN  JAPAN" ||
+			settings.content.gameId == "VF4 FINAL TUNED JAPAN")
+		{
+			uint32_t winning_streak;
+			uint32_t champion_player;
+
+			if (settings.content.gameId == "MOERO JUSTICE GAKUEN  JAPAN")
+			{
+				champion_player = ReadMem8_nommu(0x8C2EED95);
+				winning_streak = ReadMem8_nommu(0x8C2EED96);
+				NOTICE_LOG(NETWORK, "C %u, S %u", champion_player, winning_streak);
+			}
+			else if (settings.content.gameId == "VF4 FINAL TUNED JAPAN")
+			{
+				champion_player = ReadMem8_nommu(0x8C2925D4);
+				winning_streak = ReadMem8_nommu(0x8C2925DC);
+				NOTICE_LOG(NETWORK, "C %u, S %u", champion_player, winning_streak);
+			}
+
+			if (champion_player == 0)
+			{
+				detected_p1_wins = winning_streak;
+				detected_p2_wins = 0;
+			}
+			else if (champion_player == 1)
+			{
+				detected_p2_wins = winning_streak;
+				detected_p1_wins = 0;
+			}
+
+			if (current_p1_wins + 1 == detected_p1_wins) {
+				NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
+				p1_wins++;
+
+				if (config::OutputStreamTxt)
+					dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
+			}
+
+			if (current_p2_wins + 1 == detected_p2_wins) {
+				NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
+				p2_wins++;
+
+				if (config::OutputStreamTxt)
+					dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+			}
+
+			current_p1_wins = detected_p1_wins;
+			current_p2_wins = detected_p2_wins;
+
+			return;
+		}
 
 		if (settings.content.gameId == "AKATSUKI BK AUSF. ACHSE")
 		{
