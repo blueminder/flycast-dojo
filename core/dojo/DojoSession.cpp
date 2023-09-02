@@ -829,6 +829,47 @@ void DojoSession::AppendPlayerInfoToReplayFile()
 	fout.close();
 }
 
+
+void DojoSession::RegisterPlayerWin(int player)
+{
+	if (config::OutputStreamTxt)
+	{
+		if (player == 0)
+		{
+			NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
+			p1_wins++;
+			dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
+		}
+		else if (player == 1)
+		{
+			NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
+			p2_wins++;
+			dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+		}
+	}
+
+	if (config::RecordMatches && !PlayMatch)
+		AppendPlayerWinToReplay(player);
+
+	if (transmitter_started)
+		transmission_wins.push_back((u32)player);
+}
+
+void DojoSession::AppendPlayerWinToReplay(int player)
+{
+	std::ofstream fout(replay_filename,
+		std::ios::out | std::ios::binary | std::ios_base::app);
+
+	MessageWriter player_win;
+	player_win.AppendHeader(1, PLAYER_WIN);
+	player_win.AppendInt(player);
+
+	std::vector<unsigned char> message = player_win.Msg();
+
+	fout.write((const char*)player_win.Msg().data(), (std::streamsize)(player_win.GetSize() + (unsigned int)HEADER_LEN));
+	fout.close();
+}
+
 void DojoSession::AppendToReplayFile(std::string frame, int version)
 {
 	if (frame.size() == FRAME_SIZE)
@@ -997,19 +1038,11 @@ void DojoSession::UpdateScore()
 			}
 
 			if (current_p1_wins + 1 == detected_p1_wins) {
-				NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
-				p1_wins++;
-
-				if (config::OutputStreamTxt)
-					dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
+				RegisterPlayerWin(0);
 			}
 
 			if (current_p2_wins + 1 == detected_p2_wins) {
-				NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
-				p2_wins++;
-
-				if (config::OutputStreamTxt)
-					dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+				RegisterPlayerWin(1);
 			}
 
 			current_p1_wins = detected_p1_wins;
@@ -1073,19 +1106,11 @@ void DojoSession::UpdateScore()
 		}
 
 		if (current_p1_wins + 1 == detected_p1_wins) {
-			NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
-			p1_wins++;
-
-			if (config::OutputStreamTxt)
-				dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
+			RegisterPlayerWin(0);
 		}
 
 		if (current_p2_wins + 1 == detected_p2_wins) {
-			NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
-			p2_wins++;
-
-			if (config::OutputStreamTxt)
-				dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+			RegisterPlayerWin(1);
 		}
 
 		current_p1_wins = detected_p1_wins;
@@ -1240,7 +1265,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 				dojo.AddNetFrame(frame.data());
 				std::string added_frame_data = dojo.PrintFrameData("ADDED", (u8*)frame.data());
 
-				std::cout << added_frame_data << std::endl;
+				//std::cout << added_frame_data << std::endl;
 				dojo.last_received_frame = dojo.GetEffectiveFrameNumber((u8*)frame.data());
 
 				// buffer stream
@@ -1293,6 +1318,15 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 			}
 		}
 	}
+	else if (cmd == PLAYER_WIN)
+	{
+		u32 player = MessageReader::ReadPlayerWin(buffer, offset);
+
+		if (player == 0)
+			final_p1_wins++;
+		else if (player == 1)
+			final_p2_wins++;
+	}
 }
 
 void DojoSession::LoadReplayFileV1(std::string path)
@@ -1323,6 +1357,12 @@ void DojoSession::LoadReplayFileV1(std::string path)
 		offset = 0;
 
 		dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
+	}
+
+	if (final_p1_wins > 0 || final_p2_wins > 0)
+	{
+		std::cout << "Final P1 Score: " << final_p1_wins << std::endl;
+		std::cout << "Final P2 Score: " << final_p2_wins << std::endl;
 	}
 }
 
@@ -1527,6 +1567,20 @@ void DojoSession::transmitter_thread()
 					// (body_size % data_size == 0)
 					frame_msg.AppendInt(MAPLE_FRAME_SIZE);
 				}
+
+				while (transmission_wins.size() > 0)
+				{
+					unsigned int player = transmission_wins.front();
+
+					MessageWriter player_win;
+					player_win.AppendHeader(1, PLAYER_WIN);
+					player_win.AppendInt(player);
+
+					std::vector<unsigned char> message = player_win.Msg();
+					asio::write(socket, asio::buffer(message));
+
+					transmission_wins.pop_front();
+				}
 			}
 
 			if (transmitter_ended ||
@@ -1537,6 +1591,20 @@ void DojoSession::transmitter_thread()
 				{
 					message = frame_msg.Msg();
 					asio::write(socket, asio::buffer(message));
+				}
+
+				while (transmission_wins.size() > 0)
+				{
+					unsigned int player = transmission_wins.front();
+
+					MessageWriter player_win;
+					player_win.AppendHeader(1, PLAYER_WIN);
+					player_win.AppendInt(player);
+
+					std::vector<unsigned char> message = player_win.Msg();
+					asio::write(socket, asio::buffer(message));
+
+					transmission_wins.pop_front();
 				}
 
 				MessageWriter disconnect_msg;
@@ -1656,8 +1724,8 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 
 		if (settings.dojo.training)
 		{
-			std::string current_p1_frame_data = dojo.AddToInputDisplay((u8*)p1_frame.data());
-			std::string current_p2_frame_data = dojo.AddToInputDisplay((u8*)p2_frame.data());
+			std::string current_p1_frame_data = AddToInputDisplay((u8*)p1_frame.data());
+			std::string current_p2_frame_data = AddToInputDisplay((u8*)p2_frame.data());
 		}
 
 		FrameNumber++;

@@ -75,4 +75,9 @@ public:
 		return player_info;
 	}
 
+	static unsigned int ReadPlayerWin(const char* buffer, int* offset)
+	{
+		unsigned int player = ReadInt(buffer, offset);
+		return player;
+	}
 };

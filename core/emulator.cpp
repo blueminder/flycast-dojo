@@ -889,10 +889,10 @@ void Emulator::run()
 		if (ggpo::active())
 		{
 			ggpo::nextFrame();
-			dojo.UpdateScore();
 			if (dojo.PlayMatch && dojo.stepping)
 				stop();
 		}
+		dojo.UpdateScore();
 	} catch (...) {
 		setNetworkState(false);
 		state = Error;

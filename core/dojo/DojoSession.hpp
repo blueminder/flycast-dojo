@@ -195,6 +195,7 @@ public:
 	std::string CreateReplayFile(std::string rom_name, int version=1);
 	void AppendHeaderToReplayFile(std::string rom_name="");
 	void AppendPlayerInfoToReplayFile();
+	void AppendPlayerWinToReplay(int player);
 	void AppendToReplayFile(std::string frame, int version=1);
 
 	void LoadReplayFile(std::string path);
@@ -218,6 +219,8 @@ public:
 
 	std::deque<std::string> transmission_frames;
 	std::atomic<bool> write_out;
+
+	std::deque<u32> transmission_wins;
 
 	int frame_timeout;
 	u32 last_received_frame;
@@ -332,6 +335,10 @@ public:
 	uint32_t current_p1_wins = 0;
 	uint32_t current_p2_wins = 0;
 
+	uint32_t final_p1_wins = 0;
+	uint32_t final_p2_wins = 0;
+
+	void RegisterPlayerWin(int player);
 	bool ScoreAvailable();
 	void UpdateScore();
 };
