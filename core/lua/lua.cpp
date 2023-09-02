@@ -643,5 +643,26 @@ void term()
 	L = nullptr;
 }
 
+void reinit(std::string initFile)
+{
+	term();
+	if (!file_exists(initFile))
+	{
+		init();
+		return;
+	}
+	L = luaL_newstate();
+	luaL_openlibs(L);
+	luaRegister(L);
+	EventManager::listen(Event::Start, emuEventCallback);
+	EventManager::listen(Event::Resume, emuEventCallback);
+	EventManager::listen(Event::Pause, emuEventCallback);
+	EventManager::listen(Event::Terminate, emuEventCallback);
+	EventManager::listen(Event::LoadState, emuEventCallback);
+	EventManager::listen(Event::VBlank, emuEventCallback);
+
+	doExec(initFile);
+}
+
 }
 #endif

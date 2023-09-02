@@ -610,6 +610,10 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		// reload settings so that all settings can be overridden
 		loadGameSpecificSettings();
+
+		if (settings.dojo.training && !settings.network.online)
+			dojo.ExecTrainingLua();
+
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())

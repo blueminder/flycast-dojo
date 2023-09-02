@@ -961,6 +961,27 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 	}
 }
 
+std::string DojoSession::GetTrainingLua()
+{
+	if (settings.content.gameId == "CAPCOM VS SNK 2  JAPAN")
+			return get_readonly_config_path("training/cvs2.lua");
+	else if (settings.content.gameId == "T1249M")
+			return get_readonly_config_path("training/cvs2.lua");
+	else if (settings.content.gameId == "MARVEL VS CAPCOM2  JAPAN")
+			return get_readonly_config_path("training/mvsc2.lua");
+	else if (settings.content.gameId == "T1212N")
+			return get_readonly_config_path("training/mvsc2.lua");
+
+	return "";
+}
+
+void DojoSession::ExecTrainingLua()
+{
+	auto lua_file = GetTrainingLua();
+	if (lua_file != "")
+		lua::reinit(lua_file);
+}
+
 bool DojoSession::ScoreAvailable()
 {
 	bool score_available = false;
