@@ -1067,7 +1067,7 @@ static void gui_display_commands()
 	if (settings.dojo.training)
 	{
 		std::ostringstream watch_text;
-		watch_text << "Watching Player " << dojo.record_player + 1;
+		watch_text << "Controlling Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
 		{
 			dojo.TrainingSwitchPlayer();
@@ -1085,25 +1085,6 @@ static void gui_display_commands()
 		displayed_button_count++;
 
 		ImGui::NextColumn();
-	}
-
-	if (settings.network.online || config::GGPOEnable)
-	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	// Settings
-	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
-	{
-		gui_state = GuiState::Settings;
-	}
-	displayed_button_count++;
-
-	if (settings.network.online || config::GGPOEnable)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
 	}
 
 	}
@@ -1133,27 +1114,73 @@ static void gui_display_commands()
 			}
 		}
 		displayed_button_count++;
+
+		ImGui::NextColumn();
 	}
 
-	ImGui::NextColumn();
-
-	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
+	if (settings.dojo.training && dojo.GetTrainingLua() != "")
 	{
-		GamepadDevice::load_system_mappings();
-		gui_state = GuiState::Closed;
+		std::ostringstream lua_display_text;
+		lua_display_text << "Training Overlay ";
+
+		lua_display_text << (config::ShowTrainingGameOverlay.get() ? "On" : "Off");
+		if (ImGui::Button(lua_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+		{
+			config::ShowTrainingGameOverlay = (config::ShowTrainingGameOverlay.get() ? false : true);
+		}
+		displayed_button_count++;
+
+		ImGui::NextColumn();
 	}
-	displayed_button_count++;
+
+	if (!dojo.PlayMatch)
+	{
+
+	if (dojo.current_gamepad != "virtual_gamepad_uid")
+	{
+		if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+		{
+			gui_state = GuiState::ButtonCheck;
+		}
+		displayed_button_count++;
+
+		ImGui::NextColumn();
+	}
+
+#if !defined(__ANDROID__)
+	if (dojo.current_gamepad.find("keyboard") == std::string::npos)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+		if (gamepad != nullptr)
+		{
+			std::string quick_map_title = "Quick Button Map\n(" + gamepad->name() + ")";
+			if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
+			{
+				dojo_gui.current_map_button = 0;
+				gui_state = GuiState::QuickMapping;
+			}
+			displayed_button_count++;
+			ImGui::NextColumn();
+		}
+	}
+#endif
+
+	if (settings.network.online || config::GGPOEnable)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
 
 #if !defined(__ANDROID__)
 	if (settings.dojo.training || dojo.PlayMatch)
 	{
-		ImGui::NextColumn();
-
 		if (ImGui::Button("Show Hotkeys", ScaledVec2(150, 50)) && !settings.network.online)
 		{
 			gui_state = GuiState::Hotkeys;
 		}
 		displayed_button_count++;
+
+		ImGui::NextColumn();
 	}
 #endif
 
@@ -1168,8 +1195,6 @@ static void gui_display_commands()
 
 	if (!settings.dojo.training && config::ShowEjectDisk)
 	{
-	ImGui::NextColumn();
-
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
 	if (ImGui::Button(disk_label, ScaledVec2(150, 50)))
@@ -1185,6 +1210,8 @@ static void gui_display_commands()
 		}
 	}
 	displayed_button_count++;
+
+	ImGui::NextColumn();
 	}
 
 	// Cheats
@@ -1194,42 +1221,37 @@ static void gui_display_commands()
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
-	ImGui::NextColumn();
-
 	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
 	displayed_button_count++;
 
-	if (dojo.current_gamepad != "virtual_gamepad_uid")
-	{
-		ImGui::NextColumn();
+	ImGui::NextColumn();
 
-		if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
-		{
-			gui_state = GuiState::ButtonCheck;
-		}
-		displayed_button_count++;
+	// Settings
+	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
+	{
+		gui_state = GuiState::Settings;
+	}
+	displayed_button_count++;
+
+	ImGui::NextColumn();
+
+	if (settings.network.online || config::GGPOEnable)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
 	}
 
-#if !defined(__ANDROID__)
-	if (dojo.current_gamepad.find("keyboard") == std::string::npos)
-	{
-		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
-		if (gamepad != nullptr)
-		{
-			ImGui::NextColumn();
-			std::string quick_map_title = "Quick Mapping\n(" + gamepad->name() + ")";
-			if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
-			{
-				dojo_gui.current_map_button = 0;
-				gui_state = GuiState::QuickMapping;
-			}
-			displayed_button_count++;
-		}
 	}
-#endif
+
+	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
+	{
+		GamepadDevice::load_system_mappings();
+		gui_state = GuiState::Closed;
+	}
+	displayed_button_count++;
 
 	if (settings.network.online)
 	{

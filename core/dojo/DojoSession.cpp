@@ -967,8 +967,6 @@ std::string DojoSession::GetTrainingLua()
 			return get_readonly_config_path("training/cvs2.lua");
 	else if (settings.content.gameId == "T1249M")
 			return get_readonly_config_path("training/cvs2.lua");
-	else if (settings.content.gameId == "MARVEL VS CAPCOM2  JAPAN")
-			return get_readonly_config_path("training/mvsc2.lua");
 	else if (settings.content.gameId == "T1212N")
 			return get_readonly_config_path("training/mvsc2.lua");
 

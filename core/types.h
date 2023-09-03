@@ -311,6 +311,7 @@ struct settings_t
 		bool training;
 		std::string state_md5;
 		std::string state_commit;
+		bool ShowTrainingGameOverlay;
 	} dojo;
 };
 

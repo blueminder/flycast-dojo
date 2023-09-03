@@ -196,6 +196,9 @@ CONFIG_ACCESSORS(GGPODelay)
 CONFIG_ACCESSORS(NetworkStats)
 CONFIG_ACCESSORS(GGPOAnalogAxes)
 
+// Dojo
+CONFIG_ACCESSORS(ShowTrainingGameOverlay)
+
 // Maple devices
 
 static int getMapleType(int bus, lua_State *L)
@@ -529,6 +532,10 @@ static void luaRegister(lua_State *L)
 					.addFunction("getSubDeviceType", getMapleSubType)
 					.addFunction("setDeviceType", setMapleType)
 					.addFunction("setSubDeviceType", setMapleSubType)
+				.endNamespace()
+
+				.beginNamespace("dojo")
+					CONFIG_PROPERTY(ShowTrainingGameOverlay, bool)
 				.endNamespace()
 			.endNamespace()
 

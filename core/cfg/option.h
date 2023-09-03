@@ -581,6 +581,7 @@ extern Option<bool> RecordOnFirstInput;
 extern Option<bool> ForceRealBios;
 extern Option<bool> OutputStreamTxt;
 extern OptionString UpdateChannel;
+extern Option<bool> ShowTrainingGameOverlay;
 
 extern Option<bool> EnableDiagonalCorrection;
 extern Option<int> SOCDResolution;
