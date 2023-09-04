@@ -38,7 +38,6 @@
 #endif
 
 #include "network/miniupnp.h"
-#include "lua/lua.h"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -331,7 +330,6 @@ public:
 	bool lobby_launch = false;
 
 	std::string GetTrainingLua();
-	void ExecTrainingLua();
 
 	uint32_t p1_wins = 0;
 	uint32_t p2_wins = 0;

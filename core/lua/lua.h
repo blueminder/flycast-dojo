@@ -25,7 +25,7 @@ namespace lua
 
 void init();
 void term();
-void reinit(std::string initFile);
+void reinit(const std::string& initFile);
 void exec(const std::string& path);
 void overlay();
 
@@ -33,7 +33,7 @@ void overlay();
 
 inline static void init() {}
 inline static void term() {}
-inline static void reinit(std::string initFile);
+inline static void reinit(const std::string& initFile) {}
 inline static void exec(const std::string& path) {}
 inline static void overlay() {}
 

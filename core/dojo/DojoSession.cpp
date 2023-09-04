@@ -988,23 +988,13 @@ std::string DojoSession::GetTrainingLua()
 			lua_file = lua_file.substr(0, lastindex);
 
 		lua_file = lua_file + ".lua";
-		auto lua_path = get_readonly_config_path("training/" + lua_file + ".lua");
+		auto lua_path = get_readonly_config_path("training/" + lua_file);
 
 		if (ghc::filesystem::exists(lua_path))
-			return get_readonly_config_path("training/" + lua_file + ".lua");
+			return lua_path;
 	}
 
 	return "";
-}
-
-void DojoSession::ExecTrainingLua()
-{
-	auto lua_file = GetTrainingLua();
-	if (lua_file != "")
-	{
-		if (ghc::filesystem::exists(lua_file))
-			lua::reinit(lua_file);
-	}
 }
 
 bool DojoSession::ScoreAvailable()

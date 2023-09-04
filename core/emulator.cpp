@@ -45,6 +45,7 @@
 #include <chrono>
 
 #include "dojo/DojoSession.hpp"
+#include "lua/lua.h"
 
 settings_t settings;
 constexpr float WINCE_DEPTH_SCALE = 0.01f;
@@ -611,8 +612,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		// reload settings so that all settings can be overridden
 		loadGameSpecificSettings();
 
-		if (settings.dojo.training && !settings.network.online)
-			dojo.ExecTrainingLua();
+		auto lua_file = dojo.GetTrainingLua();
+		if (lua_file != "")
+		{
+			if (file_exists(lua_file))
+				lua::reinit(lua_file);
+		}
 
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
