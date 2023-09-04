@@ -931,8 +931,10 @@ bool DojoSession::ScoreAvailable()
 		"CAPCOM VS SNK 2  JAPAN",
 		"HOKUTO NO KEN",
 		"JINGI STORM THE ARCADE",
+		"MARVEL VS CAPCOM2  JAPAN",
 		"MOERO JUSTICE GAKUEN  JAPAN",
 		" POWER SMASH 2 -----------",
+		"SAMURAI SPIRITS 6",
 		"THE KING OF FIGHTERS XI",
 		"The Rumble Fish 2",
 		"TOY FIGHTER",
@@ -958,6 +960,7 @@ void DojoSession::UpdateScore()
 		uint32_t detected_p2_wins;
 
 		if (settings.content.gameId == "MOERO JUSTICE GAKUEN  JAPAN" ||
+			settings.content.gameId == "SAMURAI SPIRITS 6" ||
 			settings.content.gameId == "VF4 FINAL TUNED JAPAN")
 		{
 			uint32_t winning_streak;
@@ -967,6 +970,12 @@ void DojoSession::UpdateScore()
 			{
 				champion_player = ReadMem8_nommu(0x8C2EED95);
 				winning_streak = ReadMem8_nommu(0x8C2EED96);
+				NOTICE_LOG(NETWORK, "C %u, S %u", champion_player, winning_streak);
+			}
+			else if (settings.content.gameId == "SAMURAI SPIRITS 6")
+			{
+				champion_player = ReadMem8_nommu(0x8C2F7CF0);
+				winning_streak = ReadMem8_nommu(0x8C2F7D18);
 				NOTICE_LOG(NETWORK, "C %u, S %u", champion_player, winning_streak);
 			}
 			else if (settings.content.gameId == "VF4 FINAL TUNED JAPAN")
@@ -1053,6 +1062,14 @@ void DojoSession::UpdateScore()
 		{
 			detected_p1_wins = ReadMem8_nommu(0x8C0F8BCC);
 			detected_p2_wins = ReadMem8_nommu(0x8C0F8BCD);
+		}
+		else if (settings.content.gameId == "MARVEL VS CAPCOM2  JAPAN")
+		{
+			uint32_t in_match = ReadMem8_nommu(0x8C2F836C);
+			if (in_match == 0)
+				return;
+			detected_p1_wins = ReadMem8_nommu(0x8C2F83D4);
+			detected_p2_wins = ReadMem8_nommu(0x8C2F83D5);
 		}
 
 		if (current_p1_wins + 1 == detected_p1_wins) {
