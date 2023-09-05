@@ -1029,6 +1029,19 @@ bool DojoSession::ScoreAvailable()
 	return score_available;
 }
 
+void DojoSession::FirstToPoll()
+{
+	if (config::FirstTo > 0 && (p1_wins == config::FirstTo.get() || p2_wins == config::FirstTo.get()))
+	{
+		if (ggpo::active)
+			ggpo::stopSession();
+		else if (config::GGPOEnable && !dojo.PlayMatch)
+			gui_state = GuiState::Disconnected;
+		else
+			gui_stop_game();
+	}
+}
+
 void DojoSession::UpdateScore()
 {
 	if (ScoreAvailable())
@@ -1083,6 +1096,8 @@ void DojoSession::UpdateScore()
 
 			current_p1_wins = detected_p1_wins;
 			current_p2_wins = detected_p2_wins;
+
+			FirstToPoll();
 
 			return;
 		}
@@ -1151,6 +1166,8 @@ void DojoSession::UpdateScore()
 
 		current_p1_wins = detected_p1_wins;
 		current_p2_wins = detected_p2_wins;
+
+		FirstToPoll();
 	}
 }
 

@@ -38,6 +38,7 @@
 #endif
 
 #include "network/miniupnp.h"
+#include "network/ggpo.h"
 
 #define FRAME_SIZE 12
 #define INPUT_SIZE 6
@@ -343,6 +344,7 @@ public:
 	void RegisterPlayerWin(int player);
 	bool ScoreAvailable();
 	void UpdateScore();
+	void FirstToPoll()
 };
 
 extern DojoSession dojo;

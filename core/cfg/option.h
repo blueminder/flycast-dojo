@@ -586,6 +586,8 @@ extern Option<bool> ShowTrainingGameOverlay;
 extern Option<bool> EnableDiagonalCorrection;
 extern Option<int> SOCDResolution;
 
+extern Option<int> FirstTo;
+
 // Maple
 
 extern Option<int> MouseSensitivity;

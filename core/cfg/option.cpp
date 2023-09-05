@@ -216,6 +216,8 @@ Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input"
 Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", false, "input");
 Option<int> SOCDResolution ("SOCDResolution", 1);
 
+Option<int> FirstTo("FirstTo", 0, "dojo");
+
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
 #endif
