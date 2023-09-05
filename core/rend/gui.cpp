@@ -1245,7 +1245,7 @@ static void gui_display_commands()
 	}
 	if (displayed_button_count % 2 == 0)
 		ImGui::Columns(1, nullptr, false);
-	else
+	else if (!dojo.PlayMatch)
 		ImGui::NextColumn();
 
 	ImVec2 exit_size;
