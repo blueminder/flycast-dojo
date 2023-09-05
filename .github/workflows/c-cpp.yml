@@ -15,6 +15,7 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo}
