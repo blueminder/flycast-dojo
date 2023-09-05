@@ -782,7 +782,7 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
-	if (config::Transmitting)
+	if (config::Transmitting || config::TransmitScore)
 		dojo.StartTransmitterThread();
 
 	dojo.p1_wins = 0;

@@ -381,7 +381,7 @@ void DojoSession::StartTransmitterThread()
 	if (transmitter_started)
 		return;
 
-	if (config::Transmitting)
+	if (config::Transmitting || config::TransmitScore)
 	{
 		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
 		t4.detach();
@@ -1595,45 +1595,48 @@ void DojoSession::transmitter_thread()
 
 		for (;;)
 		{
-			transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
-
-			if (transmission_in_progress)
+			if (config::Transmitting)
 			{
-				current_frame = transmission_frames.front();
-				//u32 frame_num = GetFrameNumber((u8*)current_frame.data());
+				transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
 
-				frame_msg.AppendContinuousData(current_frame.data(), MAPLE_FRAME_SIZE);
-
-				transmission_frames.pop_front();
-				sent_frame_count++;
-
-				// send packet every 60 frames
-				if (sent_frame_count % FRAME_BATCH == 0)
+				if (transmission_in_progress)
 				{
-					message = frame_msg.Msg();
-					asio::write(socket, asio::buffer(message));
+					current_frame = transmission_frames.front();
+					//u32 frame_num = GetFrameNumber((u8*)current_frame.data());
 
-					frame_msg = MessageWriter();
-					frame_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
+					frame_msg.AppendContinuousData(current_frame.data(), MAPLE_FRAME_SIZE);
 
-					// start with individual frame size
-					// (body_size % data_size == 0)
-					frame_msg.AppendInt(MAPLE_FRAME_SIZE);
+					transmission_frames.pop_front();
+					sent_frame_count++;
+
+					// send packet every 60 frames
+					if (sent_frame_count % FRAME_BATCH == 0)
+					{
+						message = frame_msg.Msg();
+						asio::write(socket, asio::buffer(message));
+
+						frame_msg = MessageWriter();
+						frame_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
+
+						// start with individual frame size
+						// (body_size % data_size == 0)
+						frame_msg.AppendInt(MAPLE_FRAME_SIZE);
+					}
 				}
+			}
 
-				while (transmission_wins.size() > 0)
-				{
-					unsigned int player = transmission_wins.front();
+			if (transmission_wins.size() > 0)
+			{
+				unsigned int player = transmission_wins.front();
 
-					MessageWriter player_win;
-					player_win.AppendHeader(1, PLAYER_WIN);
-					player_win.AppendInt(player);
+				MessageWriter player_win;
+				player_win.AppendHeader(1, PLAYER_WIN);
+				player_win.AppendInt(player);
 
-					std::vector<unsigned char> message = player_win.Msg();
-					asio::write(socket, asio::buffer(message));
+				std::vector<unsigned char> message = player_win.Msg();
+				asio::write(socket, asio::buffer(message));
 
-					transmission_wins.pop_front();
-				}
+				transmission_wins.pop_front();
 			}
 
 			if (transmitter_ended ||
@@ -1644,20 +1647,6 @@ void DojoSession::transmitter_thread()
 				{
 					message = frame_msg.Msg();
 					asio::write(socket, asio::buffer(message));
-				}
-
-				while (transmission_wins.size() > 0)
-				{
-					unsigned int player = transmission_wins.front();
-
-					MessageWriter player_win;
-					player_win.AppendHeader(1, PLAYER_WIN);
-					player_win.AppendInt(player);
-
-					std::vector<unsigned char> message = player_win.Msg();
-					asio::write(socket, asio::buffer(message));
-
-					transmission_wins.pop_front();
 				}
 
 				MessageWriter disconnect_msg;
