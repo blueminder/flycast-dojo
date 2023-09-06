@@ -1312,7 +1312,7 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 
 		received_player_info = true;
 
-		AssignNames();
+		AssignNames(true);
 	}
 	else if (cmd == GAME_BUFFER)
 	{
@@ -1596,6 +1596,41 @@ void DojoSession::transmitter_thread()
 
 		std::vector<unsigned char> message = spectate_start.Msg();
 		asio::write(socket, asio::buffer(message));
+
+		// read player info reply
+		char header_buf[HEADER_LEN] = { 0 };
+		std::vector<unsigned char> body_buf;
+		int offset = 0;
+
+		// read header
+		memset((void*)header_buf, 0, HEADER_LEN);
+		try
+		{
+			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+		}
+		catch (const std::system_error& e)
+		{
+			//break;
+		}
+
+		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
+		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+		// read body
+		body_buf.resize(body_size);
+
+		try
+		{
+			asio::read(socket, asio::buffer(body_buf, body_size));
+		}
+		catch (const std::system_error& e)
+		{
+			//break;
+		}
+
+		offset = 0;
+
+		dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
 
 		std::cout << "Transmission Started" << std::endl;
 
@@ -2078,9 +2113,9 @@ void DojoSession::StopUPnP()
 		miniupnp.Term();
 }
 
-void DojoSession::AssignNames()
+void DojoSession::AssignNames(bool player_info)
 {
-	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
+	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer || player_info)
 	{
 		player_1 = settings.dojo.PlayerName;
 		player_2 = settings.dojo.OpponentName;

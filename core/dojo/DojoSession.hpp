@@ -294,7 +294,7 @@ public:
 
 	std::string player_1;
 	std::string player_2;
-	void AssignNames();
+	void AssignNames(bool player_info=false);
 
 	void LaunchReceiver();
 	bool offline_replay = false;
