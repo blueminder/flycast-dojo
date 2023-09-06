@@ -832,21 +832,24 @@ void DojoSession::AppendPlayerInfoToReplayFile()
 
 void DojoSession::RegisterPlayerWin(int player)
 {
-	if (config::OutputStreamTxt)
+	if (player == 0)
 	{
-		if (player == 0)
-		{
-			NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
-			p1_wins++;
+		NOTICE_LOG(NETWORK, "P1 WIN", p1_wins);
+		p1_wins++;
+
+		if (config::OutputStreamTxt)
 			dojo_file.WriteStringToOut("p1wins", std::to_string(p1_wins));
-		}
-		else if (player == 1)
-		{
-			NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
-			p2_wins++;
-			dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
-		}
 	}
+	else if (player == 1)
+	{
+		NOTICE_LOG(NETWORK, "P2 WIN", p2_wins);
+		p2_wins++;
+
+		if (config::OutputStreamTxt)
+			dojo_file.WriteStringToOut("p2wins", std::to_string(p2_wins));
+	}
+
+	last_score_frame = (u32)FrameNumber;
 
 	if (config::RecordMatches && !PlayMatch)
 		AppendPlayerWinToReplay(player);
@@ -1044,6 +1047,12 @@ void DojoSession::FirstToPoll()
 
 void DojoSession::UpdateScore()
 {
+	uint32_t cooldown_frames = 600;
+
+	u32 frame_num = FrameNumber.load();
+	if (frame_num < (last_score_frame + cooldown_frames))
+		return;
+
 	if (ScoreAvailable())
 	{
 		uint32_t detected_p1_wins;

@@ -344,7 +344,9 @@ public:
 	void RegisterPlayerWin(int player);
 	bool ScoreAvailable();
 	void UpdateScore();
-	void FirstToPoll()
+	void FirstToPoll();
+
+	uint32_t last_score_frame = 0;
 };
 
 extern DojoSession dojo;
