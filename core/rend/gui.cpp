@@ -1066,6 +1066,34 @@ static void gui_display_commands()
 
 	if (settings.dojo.training)
 	{
+		std::string net_state_path = get_savestate_file_path(0, false);
+		net_state_path.append(".net");
+
+		bool save_exists = false;
+		if(ghc::filesystem::exists(net_state_path))
+			save_exists = true;
+
+		if(!save_exists)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+
+		if (ImGui::Button("Load Net State", ScaledVec2(150, 50)))
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate(net_state_path);
+		}
+
+		if(!save_exists)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+
+		displayed_button_count++;
+
+		ImGui::NextColumn();
 		std::ostringstream watch_text;
 		watch_text << "Controlling Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
