@@ -1994,7 +1994,7 @@ void DojoSession::TrainingSwitchPlayer()
 		SwitchPlayer();
 
 	std::ostringstream NoticeStream;
-	NoticeStream << "Monitoring Player " << record_player + 1;
+	NoticeStream << "Controlling Player " << record_player + 1;
 	gui_display_notification(NoticeStream.str().data(), 2000);
 }
 
