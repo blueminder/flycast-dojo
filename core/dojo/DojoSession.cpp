@@ -1036,12 +1036,18 @@ void DojoSession::FirstToPoll()
 {
 	if (config::FirstTo > 0 && (p1_wins == config::FirstTo.get() || p2_wins == config::FirstTo.get()))
 	{
-		if (ggpo::active)
-			ggpo::stopSession();
-		else if (config::GGPOEnable && !dojo.PlayMatch)
-			gui_state = GuiState::Disconnected;
-		else
-			gui_stop_game();
+		u32 cooldown_frames = 1200;
+		u32 frame_num = (u32)FrameNumber.load();
+
+		if (frame_num > (last_score_frame + cooldown_frames))
+		{
+			if (ggpo::active)
+				ggpo::stopSession();
+			else if (config::GGPOEnable && !dojo.PlayMatch)
+				gui_state = GuiState::Disconnected;
+			else
+				gui_stop_game();
+		}
 	}
 }
 
