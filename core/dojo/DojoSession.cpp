@@ -2125,6 +2125,12 @@ void DojoSession::AssignNames(bool player_info)
 		player_1 = settings.dojo.OpponentName;
 		player_2 = settings.dojo.PlayerName;
 	}
+
+	if (config::OutputStreamTxt)
+	{
+		dojo_file.WriteStringToOut("p1name", player_1);
+		dojo_file.WriteStringToOut("p2name", player_2);
+	}
 }
 
 #ifndef __ANDROID__
