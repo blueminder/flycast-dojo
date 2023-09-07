@@ -1597,11 +1597,6 @@ if(NOT LIBRETRO)
 			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-			set(ROMS_JSON flycast_roms.json)
-			target_sources(${PROJECT_NAME} PRIVATE ${ROMS_JSON})
-			source_group("Resources" FILES ${ROMS_JSON})
-			set_source_files_properties(${ROMS_JSON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-
 			add_custom_command(
 				OUTPUT ${CMAKE_SOURCE_DIR}/data
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -1617,12 +1612,29 @@ if(NOT LIBRETRO)
 				COMMAND rm -rf data
 				COMMAND mv default data
 				COMMAND mv default.zip data/
+				COMMAND cp flycast_roms.json data/
+			)
+
+			add_custom_command(
+				OUTPUT ${CMAKE_SOURCE_DIR}/training
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				COMMAND mkdir training
+				COMMAND wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
+				COMMAND tar zxvf main.tar.gz
+				COMMAND cp flycast-dojo-training-main/*.lua training/
+				COMMAND rm main.tar.gz
+				COMMAND rm -rf flycast-dojo-training-main
 			)
 
 			set(DATA_DIR ${CMAKE_SOURCE_DIR}/data)
 			target_sources(${PROJECT_NAME} PRIVATE ${DATA_DIR})
 			source_group("Resources" FILES ${DATA_DIR})
 			set_source_files_properties(${DATA_DIR} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+			set(TRAINING_DIR ${CMAKE_SOURCE_DIR}/training)
+			target_sources(${PROJECT_NAME} PRIVATE ${TRAINING_DIR})
+			source_group("Resources" FILES ${TRAINING_DIR})
+			set_source_files_properties(${TRAINING_DIR} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast Dojo"
@@ -1756,6 +1768,56 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 	install(FILES shell/linux/${PROJECT_NAME}.desktop
 		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
 	)
+
+	set(ROMS_JSON flycast_roms.json)
+	target_sources(${PROJECT_NAME} PRIVATE ${ROMS_JSON})
+	install(FILES ${ROMS_JSON}
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/flycast-dojo"
+	)
+
+	add_custom_command(
+		OUTPUT ${CMAKE_SOURCE_DIR}/data
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		COMMAND mkdir data
+		COMMAND wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
+		COMMAND tar zxvf master.tar.gz
+		COMMAND rm master.tar.gz
+		COMMAND rm -rf default
+		COMMAND mkdir default
+		COMMAND mv flycast-netplay-nvmem-master/* default/
+		COMMAND rm -rf flycast-netplay-nvmem-master
+		COMMAND rm default/README.md
+		COMMAND zip default.zip default/*
+		COMMAND rm -rf data
+		COMMAND mv default data
+		COMMAND mv default.zip data/
+	)
+
+	set(DATA_DIR ${CMAKE_SOURCE_DIR}/data)
+	target_sources(${PROJECT_NAME} PRIVATE ${DATA_DIR})
+
+	install(DIRECTORY ${DATA_DIR}
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/flycast-dojo"
+	)
+
+	add_custom_command(
+		OUTPUT ${CMAKE_SOURCE_DIR}/training
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		COMMAND mkdir training
+		COMMAND wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
+		COMMAND tar zxvf main.tar.gz
+		COMMAND cp flycast-dojo-training-main/*.lua training/
+		COMMAND rm main.tar.gz
+		COMMAND rm -rf flycast-dojo-training-main
+	)
+
+	set(TRAINING_DIR ${CMAKE_SOURCE_DIR}/training)
+	target_sources(${PROJECT_NAME} PRIVATE ${TRAINING_DIR})
+
+	install(DIRECTORY ${TRAINING_DIR}
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/flycast-dojo"
+	)
+
 	install(FILES shell/linux/${PROJECT_NAME}.png
 		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pixmaps"
 	)

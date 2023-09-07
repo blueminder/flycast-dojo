@@ -186,6 +186,7 @@ std::string find_user_data_dir()
 			// Create local data folder
 			flycast::mkdir(datapath.c_str(), 0755);
 		}
+
 		if (flycast::stat(rompath.c_str(), &info) != 0 || (info.st_mode & S_IFDIR) == 0)
 		{
 			// Create default ROMs folder
@@ -336,8 +337,6 @@ std::vector<std::string> find_system_data_dirs()
 		const std::string data_dir(FLYCAST_DATADIR);
 		dirs.push_back(data_dir);
 #endif
-		dirs.push_back("/usr/local/share/flycast-dojo/");
-		dirs.push_back("/usr/share/flycast-dojo/");
 	}
 	if (nowide::getenv("FLYCAST_BIOS_PATH") != nullptr)
 	{
@@ -345,6 +344,17 @@ std::vector<std::string> find_system_data_dirs()
 		addDirectoriesFromPath(dirs, path, "/");
 	}
 #endif
+
+	ghc::filesystem::path root_path;
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	if (count != -1)
+		root_path = ghc::filesystem::path(result).parent_path().parent_path();
+
+	auto sharePath = root_path / "share" / "flycast-dojo/";
+
+	if (ghc::filesystem::exists(sharePath))
+		dirs.push_back(sharePath);
 
 	return dirs;
 }
@@ -376,10 +386,10 @@ int main(int argc, char* argv[])
 	// Set directories
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
-	//for (const auto& dir : find_system_config_dirs())
-		//add_system_config_dir(dir);
-	//for (const auto& dir : find_system_data_dirs())
-		//add_system_data_dir(dir);
+	for (const auto& dir : find_system_config_dirs())
+		add_system_config_dir(dir);
+	for (const auto& dir : find_system_data_dirs())
+		add_system_data_dir(dir);
 	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 

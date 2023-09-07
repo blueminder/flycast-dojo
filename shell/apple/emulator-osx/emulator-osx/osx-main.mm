@@ -130,17 +130,6 @@ extern "C" int SDL_main(int argc, char *argv[])
         NSBundle *thisBundle = [NSBundle mainBundle];
         NSString *userpath = [NSString stringWithCString:config_dir.c_str() encoding:[NSString defaultCStringEncoding]];
 
-        std::string roms_json = config_dir + "flycast_roms.json";
-        if (!file_exists(roms_json))
-        {
-            NSString *saveFilePath = [userpath stringByAppendingPathComponent:@"flycast_roms.json"];
-            NSFileManager *fileManager = [[NSFileManager alloc] init];
-            if ([fileManager fileExistsAtPath:userpath] == NO)
-                [fileManager createDirectoryAtPath:userpath withIntermediateDirectories:YES attributes:nil error:nil];
-
-            [fileManager copyItemAtPath:[thisBundle pathForResource:@"flycast_roms" ofType:@"json"] toPath:saveFilePath error:NULL];
-        }
-
         std::string data_dir = config_dir + "data";
         if (!file_exists(data_dir))
         {
@@ -152,6 +141,17 @@ extern "C" int SDL_main(int argc, char *argv[])
             [fileManager copyItemAtPath:[thisBundle pathForResource:@"data" ofType:@""] toPath:saveFilePath error:NULL];
         }
         set_user_data_dir(data_dir + "/");
+
+        std::string training_dir = data_dir + "training";
+        if (!file_exists(training_dir))
+        {
+            NSString *saveFilePath = [userpath stringByAppendingPathComponent:@"training"];
+            NSFileManager *fileManager = [[NSFileManager alloc] init];
+            if ([fileManager fileExistsAtPath:userpath] == NO)
+                [fileManager createDirectoryAtPath:userpath withIntermediateDirectories:YES attributes:nil error:nil];
+
+            [fileManager copyItemAtPath:[thisBundle pathForResource:@"training" ofType:@""] toPath:saveFilePath error:NULL];
+        }
 
         std::string replays_dir = config_dir + "replays/";
         mkdir(replays_dir.c_str(), 0755);

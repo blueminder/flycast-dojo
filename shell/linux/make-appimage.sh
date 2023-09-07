@@ -135,13 +135,19 @@ done
 
 echo "Copying shared files"
 SHAREDIR="$OUTDIR/usr/share/flycast-dojo/"
-mkdir -p $SHAREDIR
+mkdir -p $SHAREDIR/data
 wget https://github.com/blueminder/flycast-netplay-nvmem/archive/master.tar.gz
 tar zxvf master.tar.gz
 rm master.tar.gz
-mv flycast-netplay-nvmem-master/* $SHAREDIR
+mv flycast-netplay-nvmem-master/* $SHAREDIR/data/
 rm -rf flycast-netplay-nvmem-master
 cp flycast_roms.json $SHAREDIR
+
+wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
+tar zxvf main.tar.gz
+rm main.tar.gz
+mkdir -p "$SHAREDIR/training"
+mv flycast-dojo-training-main/*.lua "$SHAREDIR/training/"
 
 cp -a "$SRCDIR/shell/linux/flycast-dojo.desktop" "$SRCDIR/shell/linux/flycast-dojo.png" "$OUTDIR"
 

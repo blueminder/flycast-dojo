@@ -31,9 +31,22 @@ void DojoFile::RefreshFileDefinitions()
 	GetModuleFileName(0, szPath, MAX_PATH);
 	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
 #else
-	root_path = get_writable_data_path("");
+	root_path = get_readonly_data_path("");
 #endif
 	std::string json_filename = root_path + "flycast_roms.json";
+#if defined(__linux__)
+	if (!ghc::filesystem::exists(json_filename))
+	{
+		ghc::filesystem::path root_path;
+		char result[PATH_MAX];
+		ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+		if (count != -1)
+			root_path = ghc::filesystem::path(result).parent_path().parent_path();
+
+		auto sharePath = root_path / "share" / "flycast-dojo" / "flycast_roms.json";
+		json_filename = sharePath.string();
+	}
+#endif
 	LoadedFileDefinitions = LoadJsonFromFile(json_filename);
 	RemainingFileDefinitions = LoadJsonFromFile(json_filename);
 }

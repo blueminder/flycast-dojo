@@ -967,11 +967,11 @@ void DojoSession::AppendToReplayFile(std::string frame, int version)
 std::string DojoSession::GetTrainingLua()
 {
 	if (settings.content.gameId == "CAPCOM VS SNK 2  JAPAN")
-			return get_readonly_config_path("training/cvs2.lua");
+			return get_readonly_data_path("training/cvs2.lua");
 	else if (settings.content.gameId == "T1249M")
-			return get_readonly_config_path("training/cvs2.lua");
+			return get_readonly_data_path("training/cvs2.lua");
 	else if (settings.content.gameId == "T1212N")
-			return get_readonly_config_path("training/mvsc2.lua");
+			return get_readonly_data_path("training/mvsc2.lua");
 	else
 	{
 		// look up by game file name in training folder
@@ -991,7 +991,7 @@ std::string DojoSession::GetTrainingLua()
 			lua_file = lua_file.substr(0, lastindex);
 
 		lua_file = lua_file + ".lua";
-		auto lua_path = get_readonly_config_path("training/" + lua_file);
+		auto lua_path = get_readonly_data_path("training/" + lua_file);
 
 		if (ghc::filesystem::exists(lua_path))
 			return lua_path;
