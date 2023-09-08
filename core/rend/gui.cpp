@@ -1146,6 +1146,7 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 	}
 
+#if !defined(__APPLE__)
 	if (settings.dojo.training && dojo.GetTrainingLua() != "")
 	{
 		std::ostringstream lua_display_text;
@@ -1160,6 +1161,7 @@ static void gui_display_commands()
 
 		ImGui::NextColumn();
 	}
+#endif
 
 	if (!dojo.PlayMatch)
 	{
