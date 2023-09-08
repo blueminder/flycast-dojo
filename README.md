@@ -59,7 +59,7 @@ For Fightcade-specific help, be sure to read the pins and ask questions in the *
 # Getting Started
 To get started with Flycast Dojo, make sure that you have the appropriate ROMs and BIOS files available in your ROM and data folders. At the time of writing, the preferred MAME romset for NAOMI & Atomiswave games is the **MAME 0.226** romset.
 
-If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMS` while non-Fightcade users can use the `ROMS` folder in the Flycast folder.
+If you are running Fightcade, you can find the ROMs folder at `Fightcade\emulator\flycast\ROMs` while non-Fightcade users can use the `ROMs` folder in the Flycast folder.
 
 For the sake of performance, it is advised that you keep your games and the emulator on the same drive.
 

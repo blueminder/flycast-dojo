@@ -191,7 +191,7 @@ public:
 				{
 					if (nowide::getenv("FLYCAST_ROOT") != nullptr)
 					{
-						config::ContentPath.get().push_back(get_writable_config_path("ROMS"));
+						config::ContentPath.get().push_back(get_writable_config_path("ROMs"));
 					}
 					else
 					{
