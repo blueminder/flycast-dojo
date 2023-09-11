@@ -1675,7 +1675,7 @@ void DojoSession::transmitter_thread()
 				}
 			}
 
-			if (transmission_wins.size() > 0)
+			if (config::TransmitScore && transmission_wins.size() > 0)
 			{
 				unsigned int player = transmission_wins.front();
 
