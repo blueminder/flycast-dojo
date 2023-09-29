@@ -1201,6 +1201,8 @@ static void gui_display_commands()
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
 
+	}
+
 #if !defined(__ANDROID__)
 	if (settings.dojo.training || dojo.PlayMatch)
 	{
@@ -1283,6 +1285,11 @@ static void gui_display_commands()
 	}
 	displayed_button_count++;
 
+	ImGui::NextColumn();
+
+	if (!dojo.PlayMatch)
+	{
+
 	if (settings.network.online)
 	{
         ImGui::PopItemFlag();
@@ -1294,7 +1301,9 @@ static void gui_display_commands()
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
+
 	}
+
 	if (displayed_button_count % 2 == 0)
 		ImGui::Columns(1, nullptr, false);
 	else if (!dojo.PlayMatch)
