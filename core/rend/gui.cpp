@@ -645,7 +645,8 @@ void gui_open_settings()
 		{
 			gui_state = GuiState::Commands;
 			HideOSD();
-			emu.stop();
+			if (!ggpo::active())
+				emu.stop();
 		}
 		else
 			chat.toggle();
@@ -680,7 +681,8 @@ void gui_open_settings()
 		else
 			gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
-		emu.start();
+		if (!ggpo::active())
+			emu.start();
 	}
 }
 
