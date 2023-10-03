@@ -180,6 +180,7 @@ jobs:
           tar zxvf main.tar.gz
           rm main.tar.gz
           mv flycast-dojo-training-main/ training/
+          rm training/LICENSE
           mkdir replays
           mkdir ROMs
           wget https://raw.githubusercontent.com/blueminder/flycast-dojo/master/flycast_roms.json
