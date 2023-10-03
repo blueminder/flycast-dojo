@@ -2065,7 +2065,7 @@ std::string DojoSession::GetExternalIP()
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-		curl_easy_setopt(curl, CURLOPT_URL, "https://myexternalip.com/raw");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://api.ipify.org/");
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
