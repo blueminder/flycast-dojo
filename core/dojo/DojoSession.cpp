@@ -1100,13 +1100,26 @@ void DojoSession::UpdateScore()
 				detected_p2_wins = winning_streak;
 				detected_p1_wins = 0;
 			}
+			// double ko, samsptk
+			else if (champion_player == 255)
+			{
+				champion_player = 0;
+				winning_streak = 0;
 
-			if (current_p1_wins + 1 == detected_p1_wins) {
-				RegisterPlayerWin(0);
+				detected_p1_wins = 0;
+				detected_p2_wins = 0;
 			}
 
-			if (current_p2_wins + 1 == detected_p2_wins) {
-				RegisterPlayerWin(1);
+
+			if (champion_player != 255)
+			{
+				if (current_p1_wins + 1 == detected_p1_wins) {
+					RegisterPlayerWin(0);
+				}
+
+				if (current_p2_wins + 1 == detected_p2_wins) {
+					RegisterPlayerWin(1);
+				}
 			}
 
 			current_p1_wins = detected_p1_wins;
