@@ -10,17 +10,22 @@ DojoFile dojo_file;
 
 DojoFile::DojoFile()
 {
-	RefreshFileDefinitions();
+	Reset();
+}
+
+void DojoFile::Reset()
+{
 	start_update = false;
 	update_started = false;
 	start_download = false;
 	download_started = false;
 	start_save_download = false;
 	save_download_started = false;
-
 	save_download_ended = false;
 	download_ended = false;
 	post_save_launch = false;
+
+	RefreshFileDefinitions();
 }
 
 void DojoFile::RefreshFileDefinitions()
@@ -767,12 +772,19 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
 {
+	dojo_file.source_url = download_url;
 	auto filename = stringfix::split("//", download_url).back();
 	std::string path = filename;
 	if (dest_folder == "data")
+	{
 		path = get_writable_data_path("") + "//" + filename;
+		dojo_file.dest_path = get_writable_data_path("");
+	}
 	else if (!dest_folder.empty())
+	{
 		path = get_writable_data_path("") + "//" + dest_folder + "//" + filename;
+		dojo_file.dest_path = get_writable_data_path("") + "//" + dest_folder;
+	}
 
 	// if file already exists, delete before starting new download
 	if (file_exists(path.c_str()))

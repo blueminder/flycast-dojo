@@ -51,6 +51,7 @@ private:
 
 public:
 	DojoFile();
+	void Reset();
 	nlohmann::json LoadedFileDefinitions;
 	nlohmann::json RemainingFileDefinitions;
 	bool CompareEntry(std::string filename, std::string md5_checksum, std::string field_name);
@@ -123,6 +124,9 @@ public:
 	void WriteStringToOut(std::string name, std::string contents);
 
 	std::vector<std::string> versions;
+
+	std::string source_url;
+	std::string dest_path;
 };
 
 extern DojoFile dojo_file;
