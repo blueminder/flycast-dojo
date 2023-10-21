@@ -786,9 +786,16 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		dojo_file.dest_path = get_writable_data_path("") + "//" + dest_folder;
 	}
 
+	std::string clean_path = path;
+	stringfix::replace(clean_path, "%20", " ");
+	std::string commit_path = clean_path + ".commit";
+
 	// if file already exists, delete before starting new download
-	if (file_exists(path.c_str()))
-		remove(path.c_str());
+	if (file_exists(clean_path.c_str()))
+		remove(clean_path.c_str());
+
+	if (file_exists(commit_path.c_str()))
+		remove(commit_path.c_str());
 
 	of = std::ofstream(path, std::ofstream::out | std::ofstream::binary);
 
