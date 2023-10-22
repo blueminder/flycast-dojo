@@ -682,9 +682,9 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl(std::string 
 	return std::make_tuple(tag_name, download_url);
 }
 
-std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder)
+std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, std::string append)
 {
-	return DownloadFile(download_url, dest_folder, 0);
+	return DownloadFile(download_url, dest_folder, 0, append);
 }
 
 #ifndef ANDROID
@@ -740,19 +740,11 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 
 	status_text = "Downloading netplay savestate for " + rom_name + ".";
 
-	auto filename = DownloadFile(net_state_url, "data");
+	auto filename = DownloadFile(net_state_url, "data", commit);
 	if (filename.empty())
 		return filename;
 
 	save_download_ended = true;
-
-	std::string commit_net_state_file;
-	// if not latest, append savestate filename with commit
-	if (!commit.empty())
-	{
-		commit_net_state_file = net_state_file + "." + commit;
-		ghc::filesystem::copy(filename, get_writable_data_path("") + commit_net_state_file);
-	}
 
 	//std::FILE* file = std::fopen(filename.data(), "rb");
 	//settings.dojo.state_md5 = md5file(file);
@@ -770,7 +762,7 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	return filename;
 }
 
-std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size)
+std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size, std::string append)
 {
 	dojo_file.source_url = download_url;
 	auto filename = stringfix::split("//", download_url).back();
@@ -786,6 +778,11 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		dojo_file.dest_path = get_writable_data_path("") + "//" + dest_folder;
 	}
 
+	if (!append.empty())
+	{
+		path = path + "." + append;
+	}
+
 	std::string clean_path = path;
 	stringfix::replace(clean_path, "%20", " ");
 	std::string commit_path = clean_path + ".commit";
@@ -796,6 +793,9 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 
 	if (file_exists(commit_path.c_str()))
 		remove(commit_path.c_str());
+
+	std::string final_path = path;
+	path = path + ".download";
 
 	of = std::ofstream(path, std::ofstream::out | std::ofstream::binary);
 
@@ -854,8 +854,8 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	if (file_exists(path.c_str()))
 	{
 		std::string old_path = path;
-		stringfix::replace(path, "%20", " ");
-		rename(old_path.c_str(), path.c_str());
+		stringfix::replace(final_path, "%20", " ");
+		rename(old_path.c_str(), final_path.c_str());
 	}
 
 	if (response_code == 404 || (file_exists(path.c_str()) && ghc::filesystem::file_size(path) == 0))
@@ -866,7 +866,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	else
 		status_text = filename + " successfully downloaded.";
 
-	return path;
+	return final_path;
 }
 
 void DojoFile::DownloadDependencies(std::string entry_name)

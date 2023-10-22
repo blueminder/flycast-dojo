@@ -66,8 +66,8 @@ public:
 	void ValidateAndCopyVmu();
 	std::tuple<std::string, std::string> GetLatestDownloadUrl(std::string channel = "stable");
 
-	std::string DownloadFile(std::string download_url, std::string dest_folder);
-	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size);
+	std::string DownloadFile(std::string download_url, std::string dest_folder, std::string append = "");
+	std::string DownloadFile(std::string download_url, std::string dest_folder, size_t download_size, std::string append = "");
 
 	std::string DownloadNetSave(std::string rom_name);
 	std::string DownloadNetSave(std::string rom_name, std::string commit);

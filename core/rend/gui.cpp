@@ -124,11 +124,13 @@ static void emuEventCallback(Event event, void *)
 					std::string commit_net_save_path = net_save_path + "." + settings.dojo.state_commit;
 					if(file_exists(commit_net_save_path))
 					{
+						NOTICE_LOG(NETWORK, "LOADING %s", commit_net_save_path.data());
 						std::cout << "LOADING " << commit_net_save_path << std::endl;
 						dc_loadstate(commit_net_save_path);
 					}
 					else if (file_exists(net_save_path))
 					{
+						NOTICE_LOG(NETWORK, "LOADING %s", net_save_path.data());
 						std::cout << "LOADING " << net_save_path << std::endl;
 						dc_loadstate(net_save_path);
 					}
@@ -137,6 +139,7 @@ static void emuEventCallback(Event event, void *)
 				{
 					if (file_exists(net_save_path))
 					{
+						NOTICE_LOG(NETWORK, "LOADING %s", net_save_path.data());
 						std::cout << "LOADING " << net_save_path << std::endl;
 						dc_loadstate(net_save_path);
 					}
@@ -3673,6 +3676,9 @@ void gui_display_ui()
 						if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
 						{
 							while(!dojo.receiver_header_read);
+
+							if (!settings.dojo.state_commit.empty())
+								net_state_path = net_state_path + "." + settings.dojo.state_commit;
 
 							if (dojo.replay_version == 3)
 							{
