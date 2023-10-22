@@ -3678,7 +3678,28 @@ void gui_display_ui()
 							while(!dojo.receiver_header_read);
 
 							if (!settings.dojo.state_commit.empty())
-								net_state_path = net_state_path + "." + settings.dojo.state_commit;
+							{
+								std::string commit_net_state_path = net_state_path + "." + settings.dojo.state_commit;
+
+								// copy current netplay savestate if it matches replay commit header
+								if(!ghc::filesystem::exists(commit_net_state_path) &&
+									ghc::filesystem::exists(net_state_path + ".commit"))
+								{
+									std::fstream commit_file;
+									commit_file.open(net_state_path + ".commit");
+									if (commit_file.is_open())
+									{
+										std::string commit_sha;
+										getline(commit_file, commit_sha);
+										if (commit_sha == settings.dojo.state_commit)
+										{
+											ghc::filesystem::copy(net_state_path, commit_net_state_path);
+										}
+									}
+								}
+
+								net_state_path = commit_net_state_path;
+							}
 
 							if (dojo.replay_version == 3)
 							{
