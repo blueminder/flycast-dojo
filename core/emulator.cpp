@@ -612,11 +612,14 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		// reload settings so that all settings can be overridden
 		loadGameSpecificSettings();
 
-		auto lua_file = dojo.GetTrainingLua();
-		if (lua_file != "")
+		if (settings.dojo.training && config::ShowTrainingGameOverlay)
 		{
-			if (file_exists(lua_file))
-				lua::reinit(lua_file);
+			auto lua_file = dojo.GetTrainingLua();
+			if (lua_file != "")
+			{
+				if (file_exists(lua_file))
+					lua::reinit(lua_file);
+			}
 		}
 
 		NetworkHandshake::init();
