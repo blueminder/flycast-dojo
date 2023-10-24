@@ -858,7 +858,9 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		rename(old_path.c_str(), final_path.c_str());
 	}
 
-	if (response_code == 404 || (file_exists(final_path.c_str()) && ghc::filesystem::file_size(final_path) == 0))
+	if (response_code == 404
+		|| (file_exists(final_path.c_str()) && ghc::filesystem::file_size(final_path) == 0)
+		|| !file_exists(final_path.c_str()))
 	{
 		remove(final_path.c_str());
 		final_path = "";
