@@ -1053,16 +1053,21 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 	size_t repo_end = config::NetSaveBase.get().find("/raw/main/");
 	std::string repo_name = config::NetSaveBase.get().substr(repo_pos + github_base.length(), repo_end - github_base.length());
 
-	auto r = cpr::Get(cpr::Url{ "https://api.github.com/repos/" + repo_name + "/commits/main" });
-	nlohmann::json j = nlohmann::json::parse(r.text);
+	cpr::Response r = cpr::Get(cpr::Url{ "https://api.github.com/repos/" + repo_name + "/commits/main" });
+	std::string sha = "";
 
-	std::ofstream commit_file;
-	commit_file.open(filename + ".commit");
+	if (r.text.length() > 0)
+	{
+		nlohmann::json j = nlohmann::json::parse(r.text);
 
-	std::string sha = j["sha"].get<std::string>();
-	cfgSaveStr("dojo", "LatestStateCommit", sha);
-	commit_file << sha << std::endl;
-	commit_file.close();
+		std::ofstream commit_file;
+		commit_file.open(filename + ".commit");
+
+		sha = j["sha"].get<std::string>();
+		cfgSaveStr("dojo", "LatestStateCommit", sha);
+		commit_file << sha << std::endl;
+		commit_file.close();
+	}
 #else
 	std::string sha = "";
 #endif
