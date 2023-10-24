@@ -2602,10 +2602,10 @@ void DojoGui::download_save_popup()
 #ifdef _WIN32
 						ShellExecute(0, 0, dojo_file.source_url.data(), 0, 0, SW_SHOW);
 #elif defined(__APPLE__)
-						std::string cmd = "open " + dojo_file.source_url;
+						std::string cmd = "open \"" + dojo_file.source_url + "\"";
 						system(cmd.data());
 #elif defined(__linux__)
-						std::string cmd = "xdg-open " + dojo_file.source_url;
+						std::string cmd = "xdg-open \"" + dojo_file.source_url + "\"";
 						system(cmd.data());
 #endif
 					}
@@ -2615,10 +2615,10 @@ void DojoGui::download_save_popup()
 #ifdef _WIN32
 						ShellExecuteA(NULL, "open", dojo_file.dest_path.data(), NULL, NULL, SW_SHOWDEFAULT);
 #elif defined(__APPLE__)
-						std::string cmd = "open " + dojo_file.dest_path;
+						std::string cmd = "open \"" + dojo_file.dest_path + "\"";
 						system(cmd.data());
 #elif defined(__linux__)
-						std::string cmd = "xdg-open " + dojo_file.dest_path;
+						std::string cmd = "xdg-open \"" + dojo_file.dest_path + "\"";
 						system(cmd.data());
 #endif
 					}
@@ -2628,7 +2628,10 @@ void DojoGui::download_save_popup()
 						dojo_file.game_path = "";
 						dojo_file.Reset();
 						net_save_download = false;
-						ImGui::CloseCurrentPopup();
+						if (dojo.commandLineStart)
+							exit(0);
+						else
+							ImGui::CloseCurrentPopup();
 					}
 				}
 #endif
