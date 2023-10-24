@@ -142,9 +142,10 @@ extern "C" int SDL_main(int argc, char *argv[])
         }
         set_user_data_dir(data_dir + "/");
 
-        std::string training_dir = data_dir + "training";
+        std::string training_dir = config_dir + "training";
         if (!file_exists(training_dir))
         {
+            mkdir(training_dir.c_str(), 0755);
             NSString *saveFilePath = [userpath stringByAppendingPathComponent:@"training"];
             NSFileManager *fileManager = [[NSFileManager alloc] init];
             if ([fileManager fileExistsAtPath:userpath] == NO)
