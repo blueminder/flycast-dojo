@@ -2569,6 +2569,16 @@ void DojoGui::invoke_download_save_popup(std::string game_path, bool* net_save_d
 	dojo_file.start_save_download = true;
 	dojo_file.game_path = game_path;
 
+#if defined(__APPLE__)
+	if (config::Receiving && dojo_file.source_url.empty())
+	{
+		if (settings.dojo.state_commit.empty())
+			dojo_file.DownloadNetSave(short_game_name);
+		else
+			dojo_file.DownloadNetSave(short_game_name, settings.dojo.state_commit);
+	}
+#endif
+
 	*net_save_download = true;
 }
 

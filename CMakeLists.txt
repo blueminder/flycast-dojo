@@ -1618,7 +1618,7 @@ if(NOT LIBRETRO)
 			add_custom_command(
 				OUTPUT ${CMAKE_SOURCE_DIR}/training
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-				COMMAND mkdir training
+				COMMAND mkdir -p training
 				COMMAND wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
 				COMMAND tar zxvf main.tar.gz
 				COMMAND cp flycast-dojo-training-main/*.lua training/
@@ -1803,7 +1803,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 	add_custom_command(
 		OUTPUT ${CMAKE_SOURCE_DIR}/training
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		COMMAND mkdir training
+		COMMAND mkdir -p training
 		COMMAND wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
 		COMMAND tar zxvf main.tar.gz
 		COMMAND cp flycast-dojo-training-main/*.lua training/
