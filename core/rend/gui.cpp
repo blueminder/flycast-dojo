@@ -672,6 +672,10 @@ void gui_open_settings()
 		{
 			gui_stop_game();
 		}
+		else if (dojo_gui.quick_map_settings_call)
+		{
+			gui_state = GuiState::Settings;
+		}
 		else
 		{
 			gui_state = GuiState::Commands;
@@ -1192,6 +1196,7 @@ static void gui_display_commands()
 			if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
 			{
 				dojo_gui.current_map_button = 0;
+				dojo_gui.quick_map_settings_call = false;
 				gui_state = GuiState::QuickMapping;
 			}
 			displayed_button_count++;
@@ -2217,6 +2222,20 @@ static void settings_body_controls(ImVec2 normal_padding)
 					}
 
 					controller_mapping_popup(gamepad);
+
+					ImGui::SameLine();
+
+					if (gamepad->unique_id().find("keyboard") == std::string::npos &&
+						gamepad->unique_id().find("mouse") == std::string::npos)
+					{
+						if (gamepad->remappable() && ImGui::Button("Quick Map"))
+						{
+							dojo.current_gamepad = gamepad->unique_id();
+							dojo_gui.current_map_button = 0;
+							dojo_gui.quick_map_settings_call = true;
+							gui_state = GuiState::QuickMapping;
+						}
+					}
 
 #ifdef __ANDROID__
 					if (gamepad->is_virtual_gamepad())
