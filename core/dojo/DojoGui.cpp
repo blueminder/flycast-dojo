@@ -2717,4 +2717,44 @@ void DojoGui::download_save_popup()
 	}
 }
 
+void DojoGui::gui_display_select_platform()
+{
+	const float scaling = settings.display.uiScale;
+
+	ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2.f, settings.display.height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+	ImGui::Begin("Choose Platform", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Columns(2, "buttons", false);
+
+	if (ImGui::Button("Dreamcast", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		settings.platform.system = DC_PLATFORM_DREAMCAST;
+		dojo_gui.quick_map_settings_call = true;
+		gui_state = GuiState::QuickPlayerSelect;
+	}
+
+	ImGui::NextColumn();
+
+	if (ImGui::Button("Arcade", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		settings.platform.system = DC_PLATFORM_NAOMI;
+		dojo_gui.quick_map_settings_call = true;
+		gui_state = GuiState::QuickPlayerSelect;
+	}
+
+	ImGui::NextColumn();
+
+	ImGui::Columns(1, nullptr, false);
+	ImVec2 cancel_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
+
+	if (ImGui::Button("Cancel", cancel_size))
+	{
+		gui_state = GuiState::Settings;
+	}
+
+	ImGui::End();
+}
+
 DojoGui dojo_gui;

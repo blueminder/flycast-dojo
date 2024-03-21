@@ -1673,7 +1673,8 @@ static void detect_input_popup(const Mapping *mapping)
 	ImVec2 padding = ScaledVec2(20, 20);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
-	std::string map_control_name = "Map Control " + std::string(mapping->name);
+	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+	std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(mapping->name);
 	if (ImGui::BeginPopupModal(map_control_name.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		if (settings.platform.isArcade())
@@ -1942,7 +1943,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			if (ImGui::Button("Map"))
 			{
 				map_start_time = os_GetSeconds();
-				std::string map_control_name = "Map Control " + std::string(systemMapping->name);
+				std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(currentMapping->name);
 				ImGui::OpenPopup(map_control_name.c_str());
 				mapped_device = gamepad;
 				mapped_code = -1;
@@ -2223,6 +2224,7 @@ static void settings_body_controls(ImVec2 normal_padding)
 					ImGui::NextColumn();
 					if (gamepad->remappable() && ImGui::Button("Map"))
 					{
+						dojo.current_gamepad = gamepad->unique_id();
 						gamepad_port = 0;
 						ImGui::OpenPopup("Controller Mapping");
 					}

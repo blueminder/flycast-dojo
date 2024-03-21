@@ -107,6 +107,7 @@ public:
 
 	bool pending_player_assignment = false;
 
+	void gui_display_select_platform();
 };
 
 extern DojoGui dojo_gui;
