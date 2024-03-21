@@ -1015,6 +1015,7 @@ void show_hotkeys()
 }
 
 void quick_mapping();
+void quick_player_select();
 
 static void gui_display_commands()
 {
@@ -1101,8 +1102,8 @@ static void gui_display_commands()
 		}
 
 		displayed_button_count++;
-
 		ImGui::NextColumn();
+
 		std::ostringstream watch_text;
 		watch_text << "Controlling Player " << dojo.record_player + 1;
 		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
@@ -1110,8 +1111,8 @@ static void gui_display_commands()
 			dojo.TrainingSwitchPlayer();
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
+
 		std::ostringstream playback_loop_text;
 		playback_loop_text << "Playback Loop ";
 		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
@@ -1120,7 +1121,6 @@ static void gui_display_commands()
 			dojo.playback_loop = (dojo.playback_loop ? false : true);
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
 	}
 
@@ -1128,8 +1128,8 @@ static void gui_display_commands()
 
 	if (settings.dojo.training && config::Delay == 0 || dojo.PlayMatch)
 	{
-		if (!dojo.PlayMatch && !settings.dojo.training)
-			ImGui::NextColumn();
+		//if (!dojo.PlayMatch && !settings.dojo.training)
+			//ImGui::NextColumn();
 
 		std::ostringstream input_display_text;
 		input_display_text << "Input Display ";
@@ -1151,7 +1151,6 @@ static void gui_display_commands()
 			}
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
 	}
 
@@ -1167,7 +1166,6 @@ static void gui_display_commands()
 			config::ShowTrainingGameOverlay = (config::ShowTrainingGameOverlay.get() ? false : true);
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
 	}
 #endif
@@ -1182,23 +1180,23 @@ static void gui_display_commands()
 			gui_state = GuiState::ButtonCheck;
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
 	}
 
 #if !defined(__ANDROID__)
-	if (dojo.current_gamepad.find("keyboard") == std::string::npos)
+	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+	if (dojo.current_gamepad.find("mouse") == std::string::npos)
 	{
-		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
 		if (gamepad != nullptr)
 		{
-			std::string quick_map_title = "Quick Button Map\n(" + gamepad->name() + ")";
-			if (ImGui::Button(quick_map_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
+			std::string quick_player_select_title = "Quick Map\n(" + gamepad->name() + ")";
+			if (ImGui::Button(quick_player_select_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
 			{
 				dojo_gui.current_map_button = 0;
 				dojo_gui.quick_map_settings_call = false;
-				gui_state = GuiState::QuickMapping;
+				gui_state = GuiState::QuickPlayerSelect;
 			}
+
 			displayed_button_count++;
 			ImGui::NextColumn();
 		}
@@ -1221,7 +1219,6 @@ static void gui_display_commands()
 			gui_state = GuiState::Hotkeys;
 		}
 		displayed_button_count++;
-
 		ImGui::NextColumn();
 	}
 #endif
@@ -1252,7 +1249,6 @@ static void gui_display_commands()
 		}
 	}
 	displayed_button_count++;
-
 	ImGui::NextColumn();
 	}
 
@@ -1268,7 +1264,6 @@ static void gui_display_commands()
 		gui_state = GuiState::Cheats;
 	}
 	displayed_button_count++;
-
 	ImGui::NextColumn();
 
 	// Settings
@@ -1277,7 +1272,6 @@ static void gui_display_commands()
 		gui_state = GuiState::Settings;
 	}
 	displayed_button_count++;
-
 	ImGui::NextColumn();
 
 	if (settings.network.online || config::GGPOEnable)
@@ -1294,7 +1288,6 @@ static void gui_display_commands()
 		gui_state = GuiState::Closed;
 	}
 	displayed_button_count++;
-
 	ImGui::NextColumn();
 
 	if (!dojo.PlayMatch)
@@ -1316,8 +1309,6 @@ static void gui_display_commands()
 
 	if (displayed_button_count % 2 == 0)
 		ImGui::Columns(1, nullptr, false);
-	else if (!dojo.PlayMatch)
-		ImGui::NextColumn();
 
 	ImVec2 exit_size;
 
@@ -1629,6 +1620,7 @@ static bool positiveDirection;
 static double map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
+static u32 button_id;
 
 static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
 {
@@ -2173,17 +2165,19 @@ static void settings_body_controls(ImVec2 normal_padding)
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
 		    {
-				ImGui::Columns(4, "physicalDevices", false);
+				ImGui::Columns(5, "physicalDevices", false);
 				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
 				float system_column = ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
 				float port_column = ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
 					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x;
-				float name_column = currentwidth - system_column - port_column;
+				float name_column = currentwidth - system_column - port_column - (ImGui::CalcTextSize("Quick Map ").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 				ImGui::TextColored(gray, "System");
 				ImGui::SetColumnWidth(-1, system_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Name");
 				ImGui::SetColumnWidth(-1, name_column);
+				ImGui::NextColumn();
+				ImGui::TextColored(gray, " ");
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Port");
 				ImGui::SetColumnWidth(-1, port_column);
@@ -2197,6 +2191,18 @@ static void settings_body_controls(ImVec2 normal_padding)
 					ImGui::Text("%s", gamepad->api_name().c_str());
 					ImGui::NextColumn();
 					ImGui::Text("%s", gamepad->name().c_str());
+					ImGui::NextColumn();
+					if (gamepad->unique_id().find("mouse") == std::string::npos)
+					{
+						std::string quick_map_btn = "Quick Map##" + gamepad->unique_id();
+						if (gamepad->remappable() && ImGui::Button(quick_map_btn.data()))
+						{
+							dojo.current_gamepad = gamepad->unique_id();
+							dojo_gui.current_map_button = 0;
+							dojo_gui.quick_map_settings_call = true;
+							gui_state = GuiState::QuickPlayerSelect;
+						}
+					}
 					ImGui::NextColumn();
 					char port_name[32];
 					sprintf(port_name, "##mapleport%d", i);
@@ -2224,19 +2230,6 @@ static void settings_body_controls(ImVec2 normal_padding)
 					controller_mapping_popup(gamepad);
 
 					ImGui::SameLine();
-
-					if (gamepad->unique_id().find("keyboard") == std::string::npos &&
-						gamepad->unique_id().find("mouse") == std::string::npos)
-					{
-						if (gamepad->remappable() && ImGui::Button("Quick Map"))
-						{
-							dojo.current_gamepad = gamepad->unique_id();
-							dojo_gui.current_map_button = 0;
-							dojo_gui.quick_map_settings_call = true;
-							gui_state = GuiState::QuickMapping;
-						}
-					}
-
 #ifdef __ANDROID__
 					if (gamepad->is_virtual_gamepad())
 					{
@@ -3828,6 +3821,9 @@ void gui_display_ui()
 	case GuiState::QuickMapping:
 		quick_mapping();
 		break;
+	case GuiState::QuickPlayerSelect:
+		quick_player_select();
+		break;	
 	case GuiState::Hotkeys:
 		show_hotkeys();
 		break;
@@ -4143,3 +4139,93 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 	return false;
 }
 #endif
+
+static void detect_player_select_input_popup()
+{
+	ImVec2 padding = ScaledVec2(20, 20);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
+	std::string player_select_name = "Player Select ";
+	if (ImGui::BeginPopupModal(player_select_name.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::Text("LEFT - Player 1\nRIGHT - Player 2");
+		ImGui::Text("Waiting for control...");
+
+		double now = os_GetSeconds();
+		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
+		if (mapped_code != (u32)-1)
+		{
+			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
+			if (input_mapping != NULL)
+			{
+				button_id = (int)input_mapping->get_button_id(gamepad_port, mapped_code);
+				NOTICE_LOG(INPUT, "gamepad_port %u, mapped_code %d, button_id %d", gamepad_port, mapped_code, (int)input_mapping->get_button_id(gamepad_port, mapped_code));
+				if (button_id == (int)DC_DPAD_LEFT)
+					mapped_device->set_maple_port(0);
+				else if (button_id == (int)DC_DPAD_RIGHT)
+					mapped_device->set_maple_port(1);
+				
+				dojo_gui.mapping_shown = false;
+				//gui_state = GuiState::ButtonCheck;
+				gui_state = GuiState::QuickMapping;
+			}
+			mapped_device = NULL;
+			ImGui::CloseCurrentPopup();
+		}
+		else if (now - map_start_time >= 5)
+		{
+			ImGui::CloseCurrentPopup();
+			mapped_device = NULL;
+			mapped_code = 0;
+			dojo_gui.mapping_shown = false;
+			if (dojo_gui.quick_map_settings_call)
+				gui_state = GuiState::Settings;
+			else
+				gui_state = GuiState::ButtonCheck;
+		}
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar(2);
+}
+
+
+void quick_player_select()
+{
+	fullScreenWindow(false);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+
+    ImGui::Begin("Quick Player Select", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+	if (!dojo_gui.mapping_shown)
+	{
+		std::string map_control_name = "Player Select ";
+		map_start_time = os_GetSeconds();
+		ImGui::OpenPopup(map_control_name.c_str());
+		mapped_device = gamepad;
+		mapped_code = -1;
+		gamepad->detectButtonOrAxisInput([](u32 code, bool analog, bool positive)
+		{
+			mapped_code = code;
+		});
+		dojo_gui.mapping_shown = true;
+	}
+
+	detect_player_select_input_popup();
+
+	if (ImGui::Button("Done", ScaledVec2(100, 30)))
+	{
+		ImGui::CloseCurrentPopup();
+		mapped_device = NULL;
+		mapped_code = 0;
+		dojo_gui.mapping_shown = false;
+		if (dojo_gui.quick_map_settings_call)
+			gui_state = GuiState::Settings;
+		else
+			gui_state = GuiState::ButtonCheck;
+	}
+
+	ImGui::PopStyleVar();
+	ImGui::End();
+}

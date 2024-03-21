@@ -105,6 +105,8 @@ public:
 	int item_current_idx = 0;
 	int last_item_current_idx = 4;
 
+	bool pending_player_assignment = false;
+
 };
 
 extern DojoGui dojo_gui;

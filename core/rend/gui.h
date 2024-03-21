@@ -89,7 +89,8 @@ enum class GuiState {
 	BiosRomWarning,
 	ButtonCheck,
 	QuickMapping,
-	Hotkeys
+	Hotkeys,
+	QuickPlayerSelect
 };
 extern GuiState gui_state;
 
