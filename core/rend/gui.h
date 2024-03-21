@@ -90,7 +90,8 @@ enum class GuiState {
 	ButtonCheck,
 	QuickMapping,
 	Hotkeys,
-	QuickPlayerSelect
+	QuickPlayerSelect,
+	QuickSelectPlatform
 };
 extern GuiState gui_state;
 

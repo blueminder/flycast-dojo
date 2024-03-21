@@ -662,6 +662,10 @@ void gui_open_settings()
 	{
 		gameLoader.cancel();
 	}
+	else if (gui_state == GuiState::ButtonCheck && dojo_gui.quick_map_settings_call)
+	{
+			gui_state = GuiState::Settings;
+	}
 	else if (gui_state == GuiState::ButtonCheck)
 	{
 		if (dojo_gui.ggpo_join_screen)
@@ -1720,10 +1724,15 @@ static void detect_input_popup(const Mapping *mapping)
 		else if (now - map_start_time >= 5)
 		{
 			mapped_device = NULL;
+			dojo_gui.current_map_button = 0;
 			ImGui::CloseCurrentPopup();
 			dojo_gui.current_map_button++;
 			dojo_gui.pending_map = false;
 			dojo_gui.mapping_shown = false;
+			if (dojo_gui.quick_map_settings_call)
+				gui_state = GuiState::Settings;
+			else
+				gui_state = GuiState::ButtonCheck;
 		}
 		ImGui::EndPopup();
 	}
@@ -1943,7 +1952,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			if (ImGui::Button("Map"))
 			{
 				map_start_time = os_GetSeconds();
-				std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(currentMapping->name);
+				std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(systemMapping->name);
 				ImGui::OpenPopup(map_control_name.c_str());
 				mapped_device = gamepad;
 				mapped_code = -1;
@@ -2028,7 +2037,7 @@ void quick_mapping()
 			const char * bn = currentMapping->name;
 			if (!dojo_gui.mapping_shown)
 			{
-				std::string map_control_name = "Map Control " + std::string(currentMapping->name);
+				std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(currentMapping->name);
 				map_start_time = os_GetSeconds();
 				ImGui::OpenPopup(map_control_name.c_str());
 				mapped_device = gamepad;
@@ -2201,7 +2210,10 @@ static void settings_body_controls(ImVec2 normal_padding)
 							dojo.current_gamepad = gamepad->unique_id();
 							dojo_gui.current_map_button = 0;
 							dojo_gui.quick_map_settings_call = true;
-							gui_state = GuiState::QuickPlayerSelect;
+							if (game_started)
+								gui_state = GuiState::QuickPlayerSelect;
+							else
+								gui_state = GuiState::QuickSelectPlatform;
 						}
 					}
 					ImGui::NextColumn();
@@ -3826,6 +3838,9 @@ void gui_display_ui()
 	case GuiState::QuickPlayerSelect:
 		quick_player_select();
 		break;	
+	case GuiState::QuickSelectPlatform:
+		dojo_gui.gui_display_select_platform();
+		break;
 	case GuiState::Hotkeys:
 		show_hotkeys();
 		break;
