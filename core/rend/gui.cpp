@@ -454,13 +454,13 @@ static void gui_newFrame()
 	io.MouseDown[ImGuiMouseButton_Middle] = (mouseButtons & (1 << 2)) != 0;
 	io.MouseDown[3] = (mouseButtons & (1 << 3)) != 0;
 
-	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
-	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
-	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
-	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
-	io.NavInputs[ImGuiNavInput_DpadDown] = (kcode[0] & DC_DPAD_DOWN) == 0;
+	io.NavInputs[ImGuiNavInput_Activate] = ((kcode[0] & DC_BTN_A) == 0) || ((kcode[1] & DC_BTN_A) == 0);
+	io.NavInputs[ImGuiNavInput_Cancel] = ((kcode[0] & DC_BTN_B) == 0) || ((kcode[1] & DC_BTN_B) == 0);
+	io.NavInputs[ImGuiNavInput_Input] = ((kcode[0] & DC_BTN_X) == 0) || (kcode[1] & DC_DPAD_LEFT) == 0;
+	io.NavInputs[ImGuiNavInput_DpadLeft] = ((kcode[0] & DC_DPAD_LEFT) == 0) || (kcode[1] & DC_DPAD_LEFT) == 0;
+	io.NavInputs[ImGuiNavInput_DpadRight] = ((kcode[0] & DC_DPAD_RIGHT) == 0) || ((kcode[1] & DC_DPAD_RIGHT) == 0);
+	io.NavInputs[ImGuiNavInput_DpadUp] = ((kcode[0] & DC_DPAD_UP) == 0) || ((kcode[1] & DC_DPAD_UP) == 0);
+	io.NavInputs[ImGuiNavInput_DpadDown] = ((kcode[0] & DC_DPAD_DOWN) == 0) || ((kcode[1] & DC_DPAD_DOWN) == 0);
 	io.NavInputs[ImGuiNavInput_LStickLeft] = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
 	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickLeft] = 0.f;
