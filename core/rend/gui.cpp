@@ -2197,27 +2197,30 @@ static void settings_body_controls(ImVec2 normal_padding)
 {
 		//if (ImGui::BeginTabItem("Controls"))
 		{
-			float currentwidth = ImGui::GetContentRegionAvail().x - 150;
+			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
 		    {
 				ImGui::Columns(5, "physicalDevices", false);
 				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
 				float system_column = ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
-				float port_column = ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
-					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x;
-				float name_column = currentwidth - system_column - port_column - (ImGui::CalcTextSize("Quick Map ").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				float port_column = ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+				float map_column = ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+				float quick_map_column = ImGui::CalcTextSize("Quick Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+				float name_column = currentwidth - system_column - quick_map_column - port_column - map_column;
 				ImGui::TextColored(gray, "System");
-				ImGui::SetColumnWidth(-1, system_column);
+				ImGui::SetColumnWidth(0, system_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Name");
-				ImGui::SetColumnWidth(-1, name_column);
+				ImGui::SetColumnWidth(1, name_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, " ");
+				ImGui::SetColumnWidth(2, quick_map_column);
 				ImGui::NextColumn();
 				ImGui::TextColored(gray, "Port");
-				ImGui::SetColumnWidth(-1, port_column);
+				ImGui::SetColumnWidth(3, port_column);
 				ImGui::NextColumn();
+				ImGui::SetColumnWidth(4, map_column);
 				ImGui::NextColumn();
 				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
 				{
