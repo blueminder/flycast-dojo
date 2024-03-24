@@ -579,7 +579,7 @@ void gui_open_disconnected()
 void gui_open_step()
 {
 	const LockGuard lock(guiMutex);
-	if (dojo.PlayMatch || (!config::ThreadedRendering && settings.dojo.training))
+	if ((!config::ThreadedRendering && settings.dojo.training))
 	{
 		if (!dojo.stepping)
 			dojo.stepping = true;
@@ -619,11 +619,8 @@ void gui_open_pause()
 		{
 			if (dojo.stepping)
 				dojo.stepping = false;
-			if (dojo.PlayMatch)
-			{
-				dojo.manual_pause = true;
-				gui_state = GuiState::ReplayPause;
-			}
+			dojo.manual_pause = true;
+			gui_state = GuiState::ReplayPause;
 		}
 	}
 	else if (gui_state == GuiState::ReplayPause)
