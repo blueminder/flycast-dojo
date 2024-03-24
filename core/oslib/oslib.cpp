@@ -124,6 +124,13 @@ std::string findNaomiBios(const std::string& name)
 		fullpath = path + "/" + name;
 		if (file_exists(fullpath))
 			return fullpath;
+		// use parent data path
+		size_t folder_pos = get_last_slash_pos(path);
+		auto parent_path = path.substr(0, folder_pos);
+		auto parent_data_path = parent_path + "/data";
+		fullpath = parent_data_path + "/" + name;
+		if (file_exists(fullpath))
+			return fullpath;
 	}
 	return "";
 }
