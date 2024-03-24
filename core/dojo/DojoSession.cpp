@@ -82,6 +82,7 @@ void DojoSession::Init()
 	recording = false;
 	playing_input = false;
 	playback_loop = false;
+	rnd_playback_loop = false;
 	record_player = player;
 	current_record_slot = 0;
 
@@ -1790,6 +1791,14 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 			playback_loop && trigger_playback &&
 			FrameNumber > next_playback_frame)
 		{
+			if (rnd_playback_loop)
+			{
+				auto it = recorded_slots.cbegin();
+				srand(time(0));
+				int rnd = rand() % recorded_slots.size();
+				std::advance(it, rnd);
+				current_record_slot = *it;
+			}
 			PlayRecording(current_record_slot);
 		}
 	}
@@ -1957,6 +1966,8 @@ void DojoSession::ToggleRandomPlayback()
 		gui_display_notification("No Input Slots Recorded", 2000);
 		return;
 	}
+	if (rnd_playback_loop)
+		rnd_playback_loop = false;
 	if (!playing_input)
 	{
 		auto it = recorded_slots.cbegin();
@@ -1965,6 +1976,9 @@ void DojoSession::ToggleRandomPlayback()
 		std::advance(it, rnd);
 		current_record_slot = *it;
 	}
+	if (playback_loop)
+		rnd_playback_loop = true;
+
 	dojo.TogglePlayback(current_record_slot, config::HideRandomInputSlot.get());
 }
 

@@ -264,6 +264,7 @@ public:
 	void ResetTraining();
 
 	bool playback_loop;
+	bool rnd_playback_loop;
 	bool playing_input;
 	bool trigger_playback;
 	u32 next_playback_frame;
