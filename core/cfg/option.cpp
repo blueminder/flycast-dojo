@@ -211,6 +211,7 @@ Option<bool> ForceRealBios("ForceRealBios", false, "dojo");
 Option<bool> OutputStreamTxt("OutputStreamTxt", false, "dojo");
 OptionString UpdateChannel("UpdateChannel", "stable", "dojo");
 Option<bool> ShowTrainingGameOverlay("ShowTrainingGameOverlay", true, "dojo");
+Option<bool> EnableTrainingLua("EnableTrainingLua", true, "dojo");
 
 Option<int> EnableMouseCaptureToggle ("EnableMouseCaptureToggle", false, "input");
 Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", false, "input");

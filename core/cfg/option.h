@@ -582,6 +582,7 @@ extern Option<bool> ForceRealBios;
 extern Option<bool> OutputStreamTxt;
 extern OptionString UpdateChannel;
 extern Option<bool> ShowTrainingGameOverlay;
+extern Option<bool> EnableTrainingLua;
 
 extern Option<bool> EnableDiagonalCorrection;
 extern Option<int> SOCDResolution;

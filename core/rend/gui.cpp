@@ -1164,15 +1164,42 @@ static void gui_display_commands()
 	if (settings.dojo.training && dojo.GetTrainingLua() != "")
 	{
 		std::ostringstream lua_display_text;
-		lua_display_text << "Training Overlay ";
+		lua_display_text << "Training Lua ";
 
-		lua_display_text << (config::ShowTrainingGameOverlay.get() ? "On" : "Off");
+		lua_display_text << (config::EnableTrainingLua.get() ? "On" : "Off");
 		if (ImGui::Button(lua_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
 		{
-			config::ShowTrainingGameOverlay = (config::ShowTrainingGameOverlay.get() ? false : true);
+			config::EnableTrainingLua = (config::EnableTrainingLua.get() ? false : true);
+			if (config::EnableTrainingLua)
+			{
+				auto lua_file = dojo.GetTrainingLua();
+				if (lua_file != "")
+				{
+					if (file_exists(lua_file))
+						lua::reinit(lua_file);
+				}
+			}
+			else
+			{
+				lua::term();
+			}
 		}
 		displayed_button_count++;
 		ImGui::NextColumn();
+
+		if (config::EnableTrainingLua)
+		{
+			std::ostringstream lua_display_text;
+			lua_display_text << "Training Overlay ";
+
+			lua_display_text << (config::ShowTrainingGameOverlay.get() ? "On" : "Off");
+			if (ImGui::Button(lua_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+			{
+				config::ShowTrainingGameOverlay = (config::ShowTrainingGameOverlay.get() ? false : true);
+			}
+			displayed_button_count++;
+			ImGui::NextColumn();
+		}
 	}
 #endif
 

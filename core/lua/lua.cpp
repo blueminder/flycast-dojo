@@ -366,6 +366,8 @@ static void setRelCoordinates(int player, float x, float y, lua_State *L)
 
 static void beginWindow(const char *title, int x, int y, int w, int h)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(x, y));
@@ -377,6 +379,8 @@ static void beginWindow(const char *title, int x, int y, int w, int h)
 
 static void endWindow()
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::PopStyleColor();
 	ImGui::End();
 	ImGui::PopStyleVar(2);
@@ -384,48 +388,66 @@ static void endWindow()
 
 static void uiText(const std::string& text)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::Text("%s", text.c_str());
 }
 
 static void uiTextRightAligned(const std::string& text)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text.c_str()).x);
 	uiText(text);
 }
 
 static void uiTextColor(const std::string& text, float r, float g, float b, float a)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::TextColored(ImVec4(r, g, b, a), "%s", text.c_str());
 }
 
 static void uiTextColorRightAligned(const std::string& text, float r, float g, float b, float a)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text.c_str()).x);
 	uiTextColor(text, r, g, b ,a);
 }
 
 static void uiSameLine()
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::SameLine();
 }
 
 static void uiSameLinePlaceholder(const std::string& text)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text.c_str()).x);
 }
 
 static void uiSameLinePlaceholderRightAligned(const std::string& text)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text.c_str()).x);
 }
 
 static void uiBargraph(float v)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return;
 	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
 }
 
 static int uiButton(lua_State *L)
 {
+	if (!config::ShowTrainingGameOverlay)
+		return 0;
 	const char *label = luaL_checkstring(L, 1);
 	if (ImGui::Button(label))
 	{
