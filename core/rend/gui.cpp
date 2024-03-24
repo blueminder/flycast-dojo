@@ -2298,6 +2298,7 @@ static void settings_body_controls(ImVec2 normal_padding)
 							gamepad->set_rumble_power(power);
 						ImGui::NextColumn();
 						ImGui::NextColumn();
+						ImGui::NextColumn();
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
