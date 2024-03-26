@@ -258,7 +258,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_QUICK_SAVE:
 			if (pressed && !gui_is_open() && (!settings.network.online || settings.dojo.training))
 			{
-				dc_savestate();
+				dc_savestate(config::SavestateSlot);
 			}
 			break;
 		case EMU_BTN_RECORD:
