@@ -32,13 +32,13 @@ void DojoFile::RefreshFileDefinitions()
 {
 #ifdef _WIN32
 	// assign exe root path on launch
-	TCHAR szPath[MAX_PATH];
-	GetModuleFileName(0, szPath, MAX_PATH);
-	root_path = ghc::filesystem::path(szPath).parent_path().string() + "\\";
+	wchar_t szPath[MAX_PATH];
+	GetModuleFileNameW( NULL, szPath, MAX_PATH );
+	root_path = ghc::filesystem::path(szPath).parent_path().string();
 #else
 	root_path = get_readonly_data_path("");
 #endif
-	std::string json_filename = root_path + "flycast_roms.json";
+	ghc::filesystem::path json_filename = ghc::filesystem::path(root_path) / "flycast_roms.json";
 #if defined(__linux__)
 	if (!ghc::filesystem::exists(json_filename))
 	{
@@ -56,10 +56,10 @@ void DojoFile::RefreshFileDefinitions()
 	RemainingFileDefinitions = LoadJsonFromFile(json_filename);
 }
 
-nlohmann::json DojoFile::LoadJsonFromFile(std::string filename)
+nlohmann::json DojoFile::LoadJsonFromFile(ghc::filesystem::path path)
 {
 	nlohmann::json ret;
-	std::ifstream i(filename);
+	std::ifstream i(path);
 
 	if (i.fail())
 	{

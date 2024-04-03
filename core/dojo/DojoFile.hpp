@@ -47,7 +47,7 @@ struct GameMedia {
 class DojoFile
 {
 private:
-	nlohmann::json LoadJsonFromFile(std::string filename);
+	nlohmann::json LoadJsonFromFile(ghc::filesystem::path path);
 
 public:
 	DojoFile();
