@@ -32,6 +32,9 @@ IF EXIST flycast_previous (
 		)
 	)
 
+	ECHO Copying Netplay Savestates to active install
+	XCOPY /I /E /Q /R /Y "flycast\data\*.state.net" "flycast_previous\data"
+
 	ECHO Switching Flycast Dojo Version...
 	REN flycast flycast_tmp
 	REN flycast_previous flycast
