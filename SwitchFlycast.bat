@@ -1,6 +1,37 @@
 @ECHO OFF
 
 IF EXIST flycast_previous (
+	IF EXIST "flycast\mappings" (
+		ECHO Copying mappings folder to active install
+		XCOPY /I /E /Q /R /Y "flycast\mappings" "flycast_previous\mappings"
+	)
+
+	IF EXIST "flycast\ROMs" (
+		ECHO Copying ROMs folder to active install
+		XCOPY /I /E /Q /R /Y "flycast\ROMs" "flycast_previous\ROMs"
+	)
+
+	IF EXIST "flycast\data\naomi.zip" (
+		IF NOT EXIST "flycast_previous\ROMs\naomi.zip" (
+			ECHO Copying naomi.zip to the ROMs folder
+			XCOPY "flycast\data\naomi.zip" "flycast_previous\ROMs\" /Y >NUL
+		)
+	)
+
+	IF EXIST "flycast\data\awbios.zip" (
+		IF NOT EXIST "flycast_previous\ROMs\awbios.zip" (
+			ECHO Copying awbios.zip to the ROMs folder
+			XCOPY "flycast\data\awbios.zip" "flycast_previous\ROMs\" /Y >NUL
+		)
+	)
+
+	IF EXIST "flycast\data\naomi2.zip" (
+		IF NOT EXIST "flycast_previous\ROMs\naomi2.zip" (
+			ECHO Copying naomi2.zip to the ROMs folder
+			XCOPY "flycast\data\naomi2.zip" "flycast_previous\ROMs\" /Y >NUL
+		)
+	)
+
 	ECHO Switching Flycast Dojo Version...
 	REN flycast flycast_tmp
 	REN flycast_previous flycast
