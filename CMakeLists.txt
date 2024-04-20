@@ -314,7 +314,7 @@ if(USE_OPENMP)
 	find_package(OpenMP)
 	if(OpenMP_CXX_FOUND)
 		if(MINGW)
-			target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread -liphlpapi")
 			target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
 		elseif(ANDROID)
 			# Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
