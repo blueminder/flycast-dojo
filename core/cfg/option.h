@@ -563,7 +563,6 @@ extern Option<bool> NetCustomVmu;
 extern Option<bool> ShowPlaybackControls;
 extern Option<int> RxFrameBuffer;
 extern Option<bool> LaunchReplay;
-extern Option<bool> TransmitReplays;
 extern Option<bool> Training;
 extern Option<bool> EnableSessionQuickLoad;
 extern OptionString Quark;
@@ -589,6 +588,8 @@ extern Option<int> SOCDResolution;
 
 extern Option<int> FirstTo;
 extern Option<bool> TransmitScore;
+
+extern OptionString SpectateMatchCode;
 
 // Maple
 

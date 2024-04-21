@@ -348,6 +348,7 @@ public:
 	void FirstToPoll();
 
 	uint32_t last_score_frame = 0;
+	bool names_assigned = false;
 };
 
 extern DojoSession dojo;

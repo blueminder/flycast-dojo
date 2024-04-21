@@ -696,6 +696,17 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	if (cfgLoadBool("dojo", "Receiving", false))
+	{
+		if (config::Quark.get() == "" && config::SpectateMatchCode.get() == "")
+		{
+			gui_error("Please enter a Match Code to spectate.");
+			return;
+		}
+		else
+			gui_state = GuiState::StreamWait;
+	}
+
 	const LockGuard lock(guiMutex);
 
 	std::string filename = path.substr(path.find_last_of("/\\") + 1);
@@ -703,6 +714,65 @@ void gui_start_game(const std::string& path)
 	dojo.game_name = game_name;
 	dojo.current_delay = config::GGPODelay.get();
 	dojo.commandLineStart = commandLineStart;
+
+	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
+	{
+		dojo.LaunchReceiver();
+
+		std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
+		while(!dojo.receiver_header_read);
+
+		if (dojo.receiver_ended)
+		{
+			gui_state = GuiState::Main;
+			gui_error("Match not found.");
+			dojo.receiver_started = false;
+			dojo.receiver_ended = false;
+			return;
+		}
+
+		if (!settings.dojo.state_commit.empty())
+		{
+			std::string commit_net_state_path = net_state_path + "." + settings.dojo.state_commit;
+
+			// copy current netplay savestate if it matches replay commit header
+			if(!ghc::filesystem::exists(commit_net_state_path) &&
+				ghc::filesystem::exists(net_state_path + ".commit"))
+			{
+				std::fstream commit_file;
+				commit_file.open(net_state_path + ".commit");
+				if (commit_file.is_open())
+				{
+					std::string commit_sha;
+					getline(commit_file, commit_sha);
+					if (commit_sha == settings.dojo.state_commit)
+					{
+						ghc::filesystem::copy(net_state_path, commit_net_state_path);
+					}
+				}
+			}
+
+			net_state_path = commit_net_state_path;
+		}
+
+		if (dojo.replay_version == 3)
+		{
+			if (dojo.save_checksum != settings.dojo.state_md5)
+			{
+				//ghc::filesystem::remove(net_state_path);
+			}
+		}
+	}
+
+	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+	if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
+		(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
+			dojo_file.save_download_ended && dojo_file.post_save_launch))
+	{
+		if (!dojo_file.start_save_download)
+			dojo_gui.invoke_download_save_popup(path, &dojo_gui.net_save_download, true);
+	}
 
 	if (cfgLoadBool("network", "GGPO", false)
 		&& !config::Receiving
@@ -773,9 +843,6 @@ void gui_start_game(const std::string& path)
 
 	if (dojo.PlayMatch && !config::Receiving)
 	{
-		if (cfgLoadBool("dojo", "TransmitReplays", false))
-			dojo.StartTransmitterThread();
-
 		dojo.LoadReplayFile(dojo.ReplayFilename);
 		// ggpo session
 		if (dojo.replay_version >= 2)
@@ -790,9 +857,6 @@ void gui_start_game(const std::string& path)
 			dojo.FrameNumber = 1;
 		}
 	}
-
-	if (config::Transmitting || config::TransmitScore)
-		dojo.StartTransmitterThread();
 
 	dojo.p1_wins = 0;
 	dojo.p2_wins = 0;
@@ -2692,12 +2756,12 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN" };
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN", "SPECTATE" };
 
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 
-	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 4);
 
 	if (dojo.lobby_host_screen)
 	{
@@ -2707,7 +2771,7 @@ static void gui_display_content()
 	else
 		ImGui::Combo("", &dojo_gui.item_current_idx, items, IM_ARRAYSIZE(items));
 
-	if (dojo_gui.last_item_current_idx == 4 && gui_state != GuiState::Replays)
+	if (dojo_gui.last_item_current_idx == 5 && gui_state != GuiState::Replays)
 	{
 		// set default offline delay to 0
 		config::Delay = 0;
@@ -2775,19 +2839,21 @@ static void gui_display_content()
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
-	// RECEIVE menu option
-	/*
 	else if (dojo_gui.item_current_idx == 4)
 	{
-		config::DojoEnable = true;
-		config::DojoActAsServer = true;
-		config::Receiving = true;
-		config::Transmitting = false;
 		settings.dojo.training = false;
+		config::Receiving = true;
 
-		config::DojoServerIP = "";
-	}*/
-	else if (dojo_gui.item_current_idx == 4)
+		config::DojoActAsServer = false;
+		config::ActAsServer = false;
+		config::RxFrameBuffer = 180;
+		config::DojoEnable = true;
+		config::GGPOEnable = true;
+
+		if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
+			config::SpectateMatchCode = "";
+	}
+	else if (dojo_gui.item_current_idx == 5)
 	{
 		config::DojoEnable = false;
 		config::Receiving = false;
@@ -2798,6 +2864,7 @@ static void gui_display_content()
 	{
 		SaveSettings();
 		dojo_gui.last_item_current_idx = dojo_gui.item_current_idx;
+		config::SpectateMatchCode = "";
 	}
 
 	ImGui::SameLine();
@@ -3260,8 +3327,25 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nIf one is available, it will be downloaded upon game launch.");
 		ImGui::PopStyleColor();
 	}
+	else if (dojo_gui.item_current_idx == 4)
+	{
+		char SpectateMatchCode[256] = { 0 };
+		strcpy(SpectateMatchCode, config::SpectateMatchCode.get().c_str());
+		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+		ImGui::InputText("Match Code", SpectateMatchCode, sizeof(SpectateMatchCode), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("Spectate most recent session with Match Code");
+
+		auto match_code = std::string(SpectateMatchCode, strlen(SpectateMatchCode));
+		if (match_code != config::SpectateMatchCode.get())
+		{
+			config::SpectateMatchCode = match_code;
+			cfgSaveStr("dojo", "SpectateMatchCode", config::SpectateMatchCode);
+		}
+	}
 	else
 	{
+		ImGui::Text(" ");
 		ImGui::SameLine();
 		ImGui::Text(" ");
 	}
@@ -3720,47 +3804,10 @@ void gui_display_ui()
 						std::string filename = entry_path.substr(entry_path.find_last_of("/\\") + 1);
 						auto game_name = stringfix::remove_extension(filename);
 
-						if (cfgLoadBool("dojo", "Receiving", false))
-							dojo.LaunchReceiver();
+						//if (cfgLoadBool("dojo", "Receiving", false))
+							//dojo.LaunchReceiver();
 
 						std::string net_state_path = get_writable_data_path(game_name + ".state.net");
-
-						if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
-						{
-							while(!dojo.receiver_header_read);
-
-							if (!settings.dojo.state_commit.empty())
-							{
-								std::string commit_net_state_path = net_state_path + "." + settings.dojo.state_commit;
-
-								// copy current netplay savestate if it matches replay commit header
-								if(!ghc::filesystem::exists(commit_net_state_path) &&
-									ghc::filesystem::exists(net_state_path + ".commit"))
-								{
-									std::fstream commit_file;
-									commit_file.open(net_state_path + ".commit");
-									if (commit_file.is_open())
-									{
-										std::string commit_sha;
-										getline(commit_file, commit_sha);
-										if (commit_sha == settings.dojo.state_commit)
-										{
-											ghc::filesystem::copy(net_state_path, commit_net_state_path);
-										}
-									}
-								}
-
-								net_state_path = commit_net_state_path;
-							}
-
-							if (dojo.replay_version == 3)
-							{
-								if (dojo.save_checksum != settings.dojo.state_md5)
-								{
-									//ghc::filesystem::remove(net_state_path);
-								}
-							}
-						}
 
 						if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
 							(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
@@ -4041,8 +4088,6 @@ void gui_display_osd()
 			if(dojo.FrameNumber >= dojo.maple_inputs.size() - 1)
 			{
 				settings.input.fastForwardMode = false;
-				if (config::TransmitReplays && config::Transmitting)
-					dojo.transmitter_ended = true;
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 				gui_state = GuiState::Replays;
@@ -4056,9 +4101,6 @@ void gui_display_osd()
 			if (dojo.FrameNumber >= dojo.net_inputs[0].size() - 1 ||
 				dojo.FrameNumber >= dojo.net_inputs[1].size() - 1)
 			{
-				if (config::TransmitReplays && config::Transmitting)
-					dojo.transmitter_ended = true;
-
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 					gui_state = GuiState::Replays;
 #else

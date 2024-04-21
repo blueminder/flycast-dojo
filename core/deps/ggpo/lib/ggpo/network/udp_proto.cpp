@@ -491,7 +491,7 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    if (!dojo.received_player_info)
    {
       settings.dojo.OpponentName = std::string(opponent_name);
-      dojo.AssignNames();
+      dojo.AssignNames(true);
    }
 
    if (verification.size() != 0)
@@ -516,6 +516,8 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
 
    reply->u.sync_reply.verification_failure = 0;
    SendMsg(reply);
+
+   dojo.StartTransmitterThread();
 
    return true;
 }

@@ -1511,7 +1511,8 @@ void DojoSession::receiver_client_thread()
 		spectate_request.AppendHeader(1, SPECTATE_REQUEST);
 
 		spectate_request.AppendString(config::Quark.get());
-		spectate_request.AppendString(config::MatchCode.get());
+		spectate_request.AppendString(config::SpectateMatchCode.get());
+		spectate_request.AppendString(game_name);
 
 		std::vector<unsigned char> message = spectate_request.Msg();
 		asio::write(socket, asio::buffer(message));
@@ -1530,6 +1531,7 @@ void DojoSession::receiver_client_thread()
 			}
 			catch (const std::system_error& e)
 			{
+				receiver_header_read = true;
 				receiver_ended = true;
 				break;
 			}
@@ -1546,6 +1548,7 @@ void DojoSession::receiver_client_thread()
 			}
 			catch (const std::system_error& e)
 			{
+				receiver_header_read = true;
 				receiver_ended = true;
 				break;
 			}
@@ -1611,47 +1614,12 @@ void DojoSession::transmitter_thread()
 		spectate_start.AppendString(settings.dojo.state_md5);
 		spectate_start.AppendString(settings.dojo.state_commit);
 
-		std::vector<unsigned char> message = spectate_start.Msg();
-		asio::write(socket, asio::buffer(message));
+		std::vector<unsigned char> spectate_start_message = spectate_start.Msg();
+		bool start_sent = false;
 
-		// read player info reply
-		char header_buf[HEADER_LEN] = { 0 };
-		std::vector<unsigned char> body_buf;
-		int offset = 0;
+		std::vector<unsigned char> message;
 
-		// read header
-		memset((void*)header_buf, 0, HEADER_LEN);
-		try
-		{
-			asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
-		}
-		catch (const std::system_error& e)
-		{
-			//break;
-		}
-
-		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
-		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
-
-		// read body
-		body_buf.resize(body_size);
-
-		try
-		{
-			asio::read(socket, asio::buffer(body_buf, body_size));
-		}
-		catch (const std::system_error& e)
-		{
-			//break;
-		}
-
-		offset = 0;
-
-		dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
-
-		std::cout << "Transmission Started" << std::endl;
-
-		unsigned int sent_frame_count = 0;
+		unsigned int transmit_frame_count = 0;
 
 		MessageWriter frame_msg;
 		frame_msg.AppendHeader(0, MAPLE_BUFFER);
@@ -1674,22 +1642,86 @@ void DojoSession::transmitter_thread()
 					frame_msg.AppendContinuousData(current_frame.data(), MAPLE_FRAME_SIZE);
 
 					transmission_frames.pop_front();
-					sent_frame_count++;
+					transmit_frame_count++;
 
 					// send packet every 60 frames
-					if (sent_frame_count % FRAME_BATCH == 0)
+					if (transmit_frame_count % FRAME_BATCH == 0)
 					{
 						message = frame_msg.Msg();
+						// delay start message until first frame batch
+						if (!start_sent && transmit_frame_count == FRAME_BATCH)
+						{
+							asio::write(socket, asio::buffer(spectate_start_message));
+							// clear local match code after transmission starts
+							config::MatchCode = "";
+							cfgSaveStr("dojo", "MatchCode", "");
+
+							if (config::SpectatorIP.get() == "ggpo.fightcade.com")
+							{
+								// read player info reply
+								char header_buf[HEADER_LEN] = { 0 };
+								std::vector<unsigned char> body_buf;
+								int offset = 0;
+
+								// read header
+								memset((void*)header_buf, 0, HEADER_LEN);
+								try
+								{
+									asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+								}
+								catch (const std::system_error& e)
+								{
+									//break;
+								}
+
+								unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
+								unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+								// read body
+								body_buf.resize(body_size);
+
+								try
+								{
+									asio::read(socket, asio::buffer(body_buf, body_size));
+								}
+								catch (const std::system_error& e)
+								{
+									//break;
+								}
+								offset = 0;
+
+								dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
+							}
+
+							std::cout << "Transmission Started" << std::endl;
+							start_sent = true;
+						}
+
 						asio::write(socket, asio::buffer(message));
 
 						frame_msg = MessageWriter();
-						frame_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
+						frame_msg.AppendHeader(transmit_frame_count + 1, MAPLE_BUFFER);
 
 						// start with individual frame size
 						// (body_size % data_size == 0)
 						frame_msg.AppendInt(MAPLE_FRAME_SIZE);
 					}
 				}
+			}
+
+			// sends player info according to swapped names in ggpo session
+			// fightcade assigns player names on their own servers
+			if (config::SpectatorIP.get() != "ggpo.fightcade.com" && start_sent && names_assigned)
+			{
+				MessageWriter player_info;
+				player_info.AppendHeader(1, PLAYER_INFO);
+				player_info.AppendString(config::PlayerName.get());
+				player_info.AppendString(settings.dojo.OpponentName);
+
+				std::vector<unsigned char> message = player_info.Msg();
+				asio::write(socket, asio::buffer(message));
+
+				names_assigned = false;
 			}
 
 			if (config::TransmitScore && transmission_wins.size() > 0)
@@ -1710,14 +1742,14 @@ void DojoSession::transmitter_thread()
 				(disconnect_toggle && !transmission_in_progress))
 			{
 				// send remaining frames
-				if (sent_frame_count % FRAME_BATCH > 0)
+				if (transmit_frame_count % FRAME_BATCH > 0)
 				{
 					message = frame_msg.Msg();
 					asio::write(socket, asio::buffer(message));
 				}
 
 				MessageWriter disconnect_msg;
-				disconnect_msg.AppendHeader(sent_frame_count + 1, MAPLE_BUFFER);
+				disconnect_msg.AppendHeader(transmit_frame_count + 1, MAPLE_BUFFER);
 				disconnect_msg.AppendData("0000000000000000", MAPLE_FRAME_SIZE);
 
 				asio::write(socket, asio::buffer(disconnect_msg.Msg()));
@@ -2152,7 +2184,7 @@ void DojoSession::StopUPnP()
 
 void DojoSession::AssignNames(bool player_info)
 {
-	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer || player_info)
+	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
 	{
 		player_1 = settings.dojo.PlayerName;
 		player_2 = settings.dojo.OpponentName;
@@ -2168,6 +2200,9 @@ void DojoSession::AssignNames(bool player_info)
 		dojo_file.WriteStringToOut("p1name", player_1);
 		dojo_file.WriteStringToOut("p2name", player_2);
 	}
+
+	if (player_info)
+		names_assigned = true;
 }
 
 #ifndef __ANDROID__

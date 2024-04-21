@@ -1858,6 +1858,9 @@ void DojoGui::gui_display_replays(float scaling, std::vector<GameMedia> game_lis
 			bool is_selected = false;
 			if (ImGui::Selectable(date.c_str(), &is_selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
+				if (cfgLoadBool("dojo", "Receiving", false))
+					gui_state = GuiState::StreamWait;
+
 				dojo.ReplayFilename = replay_path;
 				dojo.PlayMatch = true;
 
@@ -2184,12 +2187,6 @@ void DojoGui::insert_replays_tab(ImVec2 normal_padding)
 			ImGui::SameLine();
 			ShowHelpMarker("Target Spectator IP Address");
 			config::SpectatorIP = SpectatorIP;
-
-			/*
-			OptionCheckbox("Transmit Replays", config::TransmitReplays);
-			ImGui::SameLine();
-			ShowHelpMarker("Transmit replays to target spectator");
-			*/
 		}
 
 		char SpectatorPort[256];
@@ -2661,10 +2658,11 @@ void DojoGui::download_save_popup()
 			ImGui::TextUnformatted("Savestate successfully downloaded. ");
 			if (config::Receiving)
 			{
-				ImGui::TextUnformatted("Please open the replay link again to continue.");
-				if (ImGui::Button("Exit"))
+				if (ImGui::Button("Launch Game"))
 				{
-					exit(0);
+					net_save_download = false;
+					ImGui::CloseCurrentPopup();
+					gui_start_game(dojo_file.game_path);
 				}
 			}
 			else if (dojo_file.post_save_launch)

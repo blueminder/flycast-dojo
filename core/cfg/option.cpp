@@ -192,7 +192,6 @@ Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
 Option<int> RxFrameBuffer("RxFrameBuffer", 1800, "dojo");
 Option<bool> LaunchReplay("LaunchReplay", false, "dojo");
-Option<bool> TransmitReplays("TransmitReplays", false, "dojo");
 Option<bool> Training("Training", false, "dojo");
 Option<bool> EnableSessionQuickLoad("EnableSessionQuickLoad", false, "dojo");
 OptionString Quark("Quark", "", "dojo");
@@ -219,6 +218,8 @@ Option<int> SOCDResolution ("SOCDResolution", 1);
 
 Option<int> FirstTo("FirstTo", 0, "dojo");
 Option<bool> TransmitScore("TransmitScore", false, "dojo");
+
+OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
