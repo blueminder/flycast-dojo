@@ -2721,6 +2721,7 @@ static void gui_display_content()
 	if (dojo_gui.item_current_idx == 0)
 	{
 		settings.dojo.training = false;
+		config::Receiving = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
@@ -2733,16 +2734,14 @@ static void gui_display_content()
 			config::GGPOEnable = true;
 			config::ActAsServer = true;
 
-			//if (config::EnableMatchCode)
-				//config::MatchCode = "";
 			config::NetworkServer = "";
 		}
 		else
 		{
 			config::DojoEnable = true;
-			config::Receiving = false;
-			settings.dojo.training = false;
 		}
+		settings.dojo.training = false;
+		config::Receiving = false;
 	}
 	else if (dojo_gui.item_current_idx == 2)
 	{
@@ -2753,9 +2752,6 @@ static void gui_display_content()
 			config::DojoEnable = true;
 			config::GGPOEnable = true;
 			config::ActAsServer = false;
-    ImGui::Indent(10 * settings.display.uiScale);
-    ImGui::Unindent(10 * settings.display.uiScale);
-
 			if (config::EnableMatchCode)
 				config::MatchCode = "";
 			config::NetworkServer = "";
@@ -2764,16 +2760,18 @@ static void gui_display_content()
 		{
 			config::DojoEnable = true;
 			config::Receiving = false;
-			settings.dojo.training = false;
 
 			if (config::EnableMatchCode)
 				config::MatchCode = "";
 			config::DojoServerIP = "";
 		}
+		settings.dojo.training = false;
+		config::Receiving = false;
 	}
 	else if (dojo_gui.item_current_idx == 3)
 	{
 		settings.dojo.training = true;
+		config::Receiving = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 	}
@@ -2792,6 +2790,7 @@ static void gui_display_content()
 	else if (dojo_gui.item_current_idx == 4)
 	{
 		config::DojoEnable = false;
+		config::Receiving = false;
 		settings.dojo.training = false;
 	}
 
@@ -2805,19 +2804,15 @@ static void gui_display_content()
 
 #if !defined(__ANDROID__)
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
-    if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 9 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
-    else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
-    else if (!config::DojoEnable)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 5 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 8);
+    if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("LAN").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 9);
+    else
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 7);
 #else
-    if (config::DojoEnable && config::EnableLobby && !config::Receiving)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Lobby").x - ImGui::GetStyle().ItemSpacing.x * 7 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
-    else if (config::DojoEnable && (!config::EnableLobby || config::Receiving))
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
-    else if (!config::DojoEnable)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 3 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 7);
+if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("LAN").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 7);
+    else
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 5);
 #endif
 #endif
 
@@ -2828,7 +2823,7 @@ static void gui_display_content()
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
-		if (config::EnableLobby && !config::Receiving)
+		if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		{
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("LAN").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 			if (ImGui::Button("LAN"))
