@@ -382,6 +382,9 @@ void DojoSession::StartTransmitterThread()
 	if (transmitter_started)
 		return;
 
+	if (config::Receiving)
+		return;
+
 	if (config::Transmitting || config::TransmitScore)
 	{
 		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
