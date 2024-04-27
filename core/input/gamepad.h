@@ -77,6 +77,7 @@ enum DreamcastKey
 	EMU_CMB_1_3,
 	EMU_CMB_2_3,
 	EMU_CMB_1_2_4,
+	EMU_CMB_1_2_5,
 	EMU_CMB_1_2_3_4,
 	EMU_CMB_1_5,
 	EMU_CMB_2_4,

@@ -86,6 +86,7 @@ button_list[] =
 	{ EMU_CMB_1_3, "emulator", "cmb_1_3_" },
 	{ EMU_CMB_2_3, "emulator", "cmb_2_3_" },
 	{ EMU_CMB_1_2_4, "emulator", "cmb_1_2_4_" },
+	{ EMU_CMB_1_2_5, "emulator", "cmb_1_2_5_" },
 	{ EMU_CMB_1_2_3_4, "emulator", "cmb_1_2_3_4_" },
 	{ EMU_CMB_1_5, "emulator", "cmb_1_5_" },
 	{ EMU_CMB_2_4, "emulator", "cmb_2_4_" },
