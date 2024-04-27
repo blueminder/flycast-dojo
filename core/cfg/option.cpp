@@ -165,7 +165,7 @@ Option<bool> Transmitting("Transmitting", false, "dojo");
 Option<bool> Receiving("Receiving", false, "dojo");
 OptionString DojoServerIP("ServerIP", "127.0.0.1", "dojo");
 OptionString DojoServerPort("ServerPort", "6000", "dojo");
-Option<int> Delay("Delay", 1, "dojo");
+Option<int> Delay("Delay", 0, "dojo");
 Option<int> Debug("Debug", 8, "dojo");
 OptionString ReplayFilename("ReplayFilename", "", "dojo");
 Option<int> PacketsPerFrame("PacketsPerFrame", 3, "dojo");
