@@ -3332,6 +3332,16 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		char SpectateMatchCode[256] = { 0 };
 		strcpy(SpectateMatchCode, config::SpectateMatchCode.get().c_str());
 		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+#ifndef __ANDROID__
+		char paste_btn[20];
+		sprintf(paste_btn, "%s", ICON_KI_SIGN_IN);
+		if (ImGui::Button((const char *)paste_btn))
+		{
+			char* pasted_txt = SDL_GetClipboardText();
+			memcpy(SpectateMatchCode, pasted_txt, strlen(pasted_txt));
+		}
+		ImGui::SameLine();
+#endif
 		ImGui::InputText("Match Code", SpectateMatchCode, sizeof(SpectateMatchCode), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 		ImGui::SameLine();
 		ShowHelpMarker("Spectate most recent session with Match Code");
