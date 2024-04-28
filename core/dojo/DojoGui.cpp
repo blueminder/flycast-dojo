@@ -2693,6 +2693,7 @@ void DojoGui::download_save_popup()
 						std::string game_path = dojo_file.game_path;
 						settings.content.path = game_path;
 						dojo_file.game_path = "";
+						dojo.CleanUp();
 						ImGui::CloseCurrentPopup();
 						gui_start_game(game_path);
 					}
