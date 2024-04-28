@@ -361,6 +361,9 @@ void UDPClient::ClientLoop()
 						}
 
 						SendPlayerName();
+
+						if (opp.size() == 3)
+							config::Quark = opp[2];
 					}
 					else
 					{

@@ -1557,6 +1557,22 @@ void DojoSession::receiver_client_thread()
 
 			dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
 
+			if (config::SpectatorIP.get() != "ggpo.fightcade.com")
+			{
+				// keepalive
+				try
+				{
+					const char one[] = { 1 };
+					asio::write(socket, asio::buffer(one, 1));
+				}
+				catch (const std::system_error& e)
+				{
+					receiver_header_read = true;
+					receiver_ended = true;
+					break;
+				}
+			}
+
 			if (maple_inputs.size() > config::RxFrameBuffer.get())
 			{
 				resume();
@@ -1652,9 +1668,6 @@ void DojoSession::transmitter_thread()
 						if (!start_sent && transmit_frame_count == FRAME_BATCH)
 						{
 							asio::write(socket, asio::buffer(spectate_start_message));
-							// clear local match code after transmission starts
-							config::MatchCode = "";
-							cfgSaveStr("dojo", "MatchCode", "");
 
 							if (config::SpectatorIP.get() == "ggpo.fightcade.com")
 							{
@@ -1692,6 +1705,14 @@ void DojoSession::transmitter_thread()
 
 								dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
 							}
+
+							// clear local match code after transmission starts
+							config::MatchCode = "";
+							cfgSaveStr("dojo", "MatchCode", "");
+
+							// clear local match code after transmission starts
+							config::Quark = "";
+							cfgSaveStr("dojo", "Quark", "");
 
 							std::cout << "Transmission Started" << std::endl;
 							start_sent = true;
