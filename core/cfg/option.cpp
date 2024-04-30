@@ -219,7 +219,7 @@ Option<bool> EnableDiagonalCorrection ("EnableDiagonalCorrection", false, "input
 Option<int> SOCDResolution ("SOCDResolution", 1);
 
 Option<int> FirstTo("FirstTo", 0, "dojo");
-Option<bool> TransmitScore("TransmitScore", false, "dojo");
+Option<bool> TransmitScore("TransmitScore", true, "dojo");
 
 OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
 OptionString RelayKey("RelayKey", "", "dojo");
