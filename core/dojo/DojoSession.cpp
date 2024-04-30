@@ -417,6 +417,7 @@ void DojoSession::LaunchReceiver()
 int DojoSession::StartDojoSession()
 {
 	net_save_path = get_net_savestate_file_path(false);
+	game_name = get_game_name();
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		SkipFrame = DcSkipFrame;
@@ -1736,8 +1737,16 @@ void DojoSession::transmitter_thread()
 			{
 				MessageWriter player_info;
 				player_info.AppendHeader(1, PLAYER_INFO);
-				player_info.AppendString(config::PlayerName.get());
-				player_info.AppendString(settings.dojo.OpponentName);
+				if (config::ActAsServer)
+				{
+					player_info.AppendString(config::PlayerName.get());
+					player_info.AppendString(settings.dojo.OpponentName);
+				}
+				else
+				{
+					player_info.AppendString(settings.dojo.OpponentName);
+					player_info.AppendString(config::PlayerName.get());
+				}
 
 				std::vector<unsigned char> message = player_info.Msg();
 				asio::write(socket, asio::buffer(message));

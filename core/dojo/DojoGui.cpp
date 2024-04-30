@@ -213,6 +213,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				if (ImGui::Button("Start Session"))
 				{
 					dojo.MatchCode = std::string(mc, strlen(mc));
+					config::MatchCode = dojo.MatchCode;
 					ImGui::CloseCurrentPopup();
 				}
 

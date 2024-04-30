@@ -1,4 +1,5 @@
 #include "DojoSession.hpp"
+#include "deps/Base64.h"
 
 UDPClient::UDPClient()
 {
@@ -23,14 +24,16 @@ void UDPClient::ConnectMMServer()
 	memcpy(&mms_addr.sin_addr, mm_host->h_addr_list[0], mm_host->h_length);
 	//inet_pton(AF_INET, config::MatchmakingServerAddress.data(), &mms_addr.sin_addr);
 
+	std::string b64_game_name = macaron::Base64::Encode(dojo.game_name.data());
+
 	std::string mm_msg;
 	if (dojo.hosting)
-		mm_msg = "host:cmd:";
+		mm_msg = "host:" + b64_game_name + ":";
 	else
 	{
 		while (dojo.MatchCode.empty())
 			std::this_thread::sleep_for (std::chrono::milliseconds(1));
-		mm_msg = "guest:cmd:" + dojo.MatchCode;
+		mm_msg = "guest:" + b64_game_name + ":" + dojo.MatchCode;
 	}
 
 	for (int i = 0; i < dojo.packets_per_frame; i++)
