@@ -109,6 +109,7 @@ Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<int> FixedFrequency ("rend.FixedFrequency", 1);
 Option<bool> FixedFrequencyThreadSleep("rend.FixedFrequencyThreadSleep", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
+Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
 
 // Misc
 

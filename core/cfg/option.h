@@ -471,6 +471,7 @@ extern Option<bool> NativeDepthInterpolation;
 extern Option<int> FixedFrequency; // 0: off, 1: auto, 2: 59.94Hz, 3: 60Hz, 4: 50Hz
 extern Option<bool> FixedFrequencyThreadSleep;
 extern Option<bool> EmulateFramebuffer;
+extern Option<bool> FixUpscaleBleedingEdge;
 
 // Misc
 
