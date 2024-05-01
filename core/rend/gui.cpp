@@ -717,19 +717,21 @@ void gui_start_game(const std::string& path)
 
 	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
 	{
-		dojo.LaunchReceiver();
-
 		std::string net_state_path = get_writable_data_path(game_name + ".state.net");
 
-		while(!dojo.receiver_header_read);
-
-		if (dojo.receiver_ended)
+		if (cfgLoadBool("dojo", "Receiving", false))
 		{
-			gui_state = GuiState::Main;
-			gui_error("Match not found.");
-			dojo.receiver_started = false;
-			dojo.receiver_ended = false;
-			return;
+			dojo.LaunchReceiver();
+			while(!dojo.receiver_header_read);
+
+			if (dojo.receiver_ended)
+			{
+				gui_state = GuiState::Main;
+				gui_error("Match not found.");
+				dojo.receiver_started = false;
+				dojo.receiver_ended = false;
+				return;
+			}
 		}
 
 		if (!settings.dojo.state_commit.empty())
