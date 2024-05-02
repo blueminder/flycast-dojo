@@ -385,7 +385,9 @@ void DojoSession::StartTransmitterThread()
 	if (config::Receiving)
 		return;
 
-	if (config::Transmitting || (config::TransmitScore && config::SpectatorIP.get() == "ggpo.fightcade.com"))
+	if ((config::Transmitting && !config::ServiceTransmitOnly)
+		|| (config::Transmitting && (config::EnableMatchCode || config::SpectatorIP.get() == "ggpo.fightcade.com"))
+		|| (config::TransmitScore && config::SpectatorIP.get() == "ggpo.fightcade.com"))
 	{
 		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
 		t4.detach();

@@ -534,6 +534,7 @@ extern Option<bool> DojoActAsServer;
 extern Option<bool> RecordMatches;
 extern Option<bool> Spectating;
 extern Option<bool> Transmitting;
+extern Option<bool> ServiceTransmitOnly;
 extern Option<bool> Receiving;
 extern OptionString DojoServerIP;
 extern OptionString DojoServerPort;
