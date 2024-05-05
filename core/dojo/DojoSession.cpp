@@ -385,9 +385,14 @@ void DojoSession::StartTransmitterThread()
 	if (config::Receiving)
 		return;
 
-	if ((config::Transmitting && !config::ServiceTransmitOnly)
-		|| (config::Transmitting && (config::EnableMatchCode || config::SpectatorIP.get() == "ggpo.fightcade.com"))
-		|| (config::TransmitScore && config::SpectatorIP.get() == "ggpo.fightcade.com"))
+	if (config::ServiceTransmitOnly)
+	{
+		if ((cfgLoadStr("dojo", "SpectatorIP", "") != "ggpo.fightcade.com") &&
+			(cfgLoadStr("dojo", "SpectatorIP", "") != "match.dojo.ooo"))
+			return;
+	}
+
+	if (config::Transmitting || config::TransmitScore)
 	{
 		std::thread t4(&DojoSession::transmitter_thread, std::ref(dojo));
 		t4.detach();
@@ -1756,7 +1761,7 @@ void DojoSession::transmitter_thread()
 				names_assigned = false;
 			}
 
-			if (config::TransmitScore && transmission_wins.size() > 0)
+			if ((config::TransmitScore || config::SpectatorIP.get() == "match.dojo.ooo") && transmission_wins.size() > 0)
 			{
 				unsigned int player = transmission_wins.front();
 
