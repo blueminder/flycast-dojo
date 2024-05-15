@@ -2424,7 +2424,9 @@ void DojoGui::lobby_player_wait_popup(std::vector<GameMedia> game_list)
 	std::vector<GameMedia>::iterator it = std::find_if (games.begin(), games.end(),
 		[&](GameMedia gm) { return ( gm.name.rfind(game_name, 0) == 0 ); });
 
-	std::string game_fullname = it->name;
+	std::string game_fullname = "";
+	if (it != games.end())
+		game_fullname = it->name;
 
 	std::string lobby_title;
 	if (dojo.host_status == 1)
