@@ -696,6 +696,9 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	if (cfgLoadBool("dojo", "Training", true))
+		settings.dojo.training = true;
+
 	if (cfgLoadBool("dojo", "Receiving", false))
 	{
 		if (config::Quark.get() == "" && config::SpectateMatchCode.get() == "")
@@ -3626,7 +3629,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame && !config::Training)
 			{
 				if (config::EnableMatchCode)
 				{
