@@ -725,6 +725,7 @@ void DojoGui::gui_display_test_game( float scaling)
 	if (ImGui::Button("Start Training", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		config::Delay = 0;
+		cfgSetVirtual("dojo", "Enable", "no");
 		settings.dojo.training = true;
 		gui_state = GuiState::Closed;
 
