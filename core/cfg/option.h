@@ -592,6 +592,8 @@ extern Option<int> FirstTo;
 extern Option<bool> TransmitScore;
 
 extern OptionString SpectateMatchCode;
+extern OptionString RelayKey;
+
 
 // Maple
 

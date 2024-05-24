@@ -222,6 +222,7 @@ Option<int> FirstTo("FirstTo", 0, "dojo");
 Option<bool> TransmitScore("TransmitScore", false, "dojo");
 
 OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
+OptionString RelayKey("RelayKey", "", "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

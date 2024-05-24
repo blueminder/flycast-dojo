@@ -349,6 +349,8 @@ public:
 
 	uint32_t last_score_frame = 0;
 	bool names_assigned = false;
+
+	void ConnectRelayServer();
 };
 
 extern DojoSession dojo;

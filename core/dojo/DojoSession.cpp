@@ -2242,6 +2242,22 @@ void DojoSession::AssignNames(bool player_info)
 		names_assigned = true;
 }
 
+void DojoSession::ConnectRelayServer()
+{
+	using asio::ip::udp;
+
+	asio::io_context io_context;
+	udp::socket s(io_context, udp::endpoint(udp::v4(), config::GGPOPort.get()));
+    udp::endpoint remote_endpoint = udp::endpoint(asio::ip::address::from_string(config::NetworkServer.get()), config::GGPORemotePort.get());
+    //s.open(udp::v4());
+
+    asio::error_code err;
+    auto sent = s.send_to(asio::buffer(config::RelayKey.get()), remote_endpoint, 0, err);
+    s.close();
+	INFO_LOG(NETWORK, "Connecting to Relay");
+	std::cout << "Connecting to Relay" << std::endl;
+}
+
 #ifndef __ANDROID__
 // adapted from https://stackoverflow.com/a/62303963
 asio::ip::address_v6 sinaddr_to_asio(sockaddr_in6 *addr) {

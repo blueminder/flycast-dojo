@@ -454,6 +454,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
+			dojo.ConnectRelayServer();
 			if (dojo.lobby_launch && config::ActAsServer)
 				dojo.host_status = 3;
 
@@ -508,6 +509,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Button Check"))
 		{
+
 			ggpo_join_screen = true;
 			gui_state = GuiState::ButtonCheck;
 		}
