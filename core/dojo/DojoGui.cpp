@@ -367,6 +367,102 @@ void DojoGui::gui_display_stream_wait(float scaling)
 	}
 }
 
+void DojoGui::gui_display_relay_join(float scaling)
+{
+	std::string title = "Connect to GGPO Relay Server";
+	ImGui::OpenPopup(title.data());
+	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		static char si[128] = "";
+		static char rk[128] = "";
+		std::string detect_address = "";
+		std::string relay_key = "";
+
+		if (!dojo.commandLineStart)
+		{
+			if (config::NetworkServer.get().empty())
+			{
+
+				ImGui::InputText("Address", si, IM_ARRAYSIZE(si));
+				detect_address = std::string(si);
+#ifndef __ANDROID__
+				ImGui::SameLine();
+				if (ImGui::Button("Paste"))
+				{
+					char* pasted_txt = SDL_GetClipboardText();
+					memcpy(si, pasted_txt, strlen(pasted_txt));
+				}
+#endif
+			}
+		}
+
+		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
+
+		ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
+
+		ImGui::Columns(2, "hosting", false);
+		ImGui::RadioButton("Host", &hosting_opt, 1);
+		ImGui::NextColumn();
+		ImGui::RadioButton("Join", &hosting_opt, 0);
+		ImGui::Columns(1, NULL, false);
+
+		if (ImGui::Button("Start Session"))
+		{
+			if (!dojo.commandLineStart)
+			{
+				config::NetworkServer.set(std::string(si, strlen(si)));
+
+				config::DojoEnable = false;
+			}
+
+			if (hosting_opt)
+				config::ActAsServer.set(true);
+			else
+				config::ActAsServer.set(false);
+
+			relay_key = std::string(rk);
+
+			config::RelayKey.set(relay_key);
+			config::GGPORemotePort.set(8001);
+
+			dojo.ConnectRelayServer();
+
+			if (dojo.current_delay != config::GGPODelay.get())
+				config::GGPODelay.set(dojo.current_delay);
+
+			ImGui::CloseCurrentPopup();
+			start_ggpo();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			config::GGPOEnable = false;
+			ImGui::CloseCurrentPopup();
+
+			// Exit to main menu
+			gui_state = GuiState::Main;
+			game_started = false;
+			settings.content.path = "";
+			dc_reset(true);
+
+			config::NetworkServer.set("");
+		}
+
+		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("IP").x + ImGui::CalcTextSize("Paste").x - ImGui::CalcTextSize("Start Session").x);
+
+		if (ImGui::Button("Button Check"))
+		{
+
+			ggpo_join_screen = true;
+			gui_state = GuiState::ButtonCheck;
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
 	std::string title = config::EnableMatchCode ? "Select GGPO Frame Delay" : "Connect to GGPO Opponent";

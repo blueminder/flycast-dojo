@@ -571,6 +571,12 @@ void gui_open_ggpo_join()
 	gui_state = GuiState::GGPOJoin;
 }
 
+void gui_open_relay_join()
+{
+	dojo_gui.current_public_ip = "";
+	gui_state = GuiState::RelayJoin;
+}
+
 void gui_open_disconnected()
 {
 	gui_state = GuiState::Disconnected;
@@ -2761,7 +2767,7 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN", "SPECTATE" };
+	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN", "SPECTATE", "RELAY" };
 
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
@@ -2776,7 +2782,7 @@ static void gui_display_content()
 	else
 		ImGui::Combo("", &dojo_gui.item_current_idx, items, IM_ARRAYSIZE(items));
 
-	if (dojo_gui.last_item_current_idx == 5 && gui_state != GuiState::Replays)
+	if (dojo_gui.last_item_current_idx == 6 && gui_state != GuiState::Replays)
 	{
 		// set default offline delay to 0
 		config::Delay = 0;
@@ -2860,6 +2866,20 @@ static void gui_display_content()
 	}
 	else if (dojo_gui.item_current_idx == 5)
 	{
+		dojo_gui.show_relay = true;
+		config::DojoActAsServer = true;
+		config::DojoEnable = true;
+		config::GGPOEnable = true;
+		config::ActAsServer = true;
+
+		config::NetworkServer = "";
+
+		settings.dojo.training = false;
+		config::Receiving = false;
+	}
+	else if (dojo_gui.item_current_idx == 6)
+	{
+		dojo_gui.show_relay = false;
 		config::DojoEnable = false;
 		config::Receiving = false;
 		settings.dojo.training = false;
@@ -3649,6 +3669,10 @@ static void gui_display_loadscreen()
 					else
 						gui_open_guest_wait();
 				}
+				else if (dojo_gui.show_relay)
+				{
+					gui_open_relay_join();
+				}
 				else
 				{
 					gui_open_ggpo_join();
@@ -3905,6 +3929,9 @@ void gui_display_ui()
 	case GuiState::GGPOJoin:
 		dojo_gui.gui_display_ggpo_join(settings.display.uiScale);
 		break;
+	case GuiState::RelayJoin:
+		dojo_gui.gui_display_relay_join(settings.display.uiScale);
+	break;
 	case GuiState::Disconnected:
 		dojo_gui.gui_display_disconnected(settings.display.uiScale);
 		break;

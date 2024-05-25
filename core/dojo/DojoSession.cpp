@@ -2254,8 +2254,8 @@ void DojoSession::ConnectRelayServer()
     asio::error_code err;
     auto sent = s.send_to(asio::buffer(config::RelayKey.get()), remote_endpoint, 0, err);
     s.close();
-	INFO_LOG(NETWORK, "Connecting to Relay");
-	std::cout << "Connecting to Relay" << std::endl;
+	INFO_LOG(NETWORK, "Connecting to Relay %s %s", config::NetworkServer.get().data(), config::RelayKey.get().data());
+	std::cout << "Connecting to Relay " << config::NetworkServer.get() << " " << config::RelayKey.get() << std::endl;
 }
 
 #ifndef __ANDROID__

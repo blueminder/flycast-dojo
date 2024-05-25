@@ -39,6 +39,9 @@ private:
 
 	void displayGameImage(std::string game_name, ImVec2 size, std::vector<GameMedia> game_list);
 	bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad);
+
+	int hosting_opt = 1;
+
 public:
 	void gui_display_bios_rom_warning(float scaling);
 
@@ -108,6 +111,9 @@ public:
 	bool pending_player_assignment = false;
 
 	void gui_display_select_platform();
+
+	bool show_relay = false;
+	void gui_display_relay_join(float scaling);
 };
 
 extern DojoGui dojo_gui;
