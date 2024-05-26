@@ -571,6 +571,12 @@ void gui_open_ggpo_join()
 	gui_state = GuiState::GGPOJoin;
 }
 
+void gui_open_host_join_select()
+{
+	//gui_state = GuiState::RelayJoin;
+	gui_state = GuiState::GGPOSelect;
+}
+
 void gui_open_relay_join()
 {
 	//gui_state = GuiState::RelayJoin;
@@ -2767,12 +2773,12 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "HOST", "JOIN", "TRAIN", "SPECTATE", "RELAY" };
+	const char* items[] = { "OFFLINE", "TRAINING", "MATCH CODE", "MC SPECTATE", "RELAY SERVER", "IP ENTRY" };
 
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 
-	ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 4);
+	ImGui::PushItemWidth(ImGui::CalcTextSize("MC SPECTATE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
 	if (dojo.lobby_host_screen)
 	{
@@ -2795,6 +2801,7 @@ static void gui_display_content()
 
 	if (dojo_gui.item_current_idx == 0)
 	{
+		dojo_gui.show_relay = false;
 		settings.dojo.training = false;
 		config::Receiving = false;
 		config::DojoEnable = false;
@@ -2802,7 +2809,16 @@ static void gui_display_content()
 	}
 	else if (dojo_gui.item_current_idx == 1)
 	{
-		config::DojoActAsServer = true;
+		settings.dojo.training = true;
+		config::Receiving = false;
+		config::DojoEnable = false;
+		config::GGPOEnable = false;
+	}
+	else if (dojo_gui.item_current_idx == 2)
+	{
+		dojo_gui.show_relay = false;
+		config::EnableMatchCode = true;
+		//config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
 		{
 			config::DojoEnable = true;
@@ -2818,39 +2834,7 @@ static void gui_display_content()
 		settings.dojo.training = false;
 		config::Receiving = false;
 	}
-	else if (dojo_gui.item_current_idx == 2)
-	{
-		config::DojoActAsServer = false;
-		config::NetworkServer = "";
-		if (config::NetplayMethod.get() == "GGPO")
-		{
-			config::DojoEnable = true;
-			config::GGPOEnable = true;
-			config::ActAsServer = false;
-			if (config::EnableMatchCode)
-				config::MatchCode = "";
-			config::NetworkServer = "";
-		}
-		else
-		{
-			config::DojoEnable = true;
-			config::Receiving = false;
-
-			if (config::EnableMatchCode)
-				config::MatchCode = "";
-			config::DojoServerIP = "";
-		}
-		settings.dojo.training = false;
-		config::Receiving = false;
-	}
 	else if (dojo_gui.item_current_idx == 3)
-	{
-		settings.dojo.training = true;
-		config::Receiving = false;
-		config::DojoEnable = false;
-		config::GGPOEnable = false;
-	}
-	else if (dojo_gui.item_current_idx == 4)
 	{
 		settings.dojo.training = false;
 		config::Receiving = true;
@@ -2864,7 +2848,7 @@ static void gui_display_content()
 		if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
 			config::SpectateMatchCode = "";
 	}
-	else if (dojo_gui.item_current_idx == 5)
+	else if (dojo_gui.item_current_idx == 4)
 	{
 		dojo_gui.show_relay = true;
 		config::DojoActAsServer = true;
@@ -2876,6 +2860,27 @@ static void gui_display_content()
 
 		settings.dojo.training = false;
 		config::Receiving = false;
+	}
+	else if (dojo_gui.item_current_idx == 5)
+	{
+		dojo_gui.show_relay = false;
+		config::EnableMatchCode = false;
+		config::DojoActAsServer = true;
+		if (config::NetplayMethod.get() == "GGPO")
+		{
+			config::DojoEnable = true;
+			config::GGPOEnable = true;
+			config::ActAsServer = true;
+
+			config::NetworkServer = "";
+		}
+		else
+		{
+			config::DojoEnable = true;
+		}
+		settings.dojo.training = false;
+		config::Receiving = false;
+		config::RelayKey = "";
 	}
 	else if (dojo_gui.item_current_idx == 6)
 	{
@@ -3302,7 +3307,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
     windowDragScroll();
 	ImGui::EndChild();
 
-	if (dojo_gui.item_current_idx == 0 || dojo_gui.item_current_idx == 3)
+	if (dojo_gui.item_current_idx == 0 || dojo_gui.item_current_idx == 1)
 	{
 #if !defined(__ANDROID__)
 		int delay_min = 0;
@@ -3331,7 +3336,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 #endif
 		ImGui::Text(" ");
 	}
-	else if (dojo_gui.item_current_idx == 1 || dojo_gui.item_current_idx == 2)
+	else if (dojo_gui.item_current_idx == 2 || dojo_gui.item_current_idx == 4 || dojo_gui.item_current_idx == 5)
 	{
 		char PlayerName[256] = { 0 };
 		strcpy(PlayerName, config::PlayerName.get().c_str());
@@ -3352,7 +3357,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nIf one is available, it will be downloaded upon game launch.");
 		ImGui::PopStyleColor();
 	}
-	else if (dojo_gui.item_current_idx == 4)
+	else if (dojo_gui.item_current_idx == 3)
 	{
 		char SpectateMatchCode[256] = { 0 };
 		strcpy(SpectateMatchCode, config::SpectateMatchCode.get().c_str());
@@ -3664,10 +3669,7 @@ static void gui_display_loadscreen()
 						config::GGPORemotePort = 19713;
 					}
 
-					if (config::ActAsServer)
-						gui_open_host_wait();
-					else
-						gui_open_guest_wait();
+					gui_open_host_join_select();
 				}
 				else if (dojo_gui.show_relay)
 				{
@@ -3675,7 +3677,8 @@ static void gui_display_loadscreen()
 				}
 				else
 				{
-					gui_open_ggpo_join();
+					gui_open_host_join_select();
+					//gui_open_ggpo_join();
 				}
 			}
 			else if (config::DojoEnable || dojo.PlayMatch)
@@ -3925,6 +3928,9 @@ void gui_display_ui()
 		break;
 	case GuiState::StreamWait:
 		dojo_gui.gui_display_stream_wait(settings.display.uiScale);
+		break;
+	case GuiState::GGPOSelect:
+		dojo_gui.gui_display_host_join_select(settings.display.uiScale);
 		break;
 	case GuiState::GGPOJoin:
 		dojo_gui.gui_display_ggpo_join(settings.display.uiScale);

@@ -83,6 +83,7 @@ enum class GuiState {
 	HostWait,
 	GuestWait,
 	StreamWait,
+	GGPOSelect,
 	GGPOJoin,
 	RelaySelect,
 	RelayJoin,

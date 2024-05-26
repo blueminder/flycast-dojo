@@ -113,6 +113,7 @@ public:
 	bool show_relay = false;
 	void gui_display_relay_join(float scaling);
 	void gui_display_relay_select(float scaling);
+	void gui_display_host_join_select(float scaling);
 };
 
 extern DojoGui dojo_gui;
