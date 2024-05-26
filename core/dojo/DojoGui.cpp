@@ -2108,36 +2108,6 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		header("Connection Methods");
-		{
-			int cxnMethod;
-			if (!config::EnableMatchCode)
-				cxnMethod = 0;
-			else
-				cxnMethod = 1;
-
-			ImGui::Columns(2, "cxnMethod", false);
-			ImGui::RadioButton("Direct IP", &cxnMethod, 0);
-			ImGui::SameLine();
-			ShowHelpMarker("Connect to IP Address.\nCan either be Public IP or Private IP via LAN.");
-			ImGui::NextColumn();
-			ImGui::RadioButton("Match Codes", &cxnMethod, 1);
-			ImGui::SameLine();
-			ShowHelpMarker("Establishes direct connection via public matchmaking relay.\nWorks with most home routers.");
-			ImGui::NextColumn();
-			ImGui::Columns(1, NULL, false);
-
-			switch (cxnMethod)
-			{
-			case 0:
-				config::EnableMatchCode = false;
-				break;
-			case 1:
-				config::EnableMatchCode = true;
-				break;
-			}
-		}
-
 		OptionCheckbox("Enable LAN Lobby", config::EnableLobby,
 			"Enable LAN Lobby interface. Works over any LAN or virtual LAN with multicast support.");
 
@@ -2159,30 +2129,26 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
-		if (config::EnableMatchCode)
+
+		if (ImGui::CollapsingHeader("Match Codes##MCHeader", ImGuiTreeNodeFlags_None))
 		{
-			if (ImGui::CollapsingHeader("Match Codes##MCHeader", ImGuiTreeNodeFlags_None))
-			{
-				char MatchmakingServerAddress[256];
+			char MatchmakingServerAddress[256];
 
-				strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
-				ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				config::MatchmakingServerAddress = MatchmakingServerAddress;
+			strcpy(MatchmakingServerAddress, config::MatchmakingServerAddress.get().c_str());
+			ImGui::InputText("Matchmaking Service Address", MatchmakingServerAddress, sizeof(MatchmakingServerAddress), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			config::MatchmakingServerAddress = MatchmakingServerAddress;
 
-				char MatchmakingServerPort[256];
+			char MatchmakingServerPort[256];
 
-				strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
-				ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-				config::MatchmakingServerPort = MatchmakingServerPort;
-			}
+			strcpy(MatchmakingServerPort, config::MatchmakingServerPort.get().c_str());
+			ImGui::InputText("Matchmaking Service Port", MatchmakingServerPort, sizeof(MatchmakingServerPort), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			config::MatchmakingServerPort = MatchmakingServerPort;
 		}
+
 
 		if (config::NetplayMethod.get() == "GGPO")
 		{
-			if (!config::EnableMatchCode)
-			{
-				OptionCheckbox("Show Public IP on Connection Dialog", config::ShowPublicIP);
-			}
+			OptionCheckbox("Show Public IP on Connection Dialog", config::ShowPublicIP);
 
 			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_None))
 			{
