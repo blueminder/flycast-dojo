@@ -84,6 +84,7 @@ enum class GuiState {
 	GuestWait,
 	StreamWait,
 	GGPOJoin,
+	RelaySelect,
 	RelayJoin,
 	Disconnected,
 	EndReplay,

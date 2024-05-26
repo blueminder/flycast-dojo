@@ -367,6 +367,26 @@ void DojoGui::gui_display_stream_wait(float scaling)
 	}
 }
 
+void DojoGui::gui_display_relay_select(float scaling)
+{
+	std::string title = "Connect to GGPO Relay Server";
+	ImGui::OpenPopup(title.data());
+	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		if (ImGui::Button("Host Game", ScaledVec2(150, 150)))
+		{
+			config::ActAsServer.set(true);	
+			gui_state = GuiState::RelayJoin;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Join Game", ScaledVec2(150, 150)))
+		{
+			config::ActAsServer.set(false);	
+			gui_state = GuiState::RelayJoin;
+		}
+	}
+}
+
 void DojoGui::gui_display_relay_join(float scaling)
 {
 	std::string title = "Connect to GGPO Relay Server";
@@ -400,25 +420,13 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 
-		ImGui::Columns(2, "hosting", false);
-		ImGui::RadioButton("Host", &hosting_opt, 1);
-		ImGui::NextColumn();
-		ImGui::RadioButton("Join", &hosting_opt, 0);
-		ImGui::Columns(1, NULL, false);
-
 		if (ImGui::Button("Start Session"))
 		{
 			if (!dojo.commandLineStart)
 			{
 				config::NetworkServer.set(std::string(si, strlen(si)));
-
 				config::DojoEnable = false;
 			}
-
-			if (hosting_opt)
-				config::ActAsServer.set(true);
-			else
-				config::ActAsServer.set(false);
 
 			relay_key = std::string(rk);
 

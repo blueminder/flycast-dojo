@@ -2248,7 +2248,19 @@ void DojoSession::ConnectRelayServer()
 
 	asio::io_context io_context;
 	udp::socket s(io_context, udp::endpoint(udp::v4(), config::GGPOPort.get()));
-    udp::endpoint remote_endpoint = udp::endpoint(asio::ip::address::from_string(config::NetworkServer.get()), config::GGPORemotePort.get());
+
+	udp::endpoint remote_endpoint = udp::endpoint(asio::ip::address::from_string(config::NetworkServer.get()), config::GGPORemotePort.get());
+
+	/*
+	udp::resolver resolver(io_context);
+	udp::resolver::query query(config::NetworkServer.get(), std::to_string(config::GGPORemotePort.get()), udp::resolver::query::numeric_service);
+	udp::resolver::iterator iter = resolver.resolve(query);
+	udp::endpoint remote_endpoint = iter->endpoint();
+
+	std::string remote_address = remote_endpoint.address().to_string();
+	config::NetworkServer.set(remote_address);
+	*/
+
     //s.open(udp::v4());
 
     asio::error_code err;

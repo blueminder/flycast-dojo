@@ -573,8 +573,8 @@ void gui_open_ggpo_join()
 
 void gui_open_relay_join()
 {
-	dojo_gui.current_public_ip = "";
-	gui_state = GuiState::RelayJoin;
+	//gui_state = GuiState::RelayJoin;
+	gui_state = GuiState::RelaySelect;
 }
 
 void gui_open_disconnected()
@@ -3929,9 +3929,12 @@ void gui_display_ui()
 	case GuiState::GGPOJoin:
 		dojo_gui.gui_display_ggpo_join(settings.display.uiScale);
 		break;
+	case GuiState::RelaySelect:
+		dojo_gui.gui_display_relay_select(settings.display.uiScale);
+		break;
 	case GuiState::RelayJoin:
 		dojo_gui.gui_display_relay_join(settings.display.uiScale);
-	break;
+		break;
 	case GuiState::Disconnected:
 		dojo_gui.gui_display_disconnected(settings.display.uiScale);
 		break;
