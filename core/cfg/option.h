@@ -592,6 +592,7 @@ extern Option<int> FirstTo;
 extern Option<bool> TransmitScore;
 
 extern OptionString SpectateMatchCode;
+extern Option<bool> EnableRelay;
 extern OptionString RelayKey;
 
 

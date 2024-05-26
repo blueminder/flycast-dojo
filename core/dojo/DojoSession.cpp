@@ -2244,14 +2244,16 @@ void DojoSession::AssignNames(bool player_info)
 
 void DojoSession::ConnectRelayServer()
 {
+	if (!config::EnableRelay)
+		return;
+
 	using asio::ip::udp;
 
 	asio::io_context io_context;
 	udp::socket s(io_context, udp::endpoint(udp::v4(), config::GGPOPort.get()));
 
-	udp::endpoint remote_endpoint = udp::endpoint(asio::ip::address::from_string(config::NetworkServer.get()), config::GGPORemotePort.get());
+	//udp::endpoint remote_endpoint = udp::endpoint(asio::ip::address::from_string(config::NetworkServer.get()), config::GGPORemotePort.get());
 
-	/*
 	udp::resolver resolver(io_context);
 	udp::resolver::query query(config::NetworkServer.get(), std::to_string(config::GGPORemotePort.get()), udp::resolver::query::numeric_service);
 	udp::resolver::iterator iter = resolver.resolve(query);
@@ -2259,15 +2261,30 @@ void DojoSession::ConnectRelayServer()
 
 	std::string remote_address = remote_endpoint.address().to_string();
 	config::NetworkServer.set(remote_address);
-	*/
 
     //s.open(udp::v4());
 
     asio::error_code err;
-    auto sent = s.send_to(asio::buffer(config::RelayKey.get()), remote_endpoint, 0, err);
+	std::string msg;
+	if (config::ActAsServer)
+		msg = "host";
+	else
+		msg = config::RelayKey.get();
+
+    auto sent = s.send_to(asio::buffer(msg), remote_endpoint, 0, err);
+
+	std::vector<char> recvd(128);
+	if (config::ActAsServer)
+	{
+		s.receive_from(asio::buffer(recvd), remote_endpoint);
+		std::string received = std::string(recvd.data());
+		config::RelayKey = received;
+		std::cout << "RECEIVED RELAY KEY " << received << std::endl;
+	}
+
     s.close();
-	INFO_LOG(NETWORK, "Connecting to Relay %s %s", config::NetworkServer.get().data(), config::RelayKey.get().data());
-	std::cout << "Connecting to Relay " << config::NetworkServer.get() << " " << config::RelayKey.get() << std::endl;
+	INFO_LOG(NETWORK, "Connecting to Relay %s %s", config::NetworkServer.get().data(), msg.data());
+	std::cout << "Connecting to Relay " << config::NetworkServer.get() << " " << msg << std::endl;
 }
 
 #ifndef __ANDROID__

@@ -2773,7 +2773,7 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "TRAINING", "MATCH CODE", "MC SPECTATE", "RELAY SERVER", "IP ENTRY" };
+	const char* items[] = { "OFFLINE", "TRAINING", "MATCH CODE", "MC SPECTATE", "RELAY", "IP ENTRY" };
 
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
@@ -2806,6 +2806,7 @@ static void gui_display_content()
 		config::Receiving = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
+		config::EnableRelay = false;
 	}
 	else if (dojo_gui.item_current_idx == 1)
 	{
@@ -2813,6 +2814,8 @@ static void gui_display_content()
 		config::Receiving = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
+		config::EnableMatchCode = false;
+		config::EnableRelay = false;
 	}
 	else if (dojo_gui.item_current_idx == 2)
 	{
@@ -2833,6 +2836,7 @@ static void gui_display_content()
 		}
 		settings.dojo.training = false;
 		config::Receiving = false;
+		config::EnableRelay = false;
 	}
 	else if (dojo_gui.item_current_idx == 3)
 	{
@@ -2844,6 +2848,8 @@ static void gui_display_content()
 		config::RxFrameBuffer = 180;
 		config::DojoEnable = true;
 		config::GGPOEnable = true;
+		config::EnableMatchCode = false;
+		config::EnableRelay = false;
 
 		if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
 			config::SpectateMatchCode = "";
@@ -2860,6 +2866,8 @@ static void gui_display_content()
 
 		settings.dojo.training = false;
 		config::Receiving = false;
+		config::EnableMatchCode = false;
+		config::EnableRelay = true;
 	}
 	else if (dojo_gui.item_current_idx == 5)
 	{
@@ -2880,11 +2888,15 @@ static void gui_display_content()
 		}
 		settings.dojo.training = false;
 		config::Receiving = false;
+		config::EnableRelay = false;
 		config::RelayKey = "";
 	}
 	else if (dojo_gui.item_current_idx == 6)
 	{
+		config::EnableMatchCode = false;
 		dojo_gui.show_relay = false;
+		config::EnableRelay = false;
+		config::RelayKey = "";
 		config::DojoEnable = false;
 		config::Receiving = false;
 		settings.dojo.training = false;
@@ -3564,6 +3576,8 @@ static void gui_network_start()
 	ImGui::AlignTextToFramePadding();
 	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
+	std::string current_notification = get_notification();
+
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
 		ImGui::Text("Starting...");
@@ -3584,7 +3598,27 @@ static void gui_network_start()
 	}
 	else
 	{
-		ImGui::Text("Starting Network...");
+		if (config::EnableRelay && config::ActAsServer && config::RelayKey.get().size() > 0 && current_notification.size() == 0)
+		{
+			ImGui::Text("Waiting for opponent to connect...");
+			ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+			ImGui::Text("Relay Key: %s", config::RelayKey.get().data());
+#ifndef __ANDROID__
+			ImGui::SameLine();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
+			if (ImGui::Button("Copy"))
+			{
+				SDL_SetClipboardText(config::RelayKey.get().data());
+			}
+			ImGui::PopStyleVar();
+			ImGui::Text(" ");
+#endif
+		}
+		else
+		{
+			ImGui::Text("Starting Network...");
+		}
+
 		if (NetworkHandshake::instance->canStartNow() && !config::GGPOEnable)
 			ImGui::Text("Press Start to start the game now.");
 	}

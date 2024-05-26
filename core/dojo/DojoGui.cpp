@@ -125,7 +125,7 @@ void DojoGui::gui_display_host_wait(float scaling)
 	{
 		ImGui::Text("Match Code: %s", config::MatchCode.get().data());
 		ImGui::SameLine();
-		ShowHelpMarker("Match Codes not working?\nTry switching to Direct IP in the settings.");
+		ShowHelpMarker("Match Codes not working?\nTry switching to a Relay server or use IP Entry.");
 #ifndef __ANDROID__
 		if (ImGui::Button("Copy Match Code"))
 		{
@@ -457,6 +457,10 @@ void DojoGui::gui_display_relay_select(float scaling)
 void DojoGui::gui_display_relay_join(float scaling)
 {
 	std::string title = "Connect to GGPO Relay Server";
+	if (config::ActAsServer)
+		title += " - Host";
+	else
+		title += " - Join";
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
@@ -485,7 +489,18 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
-		ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
+		if (!config::ActAsServer)
+		{
+			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
+#ifndef __ANDROID__
+			ImGui::SameLine();
+			if (ImGui::Button("Paste##PasteKey"))
+			{
+				char* pasted_txt = SDL_GetClipboardText();
+				memcpy(rk, pasted_txt, strlen(pasted_txt));
+			}
+#endif
+		}
 
 		if (ImGui::Button("Start Session"))
 		{
