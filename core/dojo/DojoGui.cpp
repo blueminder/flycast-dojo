@@ -545,7 +545,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 		if (ImGui::Button("Button Check"))
 		{
 
-			ggpo_join_screen = true;
+			relay_join_screen = true;
 			gui_state = GuiState::ButtonCheck;
 		}
 

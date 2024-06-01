@@ -87,6 +87,7 @@ public:
 	void display_input_str(std::string input_str, std::string prev_str = "");
 
 	bool ggpo_join_screen = false;
+	bool relay_join_screen = false;
 	bool test_game_screen = false;
 
 	int current_map_button = 0;

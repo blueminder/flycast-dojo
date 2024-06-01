@@ -681,6 +681,10 @@ void gui_open_settings()
 		{
 			gui_state = GuiState::GGPOJoin;
 		}
+		if (dojo_gui.relay_join_screen)
+		{
+			gui_state = GuiState::RelayJoin;
+		}
 		else if (dojo_gui.test_game_screen)
 		{
 			gui_stop_game();
