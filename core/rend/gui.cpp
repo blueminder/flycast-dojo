@@ -3600,19 +3600,29 @@ static void gui_network_start()
 	{
 		if (config::EnableRelay && config::ActAsServer && config::RelayKey.get().size() > 0 && current_notification.size() == 0)
 		{
-			ImGui::Text("Waiting for opponent to connect...");
-			ImGui::SetCursorPosX(20.f * settings.display.uiScale);
-			ImGui::Text("Relay Key: %s", config::RelayKey.get().data());
-#ifndef __ANDROID__
-			ImGui::SameLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
-			if (ImGui::Button("Copy"))
+			if (config::RelayKey.get().rfind("max_active_sessions_hit", 0) == 0)
 			{
-				SDL_SetClipboardText(config::RelayKey.get().data());
+				ImGui::Text("Maximum active sessions exceeded.");
+				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+				ImGui::Text("Use another Relay server or try again later.");
 			}
-			ImGui::PopStyleVar();
-			ImGui::Text(" ");
+			else
+			{
+				ImGui::Text("Waiting for opponent to connect...");
+				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+
+				ImGui::Text("Relay Key: %s", config::RelayKey.get().data());
+#ifndef __ANDROID__
+				ImGui::SameLine();
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
+				if (ImGui::Button("Copy"))
+				{
+					SDL_SetClipboardText(config::RelayKey.get().data());
+				}
+				ImGui::PopStyleVar();
+				ImGui::Text(" ");
 #endif
+			}
 		}
 		else
 		{

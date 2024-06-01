@@ -2270,8 +2270,8 @@ void DojoSession::ConnectRelayServer()
 		msg = "host";
 	else
 		msg = config::RelayKey.get();
-
-    auto sent = s.send_to(asio::buffer(msg), remote_endpoint, 0, err);
+	
+	auto sent = s.send_to(asio::buffer(msg), remote_endpoint, 0, err);
 
 	std::vector<char> recvd(128);
 	if (config::ActAsServer)
