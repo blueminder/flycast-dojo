@@ -225,6 +225,8 @@ OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
 Option<bool> Relay("Relay", false, "dojo");
 OptionString RelayKey("RelayKey", "", "dojo");
 
+Option<bool> HostJoinSelect("HostJoinSelect", false, "dojo");
+
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
 #endif

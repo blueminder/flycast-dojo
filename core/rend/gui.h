@@ -59,6 +59,7 @@ void gui_open_disconnected();
 
 void gui_open_ggpo_join();
 void gui_open_relay_join();
+void gui_open_relay_select();
 
 void scanner_stop();
 void scanner_refresh();
