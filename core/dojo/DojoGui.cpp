@@ -547,19 +547,27 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
+
+			int port = config::DefaultRelayPort.get();
 			if (!dojo.commandLineStart)
 			{
-				config::NetworkServer.set(std::string(si, strlen(si)));
+				std::string server_input = std::string(si, strlen(si));
+				std::vector<std::string> name_info = stringfix::split(":", server_input);
+
+				if (name_info.size() > 1)
+				{
+					port = std::stoi(name_info[1]);
+				}
+				config::NetworkServer.set(name_info[0]);
 				config::DojoEnable = false;
 			}
+			config::GGPORemotePort.set(port);
 
 			if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 			{
 				relay_key = std::string(rk);
 				cfgSetVirtual("dojo", "RelayKey", relay_key);
 			}
-
-			config::GGPORemotePort.set(8001);
 
 			dojo.ConnectRelayServer();
 

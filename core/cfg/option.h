@@ -594,6 +594,7 @@ extern Option<bool> TransmitScore;
 extern OptionString SpectateMatchCode;
 extern Option<bool> Relay;
 extern OptionString RelayKey;
+extern Option<int> DefaultRelayPort;
 
 extern Option<bool> HostJoinSelect;
 
