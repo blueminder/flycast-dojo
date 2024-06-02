@@ -431,6 +431,28 @@ void DojoGui::gui_display_host_join_select(float scaling)
 			else
 				gui_open_ggpo_join();
 		}
+
+
+		if (!dojo.commandLineStart)
+		{
+			ImGui::Text("");
+			std::string cancel_btn_txt = "Cancel";
+			float font_size = ImGui::GetFontSize() * cancel_btn_txt.size() / 2;
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
+			if (ImGui::Button(cancel_btn_txt.data()))
+			{
+				config::GGPOEnable = false;
+				ImGui::CloseCurrentPopup();
+
+				// Exit to main menu
+				gui_state = GuiState::Main;
+				game_started = false;
+				settings.content.path = "";
+				dc_reset(true);
+
+				config::NetworkServer.set("");
+			}
+		}
 	}
 }
 
@@ -450,6 +472,27 @@ void DojoGui::gui_display_relay_select(float scaling)
 		{
 			config::ActAsServer.set(false);
 			gui_state = GuiState::RelayJoin;
+		}
+
+		if (!dojo.commandLineStart)
+		{
+			ImGui::Text("");
+			std::string cancel_btn_txt = "Cancel";
+			float font_size = ImGui::GetFontSize() * cancel_btn_txt.size() / 2;
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
+			if (ImGui::Button(cancel_btn_txt.data()))
+			{
+				config::GGPOEnable = false;
+				ImGui::CloseCurrentPopup();
+
+				// Exit to main menu
+				gui_state = GuiState::Main;
+				game_started = false;
+				settings.content.path = "";
+				dc_reset(true);
+
+				config::NetworkServer.set("");
+			}
 		}
 	}
 }
@@ -489,7 +532,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
-		if (!config::ActAsServer)
+		if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 		{
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 #ifndef __ANDROID__
@@ -510,9 +553,12 @@ void DojoGui::gui_display_relay_join(float scaling)
 				config::DojoEnable = false;
 			}
 
-			relay_key = std::string(rk);
+			if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
+			{
+				relay_key = std::string(rk);
+				cfgSetVirtual("dojo", "RelayKey", relay_key);
+			}
 
-			config::RelayKey.set(relay_key);
 			config::GGPORemotePort.set(8001);
 
 			dojo.ConnectRelayServer();
@@ -544,8 +590,6 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		if (ImGui::Button("Button Check"))
 		{
-
-			relay_join_screen = true;
 			gui_state = GuiState::ButtonCheck;
 		}
 
@@ -640,8 +684,6 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (ImGui::Button("Start Session"))
 		{
-			if (config::RelayKey.get().size() > 0)
-				dojo.ConnectRelayServer();
 			if (dojo.lobby_launch && config::ActAsServer)
 				dojo.host_status = 3;
 
@@ -658,6 +700,11 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 				config::DojoEnable = false;
 			}
+
+			std::string relay_key = cfgLoadStr("dojo", "RelayKey", "");
+			if (!cfgLoadBool("dojo", "Relay", false) && relay_key.size() > 0)
+				dojo.ConnectRelayServer();
+
 			ggpo_join_screen = false;
 			ImGui::CloseCurrentPopup();
 			start_ggpo();

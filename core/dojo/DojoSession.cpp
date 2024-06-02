@@ -2244,7 +2244,7 @@ void DojoSession::AssignNames(bool player_info)
 
 void DojoSession::ConnectRelayServer()
 {
-	if (!config::EnableRelay)
+	if (!cfgLoadBool("dojo", "Relay", false))
 		return;
 
 	using asio::ip::udp;
@@ -2269,7 +2269,7 @@ void DojoSession::ConnectRelayServer()
 	if (config::ActAsServer)
 		msg = "host";
 	else
-		msg = config::RelayKey.get();
+		msg = cfgLoadStr("dojo", "RelayKey", "");
 	
 	auto sent = s.send_to(asio::buffer(msg), remote_endpoint, 0, err);
 
@@ -2278,7 +2278,7 @@ void DojoSession::ConnectRelayServer()
 	{
 		s.receive_from(asio::buffer(recvd), remote_endpoint);
 		std::string received = std::string(recvd.data());
-		config::RelayKey = received;
+		cfgSetVirtual("dojo", "RelayKey", received);
 		std::cout << "RECEIVED RELAY KEY " << received << std::endl;
 	}
 

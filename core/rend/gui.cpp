@@ -681,7 +681,7 @@ void gui_open_settings()
 		{
 			gui_state = GuiState::GGPOJoin;
 		}
-		if (dojo_gui.relay_join_screen)
+		if (cfgLoadBool("dojo", "Relay", false))
 		{
 			gui_state = GuiState::RelayJoin;
 		}
@@ -2805,12 +2805,11 @@ static void gui_display_content()
 
 	if (dojo_gui.item_current_idx == 0)
 	{
-		dojo_gui.show_relay = false;
 		settings.dojo.training = false;
 		config::Receiving = false;
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
-		config::EnableRelay = false;
+		cfgSetVirtual("dojo", "Relay", "no");
 	}
 	else if (dojo_gui.item_current_idx == 1)
 	{
@@ -2819,11 +2818,10 @@ static void gui_display_content()
 		config::DojoEnable = false;
 		config::GGPOEnable = false;
 		config::EnableMatchCode = false;
-		config::EnableRelay = false;
+		cfgSetVirtual("dojo", "Relay", "no");
 	}
 	else if (dojo_gui.item_current_idx == 2)
 	{
-		dojo_gui.show_relay = false;
 		config::EnableMatchCode = true;
 		//config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
@@ -2840,7 +2838,7 @@ static void gui_display_content()
 		}
 		settings.dojo.training = false;
 		config::Receiving = false;
-		config::EnableRelay = false;
+		cfgSetVirtual("dojo", "Relay", "no");
 	}
 	else if (dojo_gui.item_current_idx == 3)
 	{
@@ -2853,14 +2851,13 @@ static void gui_display_content()
 		config::DojoEnable = true;
 		config::GGPOEnable = true;
 		config::EnableMatchCode = false;
-		config::EnableRelay = false;
+		cfgSetVirtual("dojo", "Relay", "no");
 
 		if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
 			config::SpectateMatchCode = "";
 	}
 	else if (dojo_gui.item_current_idx == 4)
 	{
-		dojo_gui.show_relay = true;
 		config::DojoActAsServer = true;
 		config::DojoEnable = true;
 		config::GGPOEnable = true;
@@ -2871,11 +2868,10 @@ static void gui_display_content()
 		settings.dojo.training = false;
 		config::Receiving = false;
 		config::EnableMatchCode = false;
-		config::EnableRelay = true;
+		cfgSetVirtual("dojo", "Relay", "yes");
 	}
 	else if (dojo_gui.item_current_idx == 5)
 	{
-		dojo_gui.show_relay = false;
 		config::EnableMatchCode = false;
 		config::DojoActAsServer = true;
 		if (config::NetplayMethod.get() == "GGPO")
@@ -2892,15 +2888,14 @@ static void gui_display_content()
 		}
 		settings.dojo.training = false;
 		config::Receiving = false;
-		config::EnableRelay = false;
-		config::RelayKey = "";
+		cfgSetVirtual("dojo", "Relay", "no");
+		cfgSetVirtual("dojo", "RelayKey", "");
 	}
 	else if (dojo_gui.item_current_idx == 6)
 	{
 		config::EnableMatchCode = false;
-		dojo_gui.show_relay = false;
-		config::EnableRelay = false;
-		config::RelayKey = "";
+		cfgSetVirtual("dojo", "Relay", "no");
+		cfgSetVirtual("dojo", "RelayKey", "");
 		config::DojoEnable = false;
 		config::Receiving = false;
 		settings.dojo.training = false;
@@ -3602,9 +3597,10 @@ static void gui_network_start()
 	}
 	else
 	{
-		if (config::EnableRelay && config::ActAsServer && config::RelayKey.get().size() > 0 && current_notification.size() == 0)
+		std::string relay_key = cfgLoadStr("dojo", "RelayKey", "");
+		if (cfgLoadBool("dojo", "Relay", false) && config::ActAsServer && relay_key.size() > 0 && current_notification.size() == 0)
 		{
-			if (config::RelayKey.get().rfind("max_active_sessions_hit", 0) == 0)
+			if (relay_key.rfind("max_active_sessions_hit", 0) == 0)
 			{
 				ImGui::Text("Maximum active sessions exceeded.");
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
@@ -3615,13 +3611,13 @@ static void gui_network_start()
 				ImGui::Text("Waiting for opponent to connect...");
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
-				ImGui::Text("Relay Key: %s", config::RelayKey.get().data());
+				ImGui::Text("Relay Key: %s", relay_key.data());
 #ifndef __ANDROID__
 				ImGui::SameLine();
 				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
 				if (ImGui::Button("Copy"))
 				{
-					SDL_SetClipboardText(config::RelayKey.get().data());
+					SDL_SetClipboardText(relay_key.data());
 				}
 				ImGui::PopStyleVar();
 				ImGui::Text(" ");
@@ -3666,7 +3662,8 @@ static void gui_network_start()
 void start_ggpo()
 {
 	settings.dojo.PlayerName = config::PlayerName.get();
-	dojo.StartGGPOSession();
+	if (config::EnableMatchCode)
+		dojo.StartGGPOSession();
 	networkStatus = ggpo::startNetwork();
 	gui_state = GuiState::NetworkStart;
 }
@@ -3704,7 +3701,11 @@ static void gui_display_loadscreen()
 
 			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame && !config::Training)
 			{
-				if (config::EnableMatchCode)
+				if (cfgLoadBool("dojo", "Relay", false))
+				{
+					gui_open_relay_join();
+				}
+				else if (config::EnableMatchCode)
 				{
 					// use dojo session for match codes & initial handshake
 					dojo.StartDojoSession();
@@ -3718,10 +3719,6 @@ static void gui_display_loadscreen()
 					}
 
 					gui_open_host_join_select();
-				}
-				else if (dojo_gui.show_relay)
-				{
-					gui_open_relay_join();
 				}
 				else
 				{
