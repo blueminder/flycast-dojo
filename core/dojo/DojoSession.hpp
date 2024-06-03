@@ -25,6 +25,7 @@
 #include "dojo/UDP.hpp"
 #include "dojo/DojoLobby.hpp"
 #include "dojo/AsyncTcpServer.hpp"
+#include "dojo/RelayClient.hpp"
 
 #include "dojo/deps/StringFix/StringFix.h"
 #include "dojo/deps/filesystem.hpp"
@@ -350,7 +351,7 @@ public:
 	uint32_t last_score_frame = 0;
 	bool names_assigned = false;
 
-	void ConnectRelayServer();
+	RelayClient relay_client;
 };
 
 extern DojoSession dojo;

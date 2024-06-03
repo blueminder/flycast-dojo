@@ -3660,6 +3660,9 @@ static void gui_network_start()
 		catch (const FlycastException& e) {
 		}
 		gui_stop_game();
+
+		if (cfgLoadBool("dojo", "Relay", false))
+			cfgSetVirtual("dojo", "RelayKey", "");
 	}
 	ImGui::PopStyleVar();
 

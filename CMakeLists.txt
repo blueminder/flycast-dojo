@@ -940,6 +940,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/dojo/LobbyClient.hpp
 		core/dojo/MessageReader.hpp
 		core/dojo/MessageWriter.hpp
+		core/dojo/RelayClient.cpp
+		core/dojo/RelayClient.hpp
 		core/dojo/UDPClient.cpp
 		core/dojo/UDP.hpp)
 

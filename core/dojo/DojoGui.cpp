@@ -554,11 +554,19 @@ void DojoGui::gui_display_relay_join(float scaling)
 				std::string server_input = std::string(si, strlen(si));
 				std::vector<std::string> name_info = stringfix::split(":", server_input);
 
-				if (name_info.size() > 1)
+				if (strlen(si) == 0)
 				{
+					config::NetworkServer.set("127.0.0.1");
+				}
+				else if (name_info.size() > 1)
+				{
+					config::NetworkServer.set(name_info[0]);
 					port = std::stoi(name_info[1]);
 				}
-				config::NetworkServer.set(name_info[0]);
+				else
+				{
+					config::NetworkServer.set(name_info[0]);
+				}
 				config::DojoEnable = false;
 			}
 			config::GGPORemotePort.set(port);
@@ -569,13 +577,64 @@ void DojoGui::gui_display_relay_join(float scaling)
 				cfgSetVirtual("dojo", "RelayKey", relay_key);
 			}
 
-			dojo.ConnectRelayServer();
-
 			if (dojo.current_delay != config::GGPODelay.get())
 				config::GGPODelay.set(dojo.current_delay);
 
-			ImGui::CloseCurrentPopup();
-			start_ggpo();
+			try
+			{
+				std::thread t2(&RelayClient::ClientThread, std::ref(dojo.relay_client));
+				t2.detach();
+			}
+			catch (std::exception &)
+			{
+			}
+
+			auto start = std::chrono::system_clock::now();
+			auto end = start + std::chrono::seconds(5);
+			auto current = std::chrono::system_clock::now();
+			bool relay_wait = std::chrono::system_clock::now() < end;
+			while
+			(
+				relay_wait &&
+				(cfgLoadStr("dojo", "RelayKey", "").size() == 0)
+			)
+			{
+				current = std::chrono::system_clock::now();
+				relay_wait = current < end;
+			}
+
+			if (cfgLoadStr("dojo", "RelayKey", "").size() == 0)
+			{
+				dojo.relay_client.disconnect_toggle = true;
+				config::NetworkServer.set("");
+				ImGui::OpenPopup("Timeout");
+			}
+			else
+			{
+				ImGui::CloseCurrentPopup();
+				start_ggpo();
+			}
+		}
+
+		if (ImGui::BeginPopupModal("Timeout", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+		{
+			ImGui::Text("Relay connection timed out.\n");
+			if (dojo.commandLineStart)
+			{
+				if (ImGui::Button("Exit"))
+				{
+					exit(0);
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Cancel"))
+				{
+					dojo.relay_client.disconnect_toggle = true;
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
 		}
 
 		ImGui::SameLine();
@@ -708,10 +767,6 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 				config::DojoEnable = false;
 			}
-
-			std::string relay_key = cfgLoadStr("dojo", "RelayKey", "");
-			if (!cfgLoadBool("dojo", "Relay", false) && relay_key.size() > 0)
-				dojo.ConnectRelayServer();
 
 			ggpo_join_screen = false;
 			ImGui::CloseCurrentPopup();

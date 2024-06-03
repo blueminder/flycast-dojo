@@ -7,6 +7,7 @@
 #include "dojo/DojoFile.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <mutex>
 #include "rend/gui.h"
 #include "cfg/cfg.h"
