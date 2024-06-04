@@ -497,6 +497,22 @@ void DojoGui::gui_display_relay_select(float scaling)
 	}
 }
 
+void DojoGui::AddToRelayAddressHistory(std::string address)
+{
+	std::vector<std::string> relay_addresses = GetRelayAddressHistory();
+	if (std::find(relay_addresses.begin(), relay_addresses.end(), address) == relay_addresses.end())
+	{
+		cfgSaveStr("dojo", "RelayAddressHistory", config::RelayAddressHistory.get() + address + ";");
+	}
+}
+
+std::vector<std::string> DojoGui::GetRelayAddressHistory()
+{
+	std::string history = config::RelayAddressHistory.get();
+	std::vector<std::string> relay_addresses = stringfix::split(";", history);
+	return relay_addresses;
+}
+
 void DojoGui::gui_display_relay_join(float scaling)
 {
 	std::string title = "Connect to GGPO Relay Server";
@@ -516,8 +532,37 @@ void DojoGui::gui_display_relay_join(float scaling)
 		{
 			if (config::NetworkServer.get().empty())
 			{
+				std::string addr_lbl_txt = "Address";
+				const bool is_input_text_enter_pressed = ImGui::InputText(addr_lbl_txt.data(), si, IM_ARRAYSIZE(si), ImGuiInputTextFlags_EnterReturnsTrue);
+				const bool is_input_text_active = ImGui::IsItemActive();
+				const bool is_input_text_activated = ImGui::IsItemActivated();
 
-				ImGui::InputText("Address", si, IM_ARRAYSIZE(si));
+				auto address_history = GetRelayAddressHistory();
+				if (address_history.size() > 0 && is_input_text_activated)
+				    ImGui::OpenPopup("##popup");
+				{
+				    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+				    ImGui::SetNextWindowSize({ ImGui::GetItemRectSize().x, 0 });
+				    if (ImGui::BeginPopup("##popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
+				    {
+				        for (int i = 0; i < address_history.size(); i++)
+				        {
+				            if (strstr(address_history.at(i).data(), si) == NULL)
+				                continue;
+				            if (ImGui::Selectable(address_history.at(i).data()))
+				            {
+				                ImGui::ClearActiveID();
+				                strcpy(si, address_history.at(i).data());
+				            }
+				        }
+
+				        if (is_input_text_enter_pressed || (!is_input_text_active && !ImGui::IsWindowFocused()))
+				            ImGui::CloseCurrentPopup();
+
+				        ImGui::EndPopup();
+				    }
+				}
+
 				detect_address = std::string(si);
 #ifndef __ANDROID__
 				ImGui::SameLine();
@@ -529,8 +574,6 @@ void DojoGui::gui_display_relay_join(float scaling)
 #endif
 			}
 		}
-
-		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
 		if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 		{
@@ -545,6 +588,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 #endif
 		}
 
+		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
+
 		if (ImGui::Button("Start Session"))
 		{
 
@@ -552,6 +597,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			if (!dojo.commandLineStart)
 			{
 				std::string server_input = std::string(si, strlen(si));
+				AddToRelayAddressHistory(server_input);
 				std::vector<std::string> name_info = stringfix::split(":", server_input);
 
 				if (strlen(si) == 0)
@@ -596,7 +642,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 			while
 			(
 				relay_wait &&
-				(cfgLoadStr("dojo", "RelayKey", "").size() == 0)
+				((cfgLoadStr("dojo", "RelayKey", "").size() == 0) ||
+				(!config::ActAsServer && !dojo.relay_client.disconnect_toggle))
 			)
 			{
 				current = std::chrono::system_clock::now();

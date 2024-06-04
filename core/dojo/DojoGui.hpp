@@ -115,6 +115,9 @@ public:
 	void gui_display_relay_join(float scaling);
 	void gui_display_relay_select(float scaling);
 	void gui_display_host_join_select(float scaling);
+
+	void AddToRelayAddressHistory(std::string address);
+	std::vector<std::string> GetRelayAddressHistory();
 };
 
 extern DojoGui dojo_gui;

@@ -1,4 +1,5 @@
-#include "RelayClient.hpp"
+#include "DojoSession.hpp"
+#include "deps/Base64.h"
 
 void split(std::string const &str, const char delim,
 		   std::vector<std::string> &out)
@@ -17,7 +18,8 @@ void split(std::string const &str, const char delim,
 void RelayClient::ConnectRelayServer()
 {
 	struct hostent *mm_host;
-	mm_host = gethostbyname(config::NetworkServer.get().data());
+	target_hostname = config::NetworkServer.get();
+	mm_host = gethostbyname(target_hostname.data());
 
 	sockaddr_in mms_addr;
 	mms_addr.sin_family = AF_INET;
@@ -27,9 +29,11 @@ void RelayClient::ConnectRelayServer()
 	std::string ip_address = inet_ntoa(*((in_addr *)mm_host->h_addr));
 	config::NetworkServer.set(ip_address);
 
+	std::string b64_game_name = macaron::Base64::Encode(dojo.game_name.data());
+
 	std::string mm_msg;
 	if (config::ActAsServer)
-		mm_msg = "host";
+		mm_msg = "host|" + b64_game_name;
 	else
 	{
 		std::string relay_key = cfgLoadStr("dojo", "RelayKey", "");
@@ -85,7 +89,6 @@ bool RelayClient::CreateLocalSocket(int port)
 
 bool RelayClient::Init()
 {
-	connected = false;
 	disconnect_toggle = false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -102,7 +105,6 @@ bool RelayClient::Init()
 void RelayClient::ClientLoop()
 {
 	isLoopStarted = true;
-	connected = true;
 
 	while (!disconnect_toggle)
 	{
@@ -113,11 +115,16 @@ void RelayClient::ClientLoop()
 		int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&sender, &senderlen);
 		if (bytes_read)
 		{
+			if (memcmp("START", buffer, 5) == 0)
+			{
+				disconnect_toggle = true;
+			}
 			if (bytes_read == 6)
 			{
 				std::string received = std::string(buffer, 6);
 				cfgSetVirtual("dojo", "RelayKey", received);
 				std::cout << "RECEIVED RELAY KEY " << received << std::endl;
+				disconnect_toggle = true;
 			}
 		}
 	}
@@ -127,10 +134,6 @@ void RelayClient::ClientThread()
 {
 	Init();
 	ConnectRelayServer();
-
-	if (config::ActAsServer)
-		ClientLoop();
-
+	ClientLoop();
 	CloseSocket(local_socket);
-	connected = false;
 }

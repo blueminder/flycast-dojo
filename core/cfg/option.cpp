@@ -225,6 +225,7 @@ OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
 Option<bool> Relay("Relay", false, "dojo");
 OptionString RelayKey("RelayKey", "", "dojo");
 Option<int> DefaultRelayPort("DefaultRelayPort", 8001, "dojo");
+OptionString RelayAddressHistory("RelayAddressHistory", "", "dojo");
 
 Option<bool> HostJoinSelect("HostJoinSelect", false, "dojo");
 

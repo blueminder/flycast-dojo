@@ -595,6 +595,7 @@ extern OptionString SpectateMatchCode;
 extern Option<bool> Relay;
 extern OptionString RelayKey;
 extern Option<int> DefaultRelayPort;
+extern OptionString RelayAddressHistory;
 
 extern Option<bool> HostJoinSelect;
 

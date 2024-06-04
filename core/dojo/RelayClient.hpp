@@ -15,8 +15,8 @@ public:
     void ClientThread();
     void ConnectRelayServer();
 
-	bool disconnect_toggle;
-	bool connected;
+    bool disconnect_toggle;
+    std::string target_hostname;
 
 private:
     sock_t local_socket = INVALID_SOCKET;

@@ -715,9 +715,6 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
-	if (cfgLoadBool("dojo", "Training", true))
-		settings.dojo.training = true;
-
 	if (cfgLoadBool("dojo", "Receiving", false))
 	{
 		if (config::Quark.get() == "" && config::SpectateMatchCode.get() == "")
@@ -739,21 +736,19 @@ void gui_start_game(const std::string& path)
 
 	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
 	{
+		dojo.LaunchReceiver();
+
 		std::string net_state_path = get_writable_data_path(game_name + ".state.net");
 
-		if (cfgLoadBool("dojo", "Receiving", false))
-		{
-			dojo.LaunchReceiver();
-			while(!dojo.receiver_header_read);
+		while(!dojo.receiver_header_read);
 
-			if (dojo.receiver_ended)
-			{
-				gui_state = GuiState::Main;
-				gui_error("Match not found.");
-				dojo.receiver_started = false;
-				dojo.receiver_ended = false;
-				return;
-			}
+		if (dojo.receiver_ended)
+		{
+			gui_state = GuiState::Main;
+			gui_error("Match not found.");
+			dojo.receiver_started = false;
+			dojo.receiver_ended = false;
+			return;
 		}
 
 		if (!settings.dojo.state_commit.empty())
@@ -3577,7 +3572,10 @@ static std::future<bool> networkStatus;
 static void gui_network_start()
 {
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
+	if (cfgLoadBool("dojo", "Relay", false))
+		ImGui::SetNextWindowSize(ScaledVec2(330, 210));
+	else
+		ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
 	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
@@ -3621,11 +3619,23 @@ static void gui_network_start()
 				ImGui::Text("Waiting for opponent to connect...");
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
-				ImGui::Text("Relay Key: %s", relay_key.data());
+				ImGui::Text("Address: %s", dojo.relay_client.target_hostname.data());
 #ifndef __ANDROID__
 				ImGui::SameLine();
 				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
-				if (ImGui::Button("Copy"))
+				if (ImGui::Button("Copy###CopyUrl"))
+				{
+					SDL_SetClipboardText(dojo.relay_client.target_hostname.data());
+				}
+				ImGui::PopStyleVar();
+#endif
+
+				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+				ImGui::Text("Key: %s", relay_key.data());
+#ifndef __ANDROID__
+				ImGui::SameLine();
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
+				if (ImGui::Button("Copy###CopyKey"))
 				{
 					SDL_SetClipboardText(relay_key.data());
 				}
@@ -3650,7 +3660,10 @@ static void gui_network_start()
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+	if (cfgLoadBool("dojo", "Relay", false))
+		ImGui::SetCursorPosY(138.f * settings.display.uiScale);
+	else
+		ImGui::SetCursorPosY(126.f * settings.display.uiScale);
 	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
@@ -3662,7 +3675,10 @@ static void gui_network_start()
 		gui_stop_game();
 
 		if (cfgLoadBool("dojo", "Relay", false))
+		{
+			dojo.relay_client.disconnect_toggle = true;
 			cfgSetVirtual("dojo", "RelayKey", "");
+		}
 	}
 	ImGui::PopStyleVar();
 
@@ -3712,7 +3728,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame && !config::Training)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame)
 			{
 				if (cfgLoadBool("dojo", "Relay", false))
 				{
