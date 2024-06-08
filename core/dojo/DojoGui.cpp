@@ -245,11 +245,15 @@ void DojoGui::gui_display_guest_wait(float scaling)
    				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 #ifndef __ANDROID__
 				ImGui::SameLine();
-				if (ImGui::Button("Paste"))
+				char paste_btn_txt[20];
+				sprintf(paste_btn_txt, "%s", ICON_FA_CLIPBOARD);
+				if (ImGui::Button(paste_btn_txt))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(si, pasted_txt, strlen(pasted_txt));
 				}
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					ImGui::SetTooltip("Paste");
 #endif
    				static char sp[128] = "6000";
    				ImGui::InputTextWithHint("Port", "6000", sp, IM_ARRAYSIZE(sp));
@@ -513,6 +517,26 @@ std::vector<std::string> DojoGui::GetRelayAddressHistory()
 	return relay_addresses;
 }
 
+void DojoGui::paste_btn(char* si, float width, std::string name)
+{
+#ifndef __ANDROID__
+				char paste_btn_txt[20];
+				if (name.size() == 0)
+					sprintf(paste_btn_txt, "%s", ICON_FA_CLIPBOARD);
+				else
+					sprintf(paste_btn_txt, "%s##Paste%s", ICON_FA_CLIPBOARD, name.c_str());
+				if (ImGui::Button(paste_btn_txt))
+				{
+					char* pasted_txt = SDL_GetClipboardText();
+					memcpy(si, pasted_txt, strlen(pasted_txt));
+				}
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					ImGui::SetTooltip("Paste");
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(width - ImGui::CalcTextSize(paste_btn_txt).x);
+#endif
+}
+
 void DojoGui::gui_display_relay_join(float scaling)
 {
 	std::string title = "Connect to GGPO Relay Server";
@@ -532,6 +556,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 		{
 			if (config::NetworkServer.get().empty())
 			{
+				paste_btn(si, 256.0);
+
 				std::string addr_lbl_txt = "Address";
 				const bool is_input_text_enter_pressed = ImGui::InputText(addr_lbl_txt.data(), si, IM_ARRAYSIZE(si), ImGuiInputTextFlags_EnterReturnsTrue);
 				const bool is_input_text_active = ImGui::IsItemActive();
@@ -562,30 +588,15 @@ void DojoGui::gui_display_relay_join(float scaling)
 				        ImGui::EndPopup();
 				    }
 				}
-
 				detect_address = std::string(si);
-#ifndef __ANDROID__
-				ImGui::SameLine();
-				if (ImGui::Button("Paste"))
-				{
-					char* pasted_txt = SDL_GetClipboardText();
-					memcpy(si, pasted_txt, strlen(pasted_txt));
-				}
-#endif
+
 			}
 		}
 
 		if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 		{
+			paste_btn(rk, 256.0, "Key");
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
-#ifndef __ANDROID__
-			ImGui::SameLine();
-			if (ImGui::Button("Paste##PasteKey"))
-			{
-				char* pasted_txt = SDL_GetClipboardText();
-				memcpy(rk, pasted_txt, strlen(pasted_txt));
-			}
-#endif
 		}
 
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
@@ -700,7 +711,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 		}
 
 		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
-		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("IP").x + ImGui::CalcTextSize("Paste").x - ImGui::CalcTextSize("Start Session").x);
+		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("Address").x + ImGui::CalcTextSize("   ").x - ImGui::CalcTextSize("Start Session").x);
 
 		if (ImGui::Button("Button Check"))
 		{
@@ -771,11 +782,15 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 				detect_address = std::string(si);
 #ifndef __ANDROID__
 				ImGui::SameLine();
-				if (ImGui::Button("Paste"))
+				char paste_btn_txt[20];
+				sprintf(paste_btn_txt, "%s", ICON_FA_CLIPBOARD);
+				if (ImGui::Button(paste_btn_txt))
 				{
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(si, pasted_txt, strlen(pasted_txt));
 				}
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					ImGui::SetTooltip("Paste");
 #endif
 			}
 		}
@@ -849,7 +864,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 
 		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
-		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("IP").x + ImGui::CalcTextSize("Paste").x - ImGui::CalcTextSize("Start Session").x);
+		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("IP").x + ImGui::CalcTextSize("   ").x - ImGui::CalcTextSize("Start Session").x);
 
 		if (ImGui::Button("Button Check"))
 		{
