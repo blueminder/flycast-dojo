@@ -120,6 +120,7 @@ public:
 	std::vector<std::string> GetRelayAddressHistory();
 
 	void paste_btn(char* si, float width, std::string name = "");
+	void copy_btn(char* si, std::string name);
 };
 
 extern DojoGui dojo_gui;

@@ -3657,29 +3657,20 @@ static void gui_network_start()
 				ImGui::Text("Waiting for opponent to connect...");
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
-				ImGui::Text("Address: %s", dojo.relay_client.target_hostname.data());
-#ifndef __ANDROID__
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
 				ImGui::SameLine();
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
-				if (ImGui::Button("Copy###CopyUrl"))
-				{
-					SDL_SetClipboardText(dojo.relay_client.target_hostname.data());
-				}
+				ImGui::Text(" %s", dojo.relay_client.target_hostname.data());
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 5));
+				dojo_gui.copy_btn(dojo.relay_client.target_hostname.data(), "Address");
 				ImGui::PopStyleVar();
-#endif
 
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
-				ImGui::Text("Key: %s", relay_key.data());
-#ifndef __ANDROID__
+				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
 				ImGui::SameLine();
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(5, 5));
-				if (ImGui::Button("Copy###CopyKey"))
-				{
-					SDL_SetClipboardText(relay_key.data());
-				}
+				ImGui::Text(" %s", relay_key.data());
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 5));
+				dojo_gui.copy_btn(dojo.relay_client.target_hostname.data(), "Key");
 				ImGui::PopStyleVar();
-				ImGui::Text(" ");
-#endif
 			}
 		}
 		else
