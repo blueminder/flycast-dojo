@@ -621,7 +621,9 @@ const ImWchar* GetGlyphRangesChineseTraditionalOfficial()
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 void ShowHelpMarker(const char* desc)
 {
-    ImGui::TextDisabled("(?)");
+    char question_txt[2];
+    sprintf(question_txt, "%s", ICON_FA_CIRCLE_QUESTION);
+    ImGui::TextDisabled(question_txt);
     if (ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();

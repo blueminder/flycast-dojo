@@ -22,6 +22,8 @@
 #include <string>
 
 #include "dojo/kenney_icon_font_extended.h"
+#include "dojo/IconsFontAwesome6.h"
+#include "dojo/font_awesome_6_compressed.h"
 
 void gui_init();
 void gui_initFonts();

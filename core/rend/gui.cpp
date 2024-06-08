@@ -245,6 +245,8 @@ void gui_initFonts()
     font_cfg.MergeMode = true;
     static const ImWchar ki_ranges[] = { ICON_MIN_KI, ICON_MAX_KI, 0 };
     io.Fonts->AddFontFromMemoryCompressedTTF(kenney_icon_font_extended_compressed_data, kenney_icon_font_extended_compressed_size, fontSize, &font_cfg, ki_ranges);
+    static const ImWchar fa_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    io.Fonts->AddFontFromMemoryCompressedTTF(font_awesome_6_compressed_data, font_awesome_6_compressed_size, fontSize, &font_cfg, fa_ranges);
 #ifdef _WIN32
     u32 cp = GetACP();
     std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
@@ -2775,12 +2777,26 @@ static void gui_display_content()
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12 * settings.display.uiScale, 6 * settings.display.uiScale));		// from 8, 4
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
-	const char* items[] = { "OFFLINE", "TRAINING", "MATCH CODE", "MC SPECTATE", "RELAY", "IP ENTRY" };
+
+	char offline_txt[20];
+	char match_code_txt[20];
+	char train_txt[20];
+	char spectate_txt[20];
+	char relay_txt[20];
+	char ip_entry_txt[20];
+
+	sprintf(offline_txt, "%s   OFFLINE", ICON_FA_HOUSE);
+	sprintf(train_txt, "%s  TRAINING", ICON_FA_DUMBBELL);
+	sprintf(match_code_txt, "%s   MATCH CODE", ICON_FA_DOWN_LEFT_AND_UP_RIGHT_TO_CENTER);
+	sprintf(spectate_txt, "%s   SPECTATE", ICON_FA_EYE);
+	sprintf(relay_txt, "%s   RELAY", ICON_FA_TOWER_BROADCAST);
+	sprintf(ip_entry_txt, "%s   IP ENTRY", ICON_FA_ETHERNET);
+	const char* items[] = { offline_txt, train_txt, match_code_txt, spectate_txt, relay_txt, ip_entry_txt };
 
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
 
-	ImGui::PushItemWidth(ImGui::CalcTextSize("MC SPECTATE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
+	ImGui::PushItemWidth(ImGui::CalcTextSize("   MATCH CODE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 4);
 
 	if (dojo.lobby_host_screen)
 	{
@@ -2915,75 +2931,96 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
+	char replays_txt[20];
+	char settings_txt[20];
+	char help_txt[20];
+	char lan_txt[20];
+
+	sprintf(replays_txt, "%s", ICON_FA_FILM);
+	sprintf(settings_txt, "%s", ICON_FA_WRENCH);
+	sprintf(help_txt, "%s", ICON_FA_BOOK);
+	sprintf(lan_txt, "%s", ICON_FA_NETWORK_WIRED);
+
 #if !defined(__ANDROID__)
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("LAN").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 9);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 12);
     else
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 7);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 9);
 #else
 if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("LAN").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 7);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 9);
     else
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Filter").x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 5);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 7);
 #endif
 #endif
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 14 * settings.display.uiScale);
+	ImGui::SameLine(0, 12 * settings.display.uiScale);
 	filter.Draw(" ");
 #endif
+
     if (gui_state != GuiState::SelectDisk)
     {
 		if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		{
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::CalcTextSize("LAN").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-			if (ImGui::Button("LAN"))
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(lan_txt).x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
+			if (ImGui::Button(lan_txt))
 				gui_state = GuiState::Lobby;
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+				ImGui::SetTooltip("LAN Lobby");
 		}
 
 #if defined(__ANDROID__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().FramePadding.x * 1.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(replays_txt).x - ImGui::GetStyle().FramePadding.x * 1.0f);
 #elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 12 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(replays_txt).x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Replays").x - ImGui::GetStyle().ItemSpacing.x * 4 - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(replays_txt).x - ImGui::GetStyle().ItemSpacing.x * 10 - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
-		if (ImGui::Button("Replays"))
+		if (ImGui::Button(replays_txt))
 			gui_state = GuiState::Replays;
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			ImGui::SetTooltip("Replays");
+
 
 #ifdef TARGET_UWP
     	void gui_load_game();
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__ANDROID__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #elif defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().ItemSpacing.x * 8 - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().ItemSpacing.x * 6 - ImGui::GetStyle().FramePadding.x * 2.0f);
 #else
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(settings_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
-		if (ImGui::Button("Settings"))
+		if (ImGui::Button(settings_txt))
 			gui_state = GuiState::Settings;
     }
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+		ImGui::SetTooltip("Settings");
 
 #if !defined(__ANDROID__)
+
 #ifdef _WIN32
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-		if (ImGui::Button("Help"))
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button(help_txt))
 			ShellExecute(0, 0, "https://dojo-project.gitbook.io/flycast-dojo/", 0, 0 , SW_SHOW );
 #elif defined(__APPLE__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-		if (ImGui::Button("Help"))
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button(help_txt))
 			system("open https://dojo-project.gitbook.io/flycast-dojo/");
 #elif defined(__linux__)
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Help").x - ImGui::GetStyle().FramePadding.x * 2.0f);
-		if (ImGui::Button("Help"))
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		if (ImGui::Button(help_txt))
 			system("xdg-open https://dojo-project.gitbook.io/flycast-dojo/");
 #endif
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			ImGui::SetTooltip("Help");
 #endif
 
     ImGui::PopStyleVar();
@@ -3380,12 +3417,14 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 #ifndef __ANDROID__
 		char paste_btn[20];
-		sprintf(paste_btn, "%s", ICON_KI_SIGN_IN);
+		sprintf(paste_btn, "%s", ICON_FA_CLIPBOARD);
 		if (ImGui::Button((const char *)paste_btn))
 		{
 			char* pasted_txt = SDL_GetClipboardText();
 			memcpy(SpectateMatchCode, pasted_txt, strlen(pasted_txt));
 		}
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			ImGui::SetTooltip("Paste Match Code");
 		ImGui::SameLine();
 #endif
 		ImGui::InputText("Match Code", SpectateMatchCode, sizeof(SpectateMatchCode), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
@@ -3406,7 +3445,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		ImGui::Text(" ");
 	}
 
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize((std::string(GIT_VERSION) + std::string(" (?)")).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::string(GIT_VERSION).data()).x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 
 #ifdef _WIN32
 	if (config::UpdateChannel.get() != "stable")
@@ -3416,14 +3455,13 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		dojo_file.tag_download = dojo_file.GetLatestDownloadUrl(config::UpdateChannel);
 		ImGui::OpenPopup("Update?");
 	}
-	if (config::UpdateChannel.get() != "stable")
-		ImGui::PopStyleColor(1);
-
-	ImGui::SameLine();
 	std::string current_channel = config::UpdateChannel.get();
 	current_channel[0] = toupper(current_channel[0]);
-	std::string update_desc = "Current Flycast Dojo version. Click to check for new updates. (" + current_channel + " Channel)";
-	ShowHelpMarker(update_desc.c_str());
+	std::string update_desc = "Current Flycast Dojo version.\nClick to check for new updates. (" + current_channel + " Channel)";
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+		ImGui::SetTooltip(update_desc.c_str());
+	if (config::UpdateChannel.get() != "stable")
+		ImGui::PopStyleColor(1);
 
 	dojo_gui.update_action();
 #else
