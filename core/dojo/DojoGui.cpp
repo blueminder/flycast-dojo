@@ -462,7 +462,9 @@ void DojoGui::gui_display_host_join_select(float scaling)
 
 void DojoGui::gui_display_relay_select(float scaling)
 {
-	std::string title = "Connect to GGPO Relay Server";
+	char title_txt[60];
+	sprintf(title_txt, "%s Relay Connect", ICON_FA_TOWER_BROADCAST);
+	std::string title(title_txt);
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
@@ -530,16 +532,20 @@ void DojoGui::paste_btn(char* si, float width, std::string name)
 					char* pasted_txt = SDL_GetClipboardText();
 					memcpy(si, pasted_txt, strlen(pasted_txt));
 				}
+				std::string tooltip_txt = "Paste";
+				if (name.size() > 0)
+					tooltip_txt.append(" " + name);
 				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-					ImGui::SetTooltip("Paste");
+					ImGui::SetTooltip(tooltip_txt.c_str());
 				ImGui::SameLine();
-				ImGui::SetNextItemWidth(width - ImGui::CalcTextSize(paste_btn_txt).x);
 #endif
 }
 
 void DojoGui::gui_display_relay_join(float scaling)
 {
-	std::string title = "Connect to GGPO Relay Server";
+	char title_txt[60];
+	sprintf(title_txt, "%s Relay Connect", ICON_FA_TOWER_BROADCAST);
+	std::string title(title_txt);
 	if (config::ActAsServer)
 		title += " - Host";
 	else
@@ -556,7 +562,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 		{
 			if (config::NetworkServer.get().empty())
 			{
-				paste_btn(si, 256.0);
+				paste_btn(si, 256.0, "Address");
 
 				std::string addr_lbl_txt = "Address";
 				const bool is_input_text_enter_pressed = ImGui::InputText(addr_lbl_txt.data(), si, IM_ARRAYSIZE(si), ImGuiInputTextFlags_EnterReturnsTrue);
@@ -599,11 +605,14 @@ void DojoGui::gui_display_relay_join(float scaling)
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 		}
 
+		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
-		if (ImGui::Button("Start Session"))
+		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+		char start_btn_txt[60];
+		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
+		if (ImGui::Button(start_btn_txt))
 		{
-
 			int port = config::DefaultRelayPort.get();
 			if (!dojo.commandLineStart)
 			{
@@ -674,6 +683,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 		}
 
+		char cancel_btn_txt[60];
+		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::BeginPopupModal("Timeout", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::Text("Relay connection timed out.\n");
@@ -686,7 +697,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
-				if (ImGui::Button("Cancel"))
+				if (ImGui::Button(cancel_btn_txt))
 				{
 					dojo.relay_client.disconnect_toggle = true;
 					ImGui::CloseCurrentPopup();
@@ -696,7 +707,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (ImGui::Button(cancel_btn_txt))
 		{
 			config::GGPOEnable = false;
 			ImGui::CloseCurrentPopup();
@@ -710,10 +721,13 @@ void DojoGui::gui_display_relay_join(float scaling)
 			config::NetworkServer.set("");
 		}
 
-		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
-		ImGui::SameLine(0, 128.0f + ImGui::CalcTextSize("Address").x + ImGui::CalcTextSize("   ").x - ImGui::CalcTextSize("Start Session").x);
+		char check_btn_txt[60];
+		sprintf(check_btn_txt, "%s Button Check", ICON_FA_GAMEPAD);
 
-		if (ImGui::Button("Button Check"))
+		float comboWidth = ImGui::CalcTextSize("Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		ImGui::SameLine();
+
+		if (ImGui::Button(check_btn_txt))
 		{
 			gui_state = GuiState::ButtonCheck;
 		}
