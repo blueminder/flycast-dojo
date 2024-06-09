@@ -878,6 +878,13 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		static char si[128] = "";
 		std::string detect_address = "";
 
+		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+		ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
+		ImGui::SameLine();
+
+		ImGui::Text(dojo.game_name.c_str());
+
 		if (config::EnableMatchCode)
 		{
 			detect_address = config::NetworkServer.get();
@@ -901,6 +908,11 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			{
 				if (config::ShowPublicIP)
 				{
+					ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
+					ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 15);
+
+					ImGui::SameLine();
+					ImGui::TextColored(ImVec4(0.976f, 0.498f, 0.286f, 1.000f), " %s", ICON_FA_LOCATION_CROSSHAIRS);
 					static char external_ip[128] = "";
 					if (current_public_ip.empty())
 					{
@@ -909,23 +921,32 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 						memcpy(external_ip, external, strlen(external));
 					}
 
-					ImGui::Text("Your Public IP: ");
-					ImGui::SameLine();
-					ShowHelpMarker("This is your public IP to share with your opponent.\nFor Virtual LANs, refer to your software.");
 					ImGui::SameLine();
 					ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
 					ImGui::TextDisabled("%s", external_ip);
 					ImGui::PopStyleColor();
 					copy_btn(current_public_ip.data(), "Public IP");
 				}
+			}
 
+			if (config::NetworkServer.get().empty())
+			{
 				paste_btn(si, 256.0, "IP");
+
+				ImGui::SameLine();
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
+				ImGui::SameLine();
+
 				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 				detect_address = std::string(si);
 			}
 		}
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+		ImGui::TextDisabled("%s", ICON_FA_GAUGE);
+		ImGui::SameLine();
+
 		ImGui::SliderInt("Delay", (int*)&dojo.current_delay, 0, 20);
 
 		if (config::EnableMatchCode && dojo.host_status < 1)
