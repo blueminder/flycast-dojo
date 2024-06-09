@@ -124,4 +124,3 @@ public:
 };
 
 extern DojoGui dojo_gui;
-

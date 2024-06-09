@@ -123,6 +123,13 @@ void RelayClient::ClientLoop()
 				cfgSetVirtual("dojo", "RelayKey", received);
 				disconnect_toggle = true;
 			}
+			else if (memcmp("MAXCN", buffer, 5) == 0)
+			{
+				std::cout << "MAXCN" << std::endl;
+				std::string received = std::string(buffer, 6);
+				cfgSetVirtual("dojo", "RelayKey", received);
+				disconnect_toggle = true;
+			}
 			else if (memcmp("START", buffer, 5) == 0)
 			{
 				start_game = true;

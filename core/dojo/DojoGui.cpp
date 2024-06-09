@@ -698,8 +698,15 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 			if (cfgLoadStr("dojo", "RelayKey", "").rfind("NOKEY", 0) == 0)
 			{
+				cfgSetVirtual("dojo", "RelayKey", "");
 				std::cout << "No Key Found" << std::endl;
 				ImGui::OpenPopup("No Key Found");
+			}
+			else if (cfgLoadStr("dojo", "RelayKey", "").rfind("MAXCN", 0) == 0)
+			{
+				cfgSetVirtual("dojo", "RelayKey", "");
+				std::cout << "Maximum Connections Hit" << std::endl;
+				ImGui::OpenPopup("Max Connections Hit");
 			}
 			else if (cfgLoadStr("dojo", "RelayKey", "").size() == 0)
 			{
@@ -715,7 +722,6 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 		}
 
-		
 		if (ImGui::BeginPopupModal("Timeout", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::Text("Relay connection timed out.\n");
@@ -739,6 +745,28 @@ void DojoGui::gui_display_relay_join(float scaling)
 			ImGui::EndPopup();
 		}
 
+		if (ImGui::BeginPopupModal("Max Connections Hit", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+		{
+			ImGui::Text("Maximum active relay connections hit. Please try again later or use another relay.\n");
+			if (dojo.commandLineStart)
+			{
+				if (ImGui::Button("Exit"))
+				{
+					exit(0);
+				}
+			}
+			else
+			{
+				char back_btn_txt[60];
+				sprintf(back_btn_txt, "%s Back", ICON_FA_CIRCLE_CHEVRON_LEFT);
+				if (ImGui::Button(back_btn_txt))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
+		}
+
 		if (ImGui::BeginPopupModal("No Key Found", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::Text("Relay Key not found.\n");
@@ -751,7 +779,9 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
-				if (ImGui::Button("Back"))
+				char back_btn_txt[60];
+				sprintf(back_btn_txt, "%s Back", ICON_FA_CIRCLE_CHEVRON_LEFT);
+				if (ImGui::Button(back_btn_txt))
 				{
 					ImGui::CloseCurrentPopup();
 				}
