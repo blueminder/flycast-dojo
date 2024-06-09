@@ -902,7 +902,8 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		static char si[128] = "";
 		std::string detect_address = "";
 
-		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+		if (!config::EnableMatchCode)
+			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 
 		ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
 		ImGui::SameLine();
@@ -966,7 +967,8 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			}
 		}
 
-		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+		if (!config::EnableMatchCode)
+			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 
 		ImGui::TextDisabled("%s", ICON_FA_GAUGE);
 		ImGui::SameLine();
@@ -975,7 +977,10 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (config::EnableMatchCode && dojo.host_status < 1)
 		{
-			if (ImGui::Button("Detect Delay"))
+			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+			char detect_btn_txt[60];
+			sprintf(detect_btn_txt, "%s Detect Delay", ICON_FA_STOPWATCH);
+			if (ImGui::Button(detect_btn_txt))
 				dojo.OpponentPing = dojo.DetectGGPODelay(detect_address.data());
 
 			if (dojo.OpponentPing > 0)
@@ -985,7 +990,8 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			}
 		}
 
-		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+		if (!config::EnableMatchCode)
+			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 		char start_btn_txt[60];
 		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
 		if (ImGui::Button(start_btn_txt))
