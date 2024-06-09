@@ -555,7 +555,7 @@ std::vector<std::string> DojoGui::GetRelayAddressHistory()
 	return relay_addresses;
 }
 
-void DojoGui::copy_btn(char* si, std::string name)
+void DojoGui::copy_btn(const char* si, std::string name)
 {
 #ifndef __ANDROID__
 	ImGui::SameLine();
