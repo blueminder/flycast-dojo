@@ -3178,7 +3178,9 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 					std::string popup_name = "Options " + game.path;
 					if (ImGui::BeginPopupContextItem(popup_name.c_str(), 2))
 					{
-						if (ImGui::MenuItem("Calculate MD5 Sum"))
+						char calc_txt[60];
+						sprintf(calc_txt, "%s  Calculate MD5 Sum", ICON_FA_CALCULATOR);
+						if (ImGui::MenuItem(calc_txt))
 						{
 							std::FILE* file = std::fopen(game.path.c_str(), "rb");
 							dojo_gui.current_filename = game.path.substr(game.path.find_last_of("/\\") + 1);
@@ -3202,7 +3204,9 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 								dojo_gui.current_json_found = false;
 							}
 						}
-						if (ImGui::MenuItem("Download Netplay Savestate"))
+						char dl_txt[60];
+						sprintf(dl_txt, "%s  Download Netplay Savestate", ICON_FA_DOWNLOAD);
+						if (ImGui::MenuItem(dl_txt))
 						{
 							dojo_gui.invoke_download_save_popup(game.path, &net_save_download, false);
 						}
@@ -3212,7 +3216,9 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 						{
 							for (std::pair<std::string, std::string> link: game_links)
 							{
-								if (ImGui::MenuItem(std::string("Open " + link.first).data()))
+								char open_txt[60];
+								sprintf(open_txt, "%s  Open %s", ICON_FA_BOOKMARK, link.first.data());
+								if (ImGui::MenuItem(open_txt))
 								{
 #endif
 #ifdef _WIN32

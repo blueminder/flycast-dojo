@@ -624,6 +624,13 @@ void DojoGui::gui_display_relay_join(float scaling)
 		std::string detect_address = "";
 		std::string relay_key = "";
 
+		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+		ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
+		ImGui::SameLine();
+
+		ImGui::Text(dojo.game_name.c_str());
+
 		if (!dojo.commandLineStart)
 		{
 			//if (config::NetworkServer.get().empty())
@@ -678,13 +685,6 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 		}
-
-		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-
-		ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
-		ImGui::SameLine();
-
-		ImGui::Text(dojo.game_name.c_str());
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 
