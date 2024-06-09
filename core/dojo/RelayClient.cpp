@@ -44,7 +44,7 @@ void RelayClient::ConnectRelayServer()
 		if (disconnect_toggle)
 			return;
 
-		mm_msg = relay_key;
+		mm_msg = "join|" + relay_key;
 	}
 
 	sendto(local_socket, (const char *)mm_msg.data(), strlen(mm_msg.data()), 0, (const struct sockaddr *)&mms_addr, sizeof(mms_addr));
@@ -89,6 +89,7 @@ bool RelayClient::CreateLocalSocket(int port)
 
 bool RelayClient::Init()
 {
+	start_game = false;
 	disconnect_toggle = false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -115,15 +116,24 @@ void RelayClient::ClientLoop()
 		int bytes_read = recvfrom(local_socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&sender, &senderlen);
 		if (bytes_read)
 		{
-			if (memcmp("START", buffer, 5) == 0)
+			if (memcmp("NOKEY", buffer, 5) == 0)
 			{
+				std::cout << "NOKEY" << std::endl;
+				std::string received = std::string(buffer, 6);
+				cfgSetVirtual("dojo", "RelayKey", received);
 				disconnect_toggle = true;
 			}
-			if (bytes_read == 6)
+			else if (memcmp("START", buffer, 5) == 0)
+			{
+				start_game = true;
+				disconnect_toggle = true;
+			}
+			else if (bytes_read == 6)
 			{
 				std::string received = std::string(buffer, 6);
 				cfgSetVirtual("dojo", "RelayKey", received);
 				std::cout << "RECEIVED RELAY KEY " << received << std::endl;
+				start_game = true;
 				disconnect_toggle = true;
 			}
 		}

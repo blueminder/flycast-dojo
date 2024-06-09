@@ -695,13 +695,19 @@ void DojoGui::gui_display_relay_join(float scaling)
 				relay_wait = current < end;
 			}
 
-			if (cfgLoadStr("dojo", "RelayKey", "").size() == 0)
+			if (cfgLoadStr("dojo", "RelayKey", "").rfind("NOKEY", 0) == 0)
+			{
+				std::cout << "No Key Found" << std::endl;
+				ImGui::OpenPopup("No Key Found");
+			}
+			else if (cfgLoadStr("dojo", "RelayKey", "").size() == 0)
 			{
 				dojo.relay_client.disconnect_toggle = true;
 				config::NetworkServer.set("");
 				ImGui::OpenPopup("Timeout");
 			}
-			else
+			else if (config::ActAsServer && cfgLoadStr("dojo", "RelayKey", "").size() > 0 ||
+				dojo.relay_client.start_game && cfgLoadStr("dojo", "RelayKey", "").size() > 0)
 			{
 				ImGui::CloseCurrentPopup();
 				start_ggpo();
@@ -730,6 +736,27 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			ImGui::EndPopup();
 		}
+
+		if (ImGui::BeginPopupModal("No Key Found", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+		{
+			ImGui::Text("Relay Key not found.\n");
+			if (dojo.commandLineStart)
+			{
+				if (ImGui::Button("Exit"))
+				{
+					exit(0);
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Back"))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
+		}
+
 
 		ImGui::SameLine();
 		if (ImGui::Button(cancel_btn_txt))

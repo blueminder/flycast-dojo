@@ -17,6 +17,7 @@ public:
 
     bool disconnect_toggle;
     std::string target_hostname;
+    bool start_game = false;
 
 private:
     sock_t local_socket = INVALID_SOCKET;

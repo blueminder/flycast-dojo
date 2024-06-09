@@ -3669,7 +3669,7 @@ static void gui_network_start()
 				ImGui::SameLine();
 				ImGui::Text(" %s", relay_key.data());
 				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 5));
-				dojo_gui.copy_btn(dojo.relay_client.target_hostname.data(), "Key");
+				dojo_gui.copy_btn(relay_key.data(), "Key");
 				ImGui::PopStyleVar();
 			}
 		}
