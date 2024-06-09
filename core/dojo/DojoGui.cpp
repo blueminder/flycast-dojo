@@ -3093,9 +3093,11 @@ void DojoGui::invoke_download_save_popup(std::string game_path, bool* net_save_d
 
 void DojoGui::download_save_popup()
 {
+	if(!dojo_file.save_download_ended && !dojo_file.save_download_started)
+		return;
 	if (ImGui::BeginPopupModal("Download Netplay Savestate", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		if(!dojo_file.save_download_ended)
+		if(!dojo_file.save_download_ended && dojo_file.save_download_started)
 		{
 			ImGui::TextUnformatted(dojo_file.status_text.data());
 			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
@@ -3200,11 +3202,10 @@ void DojoGui::download_save_popup()
 					if (ImGui::Button("Launch Game"))
 					{
 						dojo_file.entry_name = "";
-						dojo_file.save_download_ended = false;
-						dojo_file.post_save_launch = false;
 						std::string game_path = dojo_file.game_path;
 						settings.content.path = game_path;
 						dojo_file.game_path = "";
+						dojo_file.Reset();
 						dojo.CleanUp();
 						ImGui::CloseCurrentPopup();
 						gui_start_game(game_path);
