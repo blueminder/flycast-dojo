@@ -673,6 +673,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 			try
 			{
+				dojo.relay_client.disconnect_toggle = false;
 				std::thread t2(&RelayClient::ClientThread, std::ref(dojo.relay_client));
 				t2.detach();
 			}
@@ -714,8 +715,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 		}
 
-		char cancel_btn_txt[60];
-		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
+		
 		if (ImGui::BeginPopupModal("Timeout", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::Text("Relay connection timed out.\n");
@@ -728,6 +728,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
+				char cancel_btn_txt[60];
+				sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 				if (ImGui::Button(cancel_btn_txt))
 				{
 					dojo.relay_client.disconnect_toggle = true;
@@ -759,6 +761,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 
 		ImGui::SameLine();
+		char cancel_btn_txt[60];
+		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::Button(cancel_btn_txt))
 		{
 			config::GGPOEnable = false;
