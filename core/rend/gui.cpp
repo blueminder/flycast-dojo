@@ -2793,8 +2793,18 @@ static void gui_display_content()
 	sprintf(ip_entry_txt, "%s   IP ENTRY", ICON_FA_ETHERNET);
 	const char* items[] = { offline_txt, train_txt, match_code_txt, spectate_txt, relay_txt, ip_entry_txt };
 
+	std::string item_desc[] = {
+		"Play an offline game.",
+		"Practice your game of choice with input display, dummy recording/playback, and preloaded training scripts for select games.",
+		"Establishes a direct P2P connection through the exchange of Match Codes. Works with most home networks.",
+		"Spectate and watch replays for recent Match Code sessions.",
+		"Establishes a connection through a Relay server. Use this if Match Codes do not work on your network.",
+		"Establish a direct P2P connection with IP Entry. Be sure to forward ports when playing over the open Internet or use a Virtual LAN."
+	};
+
 	// Here our selection data is an index.
 	const char* combo_label = items[dojo_gui.item_current_idx];  // Label to preview before opening the combo (technically it could be anything)
+	std::string current_desc = item_desc[dojo_gui.item_current_idx];
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("   MATCH CODE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 4);
 
@@ -2931,6 +2941,8 @@ static void gui_display_content()
 
 	ImGui::SameLine();
 
+	ShowHelpMarker(current_desc.c_str());
+
 	char replays_txt[20];
 	char settings_txt[20];
 	char help_txt[20];
@@ -2941,17 +2953,20 @@ static void gui_display_content()
 	sprintf(help_txt, "%s", ICON_FA_BOOK);
 	sprintf(lan_txt, "%s", ICON_FA_NETWORK_WIRED);
 
+	char question_txt[20];
+    sprintf(question_txt, " %s  ", ICON_FA_CIRCLE_QUESTION);
+
 #if !defined(__ANDROID__)
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
     if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 12);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(question_txt).x - ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 27);
     else
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 9);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(question_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 24);
 #else
 if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 9);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(question_txt).x - ImGui::CalcTextSize(lan_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 24);
     else
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x -  ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 7);
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(question_txt).x - ImGui::CalcTextSize(replays_txt).x - ImGui::CalcTextSize(settings_txt).x - ImGui::CalcTextSize(help_txt).x - ImGui::GetStyle().FramePadding.x * 22);
 #endif
 #endif
 
