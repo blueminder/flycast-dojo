@@ -524,10 +524,14 @@ void GuiSettings::settings_body_credits(ImVec2 normal_padding)
 	ImGui::Spacing();
 	header("Champion Patrons");
 	{
+		ImGui::BulletText("Weffen");
 		ImGui::BulletText("styroteqe");
-		ImGui::BulletText("The Code Always Wins");
+		ImGui::BulletText("Rob");
+		ImGui::BulletText("JellyfishKrag");
 		ImGui::BulletText("Jasen Parayno");
-		ImGui::BulletText("Carmine Macchia");
+		ImGui::BulletText("Heather Graves");
+		ImGui::BulletText("Gregory Kennedy");
+		ImGui::BulletText("zmannnn");
 		ImGui::Spacing();
 		std::string patreon_url = "https://www.patreon.com/projectdojo";
 #if !defined(__ANDROID__)
