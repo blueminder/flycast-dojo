@@ -121,6 +121,9 @@ public:
 
 	void paste_btn(char* si, float width, std::string name = "");
 	void copy_btn(char* si, std::string name);
+
+	void push_disable();
+	void pop_disable();
 };
 
 extern DojoGui dojo_gui;

@@ -566,6 +566,18 @@ void DojoGui::paste_btn(char* si, float width, std::string name)
 #endif
 }
 
+void DojoGui::push_disable()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.6f);
+	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+}
+
+void DojoGui::pop_disable()
+{
+	ImGui::PopItemFlag();
+	ImGui::PopStyleVar();
+}
+
 void DojoGui::gui_display_relay_join(float scaling)
 {
 	char title_txt[60];
@@ -636,6 +648,10 @@ void DojoGui::gui_display_relay_join(float scaling)
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 		char start_btn_txt[60];
 		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
+
+		if (!config::ActAsServer && strlen(rk) == 0)
+			push_disable();
+
 		if (ImGui::Button(start_btn_txt))
 		{
 			int port = config::DefaultRelayPort.get();
@@ -721,6 +737,9 @@ void DojoGui::gui_display_relay_join(float scaling)
 				start_ggpo();
 			}
 		}
+
+		if (!config::ActAsServer && strlen(rk) == 0)
+			pop_disable();
 
 		if (ImGui::BeginPopupModal("Timeout", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
