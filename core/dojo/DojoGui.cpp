@@ -2449,6 +2449,8 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 	{
+		OptionCheckbox("Show Public IP on IP Entry Dialog", config::ShowPublicIP);
+
 		OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
 			"Display network statistics on screen");
 
@@ -2482,6 +2484,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
+/*
 		OptionCheckbox("Enable LAN Lobby", config::EnableLobby,
 			"Enable LAN Lobby interface. Works over any LAN or virtual LAN with multicast support.");
 
@@ -2503,6 +2506,7 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			}
 		}
 
+*/
 
 		if (ImGui::CollapsingHeader("Match Codes##MCHeader", ImGuiTreeNodeFlags_None))
 		{
@@ -2519,10 +2523,8 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 			config::MatchmakingServerPort = MatchmakingServerPort;
 		}
 
-
 		if (config::NetplayMethod.get() == "GGPO")
 		{
-			OptionCheckbox("Show Public IP on Connection Dialog", config::ShowPublicIP);
 
 			if (ImGui::CollapsingHeader("GGPO", ImGuiTreeNodeFlags_None))
 			{

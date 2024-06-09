@@ -173,7 +173,7 @@ OptionString ReplayFilename("ReplayFilename", "", "dojo");
 Option<int> PacketsPerFrame("PacketsPerFrame", 3, "dojo");
 Option<bool> EnableBackfill("EnableBackfill", true, "dojo");
 Option<int> NumBackFrames("NumBackFrames", 3, "dojo");
-Option<bool> EnableLobby("EnableLobby", true, "dojo");
+Option<bool> EnableLobby("EnableLobby", false, "dojo");
 OptionString PlayerName("PlayerName", "Player", "dojo");
 OptionString OpponentName("OpponentName", "Opponent", "dojo");
 Option<bool> TestGame("TestGame", false, "dojo");
