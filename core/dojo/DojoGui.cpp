@@ -475,13 +475,17 @@ void DojoGui::gui_display_relay_select(float scaling)
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		if (ImGui::Button("Host Game", ScaledVec2(150, 150)))
+		char host_txt[60];
+		sprintf(host_txt, "  %s  \nHost", ICON_FA_SATELLITE);
+		if (ImGui::Button(host_txt, ScaledVec2(150, 150)))
 		{
 			config::ActAsServer.set(true);
 			gui_state = GuiState::RelayJoin;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Join Game", ScaledVec2(150, 150)))
+		char join_txt[60];
+		sprintf(join_txt, "  %s  \nJoin", ICON_FA_SATELLITE_DISH);
+		if (ImGui::Button(join_txt, ScaledVec2(150, 150)))
 		{
 			config::ActAsServer.set(false);
 			gui_state = GuiState::RelayJoin;
@@ -490,10 +494,11 @@ void DojoGui::gui_display_relay_select(float scaling)
 		if (!dojo.commandLineStart)
 		{
 			ImGui::Text("");
-			std::string cancel_btn_txt = "Cancel";
-			float font_size = ImGui::GetFontSize() * cancel_btn_txt.size() / 2;
+			char cancel_btn_txt[60];
+			sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
+			float font_size = ImGui::GetFontSize() * strlen(cancel_btn_txt) / 2;
 			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
-			if (ImGui::Button(cancel_btn_txt.data()))
+			if (ImGui::Button(cancel_btn_txt))
 			{
 				config::GGPOEnable = false;
 				ImGui::CloseCurrentPopup();
