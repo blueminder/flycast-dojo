@@ -601,6 +601,10 @@ void DojoGui::gui_display_relay_join(float scaling)
 			{
 				paste_btn(si, 256.0, "Address");
 
+				ImGui::SameLine();
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
+				ImGui::SameLine();
+
 				std::string addr_lbl_txt = "Address";
 				const bool is_input_text_enter_pressed = ImGui::InputText(addr_lbl_txt.data(), si, IM_ARRAYSIZE(si), ImGuiInputTextFlags_EnterReturnsTrue);
 				const bool is_input_text_active = ImGui::IsItemActive();
@@ -639,10 +643,19 @@ void DojoGui::gui_display_relay_join(float scaling)
 		if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 		{
 			paste_btn(rk, 256.0, "Key");
+
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+			ImGui::SameLine();
+
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 		}
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+		ImGui::TextDisabled("%s", ICON_FA_GAUGE);
+		ImGui::SameLine();
+
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
