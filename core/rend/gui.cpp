@@ -2778,12 +2778,12 @@ static void gui_display_content()
 	ImGui::AlignTextToFramePadding();
 	static ImGuiComboFlags flags = 0;
 
-	char offline_txt[20];
-	char match_code_txt[20];
-	char train_txt[20];
-	char spectate_txt[20];
-	char relay_txt[20];
-	char ip_entry_txt[20];
+	char offline_txt[64];
+	char match_code_txt[64];
+	char train_txt[64];
+	char spectate_txt[64];
+	char relay_txt[64];
+	char ip_entry_txt[64];
 
 	sprintf(offline_txt, "%s   OFFLINE", ICON_FA_HOUSE);
 	sprintf(train_txt, "%s  TRAINING", ICON_FA_DUMBBELL);
@@ -2943,17 +2943,17 @@ static void gui_display_content()
 
 	ShowHelpMarker(current_desc.c_str());
 
-	char replays_txt[20];
-	char settings_txt[20];
-	char help_txt[20];
-	char lan_txt[20];
+	char replays_txt[64];
+	char settings_txt[64];
+	char help_txt[64];
+	char lan_txt[64];
 
 	sprintf(replays_txt, "%s", ICON_FA_FILM);
 	sprintf(settings_txt, "%s", ICON_FA_WRENCH);
 	sprintf(help_txt, "%s", ICON_FA_BOOK);
 	sprintf(lan_txt, "%s", ICON_FA_NETWORK_WIRED);
 
-	char question_txt[20];
+	char question_txt[64];
     sprintf(question_txt, " %s  ", ICON_FA_CIRCLE_QUESTION);
 
 #if !defined(__ANDROID__)
@@ -3193,7 +3193,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 					std::string popup_name = "Options " + game.path;
 					if (ImGui::BeginPopupContextItem(popup_name.c_str(), 2))
 					{
-						char calc_txt[60];
+						char calc_txt[128];
 						sprintf(calc_txt, "%s  Calculate MD5 Sum", ICON_FA_CALCULATOR);
 						if (ImGui::MenuItem(calc_txt))
 						{
@@ -3219,7 +3219,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 								dojo_gui.current_json_found = false;
 							}
 						}
-						char dl_txt[60];
+						char dl_txt[128];
 						sprintf(dl_txt, "%s  Download Netplay Savestate", ICON_FA_DOWNLOAD);
 						if (ImGui::MenuItem(dl_txt))
 						{
@@ -3231,7 +3231,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 						{
 							for (std::pair<std::string, std::string> link: game_links)
 							{
-								char open_txt[60];
+								char open_txt[128];
 								sprintf(open_txt, "%s  Open %s", ICON_FA_BOOKMARK, link.first.data());
 								if (ImGui::MenuItem(open_txt))
 								{

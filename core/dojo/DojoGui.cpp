@@ -138,7 +138,7 @@ void DojoGui::gui_display_host_wait(float scaling)
 		ShowHelpMarker("Send the Match Code to your opponent.\n\nMatch Codes not working?\nTry switching to a Relay server or use IP Entry.");
 
 #ifndef __ANDROID__
-		char copy_txt[60];
+		char copy_txt[128];
 		sprintf(copy_txt, "%s Copy Match Code", ICON_FA_CLONE);
 		if (ImGui::Button(copy_txt))
 		{
@@ -149,7 +149,7 @@ void DojoGui::gui_display_host_wait(float scaling)
 
 	ImGui::SameLine();
 
-	char cancel_btn_txt[60];
+	char cancel_btn_txt[128];
 	sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 	if (ImGui::Button(cancel_btn_txt))
 	{
@@ -209,7 +209,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 			(config::GGPOEnable && config::EnableMatchCode && config::NetworkServer.get().empty()))
 		{
 
-			char title_txt[60];
+			char title_txt[128];
 			sprintf(title_txt, "%s Match Code - Join", ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER);
 			ImGui::OpenPopup(title_txt);
 			if (ImGui::BeginPopupModal(title_txt, NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -233,7 +233,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				ImGui::InputTextWithHint("", "ABC123", mc, IM_ARRAYSIZE(mc), ImGuiInputTextFlags_CharsUppercase);
 
 				ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-				char start_btn_txt[60];
+				char start_btn_txt[128];
 				sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
 				if (ImGui::Button(start_btn_txt))
 				{
@@ -244,7 +244,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
 
 				ImGui::SameLine();
 
-				char cancel_btn_txt[60];
+				char cancel_btn_txt[128];
 				sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 				if (ImGui::Button(cancel_btn_txt))
 				{
@@ -271,7 +271,7 @@ void DojoGui::gui_display_guest_wait(float scaling)
    				ImGui::InputTextWithHint("IP", "0.0.0.0", si, IM_ARRAYSIZE(si));
 #ifndef __ANDROID__
 				ImGui::SameLine();
-				char paste_btn_txt[20];
+				char paste_btn_txt[128];
 				sprintf(paste_btn_txt, "%s", ICON_FA_CLIPBOARD);
 				if (ImGui::Button(paste_btn_txt))
 				{
@@ -399,7 +399,7 @@ void DojoGui::gui_display_stream_wait(float scaling)
 
 void DojoGui::gui_display_host_join_select(float scaling)
 {
-	char title_txt[60];
+	char title_txt[128];
 	if (config::EnableMatchCode)
 		sprintf(title_txt, "%s Match Code - GGPO Connect", ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER);
 	else
@@ -407,7 +407,7 @@ void DojoGui::gui_display_host_join_select(float scaling)
 	ImGui::OpenPopup(title_txt);
 	if (ImGui::BeginPopupModal(title_txt, NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		char host_txt[60];
+		char host_txt[128];
 		sprintf(host_txt, "  %s  \nHost", ICON_FA_SATELLITE);
 		if (ImGui::Button(host_txt, ScaledVec2(150, 150)))
 		{
@@ -433,7 +433,7 @@ void DojoGui::gui_display_host_join_select(float scaling)
 				gui_open_ggpo_join();
 		}
 		ImGui::SameLine();
-		char join_txt[60];
+		char join_txt[128];
 		sprintf(join_txt, "  %s  \nJoin", ICON_FA_SATELLITE_DISH);
 		if (ImGui::Button(join_txt, ScaledVec2(150, 150)))
 		{
@@ -470,7 +470,7 @@ void DojoGui::gui_display_host_join_select(float scaling)
 		if (!dojo.commandLineStart)
 		{
 			ImGui::Text("");
-			char cancel_btn_txt[60];
+			char cancel_btn_txt[128];
 			sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 			float font_size = ImGui::GetFontSize() * strlen(cancel_btn_txt) / 2;
 			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
@@ -493,13 +493,13 @@ void DojoGui::gui_display_host_join_select(float scaling)
 
 void DojoGui::gui_display_relay_select(float scaling)
 {
-	char title_txt[60];
+	char title_txt[128];
 	sprintf(title_txt, "%s Relay Connect", ICON_FA_TOWER_BROADCAST);
 	std::string title(title_txt);
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		char host_txt[60];
+		char host_txt[128];
 		sprintf(host_txt, "  %s  \nHost", ICON_FA_SATELLITE);
 		if (ImGui::Button(host_txt, ScaledVec2(150, 150)))
 		{
@@ -507,7 +507,7 @@ void DojoGui::gui_display_relay_select(float scaling)
 			gui_state = GuiState::RelayJoin;
 		}
 		ImGui::SameLine();
-		char join_txt[60];
+		char join_txt[128];
 		sprintf(join_txt, "  %s  \nJoin", ICON_FA_SATELLITE_DISH);
 		if (ImGui::Button(join_txt, ScaledVec2(150, 150)))
 		{
@@ -518,7 +518,7 @@ void DojoGui::gui_display_relay_select(float scaling)
 		if (!dojo.commandLineStart)
 		{
 			ImGui::Text("");
-			char cancel_btn_txt[60];
+			char cancel_btn_txt[128];
 			sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 			float font_size = ImGui::GetFontSize() * strlen(cancel_btn_txt) / 2;
 			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
@@ -559,9 +559,12 @@ void DojoGui::copy_btn(const char* si, std::string name)
 {
 #ifndef __ANDROID__
 	ImGui::SameLine();
-	char copy_txt[60];
-	sprintf(copy_txt, "%s##%s", ICON_FA_CLONE, name.c_str());
-	if (ImGui::Button(copy_txt))
+	char copy_btn_txt[128];
+	if (name.size() == 0)
+		sprintf(copy_btn_txt, "%s", ICON_FA_CLONE);
+	else
+		sprintf(copy_btn_txt, "%s##%s", ICON_FA_CLONE, name.c_str());
+	if (ImGui::Button(copy_btn_txt))
 	{
 		SDL_SetClipboardText(si);
 	}
@@ -576,7 +579,7 @@ void DojoGui::copy_btn(const char* si, std::string name)
 void DojoGui::paste_btn(char* si, float width, std::string name)
 {
 #ifndef __ANDROID__
-	char paste_btn_txt[20];
+	char paste_btn_txt[128];
 	if (name.size() == 0)
 		sprintf(paste_btn_txt, "%s", ICON_FA_CLIPBOARD);
 	else
@@ -609,7 +612,7 @@ void DojoGui::pop_disable()
 
 void DojoGui::gui_display_relay_join(float scaling)
 {
-	char title_txt[60];
+	char title_txt[128];
 	sprintf(title_txt, "%s Relay Connect", ICON_FA_TOWER_BROADCAST);
 	std::string title(title_txt);
 	if (config::ActAsServer)
@@ -694,7 +697,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 		ImGui::SliderInt("Delay##CurrentDelay", (int*)&dojo.current_delay, 0, 20);
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-		char start_btn_txt[60];
+		char start_btn_txt[128];
 		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
 
 		if (!config::ActAsServer && strlen(rk) == 0)
@@ -801,7 +804,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
-				char cancel_btn_txt[60];
+				char cancel_btn_txt[128];
 				sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 				if (ImGui::Button(cancel_btn_txt))
 				{
@@ -824,7 +827,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
-				char back_btn_txt[60];
+				char back_btn_txt[128];
 				sprintf(back_btn_txt, "%s Back", ICON_FA_CIRCLE_CHEVRON_LEFT);
 				if (ImGui::Button(back_btn_txt))
 				{
@@ -846,7 +849,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			else
 			{
-				char back_btn_txt[60];
+				char back_btn_txt[128];
 				sprintf(back_btn_txt, "%s Back", ICON_FA_CIRCLE_CHEVRON_LEFT);
 				if (ImGui::Button(back_btn_txt))
 				{
@@ -858,7 +861,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 
 		ImGui::SameLine();
-		char cancel_btn_txt[60];
+		char cancel_btn_txt[128];
 		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::Button(cancel_btn_txt))
 		{
@@ -874,7 +877,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			config::NetworkServer.set("");
 		}
 
-		char check_btn_txt[60];
+		char check_btn_txt[128];
 		sprintf(check_btn_txt, "%s Button Check", ICON_FA_GAMEPAD);
 
 		float comboWidth = ImGui::CalcTextSize("   Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
@@ -891,7 +894,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 void DojoGui::gui_display_ggpo_join(float scaling)
 {
-	char title_txt[60];
+	char title_txt[128];
 	if (config::EnableMatchCode)
 		sprintf(title_txt, "%s GGPO Frame Delay", ICON_FA_GAUGE);
 	else
@@ -978,7 +981,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		if (config::EnableMatchCode && dojo.host_status < 1)
 		{
 			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-			char detect_btn_txt[60];
+			char detect_btn_txt[128];
 			sprintf(detect_btn_txt, "%s Detect Delay", ICON_FA_STOPWATCH);
 			if (ImGui::Button(detect_btn_txt))
 				dojo.OpponentPing = dojo.DetectGGPODelay(detect_address.data());
@@ -992,7 +995,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 
 		if (!config::EnableMatchCode)
 			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-		char start_btn_txt[60];
+		char start_btn_txt[128];
 		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
 		if (ImGui::Button(start_btn_txt))
 		{
@@ -1019,7 +1022,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 		}
 
 		ImGui::SameLine();
-		char cancel_btn_txt[60];
+		char cancel_btn_txt[128];
 		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::Button(cancel_btn_txt))
 		{
@@ -1048,7 +1051,7 @@ void DojoGui::gui_display_ggpo_join(float scaling)
 			config::NetworkServer.set("");
 		}
 
-		char check_btn_txt[60];
+		char check_btn_txt[128];
 		sprintf(check_btn_txt, "%s Button Check", ICON_FA_GAMEPAD);
 
 		float comboWidth = ImGui::CalcTextSize("   Button Check").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
