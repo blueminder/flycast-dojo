@@ -427,8 +427,12 @@ void DojoGui::gui_display_host_join_select(float scaling)
 			settings.dojo.training = false;
 			config::Receiving = false;
 
+			dojo.StartDojoSession();
+
 			if (config::EnableMatchCode)
+			{
 				gui_open_host_wait();
+			}
 			else
 				gui_open_ggpo_join();
 		}
@@ -459,6 +463,8 @@ void DojoGui::gui_display_host_join_select(float scaling)
 			}
 			settings.dojo.training = false;
 			config::Receiving = false;
+
+			dojo.StartDojoSession();
 
 			if (config::EnableMatchCode)
 				gui_open_guest_wait();

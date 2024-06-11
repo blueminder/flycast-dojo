@@ -3790,7 +3790,7 @@ static void gui_display_loadscreen()
 				else if (config::EnableMatchCode)
 				{
 					// use dojo session for match codes & initial handshake
-					dojo.StartDojoSession();
+					//dojo.StartDojoSession();
 
 					if (!dojo.lobby_launch &&
 						(config::GGPOPort.get() != 19713 || config::GGPORemotePort.get() != 19713))
@@ -3803,9 +3803,15 @@ static void gui_display_loadscreen()
 					if (cfgLoadBool("dojo", "HostJoinSelect", false))
 						gui_open_host_join_select();
 					else if (cfgLoadBool("network", "ActAsServer", false))
+					{
+						dojo.StartDojoSession();
 						gui_open_host_wait();
+					}
 					else
+					{
+						dojo.StartDojoSession();
 						gui_open_guest_wait();
+					}
 				}
 				else
 				{
