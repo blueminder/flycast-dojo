@@ -636,7 +636,7 @@ std::tuple<std::string, std::string> DojoFile::GetLatestDownloadUrl(std::string 
 					for (nlohmann::json::iterator it = j[i]["assets"].begin(); it != j[i]["assets"].end(); ++it)
 					{
 						if ((*it)["name"].get<std::string>().rfind("flycast-dojo", 0) == 0 &&
-							(*it)["content_type"] == "application/x-zip-compressed")
+							((*it)["content_type"] == "application/x-zip-compressed" || (*it)["content_type"] == "application/zip"))
 						{
 							download_url = (*it)["browser_download_url"].get<std::string>();
 						}
