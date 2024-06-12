@@ -628,8 +628,8 @@ void DojoGui::gui_display_relay_join(float scaling)
 	ImGui::OpenPopup(title.data());
 	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		static char si[128] = { 0 };
-		static char rk[128] = { 0 };
+		static char si[128] = "";
+		static char rk[128] = "";
 		std::string detect_address = "";
 		std::string relay_key = "";
 
@@ -684,8 +684,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 		}
 
-		std::string cfg_relay_key = cfgLoadStr("dojo", "RelayKey", "");
-		if (!config::ActAsServer && !(dojo.commandLineStart && cfg_relay_key.size() > 0))
+		if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 		{
 			paste_btn(rk, 256.0, "Key");
 
@@ -706,9 +705,6 @@ void DojoGui::gui_display_relay_join(float scaling)
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 		char start_btn_txt[128];
 		sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
-
-		if (!config::ActAsServer && dojo.commandLineStart && cfg_relay_key.size() > 0)
-			memcpy(rk, cfg_relay_key.c_str(), cfg_relay_key.size());
 
 		if (!config::ActAsServer && strlen(rk) == 0)
 			push_disable();
@@ -739,7 +735,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			}
 			config::GGPORemotePort.set(port);
 
-			if (!config::ActAsServer && !dojo.commandLineStart && cfg_relay_key.size() > 0)
+			if (!config::ActAsServer && !(dojo.commandLineStart && cfgLoadStr("dojo", "RelayKey", "").size() > 0))
 			{
 				relay_key = std::string(rk);
 				cfgSetVirtual("dojo", "RelayKey", relay_key);
@@ -765,7 +761,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			while
 			(
 				relay_wait &&
-				((cfg_relay_key.size() == 0) ||
+				((cfgLoadStr("dojo", "RelayKey", "").size() == 0) ||
 				(!config::ActAsServer && !dojo.relay_client.disconnect_toggle))
 			)
 			{
@@ -773,26 +769,26 @@ void DojoGui::gui_display_relay_join(float scaling)
 				relay_wait = current < end;
 			}
 
-			if (cfg_relay_key.rfind("NOKEY", 0) == 0)
+			if (cfgLoadStr("dojo", "RelayKey", "").rfind("NOKEY", 0) == 0)
 			{
 				cfgSetVirtual("dojo", "RelayKey", "");
 				std::cout << "No Key Found" << std::endl;
 				ImGui::OpenPopup("No Key Found");
 			}
-			else if (cfg_relay_key.rfind("MAXCN", 0) == 0)
+			else if (cfgLoadStr("dojo", "RelayKey", "").rfind("MAXCN", 0) == 0)
 			{
 				cfgSetVirtual("dojo", "RelayKey", "");
 				std::cout << "Maximum Connections Hit" << std::endl;
 				ImGui::OpenPopup("Max Connections Hit");
 			}
-			else if (cfg_relay_key.size() == 0)
+			else if (cfgLoadStr("dojo", "RelayKey", "").size() == 0)
 			{
 				dojo.relay_client.disconnect_toggle = true;
 				config::NetworkServer.set("");
 				ImGui::OpenPopup("Timeout");
 			}
-			else if (config::ActAsServer && cfg_relay_key.size() > 0 ||
-				dojo.relay_client.start_game && cfg_relay_key.size() > 0)
+			else if (config::ActAsServer && cfgLoadStr("dojo", "RelayKey", "").size() > 0 ||
+				dojo.relay_client.start_game && cfgLoadStr("dojo", "RelayKey", "").size() > 0)
 			{
 				ImGui::CloseCurrentPopup();
 				start_ggpo();
