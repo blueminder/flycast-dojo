@@ -3654,6 +3654,8 @@ static void gui_network_start()
 				if (config::RecordMatches && !config::Receiving)
 					dojo.CreateReplayFile();
 
+				std::cout << "Session Start" << std::endl;
+
 				gui_state = GuiState::Closed;
 			}
 			else
