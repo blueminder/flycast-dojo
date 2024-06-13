@@ -2808,6 +2808,9 @@ static void gui_display_content()
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("   MATCH CODE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 4);
 
+	if (commandLineStart && cfgLoadBool("dojo", "Relay", false))
+		dojo_gui.item_current_idx = 4;
+
 	if (dojo.lobby_host_screen)
 	{
 		ImGui::Text("HOST");
@@ -2896,7 +2899,9 @@ static void gui_display_content()
 		settings.dojo.training = false;
 		config::Receiving = false;
 		config::EnableMatchCode = false;
-		cfgSetVirtual("dojo", "HostJoinSelect", "yes");
+
+		if (!commandLineStart)
+			cfgSetVirtual("dojo", "HostJoinSelect", "yes");
 		cfgSetVirtual("dojo", "Relay", "yes");
 	}
 	else if (dojo_gui.item_current_idx == 5)
@@ -3981,6 +3986,9 @@ void gui_display_ui()
 			settings.dojo.GameEntry = cfgLoadStr("dojo", "GameEntry", "");
 			if (!settings.dojo.GameEntry.empty())
 			{
+#ifndef __ANDROID__
+				commandLineStart = true;
+#endif
 				try {
 					std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
 					if (file_exists(entry_path))
