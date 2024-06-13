@@ -153,6 +153,9 @@ void DojoGui::gui_display_host_wait(float scaling)
 	sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 	if (ImGui::Button(cancel_btn_txt))
 	{
+		if (dojo.commandLineStart)
+			exit(0);
+
 		ImGui::CloseCurrentPopup();
 
 		// Exit to main menu
@@ -299,6 +302,9 @@ void DojoGui::gui_display_guest_wait(float scaling)
 				ImGui::SameLine();
 				if (ImGui::Button("Cancel"))
 				{
+					if (dojo.commandLineStart)
+						exit(0);
+
 					ImGui::CloseCurrentPopup();
 
 					// Exit to main menu
@@ -881,6 +887,9 @@ void DojoGui::gui_display_relay_join(float scaling)
 		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::Button(cancel_btn_txt))
 		{
+			if (dojo.commandLineStart)
+				exit(0);
+
 			config::GGPOEnable = false;
 			ImGui::CloseCurrentPopup();
 
