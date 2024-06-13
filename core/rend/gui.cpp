@@ -568,6 +568,8 @@ void gui_open_stream_wait()
 void gui_open_ggpo_join()
 {
 	dojo_gui.current_public_ip = "";
+	if (!config::ActAsServer)
+		std::cout << "Client Join" << std::endl;
 	if (config::EnableMatchCode)
 		dojo.OpponentPing = dojo.DetectGGPODelay(config::NetworkServer.get().data());
 	gui_state = GuiState::GGPOJoin;
@@ -585,6 +587,8 @@ void gui_open_relay_select()
 
 void gui_open_relay_join()
 {
+	if (!config::ActAsServer)
+		std::cout << "Client Join" << std::endl;
 	gui_state = GuiState::RelayJoin;
 }
 
