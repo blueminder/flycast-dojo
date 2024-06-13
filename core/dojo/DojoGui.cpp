@@ -694,6 +694,16 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 			ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
 		}
+		else
+		{
+			std::string cfg_relay_key = cfgLoadStr("dojo", "RelayKey", "");
+			if (!cfg_relay_key.empty())
+			{
+				size_t length = std::min(cfg_relay_key.length(), sizeof(rk) - 1);
+				memcpy(rk, cfg_relay_key.c_str(), length);
+				rk[length] = 0;
+			}
+		}
 
 		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
 
