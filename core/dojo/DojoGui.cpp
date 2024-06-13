@@ -3193,7 +3193,8 @@ void DojoGui::download_save_popup()
 
 		if (dojo_file.save_download_ended || dojo_file.status_text.find("not found") != std::string::npos)
 		{
-			ImGui::TextUnformatted("Savestate successfully downloaded. ");
+			if (!dojo_file.not_found && dojo_file.status_text.find("not found") != std::string::npos)
+				ImGui::TextUnformatted("Savestate successfully downloaded. ");
 			if (config::Receiving)
 			{
 				if (ImGui::Button("Launch Game"))
