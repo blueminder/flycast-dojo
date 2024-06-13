@@ -127,6 +127,8 @@ public:
 
 	std::string source_url;
 	std::string dest_path;
+
+	bool not_found;
 };
 
 extern DojoFile dojo_file;

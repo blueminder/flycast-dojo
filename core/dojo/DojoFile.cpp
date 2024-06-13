@@ -24,6 +24,7 @@ void DojoFile::Reset()
 	save_download_ended = false;
 	download_ended = false;
 	post_save_launch = false;
+	not_found = false;
 
 	RefreshFileDefinitions();
 }
@@ -838,6 +839,7 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 		fprintf(stderr, "%s\n", curl_easy_strerror(res));
 		if (res == CURLE_REMOTE_FILE_NOT_FOUND || response_code == 404)
 		{
+			not_found = true;
 			status_text = filename + " not found. ";
 			if (stringfix::get_extension(filename) == "net")
 				status_text += "\n\nIt is recommended that you create a savestate\nto share with your opponent.";

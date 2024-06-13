@@ -3121,18 +3121,21 @@ void DojoGui::download_save_popup()
 		if(!dojo_file.save_download_ended && dojo_file.save_download_started)
 		{
 			ImGui::TextUnformatted(dojo_file.status_text.data());
-			if (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
-				|| dojo_file.status_text.find("not found") != std::string::npos)
+			if (!dojo_file.not_found && (dojo_file.downloaded_size == dojo_file.total_size && dojo_file.save_download_ended
+				|| dojo_file.status_text.find("not found") != std::string::npos))
 			{
 				dojo_file.start_save_download = false;
 				dojo_file.save_download_started = false;
 			}
 			else
 			{
-				float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
-				char buf[32];
-				sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
-				ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+				if (!dojo_file.not_found)
+				{
+					float progress = float(dojo_file.downloaded_size) / float(dojo_file.total_size);
+					char buf[32];
+					sprintf(buf, "%d/%d", (int)(progress * dojo_file.total_size), dojo_file.total_size);
+					ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+				}
 
 #if defined(_WIN32) || defined(__APPLE__) || defined(__linux__)
 				if (dojo_file.status_text.find("Idle") != std::string::npos
@@ -3196,6 +3199,7 @@ void DojoGui::download_save_popup()
 				if (ImGui::Button("Launch Game"))
 				{
 					net_save_download = false;
+					dojo_file.Reset();
 					ImGui::CloseCurrentPopup();
 					gui_start_game(dojo_file.game_path);
 				}
