@@ -546,11 +546,19 @@ void gui_open_bios_rom_warning()
 
 void gui_open_host_wait()
 {
+	if (config::EnableMatchCode)
+		std::cout << "Host Match Code Receive" << std::endl;
+	else
+		std::cout << "Host Wait" << std::endl;
 	gui_state = GuiState::HostWait;
 }
 
 void gui_open_guest_wait()
 {
+	if (config::EnableMatchCode)
+		std::cout << "Client Match Code Entry" << std::endl;
+	else
+		std::cout << "Client Wait" << std::endl;
 	gui_state = GuiState::GuestWait;
 
 	//if (dojo.isMatchReady)
@@ -562,14 +570,17 @@ void gui_open_guest_wait()
 
 void gui_open_stream_wait()
 {
+	std::cout << "Stream Wait" << std::endl;
 	gui_state = GuiState::StreamWait;
 }
 
 void gui_open_ggpo_join()
 {
 	dojo_gui.current_public_ip = "";
-	if (!config::ActAsServer)
-		std::cout << "Client Join" << std::endl;
+	if (config::ActAsServer)
+		std::cout << "Host Delay Select" << std::endl;
+	else
+		std::cout << "Client Delay Select" << std::endl;
 	if (config::EnableMatchCode)
 		dojo.OpponentPing = dojo.DetectGGPODelay(config::NetworkServer.get().data());
 	gui_state = GuiState::GGPOJoin;
@@ -587,7 +598,9 @@ void gui_open_relay_select()
 
 void gui_open_relay_join()
 {
-	if (!config::ActAsServer)
+	if (config::ActAsServer)
+		std::cout << "Host Join" << std::endl;
+	else
 		std::cout << "Client Join" << std::endl;
 	gui_state = GuiState::RelayJoin;
 }
