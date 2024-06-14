@@ -196,9 +196,9 @@ public:
 					else
 					{
 						ghc::filesystem::path data_path = get_writable_data_path("");
-						if (data_path.stem().string() == "data")
-							data_path = data_path.parent_path();
-						auto rom_path = data_path / "ROMs";
+						ghc::filesystem::path rom_path = data_path / "ROMs";
+						if (data_path.parent_path().filename().string() == "data")
+							rom_path = data_path.parent_path().parent_path() / "ROMs";
 						config::ContentPath.get().push_back(rom_path.string());
 					}
 				}
