@@ -442,6 +442,12 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			else
 				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
 			break;
+		case EMU_CMB_A_START:
+			if (pressed && !gui_is_open())
+				kcode[port] &= ~(DC_BTN_A | DC_BTN_START);
+			else
+				kcode[port] |= (DC_BTN_A | DC_BTN_START);
+			break;
 		case DC_AXIS_LT:
 			if (port >= 0)
 				lt[port] = pressed ? 255 : 0;

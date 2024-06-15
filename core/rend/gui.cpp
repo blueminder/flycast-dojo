@@ -1640,6 +1640,7 @@ const Mapping dcButtons[] = {
 	{ EMU_CMB_3_4, "X+C" },
 	{ EMU_CMB_2_3, "B+C" },
 	{ EMU_CMB_3_6, "C+Z" },
+	{ EMU_CMB_A_START, "A+Start" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
