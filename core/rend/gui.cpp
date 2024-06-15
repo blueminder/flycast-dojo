@@ -1343,6 +1343,7 @@ static void gui_display_commands()
 	}
 
 #if !defined(__ANDROID__)
+/*
 	if (settings.dojo.training || dojo.PlayMatch)
 	{
 		if (ImGui::Button("Show Hotkeys", ScaledVec2(150, 50)) && !settings.network.online)
@@ -1352,6 +1353,7 @@ static void gui_display_commands()
 		displayed_button_count++;
 		ImGui::NextColumn();
 	}
+*/
 #endif
 
 	if (!dojo.PlayMatch)
