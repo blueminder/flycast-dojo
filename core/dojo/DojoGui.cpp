@@ -685,7 +685,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 
 		ImGui::Text(dojo.game_name.c_str());
 
-		if (!dojo.commandLineStart)
+		if (!dojo.commandLineStart || config::NetworkServer.get().empty())
 		{
 			//if (config::NetworkServer.get().empty())
 			{
