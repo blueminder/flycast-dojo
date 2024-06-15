@@ -779,11 +779,13 @@ void DojoGui::gui_display_relay_join(float scaling)
 				}
 				else if (name_info.size() > 1)
 				{
+					dojo.relay_client.target_hostname = name_info[0];
 					config::NetworkServer.set(name_info[0]);
 					port = std::stoi(name_info[1]);
 				}
 				else
 				{
+					dojo.relay_client.target_hostname = name_info[0];
 					config::NetworkServer.set(name_info[0]);
 				}
 				config::DojoEnable = false;

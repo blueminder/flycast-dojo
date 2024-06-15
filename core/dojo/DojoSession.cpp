@@ -806,7 +806,16 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 	spectate_start.AppendString(config::OpponentName.get());
 
 	spectate_start.AppendString(config::Quark.get());
-	spectate_start.AppendString(config::MatchCode.get());
+
+	if (config::Relay)
+	{
+		std::string relay_rk = dojo.relay_client.target_hostname + "#" + config::RelayKey.get();
+		spectate_start.AppendString(relay_rk);
+	}
+	else
+	{
+		spectate_start.AppendString(config::MatchCode.get());
+	}
 
 	u32 analog = 0;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::GGPOEnable)
@@ -1627,7 +1636,16 @@ void DojoSession::transmitter_thread()
 		spectate_start.AppendString(config::OpponentName.get());
 
 		spectate_start.AppendString(config::Quark.get());
-		spectate_start.AppendString(config::MatchCode.get());
+
+		if (config::Relay)
+		{
+			std::string relay_rk = dojo.relay_client.target_hostname + "#" + cfgLoadStr("dojo", "RelayKey", "");
+			spectate_start.AppendString(relay_rk);
+		}
+		else
+		{
+			spectate_start.AppendString(config::MatchCode.get());
+		}
 
 		// ggpo analog settings
 		if (settings.platform.isConsole())
