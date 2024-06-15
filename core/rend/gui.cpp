@@ -736,7 +736,7 @@ void gui_start_game(const std::string& path)
 {
 	if (cfgLoadBool("dojo", "Receiving", false))
 	{
-		if (config::Quark.get() == "" && config::SpectateMatchCode.get() == "")
+		if (config::Quark.get() == "" && config::SpectateKey.get() == "")
 		{
 			gui_error("Please enter a Match Code to spectate.");
 			return;
@@ -2905,7 +2905,7 @@ static void gui_display_content()
 		cfgSetVirtual("dojo", "Relay", "no");
 
 		if (dojo_gui.item_current_idx != dojo_gui.last_item_current_idx)
-			config::SpectateMatchCode = "";
+			config::SpectateKey = "";
 	}
 	else if (dojo_gui.item_current_idx == 4)
 	{
@@ -2961,7 +2961,7 @@ static void gui_display_content()
 	{
 		SaveSettings();
 		dojo_gui.last_item_current_idx = dojo_gui.item_current_idx;
-		config::SpectateMatchCode = "";
+		config::SpectateKey = "";
 	}
 
 	ImGui::SameLine();
@@ -3458,8 +3458,8 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 	}
 	else if (dojo_gui.item_current_idx == 3)
 	{
-		char SpectateMatchCode[256] = { 0 };
-		strcpy(SpectateMatchCode, config::SpectateMatchCode.get().c_str());
+		char SpectateKey[256] = { 0 };
+		strcpy(SpectateKey, config::SpectateKey.get().c_str());
 		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 #ifndef __ANDROID__
 		char paste_btn[20];
@@ -3467,21 +3467,21 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		if (ImGui::Button((const char *)paste_btn))
 		{
 			char* pasted_txt = SDL_GetClipboardText();
-			memcpy(SpectateMatchCode, pasted_txt, strlen(pasted_txt));
+			memcpy(SpectateKey, pasted_txt, strlen(pasted_txt));
 		}
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 			ImGui::SetTooltip("Paste Match Code");
 		ImGui::SameLine();
 #endif
-		ImGui::InputText("Match Code", SpectateMatchCode, sizeof(SpectateMatchCode), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		ImGui::InputText("Match Code", SpectateKey, sizeof(SpectateKey), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 		ImGui::SameLine();
 		ShowHelpMarker("Spectate most recent session with Match Code");
 
-		auto match_code = std::string(SpectateMatchCode, strlen(SpectateMatchCode));
-		if (match_code != config::SpectateMatchCode.get())
+		auto match_code = std::string(SpectateKey, strlen(SpectateKey));
+		if (match_code != config::SpectateKey.get())
 		{
-			config::SpectateMatchCode = match_code;
-			cfgSaveStr("dojo", "SpectateMatchCode", config::SpectateMatchCode);
+			config::SpectateKey = match_code;
+			cfgSaveStr("dojo", "SpectateKey", config::SpectateKey);
 		}
 	}
 	else

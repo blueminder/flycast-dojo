@@ -221,7 +221,7 @@ Option<int> SOCDResolution ("SOCDResolution", 1);
 Option<int> FirstTo("FirstTo", 0, "dojo");
 Option<bool> TransmitScore("TransmitScore", false, "dojo");
 
-OptionString SpectateMatchCode("SpectateMatchCode", "", "dojo");
+OptionString SpectateKey("SpectateKey", "", "dojo");
 Option<bool> Relay("Relay", false, "dojo");
 OptionString RelayKey("RelayKey", "", "dojo");
 Option<int> DefaultRelayPort("DefaultRelayPort", 8001, "dojo");

@@ -1528,7 +1528,7 @@ void DojoSession::receiver_client_thread()
 		spectate_request.AppendHeader(1, SPECTATE_REQUEST);
 
 		spectate_request.AppendString(config::Quark.get());
-		spectate_request.AppendString(config::SpectateMatchCode.get());
+		spectate_request.AppendString(config::SpectateKey.get());
 		spectate_request.AppendString(game_name);
 
 		std::vector<unsigned char> message = spectate_request.Msg();
