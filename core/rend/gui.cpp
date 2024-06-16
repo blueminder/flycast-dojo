@@ -767,6 +767,7 @@ void gui_start_game(const std::string& path)
 			gui_error("Match not found.");
 			dojo.receiver_started = false;
 			dojo.receiver_ended = false;
+			config::SpectateKey = "";
 			return;
 		}
 
@@ -2817,7 +2818,7 @@ static void gui_display_content()
 		"Play an offline game.",
 		"Practice your game of choice with input display, dummy recording/playback, and preloaded training scripts for select games.",
 		"Establishes a direct P2P connection through the exchange of Match Codes. Works with most home networks.",
-		"Spectate and watch replays for recent Match Code sessions.",
+		"Spectate and watch replays for recent Match Code & Relay sessions.",
 		"Establishes a connection through a Relay server. Use this if Match Codes do not work on your network.",
 		"Establish a direct P2P connection with IP Entry. Be sure to forward ports when playing over the open Internet or use a Virtual LAN."
 	};
@@ -3198,7 +3199,11 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 							std::string gamePath(game.path);
 
 							scanner.get_mutex().unlock();
-							if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
+							if (config::Receiving && config::SpectateKey.get().empty())
+							{
+								dojo_gui.invoke_spectate_key_popup(game.path);
+							}
+							else if (config::GGPOEnable && !ghc::filesystem::exists(get_writable_data_path(game_name + ".state.net")))
 							{
 								dojo_gui.invoke_download_save_popup(game.path, &dojo_gui.net_save_download, true);
 							}
@@ -3356,6 +3361,8 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 						ImGui::EndPopup();
 					}
 
+					dojo_gui.spectate_key_popup();
+
 					if (net_save_download)
 					{
 						ImGui::OpenPopup("Download Netplay Savestate");
@@ -3455,34 +3462,6 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(255, 255, 0, 1));
 		ShowHelpMarker("Games lacking netplay savestate marked in yellow.\nIf one is available, it will be downloaded upon game launch.");
 		ImGui::PopStyleColor();
-	}
-	else if (dojo_gui.item_current_idx == 3)
-	{
-		char SpectateKey[256] = { 0 };
-		strcpy(SpectateKey, config::SpectateKey.get().c_str());
-		ImGui::PushItemWidth(ImGui::CalcTextSize("OFFLINE").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
-#ifndef __ANDROID__
-		char paste_btn[20];
-		sprintf(paste_btn, "%s", ICON_FA_CLIPBOARD);
-		if (ImGui::Button((const char *)paste_btn))
-		{
-			char* pasted_txt = SDL_GetClipboardText();
-			memcpy(SpectateKey, pasted_txt, strlen(pasted_txt));
-		}
-		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-			ImGui::SetTooltip("Paste Match Code");
-		ImGui::SameLine();
-#endif
-		ImGui::InputText("Match Code", SpectateKey, sizeof(SpectateKey), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-		ImGui::SameLine();
-		ShowHelpMarker("Spectate most recent session with Match Code");
-
-		auto match_code = std::string(SpectateKey, strlen(SpectateKey));
-		if (match_code != config::SpectateKey.get())
-		{
-			config::SpectateKey = match_code;
-			cfgSaveStr("dojo", "SpectateKey", config::SpectateKey);
-		}
 	}
 	else
 	{

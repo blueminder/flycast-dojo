@@ -3326,6 +3326,180 @@ void DojoGui::download_save_popup()
 	}
 }
 
+void DojoGui::invoke_spectate_key_popup(std::string game_path)
+{
+	dojo_file.game_path = game_path;
+	std::string filename = game_path.substr(game_path.find_last_of("/\\") + 1);
+	std::string short_game_name = stringfix::remove_extension(filename);
+	dojo.game_name = short_game_name;
+	char title_txt[128];
+	sprintf(title_txt, "%s Spectate Session", ICON_FA_EYE);
+	std::string title(title_txt);
+	ImGui::OpenPopup(title.data());
+}
+
+void DojoGui::spectate_key_popup()
+{
+	char title_txt[128];
+	sprintf(title_txt, "%s Spectate Session", ICON_FA_EYE);
+	std::string title(title_txt);
+	//ImGui::OpenPopup(title.data());
+	if (ImGui::BeginPopupModal(title.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+		if (ImGui::BeginTabBar("SpectateTarget", tab_bar_flags))
+        {
+            if (ImGui::BeginTabItem("Match Code"))
+            {
+				static char ri[128] = "";
+				static char rk[128] = "";
+				std::string relay_address = "";
+				std::string relay_key = "";
+
+				ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+				ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
+				ImGui::SameLine();
+
+				ImGui::Text(dojo.game_name.c_str());
+
+				paste_btn(rk, 256.0, "Match Code");
+
+				ImGui::SameLine();
+				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+				ImGui::SameLine();
+
+				ImGui::InputText("Match Code", rk, IM_ARRAYSIZE(rk));
+
+				ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+				char start_btn_txt[128];
+				sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
+
+				if (strlen(rk) == 0)
+					push_disable();
+
+				if (ImGui::Button(start_btn_txt))
+				{
+					relay_key = std::string(rk);
+					config::SpectateKey = relay_key;
+
+					ImGui::CloseCurrentPopup();
+					gui_start_game(dojo_file.game_path);
+				}
+
+				if (strlen(rk) == 0)
+					pop_disable();
+
+				ImGui::SameLine();
+
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Relay Server"))
+            {
+				static char ri[128] = "";
+				static char rk[128] = "";
+				std::string relay_address = "";
+				std::string relay_key = "";
+
+				ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+
+				ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
+				ImGui::SameLine();
+
+				ImGui::Text(dojo.game_name.c_str());
+
+				paste_btn(ri, 256.0, "Address");
+
+				ImGui::SameLine();
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
+				ImGui::SameLine();
+
+				std::string addr_lbl_txt = "Address";
+				const bool is_input_text_enter_pressed = ImGui::InputText(addr_lbl_txt.data(), ri, IM_ARRAYSIZE(ri), ImGuiInputTextFlags_EnterReturnsTrue);
+				const bool is_input_text_active = ImGui::IsItemActive();
+				const bool is_input_text_activated = ImGui::IsItemActivated();
+
+				auto address_history = GetRelayAddressHistory();
+				if (address_history.size() > 0 && is_input_text_activated)
+				    ImGui::OpenPopup("##popup");
+				{
+				    ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+				    ImGui::SetNextWindowSize({ ImGui::GetItemRectSize().x, 0 });
+				    if (ImGui::BeginPopup("##popup", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_ChildWindow))
+				    {
+				        for (int i = 0; i < address_history.size(); i++)
+				        {
+				            if (strstr(address_history.at(i).data(), ri) == NULL)
+				                continue;
+				            if (ImGui::Selectable(address_history.at(i).data()))
+				            {
+				                ImGui::ClearActiveID();
+				                strcpy(ri, address_history.at(i).data());
+				            }
+				        }
+
+				        if (is_input_text_enter_pressed || (!is_input_text_active && !ImGui::IsWindowFocused()))
+				            ImGui::CloseCurrentPopup();
+
+				        ImGui::EndPopup();
+				    }
+				}
+				relay_address = std::string(ri);
+
+				paste_btn(rk, 256.0, "Key");
+
+				ImGui::SameLine();
+				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+				ImGui::SameLine();
+
+				ImGui::InputText("Key", rk, IM_ARRAYSIZE(rk));
+
+				ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+				char start_btn_txt[128];
+				sprintf(start_btn_txt, "%s Start", ICON_FA_CIRCLE_PLAY);
+
+				if (strlen(ri) == 0 || strlen(rk) == 0)
+					push_disable();
+
+				if (ImGui::Button(start_btn_txt))
+				{
+					relay_key = std::string(rk);
+
+					std::string spectate_key = relay_key;
+					std::string server_input = std::string(ri, strlen(ri));
+					spectate_key = server_input + "#" + relay_key;
+
+					config::SpectateKey = spectate_key;
+
+					std::cout << spectate_key << std::endl;
+					std::cout << dojo_file.game_path << std::endl;
+
+					ImGui::CloseCurrentPopup();
+					gui_start_game(dojo_file.game_path);
+				}
+
+				if (strlen(ri) == 0 || strlen(rk) == 0)
+					pop_disable();
+
+				ImGui::SameLine();
+
+				ImGui::EndTabItem();
+			}
+		}
+
+		char cancel_btn_txt[128];
+		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
+		if (ImGui::Button(cancel_btn_txt))
+		{
+			ImGui::CloseCurrentPopup();
+			gui_state = GuiState::Main;
+			settings.content.path = "";
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 void DojoGui::gui_display_select_platform()
 {
 	const float scaling = settings.display.uiScale;
