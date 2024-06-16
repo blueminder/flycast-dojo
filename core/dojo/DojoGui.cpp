@@ -575,6 +575,7 @@ void DojoGui::gui_display_relay_select(float scaling)
 			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - font_size + (font_size / 2));
 			if (ImGui::Button(cancel_btn_txt))
 			{
+				config::Relay = false;
 				config::GGPOEnable = false;
 				ImGui::CloseCurrentPopup();
 
@@ -931,6 +932,7 @@ void DojoGui::gui_display_relay_join(float scaling)
 			if (dojo.commandLineStart)
 				exit(0);
 
+			config::Relay = false;
 			config::GGPOEnable = false;
 			ImGui::CloseCurrentPopup();
 
