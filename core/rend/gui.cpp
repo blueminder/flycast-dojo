@@ -736,13 +736,7 @@ void gui_start_game(const std::string& path)
 {
 	if (cfgLoadBool("dojo", "Receiving", false))
 	{
-		if (config::Quark.get() == "" && config::SpectateKey.get() == "")
-		{
-			gui_error("Please enter a Match Code to spectate.");
-			return;
-		}
-		else
-			gui_state = GuiState::StreamWait;
+		gui_state = GuiState::StreamWait;
 	}
 
 	const LockGuard lock(guiMutex);
@@ -2894,7 +2888,7 @@ static void gui_display_content()
 	else if (dojo_gui.item_current_idx == 3)
 	{
 		settings.dojo.training = false;
-		config::Receiving = true;
+		cfgSetVirtual("dojo", "Receiving", "yes");
 
 		config::DojoActAsServer = false;
 		config::ActAsServer = false;
@@ -3199,7 +3193,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 							std::string gamePath(game.path);
 
 							scanner.get_mutex().unlock();
-							if (config::Receiving && config::SpectateKey.get().empty())
+							if (cfgLoadBool("dojo", "Receiving", false) && config::SpectateKey.get().empty())
 							{
 								dojo_gui.invoke_spectate_key_popup(game.path);
 							}

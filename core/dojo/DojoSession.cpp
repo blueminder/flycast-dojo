@@ -430,7 +430,7 @@ int DojoSession::StartDojoSession()
 		SkipFrame = DcSkipFrame;
 
 	if (receiving)
-		config::Receiving = true;
+		cfgSetVirtual("dojo", "Receiving", "yes");
 
 	if (config::Receiving)
 	{
