@@ -993,6 +993,8 @@ std::string DojoSession::GetTrainingLua()
 			return get_readonly_data_path("training/cvs2.lua");
 	else if (settings.content.gameId == "T1212N")
 			return get_readonly_data_path("training/mvsc2.lua");
+	else if (settings.content.gameId == "PAXTEZ_IP")
+			return get_readonly_data_path("training/mvsc2.lua");
 	else
 	{
 		// look up by game file name in training folder
