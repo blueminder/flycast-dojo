@@ -345,6 +345,7 @@ void gui_initFonts()
 				try {
 					std::string entry_path = dojo_file.GetEntryPath(settings.dojo.GameEntry);
 					settings.content.path = entry_path;
+					settings.platform.system = getGamePlatform(entry_path.c_str());
 					settings.dojo.GameEntry = "";
 				}
 				catch (...) { }
@@ -2009,7 +2010,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		// Here our selection data is an index.
 
-		if (!settings.content.gameId.empty())
+		if (!settings.content.gameId.empty() || config::TestGame)
 		{
 			dojo_gui.push_disable();
 			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -2024,7 +2025,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
 
-		if (!settings.content.gameId.empty())
+		if (!settings.content.gameId.empty() || config::TestGame)
 			dojo_gui.pop_disable();
 
 		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
@@ -2353,7 +2354,7 @@ static void settings_body_controls(ImVec2 normal_padding)
 							dojo.current_gamepad = gamepad->unique_id();
 							dojo_gui.current_map_button = 0;
 							dojo_gui.quick_map_settings_call = true;
-							if (game_started)
+							if (game_started || config::TestGame)
 								gui_state = GuiState::QuickPlayerSelect;
 							else
 								gui_state = GuiState::QuickSelectPlatform;
