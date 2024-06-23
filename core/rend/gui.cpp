@@ -2009,11 +2009,24 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		// Here our selection data is an index.
 
+		if (!settings.content.gameId.empty())
+		{
+			dojo_gui.push_disable();
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+				item_current_map_idx = 0;
+			else
+				item_current_map_idx = 1;
+		}
+
 		ImGui::SetNextItemWidth(comboWidth);
 		// Make the combo height the same as the Done and Reset buttons
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * settings.display.uiScale - ImGui::GetFontSize()) / 2));
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
+
+		if (!settings.content.gameId.empty())
+			dojo_gui.pop_disable();
+
 		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
 		{
 			gamepad->save_mapping(map_system);
