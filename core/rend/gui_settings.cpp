@@ -520,17 +520,22 @@ void GuiSettings::settings_body_credits(ImVec2 normal_padding)
 		ImGui::BulletText("pof & shine");
 		ImGui::SameLine();
 		ShowHelpMarker("For consistently giving good advice and integrating Flycast Dojo into Fightcade.");
+
+		ImGui::BulletText("Ren");
+		ImGui::SameLine();
+		ShowHelpMarker("For extensive testing of Relays and integrating Flycast Dojo into Arkadyzja.");
 	}
 	ImGui::Spacing();
 	header("Champion Patrons");
 	{
-		ImGui::BulletText("Weffen");
-		ImGui::BulletText("styroteqe");
-		ImGui::BulletText("Rob");
-		ImGui::BulletText("JellyfishKrag");
-		ImGui::BulletText("Jasen Parayno");
-		ImGui::BulletText("Heather Graves");
+		ImGui::BulletText("Arlieth");
 		ImGui::BulletText("Gregory Kennedy");
+		ImGui::BulletText("Heather Graves");
+		ImGui::BulletText("Jasen Parayno");
+		ImGui::BulletText("JellyfishKrag");
+		ImGui::BulletText("Rob");
+		ImGui::BulletText("styroteqe");
+		ImGui::BulletText("Weffen");
 		ImGui::BulletText("zmannnn");
 		ImGui::Spacing();
 		std::string patreon_url = "https://www.patreon.com/projectdojo";
