@@ -1802,10 +1802,14 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 }
 static void detect_input_popup(const Mapping *mapping)
 {
+	if (dojo.current_gamepad.empty())
+		return;
+	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
+	if (gamepad == nullptr)
+		return;
 	ImVec2 padding = ScaledVec2(20, 20);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
-	std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(dojo.current_gamepad);
 	std::string map_control_name = "P" + std::to_string(gamepad->maple_port() + 1) + " Map Control " + std::string(mapping->name);
 	if (ImGui::BeginPopupModal(map_control_name.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
