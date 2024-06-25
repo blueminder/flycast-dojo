@@ -710,7 +710,7 @@ void gui_open_settings()
 		}
 		else if (dojo_gui.test_game_screen)
 		{
-			gui_stop_game();
+			gui_state = GuiState::TestGame;
 		}
 		else if (dojo_gui.quick_map_settings_call)
 		{

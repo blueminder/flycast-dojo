@@ -168,3 +168,5 @@ struct InputDescriptors
 
 extern InputDescriptors *NaomiGameInputs;
 extern bool atomiswaveForceFeedback;
+
+void LoadButtonNames(const char * filename);

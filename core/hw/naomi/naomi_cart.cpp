@@ -209,6 +209,12 @@ void naomi_cart_LoadBios(const char *filename)
 	bios_loaded = true;
 }
 
+void LoadButtonNames(const char * filename)
+{
+	Game *game = FindGame(filename);
+	NaomiGameInputs = game->inputs;
+}
+
 static void loadMameRom(const char *filename, LoadProgress *progress)
 {
 	Game *game = FindGame(filename);
