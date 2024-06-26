@@ -458,6 +458,24 @@ static int uiButton(lua_State *L)
 	return 0;
 }
 
+static int read8s(u32 addr)
+{
+	u8 data = _vmem_ReadMem8(addr);
+	return (s8)data;
+}
+
+static int read16s(u32 addr)
+{
+	u16 data = _vmem_ReadMem16(addr);
+	return (s16)data;
+}
+
+static int read32s(u32 addr)
+{
+	u32 data = _vmem_ReadMem32(addr);
+	return (s32)data;
+}
+
 static f32 read32f(u32 addr)
 {
 	u32 data = _vmem_ReadMem32(addr);
@@ -598,6 +616,9 @@ static void luaRegister(lua_State *L)
 				.addFunction("read16", _vmem_readt<u16, u16>)
 				.addFunction("read32", _vmem_readt<u32, u32>)
 				.addFunction("read64", _vmem_readt<u64, u64>)
+				.addFunction("read8s", read8s)
+				.addFunction("read16s", read16s)
+				.addFunction("read32s", read32s)
 				.addFunction("read32f", read32f)
 				.addFunction("readTable8", readMemoryTable<u8>)
 				.addFunction("readTable16", readMemoryTable<u16>)
