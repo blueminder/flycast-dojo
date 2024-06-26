@@ -458,6 +458,12 @@ static int uiButton(lua_State *L)
 	return 0;
 }
 
+static f32 read32f(u32 addr)
+{
+	u32 data = _vmem_ReadMem32(addr);
+	return *(f32 *)&data;
+}
+
 static void luaRegister(lua_State *L)
 {
 	getGlobalNamespace(L)
@@ -592,6 +598,7 @@ static void luaRegister(lua_State *L)
 				.addFunction("read16", _vmem_readt<u16, u16>)
 				.addFunction("read32", _vmem_readt<u32, u32>)
 				.addFunction("read64", _vmem_readt<u64, u64>)
+				.addFunction("read32f", read32f)
 				.addFunction("readTable8", readMemoryTable<u8>)
 				.addFunction("readTable16", readMemoryTable<u16>)
 				.addFunction("readTable32", readMemoryTable<u32>)
