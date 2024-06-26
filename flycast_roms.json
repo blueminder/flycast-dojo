@@ -1,136 +1,87 @@
 {
-    "flycast_cvs2": {
-        "filename": "cvs2.zip",
-        "md5_checksum": "cbc7a0e4e0a7af4327511e86af2c15b8",
-        "eeprom_checksum": "9e0711ef637fc872bb8bc10248aa89e5",
-        "nvmem_checksum": "2a57a5997e4979058259f89fbc28711b",
-        "resource_links": {
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Capcom_vs_SNK_2"
-        }
+    "flycast_atomiswave_bios": {
+        "filename": "../data/awbios.zip",
+        "md5_checksum": "85254fbe320ca82a768ec2c26bb08def"
     },
-    "cvs2_chd": {
-        "filename": "/cvs2/gdl-0008.chd",
-        "md5_checksum": "64b68ca54da926e68db0dcb0327381f9"
+    "flycast_naomi_bios": {
+        "filename": "../data/naomi.zip",
+        "md5_checksum": "526eda1e2a7920c92c88178789d71d84"
     },
-    "flycast_ggx": {
-        "filename": "ggx.zip",
-        "md5_checksum": "60a33277d008b655ece5772f7de02cbd",
-        "eeprom_checksum": "7bce1d51dcd11979e9e79cccbd547161",
-        "nvmem_checksum": "6946f70968e9f0049a9c2788b10df863"
+    "flycast_naomi2_bios": {
+        "filename": "../data/naomi2.zip",
+        "md5_checksum": "c50072cbab75673e1b1a6b94355e6fa8"
     },
-    "flycast_ggxxac": {
-        "filename": "ggxxac.zip",
-        "md5_checksum": "5f6890460c71c154cbda3153b1d866a3",
-        "eeprom_checksum": "f315aa7f0d08d8c2f6432d0b4f98d855",
-        "nvmem_checksum": "1ff240fee0b8a81171449b8a395e4d4d",
-        "resource_links": {
-            "Dustloop Wiki": "https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Accent_Core",
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Guilty_Gear_XX_Accent_Core",
-            "Hard Edge Wiki (DE)": "https://wiki.hardedge.org/wiki/Guilty_Gear_XX_Accent_Core"
-        }
-    },
-    "ggxxac_chd": {
-        "filename": "/ggxxac/gdl-0041.chd",
-        "md5_checksum": "ebb2e460a7aedc1b9cb997958c5c296f"
-    },
-    "flycast_ggxxrl": {
-        "filename": "ggxxrl.zip",
-        "md5_checksum": "aacf48ab6c2fe91dedc43ce3f3278332",
-        "eeprom_checksum": "d45415e19aa4007a9e8a79feb37eff63",
-        "nvmem_checksum": "b47f844f0168d28cb3f31ec61150ce6f",
-        "resource_links": {
-            "Dustloop Wiki": "https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Reload"
-        }
-    },
-    "ggxxrl_chd": {
-        "filename": "/ggxxrl/gdl-0019a.chd",
-        "md5_checksum": "0702dbc07bfc5e2398fb22c694e96731"
-    },
-    "flycast_ggxxsla": {
-        "filename": "ggxxsla.zip",
-        "md5_checksum": "dc8441e216066ab6ae3a038d1e9ae83c",
-        "eeprom_checksum": "1919c4b11a1345bef7912ba49670256d",
-        "nvmem_checksum": "3159585119c5cfdaa1b59fa7e55ac80f",
-        "resource_links": {
-            "Dustloop Wiki":"https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Slash",
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Guilty_Gear_XX_Slash"
-        }
-    },
-    "ggxxsla_chd": {
-        "filename": "/ggxxsla/gdl-0033a.chd",
-        "md5_checksum": "2498140f3ad7c7df8f22d2bb5cc0667f"
-    },
-    "flycast_luptype": {
-        "filename": "luptype.zip",
-        "md5_checksum": "806afa3bef8c5e35a348860552c670e7"
-    },
-    "flycast_mslug6": {
-        "filename": "mslug6.zip",
-        "md5_checksum": "b9ba25094997b67d7ade1f27cc6da47f",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "988d67c29c1b1de4db020e1e2f9db9f8",
-        "nvmem2_checksum": "8443b7376c74ce1e5ecdff8da21b69e4"
-    },
-    "flycast_sfz3ugd": {
-        "filename": "sfz3ugd.zip",
-        "md5_checksum": "007ec662bfd8c6d8572466492025dfa5",
-        "eeprom_checksum": "2403c8c73a64e292e5a5db30083328d1",
-        "nvmem_checksum": "1730de8cb3e8b41c07d462cc3cbe34e3",
-        "resource_links": {
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Street_Fighter_Alpha_3"
-        }
-    },
-    "sfz3ugd_chd": {
-        "filename": "/sfz3ugd/gdl-0002.chd",
-        "md5_checksum": "bcc1e0d20a677c9b2db6ce73a155255f"
-    },
-    "flycast_totd": {
-        "filename": "totd.zip",
-        "md5_checksum": "cfc82e30265f8a0121b9b9d8e386e90a"
-    },
-	"flycast_vs2_2k": {
-        "filename": "vs2_2k.zip",
-        "md5_checksum": "c6a029accf58a12070a520b0db0f5087",
-        "eeprom_checksum": "",
-        "nvmem_checksum": ""		
-	},
-    "flycast_vtennis2": {
-        "filename": "vtennis2.zip",
-        "md5_checksum": "e8fa24676d13e66c1b05cf03204ac8c2",
-        "eeprom_checksum": "",
-        "nvmem_checksum": ""
-    },
-    "vtennis2_chd": {
-        "filename": "/vtennis2/gds-0015a.chd",
-        "md5_checksum": "8bab73a044db9d2fa9821b3cbace6409"
+    "dojo_dc_vmu": {
+        "filename": "../data/vmu_save_A1.bin.net",
+        "md5_checksum": "3cfc9c2769b37b75430cb4e4c725fabd"
     },
     "flycast_ausfache": {
         "filename": "ausfache.zip",
         "md5_checksum": "b54bd62d3c5024da23cfef211a304f61",
-        "eeprom_checksum": "75a9daee0ac749e1ecd81a9fc8e9329f",
-        "nvmem_checksum": "15300ad9d6e497f3ce7b0b74c2592a01",
         "resource_links": {
             "Mizuumi Wiki": "https://wiki.gbl.gg/w/Akatsuki_Blitzkampf"
         }
     },
+    "flycast_beachspi": {
+        "filename": "beachspi.zip",
+        "md5_checksum": "c114cc2701d7551bc3c1b9f1e3c8cbe3"
+    },
     "flycast_capsnk": {
         "filename": "capsnk.zip",
         "md5_checksum": "037a8dfcf837bbe5d4c720add7e2012e",
-        "eeprom_checksum": "31489afa7e90da9b7f24880feec1ab48",
-        "nvmem_checksum": "e6e0bcc68e10cfe07e13947fee78fabf",
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Capcom_vs_SNK"
+        }
+    },
+    "flycast_cvs2": {
+        "filename": "cvs2.zip",
+        "md5_checksum": "cbc7a0e4e0a7af4327511e86af2c15b8",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Capcom_vs_SNK_2"
+        }
+    },
+    "flycast_doa2m": {
+        "filename": "doa2m.zip",
+        "md5_checksum": "7cc94e54bbe50e9131430a5b2979eb1d",
+        "resource_links": {
+            "Free Step Dodge Wiki": "https://www.freestepdodge.com/wiki/dead-or-alive-2/"
         }
     },
     "flycast_fotns": {
         "filename": "fotns.zip",
         "md5_checksum": "85ebeb3feb9640fbd8caaedd15d33b3f",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "7b4a0a9023ce68002ef2ddf5fcae3bfd",
         "nvmem2_checksum": "ae84df2196e93faeb34b9a2e179c97e2",
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Hokuto_no_Ken",
             "Hard Edge Wiki (DE)": "https://wiki.hardedge.org/wiki/Hokuto_No_Ken_(Fist_Of_The_North_Star)"
+        }
+    },
+    "flycast_ggx": {
+        "filename": "ggx.zip",
+        "md5_checksum": "60a33277d008b655ece5772f7de02cbd"
+    },
+    "flycast_ggxxac": {
+        "filename": "ggxxac.zip",
+        "md5_checksum": "5f6890460c71c154cbda3153b1d866a3",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Guilty_Gear_XX_Accent_Core",
+            "Dustloop Wiki": "https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Accent_Core",
+            "Hard Edge Wiki (DE)": "https://wiki.hardedge.org/wiki/Guilty_Gear_XX_Accent_Core"
+        }
+    },
+    "flycast_ggxxrl": {
+        "filename": "ggxxrl.zip",
+        "md5_checksum": "aacf48ab6c2fe91dedc43ce3f3278332",
+        "resource_links": {
+            "Dustloop Wiki": "https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Reload"
+        }
+    },
+    "flycast_ggxxsla": {
+        "filename": "ggxxsla.zip",
+        "md5_checksum": "dc8441e216066ab6ae3a038d1e9ae83c",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Guilty_Gear_XX_Slash",
+            "Dustloop Wiki": "https://www.dustloop.com/wiki/index.php?title=Guilty_Gear_XX_Slash"
         }
     },
     "flycast_kenju": {
@@ -140,45 +91,46 @@
             "Mizuumi Wiki": "https://wiki.gbl.gg/w/KenJu"
         }
     },
+    "flycast_kofnw": {
+        "filename": "kofnw.zip",
+        "md5_checksum": "17d32ad33532d7dd2191aab01e59bde4"
+    },
     "flycast_kofxi": {
         "filename": "kofxi.zip",
         "md5_checksum": "5fabd38ba0a86d55aef3bec231cc102d",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "8f8d951ca4fa7bb6fbdee98047286b24",
         "nvmem2_checksum": "aa9c5b465faad1fd24c6679b4c00a6cd",
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/The_King_of_Fighters_XI",
             "Dream Cancel Wiki": "https://dreamcancel.com/wiki/index.php/The_King_of_Fighters_XI",
             "Hard Edge Wiki": "https://wiki.hardedge.org/wiki/The_King_of_Fighters_XI"
         }
-	},
-	"flycast_kofnw": {
-		"filename": "kofnw.zip",
-		"md5_checksum": "17d32ad33532d7dd2191aab01e59bde4"
-	},
-	"flycast_meltyb": {
-		"filename": "meltyb.zip",
-		"md5_checksum": "14c34c22b67fce1d82090620ca2645eb",
-		"eeprom_checksum": "351a376322b6b7174259e7aa2c14f250",
-		"nvmem_checksum": "b1da767ea65c3e1c6416d4ba8d649422",
-		"resource_links": {
-			"SuperCombo Wiki": "https://wiki.supercombo.gg/w/Melty_Blood:_Act_Cadenza"
-		}
+    },
+    "flycast_luptype": {
+        "filename": "luptype.zip",
+        "md5_checksum": "806afa3bef8c5e35a348860552c670e7"
     },
     "flycast_mbaa": {
         "filename": "mbaa.zip",
         "md5_checksum": "a022921e36053d5e4930c626d10ffca9",
-        "eeprom_checksum": "8179d2c61f23a478411159cd49d7b62c",
-        "nvmem_checksum": "8e55adef099579c8c882743d4271d10a",
         "resource_links": {
             "Mizuumi Wiki": "https://wiki.gbl.gg/w/Melty_Blood/MBAA"
         }
     },
+    "flycast_meltyb": {
+        "filename": "meltyb.zip",
+        "md5_checksum": "14c34c22b67fce1d82090620ca2645eb",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Melty_Blood:_Act_Cadenza"
+        }
+    },
+    "flycast_mslug6": {
+        "filename": "mslug6.zip",
+        "md5_checksum": "b9ba25094997b67d7ade1f27cc6da47f",
+        "nvmem2_checksum": "8443b7376c74ce1e5ecdff8da21b69e4"
+    },
     "flycast_mvsc2": {
         "filename": "mvsc2.zip",
         "md5_checksum": "54ce963386a6baade119f40a2039c230",
-        "eeprom_checksum": "53244f20b09ef5ddaea8a87e3d9b5ee1",
-        "nvmem_checksum": "c43574bf685539aa8fe1129cb785bcd2",
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2"
         }
@@ -187,25 +139,22 @@
         "filename": "MarvelVsCapcom2_ratio.bin",
         "md5_checksum": "9d73a32b1aaf656789e36e5c70bfc897",
         "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2",
             "SuperCombo Wiki - MvC2 Ratios": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2/Ratios"
         }
     },
     "flycast_ngbc": {
         "filename": "ngbc.zip",
         "md5_checksum": "02f763ec17e2046edc83c32459ce17b7",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "189d54dfec45d1404112abb02e34b714",
         "nvmem2_checksum": "15edcb2708c71550cd3014a05c568e72",
         "resource_links": {
-            "Dream Cancel Wiki": "https://dreamcancel.com/wiki/index.php/NeoGeo_Battle_Coliseum",
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/NeoGeo_Battle_Coliseum"
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/NeoGeo_Battle_Coliseum",
+            "Dream Cancel Wiki": "https://dreamcancel.com/wiki/index.php/NeoGeo_Battle_Coliseum"
         }
     },
     "flycast_pjustic": {
         "filename": "pjustic.zip",
         "md5_checksum": "38d749d1a171cb2bbefcabe2b58e206c",
-        "eeprom_checksum": "5a397952c167809542fc26c6fff91ff8",
-        "nvmem_checksum": "3e67072b2b8caa00e76c3551a88d3dfb",
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Project_Justice"
         }
@@ -213,15 +162,11 @@
     "flycast_rumblef": {
         "filename": "rumblef.zip",
         "md5_checksum": "2127b61a2605a7c975e370ea9322e323",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "547cf8fb2d1aba7a0f2d165c449f9457",
         "nvmem2_checksum": "2f68170e1266e07b15e2617a86406872"
     },
     "flycast_rumblef2": {
         "filename": "rumblef2.zip",
         "md5_checksum": "037cd09db8a5a887132deeaa60e8efe8",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "47afb4e5e42f460b5f4505e8b9d4c7bd",
         "nvmem2_checksum": "a558ec454185fe1cff243845979a2062",
         "resource_links": {
             "Mizuumi Wiki": "https://wiki.gbl.gg/w/The_Rumble_Fish_2"
@@ -230,46 +175,127 @@
     "flycast_samsptk": {
         "filename": "samsptk.zip",
         "md5_checksum": "6ad2ce35b25e1b625391c434da007cd7",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "686f750df5d1ce62e6c06d88925e610e",
         "nvmem2_checksum": "69b43e2cba2d27305e6757de44535d8f",
         "resource_links": {
-            "Dream Cancel Wiki": "https://dreamcancel.com/wiki/index.php/Samurai_Shodown_VI",
-            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Samurai_Shodown_Tenka"
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Samurai_Shodown_Tenka",
+            "Dream Cancel Wiki": "https://dreamcancel.com/wiki/index.php/Samurai_Shodown_VI"
         }
     },
     "flycast_senkosp": {
         "filename": "senkosp.zip",
-        "md5_checksum": "b94d31522e0b8ec7b5f1d5c99d9bf465",
-        "eeprom_checksum": "639b6f907239e709ee3070437974b4d0",
-        "nvmem_checksum": "6fcd5021629be2765914693357e42a91",
-        "nvmem2_checksum": ""
+        "md5_checksum": "b94d31522e0b8ec7b5f1d5c99d9bf465"
+    },
+    "flycast_sfz3ugd": {
+        "filename": "sfz3ugd.zip",
+        "md5_checksum": "007ec662bfd8c6d8572466492025dfa5",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Street_Fighter_Alpha_3"
+        }
+    },
+    "flycast_totd": {
+        "filename": "totd.zip",
+        "md5_checksum": "cfc82e30265f8a0121b9b9d8e386e90a"
+    },
+    "flycast_vf4": {
+        "filename": "vf4.zip",
+        "md5_checksum": "383ee658d376419bb7f48b65e8f7d6f2",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4c"
+        }
+    },
+    "flycast_vf4evo": {
+        "filename": "vf4evo.zip",
+        "md5_checksum": "381739a42986b6e56706c85576e6e33a",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4evob"
+        }
+    },
+    "flycast_vf4tuned": {
+        "filename": "vf4tuned.zip",
+        "md5_checksum": "9c3f452daf1166721d19360e90da36c1",
+        "resource_links": {
+            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4fta"
+        }
+    },
+    "flycast_vs2_2k": {
+        "filename": "vs2_2k.zip",
+        "md5_checksum": "c6a029accf58a12070a520b0db0f5087"
+    },
+    "flycast_vstrik3": {
+        "filename": "vstrik3.zip",
+        "md5_checksum": "079dba6a81c953e22e6fa6bf0cfd1b42"
+    },
+    "flycast_vtennis2": {
+        "filename": "vtennis2.zip",
+        "md5_checksum": "e8fa24676d13e66c1b05cf03204ac8c2"
+    },
+    "beachspi_chd": {
+        "filename": "/beachspi/gds-0014.chd",
+        "md5_checksum": "d1ab66b9e25bf319928312d36cfd2f48"
+    },
+    "cvs2_chd": {
+        "filename": "/cvs2/gdl-0008.chd",
+        "md5_checksum": "64b68ca54da926e68db0dcb0327381f9"
+    },
+    "ggxxac_chd": {
+        "filename": "/ggxxac/gdl-0041.chd",
+        "md5_checksum": "ebb2e460a7aedc1b9cb997958c5c296f"
+    },
+    "ggxxrl_chd": {
+        "filename": "/ggxxrl/gdl-0019a.chd",
+        "md5_checksum": "0702dbc07bfc5e2398fb22c694e96731"
+    },
+    "ggxxsla_chd": {
+        "filename": "/ggxxsla/gdl-0033a.chd",
+        "md5_checksum": "2498140f3ad7c7df8f22d2bb5cc0667f"
     },
     "senkosp_chd": {
         "filename": "/senkosp/gdl-0038.chd",
-		"md5_checksum": "bc9dd736cf7b49ae20efb6cf32d5f8a5"
-	},
-	"flycast_doa2m": {
-        "filename": "doa2m.zip",
-        "md5_checksum": "7cc94e54bbe50e9131430a5b2979eb1d",
-        "eeprom_checksum": "",
-        "nvmem_checksum": "",
-        "nvmem2_checksum": "",
-		"resource_links": {
-            "Free Step Dodge Wiki": "https://www.freestepdodge.com/wiki/dead-or-alive-2/"
-        }
+        "md5_checksum": "bc9dd736cf7b49ae20efb6cf32d5f8a5"
     },
-    "flycast_naomi_bios": {
-        "filename": "../data/naomi.zip",
-        "md5_checksum": "526eda1e2a7920c92c88178789d71d84"
+    "sfz3ugd_chd": {
+        "filename": "/sfz3ugd/gdl-0002.chd",
+        "md5_checksum": "bcc1e0d20a677c9b2db6ce73a155255f"
     },
-    "flycast_atomiswave_bios": {
-        "filename": "../data/awbios.zip",
-        "md5_checksum": "85254fbe320ca82a768ec2c26bb08def"
+    "vf4_chd": {
+        "filename": "/vf4/gds-0012c.chd",
+        "md5_checksum": "8fa25603520d80ccec487298a75358bb"
     },
-    "dojo_dc_vmu": {
-        "filename": "../data/vmu_save_A1.bin.net",
-        "md5_checksum": "3cfc9c2769b37b75430cb4e4c725fabd"
+    "vf4evo_chd": {
+        "filename": "/vf4evo/gds-0024c.chd",
+        "md5_checksum": "992bbcd7eca0c55a6fa118bbe7490b4b"
+    },
+    "vf4tuned_chd": {
+        "filename": "/vf4tuned/gds-0036f.chd",
+        "md5_checksum": "ca809ed67dfd58db648f5ad3a65d0a8b"
+    },
+    "vstrik3_chd": {
+        "filename": "/vstrik3/gds-0006.chd",
+        "md5_checksum": "6d7aa455c5ecffa4d9dadc4b1ebeaba6"
+    },
+    "vtennis2_chd": {
+        "filename": "/vtennis2/gds-0015a.chd",
+        "md5_checksum": "8bab73a044db9d2fa9821b3cbace6409"
+    },
+    "flycast_dc_aerowings": {
+        "filename": "AeroWings (USA).chd",
+        "md5_checksum": "f4b81974737819dbffcc318fe93f9492"
+    },
+    "flycast_dc_aerowings2": {
+        "filename": "AeroWings 2 - Airstrike (USA).chd",
+        "md5_checksum": "8f5c785fd7c2315577f435a2273a8d23"
+    },
+    "flycast_dc_bombermanonline": {
+        "filename": "Bomberman Online (USA).chd",
+        "md5_checksum": "1a178d9da3e81f944fb08d6c1fa692eb"
+    },
+    "flycast_dc_bustamove4": {
+        "filename": "Bust-A-Move 4 (USA).chd",
+        "md5_checksum": "7659b93b41de41223875ccaa403c4a44"
+    },
+    "flycast_dc_chuchurocket": {
+        "filename": "ChuChu Rocket! (USA) (En,Ja,Fr,De,Es).chd",
+        "md5_checksum": "a400fd53214790dbd662e118b7fcea9d"
     },
     "flycast_dc_cvs2": {
         "filename": "Capcom vs. SNK 2 - Millionaire Fighting 2001 (Japan).chd",
@@ -277,6 +303,14 @@
         "resource_links": {
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Capcom_vs_SNK_2"
         }
+    },
+    "flycast_dc_daytona": {
+        "filename": "Daytona USA (USA).chd",
+        "md5_checksum": "a31dc7bf00df60cc952590d1d2178f59"
+    },
+    "flycast_dc_daytona_usa_2001": {
+        "filename": "Daytona USA 2001 (Japan).chd",
+        "md5_checksum": "d42d4bc33c309ef96e3368de01f88730"
     },
     "flycast_dc_doa2": {
         "filename": "Dead or Alive 2 (USA).chd",
@@ -292,9 +326,77 @@
             "Free Step Dodge Wiki": "https://www.freestepdodge.com/wiki/dead-or-alive-2/"
         }
     },
+    "flycast_dc_ecwar": {
+        "filename": "ECW Anarchy Rulz (USA).chd",
+        "md5_checksum": "cf56514c59a4aa39fea503541a201f41"
+    },
+    "flycast_dc_ecwhr": {
+        "filename": "ECW Hardcore Revolution (USA).chd",
+        "md5_checksum": "5d47fb8a45814b1527e59a85f803747d"
+    },
     "flycast_dc_fvipers2": {
         "filename": "Fighting Vipers 2 (Japan) (En,Ja).chd",
         "md5_checksum": "b4d325abdbc320761130f088eb37e43f"
+    },
+    "flycast_dc_gauntletlegends": {
+        "filename": "Gauntlet Legends (USA).chd",
+        "md5_checksum": "64f230e5008a1b6646fa044147971be0"
+    },
+    "flycast_dc_ggram2": {
+        "filename": "Giant Gram - Zen Nihon Pro Wres 2 in Nihon Budoukan (Japan).chd",
+        "md5_checksum": "dd4193d58cf6f84b5fd8cf5a1f6bcbbb"
+    },
+    "flycast_dc_golf_shiyou_yo_2": {
+        "filename": "Golf Shiyou yo 2 - Aratanaru Chousen (Japan).chd",
+        "md5_checksum": "5fa3491abffb6799f0e3620954985b61"
+    },
+    "flycast_dc_gram2000": {
+        "filename": "Giant Gram 2000 - Zen Nihon Pro Wres 3 Eikou no Yuusha-tachi (Japan).chd",
+        "md5_checksum": "0662a6eebe96c7f4f227d053127c4ea4"
+    },
+    "flycast_dc_hydrothunder": {
+        "filename": "Hydro Thunder (USA) (Rev 1).chd",
+        "md5_checksum": "3346edf38b29cd3d453f83464f82e01c"
+    },
+    "flycast_dc_kenju": {
+        "filename": "KenJu.gdi",
+        "md5_checksum": "c527f1ec937b56caa65084d436f8c0a0",
+        "resource_links": {
+            "Mizuumi Wiki": "https://wiki.gbl.gg/w/KenJu"
+        },
+        "dir": "KenJu"
+    },
+    "dc_kenju_track01": {
+        "filename": "track01.iso",
+        "md5_checksum": "3a1a8f5829dab51f5018a527afec0402",
+        "dir": "KenJu"
+    },
+    "dc_kenju_track02": {
+        "filename": "track02.raw",
+        "md5_checksum": "03c796f60db2e9ef0b65a42a47a9d321",
+        "dir": "KenJu"
+    },
+    "dc_kenju_track03": {
+        "filename": "track03.iso",
+        "md5_checksum": "19bf2b352f71271b66d58fcb94af2877",
+        "dir": "KenJu"
+    },
+    "dc_kenju_track04": {
+        "filename": "track04.iso",
+        "md5_checksum": "8ff20b0e2d925627a690c8cdaaa75abb",
+        "dir": "KenJu"
+    },
+    "flycast_dc_kof99evo": {
+        "filename": "King of Fighters, The - Evolution (USA) (En,Ja,Es,Pt).chd",
+        "md5_checksum": "6d0f28040909dee5edf3efaecb5a99a6"
+    },
+    "flycast_dc_mkg": {
+        "filename": "Mortal Kombat Gold (USA) (Rev 1).chd",
+        "md5_checksum": "b1fe526600915eadb0a3adac4baf1428"
+    },
+    "flycast_dc_msr": {
+        "filename": "MSR - Metropolis Street Racer (USA) (Rev A).chd",
+        "md5_checksum": "edf05bf80dee93b37713787801341746"
     },
     "flycast_dc_mvsc2": {
         "filename": "Marvel vs. Capcom 2 (USA).chd",
@@ -303,24 +405,43 @@
             "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2"
         }
     },
-    "flycast_dc_mkg": {
-        "filename": "Mortal Kombat Gold (USA) (Rev 1).chd",
-        "md5_checksum": "b1fe526600915eadb0a3adac4baf1428"
+    "flycast_dc_mvsc2_te": {
+        "filename": "MvC2 TE w Training.cdi",
+        "md5_checksum": "64aff5ccec22cf843800f939536a3fa9",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2"
+        }
+    },
+    "flycast_dc_nbashowtime": {
+        "filename": "NBA Showtime - NBA on NBC (USA).chd",
+        "md5_checksum": "e2082ed0499967d24bc92e9ba9c716e2"
+    },
+    "flycast_dc_nflblitz2000": {
+        "filename": "NFL Blitz 2000 (USA) (Rev 1).chd",
+        "md5_checksum": "6c08ddd095421c18de0634bd358307fb"
     },
     "flycast_dc_pf2012": {
         "filename": "Psychic Force 2012 (USA).chd",
         "md5_checksum": "953818332deb42f31d0e0c3cb4bec2fb",
-		"resource_links": {
+        "resource_links": {
             "Mizuumi Wiki": "https://wiki.gbl.gg/w/Psychic_Force_2012"
         }
+    },
+    "flycast_dc_plasmasword": {
+        "filename": "Plasma Sword - Nightmare of Bilstein (USA).chd",
+        "md5_checksum": "7b02fe25a726c28c3adcae4c05b84249"
+    },
+    "flycast_dc_popnmusic": {
+        "filename": "Pop'n Music (Japan).chd",
+        "md5_checksum": "0793a42caeb571b0b39f21102b9082ff"
     },
     "flycast_dc_pstone2": {
         "filename": "Power Stone 2 (USA).chd",
         "md5_checksum": "72aa612c3bdeba696dfa10e91f1014f8"
     },
-    "flycast_dc_plasmasword": {
-        "filename": "Plasma Sword - Nightmare of Bilstein (USA).chd",
-        "md5_checksum": "7b02fe25a726c28c3adcae4c05b84249"
+    "flycast_dc_puyopuyoon": {
+        "filename": "Puyo Puyoon (Japan).chd",
+        "md5_checksum": "f69c133f44c246adba03c2eaf459c8ac"
     },
     "flycast_dc_ready2rumbleboxing": {
         "filename": "Ready 2 Rumble Boxing (USA).chd",
@@ -330,29 +451,93 @@
         "filename": "Ready 2 Rumble Boxing - Round 2 (USA) (En,Fr,De).chd",
         "md5_checksum": "068264d775f0e358320bdd4b88d17fa2"
     },
+    "flycast_dc_sakurawarscolumns2eng": {
+        "filename": "Sakura Wars - Columns 2 (English - v1.2).cdi",
+        "md5_checksum": "5e0627495487427d41980d327ac3df61"
+    },
+    "flycast_dc_segagt": {
+        "filename": "Sega GT (USA).chd",
+        "md5_checksum": "4b1b899db29c38903642ff35fc368cf7"
+    },
+    "flycast_dc_segarally2": {
+        "filename": "Sega Rally 2 (USA).chd",
+        "md5_checksum": "547093d1c95b0d37fe84a94cc6f7769b"
+    },
+    "flycast_dc_sf2049": {
+        "filename": "San Francisco Rush 2049 (USA) (En,Fr,De,Es,It,Nl).chd",
+        "md5_checksum": "57b9d666befa313b8a47055b2262f327"
+    },
+    "flycast_dc_sfiii3": {
+        "filename": "Street Fighter III - 3rd Strike (USA).chd",
+        "md5_checksum": "2f64324bde3cf4f174f32663492647e4"
+    },
+    "flycast_dc_sfz3_saikyoryudojo": {
+        "filename": "Street Fighter Zero 3 - Saikyo-ryu Dojo (Japan).chd",
+        "md5_checksum": "7599965c52e6c778889ab38451296768"
+    },
+    "flycast_dc_snowsurfers": {
+        "filename": "Snow Surfers (Europe).chd",
+        "md5_checksum": "429f584b2698e290cad3eb430c5a5de9"
+    },
     "flycast_dc_sonicadventure2": {
         "filename": "Sonic Adventure 2 (USA) (En,Ja,Fr,De,Es).chd",
         "md5_checksum": "45363831670236d3460bc1d8562e268c"
-    },
-    "flycast_dc_spf2x": {
-        "filename": "Super Puzzle Fighter II X for Matching Service (Japan).chd",
-        "md5_checksum": "7410f2a9ca716aca47033801a114d0ae"
     },
     "flycast_dc_soulclbr": {
         "filename": "Soulcalibur (USA).chd",
         "md5_checksum": "8754066be20bc17cd5967b86357cde02"
     },
+    "flycast_dc_spawn": {
+        "filename": "Spawn - In the Demon's Hand (USA).chd",
+        "md5_checksum": "0870ddf791c87375c7de0b723a779fd6"
+    },
+    "flycast_dc_spf2x": {
+        "filename": "Super Puzzle Fighter II X for Matching Service (Japan).chd",
+        "md5_checksum": "7410f2a9ca716aca47033801a114d0ae"
+    },
+    "flycast_dc_ssf2x": {
+        "filename": "Super Street Fighter II X for Matching Service (Japan).chd",
+        "md5_checksum": "e5b82b02c86d5f96857f69d9319d6282"
+    },
+    "flycast_dc_starwars_racer": {
+        "filename": "Star Wars - Episode I - Racer (USA).chd",
+        "md5_checksum": "f73b771859f5a6f895b350340029495c"
+    },
     "flycast_dc_techromancer": {
         "filename": "Tech Romancer (USA).chd",
         "md5_checksum": "a53518feecec3e000205da3e55728242"
+    },
+    "flycast_dc_testdrive_lemans": {
+        "filename": "Test Drive Le Mans (USA) (En,Fr,Es).chd",
+        "md5_checksum": "b9d1317edfffb07bfd5e0449a7f95b5c"
+    },
+    "flycast_dc_testdrive_vrally": {
+        "filename": "Test Drive V-Rally (USA) (En,Fr,De).chd",
+        "md5_checksum": "f3f7d6c5fe5d048fef8d9b9165d51c9a"
     },
     "flycast_dc_thps2": {
         "filename": "Tony Hawk's Pro Skater 2 (USA).chd",
         "md5_checksum": "27c00c029c9043dc9fe97e630ceffccf"
     },
+    "flycast_dc_tokyoxtremeracer": {
+        "filename": "Tokyo Xtreme Racer (USA).chd",
+        "md5_checksum": "cfbd78057b1c65dbe3e7e689dfc6a1e2"
+    },
+    "flycast_dc_tokyoxtremeracer2": {
+        "filename": "Tokyo Xtreme Racer 2 (USA).chd",
+        "md5_checksum": "91eb06164794b56703261ca36cdd01b1"
+    },
     "flycast_dc_totd_usa": {
         "filename": "Typing of the Dead, The (USA).chd",
         "md5_checksum": "c2b33845a8a9aeb1efe6b5350e71d00d"
+    },
+    "flycast_dc_ufc": {
+        "filename": "Ultimate Fighting Championship (USA).chd",
+        "md5_checksum": "54f2f5b7faee509a1d856a4037c46464"
+    },
+    "flycast_dc_vampirechronicle": {
+        "filename": "Vampire Chronicle for Matching Service (Japan).chd",
+        "md5_checksum": "9b2fca5a5a745caf80d0111a29d057cc"
     },
     "flycast_dc_vf3tb": {
         "filename": "Virtua Fighter 3tb (USA).chd",
@@ -360,10 +545,6 @@
         "resource_links": {
             "VFDC Command List": "https://virtuafighter.com/commands/?ver=3tb"
         }
-    },
-    "flycast_dc_vampirechronicle": {
-        "filename": "Vampire Chronicle for Matching Service (Japan).chd",
-        "md5_checksum": "9b2fca5a5a745caf80d0111a29d057cc"
     },
     "flycast_dc_vigilante8_2o": {
         "filename": "Vigilante 8 - 2nd Offense (USA).chd",
@@ -373,158 +554,17 @@
         "filename": "Cyber Troopers - Virtual On - Oratorio Tangram v1.000 (2000)(Activision)(US)[!].chd",
         "md5_checksum": "44083e32229f1f87421aac763485af40"
     },
-    "flycast_dc_kenju": {
-        "filename": "KenJu.gdi",
-        "dir": "KenJu",
-        "md5_checksum": "c527f1ec937b56caa65084d436f8c0a0",
-        "resource_links": {
-            "Mizuumi Wiki": "https://wiki.gbl.gg/w/KenJu"
-        }
-    },
-    "dc_kenju_track01": {
-        "filename": "track01.iso",
-        "dir": "KenJu",
-        "md5_checksum": "3a1a8f5829dab51f5018a527afec0402"
-    },
-    "dc_kenju_track02": {
-        "filename": "track02.raw",
-        "dir": "KenJu",
-        "md5_checksum": "03c796f60db2e9ef0b65a42a47a9d321"
-    },
-    "dc_kenju_track03": {
-        "filename": "track03.iso",
-        "dir": "KenJu",
-        "md5_checksum": "19bf2b352f71271b66d58fcb94af2877"
-    },
-    "dc_kenju_track04": {
-        "filename": "track04.iso",
-        "dir": "KenJu",
-        "md5_checksum": "8ff20b0e2d925627a690c8cdaaa75abb"
-    },
-    "flycast_dc_bustamove4": {
-        "filename": "Bust-A-Move 4 (USA).chd",
-        "md5_checksum": "7659b93b41de41223875ccaa403c4a44"
-    },
-    "flycast_dc_chuchurocket": {
-        "filename": "ChuChu Rocket! (USA) (En,Ja,Fr,De,Es).chd",
-        "md5_checksum": "a400fd53214790dbd662e118b7fcea9d"
-    },
-    "flycast_dc_kof99evo": {
-        "filename": "King of Fighters, The - Evolution (USA) (En,Ja,Es,Pt).chd",
-        "md5_checksum": "6d0f28040909dee5edf3efaecb5a99a6"
-    },
-    "flycast_dc_puyopuyoon": {
-        "filename": "Puyo Puyoon (Japan).chd",
-        "md5_checksum": "f69c133f44c246adba03c2eaf459c8ac"
-    },
-    "flycast_dc_sakurawarscolumns2eng": {
-        "filename": "Sakura Wars - Columns 2 (English - v1.2).cdi",
-        "md5_checksum": "5e0627495487427d41980d327ac3df61"
-    },
     "flycast_dc_wetrix_plus": {
         "filename": "Wetrix+ (USA).chd",
         "md5_checksum": "2bbd228f4d1372518ce5e3a7e7144bee"
     },
-    "flycast_dc_ssf2x": {
-        "filename": "Super Street Fighter II X for Matching Service (Japan).chd",
-        "md5_checksum": "e5b82b02c86d5f96857f69d9319d6282"
+    "flycast_dc_wormsarmageddon": {
+        "filename": "Worms Armageddon (USA) (En,Fr,De,Nl,Sv,No,Da).chd",
+        "md5_checksum": "24bdeac4a84121dd2f78ab8a55a8444d"
     },
-    "flycast_dc_sfiii3": {
-        "filename": "Street Fighter III - 3rd Strike (USA).chd",
-        "md5_checksum": "2f64324bde3cf4f174f32663492647e4"
-    },
-    "flycast_dc_daytona": {
-        "filename": "Daytona USA (USA).chd",
-        "md5_checksum": "a31dc7bf00df60cc952590d1d2178f59"
-    },
-    "flycast_dc_sf2049": {
-        "filename": "San Francisco Rush 2049 (USA) (En,Fr,De,Es,It,Nl).chd",
-        "md5_checksum": "57b9d666befa313b8a47055b2262f327"
-    },
-    "flycast_naomi2_bios": {
-        "filename": "../data/naomi2.zip",
-        "md5_checksum": "c50072cbab75673e1b1a6b94355e6fa8"
-    },
-    "flycast_vf4tuned": {
-        "filename": "vf4tuned.zip",
-        "md5_checksum": "9c3f452daf1166721d19360e90da36c1",
-        "resource_links": {
-            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4fta"
-        }
-    },
-    "vf4tuned_chd": {
-        "filename": "/vf4tuned/gds-0036f.chd",
-        "md5_checksum": "ca809ed67dfd58db648f5ad3a65d0a8b"
-    },
-    "flycast_vf4evo": {
-        "filename": "vf4evo.zip",
-        "md5_checksum": "381739a42986b6e56706c85576e6e33a",
-        "resource_links": {
-            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4evob"
-        }
-    },
-    "vf4evo_chd": {
-        "filename": "/vf4evo/gds-0024c.chd",
-        "md5_checksum": "992bbcd7eca0c55a6fa118bbe7490b4b"
-    },
-    "flycast_vf4": {
-        "filename": "vf4.zip",
-        "md5_checksum": "383ee658d376419bb7f48b65e8f7d6f2",
-        "resource_links": {
-            "VFDC Command List": "https://virtuafighter.com/commands/?ver=4c"
-        }
-    },
-    "vf4_chd": {
-        "filename": "/vf4/gds-0012c.chd",
-        "md5_checksum": "8fa25603520d80ccec487298a75358bb"
-    },
-    "flycast_beachspi": {
-        "filename": "beachspi.zip",
-        "md5_checksum": "c114cc2701d7551bc3c1b9f1e3c8cbe3"
-    },
-    "beachspi_chd": {
-        "filename": "/beachspi/gds-0014.chd",
-        "md5_checksum": "d1ab66b9e25bf319928312d36cfd2f48"
-    },
-    "flycast_vstrik3": {
-        "filename": "vstrik3.zip",
-        "md5_checksum": "079dba6a81c953e22e6fa6bf0cfd1b42"
-    },
-    "vstrik3_chd": {
-        "filename": "/vstrik3/gds-0006.chd",
-        "md5_checksum": "6d7aa455c5ecffa4d9dadc4b1ebeaba6"
-    },
-    "flycast_dc_aerowings": {
-        "filename": "AeroWings (USA).chd",
-        "md5_checksum": "f4b81974737819dbffcc318fe93f9492"
-    },
-    "flycast_dc_aerowings2": {
-        "filename": "AeroWings 2 - Airstrike (USA).chd",
-        "md5_checksum": "8f5c785fd7c2315577f435a2273a8d23"
-    },
-    "flycast_dc_nflblitz2000": {
-        "filename": "NFL Blitz 2000 (USA) (Rev 1).chd",
-        "md5_checksum": "6c08ddd095421c18de0634bd358307fb"
-    },
-    "flycast_dc_ggram2": {
-        "filename": "Giant Gram - Zen Nihon Pro Wres 2 in Nihon Budoukan (Japan).chd",
-        "md5_checksum": "dd4193d58cf6f84b5fd8cf5a1f6bcbbb"
-    },
-    "flycast_dc_gram2000": {
-        "filename": "Giant Gram 2000 - Zen Nihon Pro Wres 3 Eikou no Yuusha-tachi (Japan).chd",
-        "md5_checksum": "0662a6eebe96c7f4f227d053127c4ea4"
-    },
-    "flycast_dc_ufc": {
-        "filename": "Ultimate Fighting Championship (USA).chd",
-        "md5_checksum": "54f2f5b7faee509a1d856a4037c46464"
-    },
-    "flycast_dc_ecwhr": {
-        "filename": "ECW Hardcore Revolution (USA).chd",
-        "md5_checksum": "5d47fb8a45814b1527e59a85f803747d"
-    },
-    "flycast_dc_ecwar": {
-        "filename": "ECW Anarchy Rulz (USA).chd",
-        "md5_checksum": "cf56514c59a4aa39fea503541a201f41"
+    "flycast_dc_wormsworldparty": {
+        "filename": "Worms World Party (USA) (En,Fr,De,Es,It,Nl,Sv,Da).chd",
+        "md5_checksum": "e8d9eae48f7f947d3161fccb41a52de2"
     },
     "flycast_dc_wwfa": {
         "filename": "WWF Attitude (USA).chd",
@@ -534,86 +574,349 @@
         "filename": "WWF Royal Rumble (USA).chd",
         "md5_checksum": "f8d765dc12f57273f1d855fef9b7616a"
     },
-    "flycast_dc_snowsurfers": {
-        "filename": "Snow Surfers (Europe).chd",
-        "md5_checksum": "429f584b2698e290cad3eb430c5a5de9"
+    "flycast_dc_18wheelr": {
+        "filename": "18 Wheeler - American Pro Trucker (USA).chd"
     },
-    "flycast_dc_golf_shiyou_yo_2": {
-        "filename": "Golf Shiyou yo 2 - Aratanaru Chousen (Japan).chd",
-        "md5_checksum": "5fa3491abffb6799f0e3620954985b61"
+    "flycast_dc_4x4evo": {
+        "filename": "4x4 Evo (USA).chd"
     },
-    "flycast_dc_spawn": {
-        "filename": "Spawn - In the Demon's Hand (USA).chd",
-        "md5_checksum": "0870ddf791c87375c7de0b723a779fd6"
+    "flycast_dc_90minutes": {
+        "filename": "90 Minutes - Sega Championship Football (Europe) (En,Fr,De,Es,It).chd"
     },
-    "flycast_dc_starwars_racer": {
-        "filename": "Star Wars - Episode I - Racer (USA).chd",
-        "md5_checksum": "f73b771859f5a6f895b350340029495c"
+    "flycast_dc_aquagt": {
+        "filename": "Aqua GT (Europe) (En,Fr,De).chd"
     },
-	"flycast_dc_nbashowtime": {
-		"filename": "NBA Showtime - NBA on NBC (USA).chd",
-		"md5_checksum": "e2082ed0499967d24bc92e9ba9c716e2"
-	},
-	"flycast_dc_testdrive_lemans": {
-		"filename": "Test Drive Le Mans (USA) (En,Fr,Es).chd",
-		"md5_checksum": "b9d1317edfffb07bfd5e0449a7f95b5c"
-	},
-	"flycast_dc_testdrive_vrally": {
-		"filename": "Test Drive V-Rally (USA) (En,Fr,De).chd",
-		"md5_checksum": "f3f7d6c5fe5d048fef8d9b9165d51c9a"
-	},
-	"flycast_dc_msr": {
-		"filename": "MSR - Metropolis Street Racer (USA) (Rev A).chd",
-		"md5_checksum": "edf05bf80dee93b37713787801341746"
-	},
-	"flycast_dc_hydrothunder": {
-		"filename": "Hydro Thunder (USA) (Rev 1).chd",
-		"md5_checksum": "3346edf38b29cd3d453f83464f82e01c"
-	},
-	"flycast_dc_daytona_usa_2001": {
-		"filename": "Daytona USA 2001 (Japan).chd",
-		"md5_checksum": "d42d4bc33c309ef96e3368de01f88730"
-	},
-	"flycast_dc_segagt": {
-		"filename": "Sega GT (USA).chd",
-		"md5_checksum": "4b1b899db29c38903642ff35fc368cf7"
-	},
-	"flycast_dc_segarally2": {
-		"filename": "Sega Rally 2 (USA).chd",
-		"md5_checksum": "547093d1c95b0d37fe84a94cc6f7769b"
-	},
-	"flycast_dc_popnmusic": {
-		"filename": "Pop'n Music (Japan).chd",
-		"md5_checksum": "0793a42caeb571b0b39f21102b9082ff"
-	},
-	"flycast_dc_bombermanonline": {
-		"filename": "Bomberman Online (USA).chd",
-		"md5_checksum": "1a178d9da3e81f944fb08d6c1fa692eb"
-	},
-	"flycast_dc_wormsarmageddon": {
-		"filename": "Worms Armageddon (USA) (En,Fr,De,Nl,Sv,No,Da).chd",
-		"md5_checksum": "24bdeac4a84121dd2f78ab8a55a8444d"
-	},
-	"flycast_dc_wormsworldparty": {
-		"filename": "Worms World Party (USA) (En,Fr,De,Es,It,Nl,Sv,Da).chd",
-		"md5_checksum": "e8d9eae48f7f947d3161fccb41a52de2"
-	},
-	"flycast_dc_gauntletlegends": {
-		"filename": "Gauntlet Legends (USA).chd",
-		"md5_checksum": "64f230e5008a1b6646fa044147971be0"
-	},
-	"flycast_dc_tokyoxtremeracer": {
-		"filename": "Tokyo Xtreme Racer (USA).chd",
-		"md5_checksum": "cfbd78057b1c65dbe3e7e689dfc6a1e2"
-	},
-	"flycast_dc_tokyoxtremeracer2": {
-		"filename": "Tokyo Xtreme Racer 2 (USA).chd",
-		"md5_checksum": "91eb06164794b56703261ca36cdd01b1"
-	},
-	"flycast_dc_sfz3_saikyoryudojo": {
-		"filename": "Street Fighter Zero 3 - Saikyo-ryu Dojo (Japan).chd",
-		"md5_checksum": "7599965c52e6c778889ab38451296768"
-	}
+    "flycast_dc_armada": {
+        "filename": "Armada (USA).chd"
+    },
+    "flycast_dc_armymen": {
+        "filename": "Army Men - Sarge's Heroes (USA).chd"
+    },
+    "flycast_dc_caesarspalace2000": {
+        "filename": "Caesars Palace 2000 - Millennium Gold Edition (USA).chd"
+    },
+    "flycast_dc_cannonspike": {
+        "filename": "Cannon Spike (USA).chd"
+    },
+    "flycast_dc_centipede": {
+        "filename": "Centipede (USA).chd"
+    },
+    "flycast_dc_championshipsurfer": {
+        "filename": "Championship Surfer (USA).chd"
+    },
+    "flycast_dc_cleopatrafortune": {
+        "filename": "Cleopatra Fortune (Japan) (Rev A).chd"
+    },
+    "flycast_dc_coolherders": {
+        "filename": "Cool Herders (USA) (Unl).chd"
+    },
+    "flycast_dc_davemirrafreestylebmx": {
+        "filename": "Dave Mirra Freestyle BMX (USA).chd"
+    },
+    "flycast_dc_ddrclub": {
+        "filename": "Dance Dance Revolution - Club Version - Dreamcast Edition (Japan).chd"
+    },
+    "flycast_dc_deathcrimsonox": {
+        "filename": "Death Crimson OX (USA).chd"
+    },
+    "flycast_dc_ducatiworld": {
+        "filename": "Ducati World - Racing Challenge (USA).chd"
+    },
+    "flycast_dc_espnnba2night": {
+        "filename": "ESPN NBA 2Night (USA).chd"
+    },
+    "flycast_dc_espntrackfield": {
+        "filename": "ESPN International Track & Field (USA).chd"
+    },
+    "flycast_dc_eurosuperleague": {
+        "filename": "European Super League (Europe) (En,Fr,De,Es,It,Pt).chd"
+    },
+    "flycast_dc_expendable": {
+        "filename": "Expendable (USA) (En,Fr,De,Es,It).chd"
+    },
+    "flycast_dc_f1racing": {
+        "filename": "F1 Racing Championship (Europe) (En,Fr,De,Es,It).chd"
+    },
+    "flycast_dc_f1worldgp": {
+        "filename": "F1 World Grand Prix (USA) (En,Fr,De,Es).chd"
+    },
+    "flycast_dc_f355challenge": {
+        "filename": "F355 Challenge - Passione Rossa (USA).chd"
+    },
+    "flycast_dc_framegride": {
+        "filename": "Frame Gride (Japan).chd"
+    },
+    "flycast_dc_frogger2": {
+        "filename": "Frogger 2 - Swampy's Revenge (USA).chd"
+    },
+    "flycast_dc_furfighters": {
+        "filename": "Fur Fighters (USA) (En,Fr,De,Es) (Rev B).chd"
+    },
+    "flycast_dc_ggx": {
+        "filename": "Guilty Gear X (Japan) (Rev A).chd"
+    },
+    "flycast_dc_gigawing": {
+        "filename": "GigaWing (USA).chd"
+    },
+    "flycast_dc_gigawing2": {
+        "filename": "GigaWing 2 (USA).chd"
+    },
+    "flycast_dc_golf_shiyou_yo": {
+        "filename": "Golf Shiyou yo (Japan) (Rev A).chd"
+    },
+    "flycast_dc_golf_shiyou_yo_course": {
+        "filename": "Golf Shiyou yo - Course Data-shuu - Adventure-hen (Japan).chd"
+    },
+    "flycast_dc_gunbird2": {
+        "filename": "Gunbird 2 (USA).chd"
+    },
+    "flycast_dc_gundambattleonline": {
+        "filename": "Gundam Battle Online (Japan).chd"
+    },
+    "flycast_dc_heavymetalgeomatrix": {
+        "filename": "Heavy Metal - Geomatrix (USA).chd"
+    },
+    "flycast_dc_hiddendangerous": {
+        "filename": "Hidden & Dangerous (USA).chd"
+    },
+    "flycast_dc_hundredswords": {
+        "filename": "Hundred Swords (Japan) (@barai).chd"
+    },
+    "flycast_dc_ikaruga": {
+        "filename": "Ikaruga (Japan).chd"
+    },
+    "flycast_dc_incoming": {
+        "filename": "Incoming (USA).chd"
+    },
+    "flycast_dc_inhabitants": {
+        "filename": "Inhabitants (USA) (Unl).chd"
+    },
+    "flycast_dc_kof2k": {
+        "filename": "King of Fighters 2000, The (Japan).chd"
+    },
+    "flycast_dc_kof2k1": {
+        "filename": "King of Fighters 2001, The (Japan).chd"
+    },
+    "flycast_dc_kof2k2": {
+        "filename": "King of Fighters 2002, The (Japan) (En,Ja).chd"
+    },
+    "flycast_dc_lemans24": {
+        "filename": "Le Mans 24 Hours (Japan).chd"
+    },
+    "flycast_dc_looneytunesspacerace": {
+        "filename": "Looney Tunes - Space Race (USA) (En,Fr,Es).chd"
+    },
+    "flycast_dc_magforce": {
+        "filename": "MagForce Racing (USA) (En,Fr,De,Es,It).chd"
+    },
+    "flycast_dc_marsmatrix": {
+        "filename": "Mars Matrix (USA).chd"
+    },
+    "flycast_dc_matthoffmansprobmx": {
+        "filename": "Mat Hoffman's Pro BMX (USA).chd"
+    },
+    "flycast_dc_maximumpool": {
+        "filename": "Maximum Pool (USA).chd"
+    },
+    "flycast_dc_monacogpr2": {
+        "filename": "Monaco Grand Prix Racing Simulation 2 (Japan).chd"
+    },
+    "flycast_dc_mspacmanmm": {
+        "filename": "Ms. Pac-Man Maze Madness (USA).chd"
+    },
+    "flycast_dc_mtvsportsskateboarding": {
+        "filename": "MTV Sports - Skateboarding featuring Andy Macdonald (USA).chd"
+    },
+    "flycast_dc_mvc": {
+        "filename": "Marvel vs. Capcom - Clash of Super Heroes (USA).chd"
+    },
+    "flycast_dc_nba2k": {
+        "filename": "NBA 2K (USA).chd"
+    },
+    "flycast_dc_nba2k1": {
+        "filename": "NBA 2K1 (USA).chd"
+    },
+    "flycast_dc_nba2k2": {
+        "filename": "NBA 2K2 (USA).chd"
+    },
+    "flycast_dc_nbahoopz": {
+        "filename": "NBA Hoopz (USA).chd"
+    },
+    "flycast_dc_ncaacollegefootball2k2": {
+        "filename": "NCAA College Football 2K2 - Road to the Rose Bowl (USA).chd"
+    },
+    "flycast_dc_nfl2k": {
+        "filename": "NFL 2K (USA).chd"
+    },
+    "flycast_dc_nfl2k1": {
+        "filename": "NFL 2K1 (USA).chd"
+    },
+    "flycast_dc_nfl2k2": {
+        "filename": "NFL 2K2 (USA).chd"
+    },
+    "flycast_dc_nflblitz2k1": {
+        "filename": "NFL Blitz 2001 (USA).chd"
+    },
+    "flycast_dc_nflqbclub2000": {
+        "filename": "NFL Quarterback Club 2000 (USA).chd"
+    },
+    "flycast_dc_nflqbclub2001": {
+        "filename": "NFL QB Club 2001 (USA).chd"
+    },
+    "flycast_dc_nhl2k2": {
+        "filename": "NHL 2K2 (USA).chd"
+    },
+    "flycast_dc_nobunaga": {
+        "filename": "Nobunaga no Yabou - Reppuuden (Japan).chd"
+    },
+    "flycast_dc_oogabooga": {
+        "filename": "Ooga Booga (USA).chd"
+    },
+    "flycast_dc_outtrigger": {
+        "filename": "Outtrigger (USA).chd"
+    },
+    "flycast_dc_penpen": {
+        "filename": "PenPen TriIcelon (USA).chd"
+    },
+    "flycast_dc_pjustic": {
+        "filename": "Project Justice (USA).chd",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Project_Justice"
+        }
+    },
+    "flycast_dc_pod": {
+        "filename": "POD - Speedzone (USA).chd"
+    },
+    "flycast_dc_popnmusic2": {
+        "filename": "Pop'n Music 2 (Japan).chd"
+    },
+    "flycast_dc_psyvariar2": {
+        "filename": "Psyvariar 2 - The Will to Fabricate (Japan).chd"
+    },
+    "flycast_dc_puyopuyoda": {
+        "filename": "Puyo Puyo Da! Featuring Ellena System (Japan).chd"
+    },
+    "flycast_dc_puyopuyoon_taikenban": {
+        "filename": "Puyo Puyoon (Japan) (Taikenban).chd"
+    },
+    "flycast_dc_q3a": {
+        "filename": "Quake III - Arena (USA).chd"
+    },
+    "flycast_dc_razor": {
+        "filename": "Razor Freestyle Scooter (USA).chd"
+    },
+    "flycast_dc_reddog": {
+        "filename": "Red Dog - Superior Firepower (USA).chd"
+    },
+    "flycast_dc_redlineracer": {
+        "filename": "Redline Racer (Japan).chd"
+    },
+    "flycast_dc_rippinriders": {
+        "filename": "Rippin' Riders (USA).chd"
+    },
+    "flycast_dc_roadsters": {
+        "filename": "Roadsters (USA).chd"
+    },
+    "flycast_dc_sambadeamigo": {
+        "filename": "Samba de Amigo (USA).chd"
+    },
+    "flycast_dc_sambadeamigo2000": {
+        "filename": "Samba de Amigo Ver. 2000 (Japan).chd"
+    },
+    "flycast_dc_segatetris": {
+        "filename": "Sega Tetris (Japan) (Rev A).chd"
+    },
+    "flycast_dc_segawwsoccer_euro": {
+        "filename": "Sega Worldwide Soccer 2000 - Euro Edition (Europe) (En,Fr,De,Es).chd"
+    },
+    "flycast_dc_sfalpha3": {
+        "filename": "Street Fighter Alpha 3 (USA).chd"
+    },
+    "flycast_dc_shikigaminoshiro2": {
+        "filename": "Shikigami no Shiro II (Japan).chd"
+    },
+    "flycast_dc_southparkrally": {
+        "filename": "South Park Rally (USA).chd"
+    },
+    "flycast_dc_spacechannel5": {
+        "filename": "Space Channel 5 (USA).chd"
+    },
+    "flycast_dc_sportsjam": {
+        "filename": "Sports Jam (USA).chd"
+    },
+    "flycast_dc_starwars_demolition": {
+        "filename": "Star Wars - Demolition (USA).chd"
+    },
+    "flycast_dc_strikerpro2000": {
+        "filename": "Striker Pro 2000 (USA).chd"
+    },
+    "flycast_dc_stuntgp": {
+        "filename": "Stunt GP (Europe) (En,Fr,De,Es,It,Nl,Sv).chd"
+    },
+    "flycast_dc_suzukialstare": {
+        "filename": "Suzuki Alstare - Extreme Racing (USA).chd"
+    },
+    "flycast_dc_sydney2000": {
+        "filename": "Sydney 2000 (USA).chd"
+    },
+    "flycast_dc_tee_off": {
+        "filename": "Tee Off (USA).chd"
+    },
+    "flycast_dc_toycommander": {
+        "filename": "Toy Commander (USA) (En,Fr,De,Es).chd"
+    },
+    "flycast_dc_triggerheart_exelica": {
+        "filename": "Triggerheart Exelica (Japan).chd"
+    },
+    "flycast_dc_trizeal": {
+        "filename": "Trizeal (Japan).chd"
+    },
+    "flycast_dc_twinklestarsprites": {
+        "filename": "Twinkle Star Sprites (Japan) (En,Ja,Es).chd"
+    },
+    "flycast_dc_underdefeat": {
+        "filename": "Under Defeat (Japan).chd"
+    },
+    "flycast_dc_unrealtournament": {
+        "filename": "Unreal Tournament (USA) (En,Fr,De,Es,It).chd"
+    },
+    "flycast_dc_vanishingpoint": {
+        "filename": "Vanishing Point (USA).chd"
+    },
+    "flycast_dc_virtuaathlete2000": {
+        "filename": "Virtua Athlete 2000 (USA) (En,Fr,De,Es).chd"
+    },
+    "flycast_dc_vrally2": {
+        "filename": "V-Rally 2 - Expert Edition (Europe) (En,Fr,De).chd"
+    },
+    "flycast_dc_vtennis": {
+        "filename": "Virtua Tennis (USA).chd"
+    },
+    "flycast_dc_vtennis2": {
+        "filename": "Virtua Tennis 2 - Sega Professional Tennis (Europe) (En,Fr,De,Es).chd"
+    },
+    "flycast_dc_wackyraces": {
+        "filename": "Wacky Races (USA).chd"
+    },
+    "flycast_dc_wdwquest": {
+        "filename": "Walt Disney World Quest - Magical Racing Tour (USA).chd"
+    },
+    "flycast_dc_wildmetal": {
+        "filename": "Wild Metal (USA) (En,Fr,De,Es,It,Pt).chd"
+    },
+    "flycast_dc_wsbaseball2k2": {
+        "filename": "World Series Baseball 2K2 (USA).chd"
+    },
+    "flycast_dc_xtremesports": {
+        "filename": "Xtreme Sports (USA).chd"
+    },
+    "flycast_dc_zerogunner2": {
+        "filename": "Zero Gunner 2 (Japan).chd"
+    },
+    "flycast_dc_zombierevenge": {
+        "filename": "Zombie Revenge (USA).chd"
+    },
+    "flycast_dc_zusarvasar": {
+        "filename": "Zusar Vasar (Japan) (En,Ja).chd"
+    }
 }
-
-
