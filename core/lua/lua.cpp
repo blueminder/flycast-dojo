@@ -444,6 +444,15 @@ static void uiBargraph(float v)
 	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
 }
 
+static void uiBargraphColor(float v, u32 color)
+{
+	if (!config::ShowTrainingGameOverlay)
+		return;
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color);
+	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::PopStyleColor();
+}
+
 static int uiButton(lua_State *L)
 {
 	if (!config::ShowTrainingGameOverlay)
@@ -663,6 +672,7 @@ static void luaRegister(lua_State *L)
 				.addFunction("sameLinePlaceholder", uiSameLinePlaceholder)
 				.addFunction("sameLinePlaceholderRight", uiSameLinePlaceholderRightAligned)
 				.addFunction("bargraph", uiBargraph)
+				.addFunction("bargraphColor", uiBargraphColor)
 				.addFunction("button", uiButton)
 			.endNamespace()
 		.endNamespace();
