@@ -264,6 +264,12 @@ public:
 	void SwitchPlayer();
 	void ResetTraining();
 
+	int selected_record_slot = 0;
+
+	void SelectRecordSlot();
+	void ToggleSelectedRecording();
+	void ToggleSelectedPlayback();
+
 	bool playback_loop;
 	bool rnd_playback_loop;
 	bool playing_input;

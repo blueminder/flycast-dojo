@@ -2081,6 +2081,25 @@ void DojoSession::ToggleRandomPlayback()
 	dojo.TogglePlayback(current_record_slot, config::HideRandomInputSlot.get());
 }
 
+void DojoSession::SelectRecordSlot()
+{
+	selected_record_slot = (selected_record_slot + 1) % 3;
+
+	std::ostringstream NoticeStream;
+	NoticeStream << "Selected Input Slot " << selected_record_slot + 1;
+	gui_display_notification(NoticeStream.str().data(), 2000);
+}
+
+void DojoSession::ToggleSelectedRecording()
+{
+	ToggleRecording(selected_record_slot);
+}
+
+void DojoSession::ToggleSelectedPlayback()
+{
+	TogglePlayback(selected_record_slot, false);
+}
+
 void DojoSession::PlayRecording(int slot)
 {
 	if (!recording && !playing_input)
