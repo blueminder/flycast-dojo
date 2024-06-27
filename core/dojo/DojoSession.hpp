@@ -244,6 +244,7 @@ public:
 
 	void FillSkippedFrames(u32 end_frame);
 
+	bool IsDefaultVmuGame(std::string filename);
 	bool SetDojoDevicesByPath(std::string path);
 
 	std::string game_name;

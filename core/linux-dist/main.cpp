@@ -356,6 +356,11 @@ std::vector<std::string> find_system_data_dirs()
 	if (ghc::filesystem::exists(sharePath))
 		dirs.push_back(sharePath);
 
+	auto sharePath_data = root_path / "share" / "flycast-dojo" / "data/";
+
+	if (ghc::filesystem::exists(sharePath_data))
+		dirs.push_back(sharePath_data);
+
 	return dirs;
 }
 

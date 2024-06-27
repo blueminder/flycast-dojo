@@ -1943,6 +1943,24 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 		return buttons;
 }
 
+bool DojoSession::IsDefaultVmuGame(std::string filename)
+{
+	std::vector<std::string> vmu_games
+	{
+		"Capcom vs. SNK 2 - Millionaire Fighting 2001 (Japan).chd",
+		"Dead or Alive 2 (Japan) (Shokai Genteiban).chd",
+		"Fighting Vipers 2 (Japan) (En,Ja).chd",
+		"Marvel vs. Capcom 2 (USA).chd",
+		"Mortal Kombat Gold (USA) (Rev 1).chd",
+		"Plasma Sword - Nightmare of Bilstein (USA).chd",
+		"Power Stone 2 (USA).chd",
+		"Psychic Force 2012 (USA).chd",
+		"Soulcalibur (USA).chd"
+	};
+
+	return std::find(vmu_games.begin(), vmu_games.end(), filename) != vmu_games.end();
+}
+
 bool DojoSession::SetDojoDevicesByPath(std::string path)
 {
 	bool enable_vmu = false;
