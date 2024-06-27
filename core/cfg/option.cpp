@@ -228,6 +228,7 @@ Option<int> DefaultRelayPort("DefaultRelayPort", 8001, "dojo");
 OptionString RelayAddressHistory("RelayAddressHistory", "", "dojo");
 
 Option<bool> HostJoinSelect("HostJoinSelect", false, "dojo");
+Option<bool> HideKey("HideKey", false, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

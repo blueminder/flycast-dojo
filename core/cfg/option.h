@@ -598,6 +598,7 @@ extern Option<int> DefaultRelayPort;
 extern OptionString RelayAddressHistory;
 
 extern Option<bool> HostJoinSelect;
+extern Option<bool> HideKey;
 
 // Maple
 

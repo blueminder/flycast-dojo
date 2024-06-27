@@ -130,24 +130,26 @@ void DojoGui::gui_display_host_wait(float scaling)
 
 		ImGui::Text(dojo.game_name.c_str());
 
-		ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
-		ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
-		ImGui::SameLine();
-		ImGui::Text(" %s", config::MatchCode.get().data());
-		ImGui::SameLine();
-		ShowHelpMarker("Send the Match Code to your opponent.\n\nMatch Codes not working?\nTry switching to a Relay server or use IP Entry.");
+		if (!config::HideKey)
+		{
+			ImGui::SetCursorPosX(ImGui::GetStyle().FramePadding.x * 9);
+			ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+			ImGui::SameLine();
+			ImGui::Text(" %s", config::MatchCode.get().data());
+			ImGui::SameLine();
+			ShowHelpMarker("Send the Match Code to your opponent.\n\nMatch Codes not working?\nTry switching to a Relay server or use IP Entry.");
 
 #ifndef __ANDROID__
-		char copy_txt[128];
-		sprintf(copy_txt, "%s Copy Match Code", ICON_FA_CLONE);
-		if (ImGui::Button(copy_txt))
-		{
-			SDL_SetClipboardText(config::MatchCode.get().data());
-		}
+			char copy_txt[128];
+			sprintf(copy_txt, "%s Copy Match Code", ICON_FA_CLONE);
+			if (ImGui::Button(copy_txt))
+			{
+				SDL_SetClipboardText(config::MatchCode.get().data());
+			}
 #endif
+			ImGui::SameLine();
+		}
 	}
-
-	ImGui::SameLine();
 
 	if (dojo.commandLineStart)
 	{

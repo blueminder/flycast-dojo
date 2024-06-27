@@ -3696,20 +3696,29 @@ static void gui_network_start()
 				ImGui::Text("Waiting for opponent to connect...");
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
-				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
+				ImGui::TextColored(ImVec4(0.063f, 0.412f, 0.812f, 1.000f), "%s", ICON_FA_COMPACT_DISC);
 				ImGui::SameLine();
-				ImGui::Text(" %s", dojo.relay_client.target_hostname.data());
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 5));
-				dojo_gui.copy_btn(dojo.relay_client.target_hostname.data(), "Address");
-				ImGui::PopStyleVar();
+				ImGui::Text(dojo.game_name.c_str());
 
 				ImGui::SetCursorPosX(20.f * settings.display.uiScale);
-				ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+				ImGui::TextColored(ImVec4(0, 175, 255, 1), "%s", ICON_FA_GLOBE);
 				ImGui::SameLine();
-				ImGui::Text(" %s", relay_key.data());
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 5));
-				dojo_gui.copy_btn(relay_key.data(), "Key");
-				ImGui::PopStyleVar();
+				ImGui::Text("%s", dojo.relay_client.target_hostname.data());
+				
+				if (!config::HideKey)
+				{
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 4));
+					dojo_gui.copy_btn(dojo.relay_client.target_hostname.data(), "Address");
+					ImGui::PopStyleVar();
+
+					ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+					ImGui::TextColored(ImVec4(255, 255, 0, 1), "%s", ICON_FA_KEY);
+					ImGui::SameLine();
+					ImGui::Text(" %s", relay_key.data());
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(3, 4));
+					dojo_gui.copy_btn(relay_key.data(), "Key");
+					ImGui::PopStyleVar();
+				}
 			}
 		}
 		else
@@ -3729,7 +3738,7 @@ static void gui_network_start()
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	if (cfgLoadBool("dojo", "Relay", false))
-		ImGui::SetCursorPosY(138.f * settings.display.uiScale);
+		ImGui::SetCursorPosY(148.f * settings.display.uiScale);
 	else
 		ImGui::SetCursorPosY(126.f * settings.display.uiScale);
 	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
