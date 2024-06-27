@@ -31,6 +31,7 @@
 #include "hw/maple/maple_if.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
+#include "dojo/DojoSession.hpp"
 
 namespace lua
 {
@@ -510,6 +511,11 @@ static f32 read32f(u32 addr)
 	return *(f32 *)&data;
 }
 
+static int getFrameNumber()
+{
+	return (int)dojo.FrameNumber.load();
+}
+
 static void luaRegister(lua_State *L)
 {
 	getGlobalNamespace(L)
@@ -678,6 +684,7 @@ static void luaRegister(lua_State *L)
 					.addProperty("width", &settings.display.width, false)
 					.addProperty("height", &settings.display.height, false)
 				.endNamespace()
+				.addFunction("getFrameNumber", getFrameNumber)
 			.endNamespace()
 
 			.beginNamespace("ui")
