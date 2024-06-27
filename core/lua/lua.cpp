@@ -467,6 +467,25 @@ static int uiButton(lua_State *L)
 	return 0;
 }
 
+static int uiRect(int x, int y, int w, int h, u32 fill, u32 border)
+{
+	if (!config::ShowTrainingGameOverlay)
+		return 0;
+	ImDrawList *draw_list = ImGui::GetForegroundDrawList();
+	draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + w, y + h), fill);
+	draw_list->AddRect(ImVec2(x, y), ImVec2(x + w, y + h), border, 0, 0, 4.0);
+	return 0;
+}
+
+static int uiLine(int x1, int y1, int x2, int y2, u32 color)
+{
+	if (!config::ShowTrainingGameOverlay)
+		return 0;
+	ImDrawList *draw_list = ImGui::GetForegroundDrawList();
+	draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), color, 4.0f);
+	return 0;
+}
+
 static int read8s(u32 addr)
 {
 	u8 data = _vmem_ReadMem8(addr);
@@ -674,6 +693,8 @@ static void luaRegister(lua_State *L)
 				.addFunction("bargraph", uiBargraph)
 				.addFunction("bargraphColor", uiBargraphColor)
 				.addFunction("button", uiButton)
+				.addFunction("rect", uiRect)
+				.addFunction("line", uiLine)
 			.endNamespace()
 		.endNamespace();
 }
