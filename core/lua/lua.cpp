@@ -468,7 +468,7 @@ static int uiButton(lua_State *L)
 	return 0;
 }
 
-static int uiRect(int x, int y, int w, int h, u32 fill, u32 border)
+static int uiRect(float x, float y, float w, float h, u32 fill, u32 border)
 {
 	if (!config::ShowTrainingGameOverlay)
 		return 0;
@@ -478,7 +478,7 @@ static int uiRect(int x, int y, int w, int h, u32 fill, u32 border)
 	return 0;
 }
 
-static int uiLine(int x1, int y1, int x2, int y2, u32 color)
+static int uiLine(float x1, float y1, float x2, float y2, u32 color)
 {
 	if (!config::ShowTrainingGameOverlay)
 		return 0;
