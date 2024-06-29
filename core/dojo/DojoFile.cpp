@@ -31,13 +31,18 @@ void DojoFile::Reset()
 
 void DojoFile::RefreshFileDefinitions()
 {
+	root_path = get_readonly_data_path("");
 #ifdef _WIN32
 	// assign exe root path on launch
 	wchar_t szPath[MAX_PATH];
 	GetModuleFileNameW( NULL, szPath, MAX_PATH );
 	root_path = ghc::filesystem::path(szPath).parent_path().string();
-#else
-	root_path = get_readonly_data_path("");
+#elif defined(__APPLE__)
+	if (std::getenv("DOJO_BASE_DIR") != nullptr)
+		root_path = std::getenv("DOJO_BASE_DIR");
+#elif defined(__linux__)
+	if (nowide::getenv("FLYCAST_ROOT") != nullptr)
+		root_path = nowide::getenv("FLYCAST_ROOT");
 #endif
 	ghc::filesystem::path json_filename = ghc::filesystem::path(root_path) / "flycast_roms.json";
 #if defined(__linux__)
@@ -176,7 +181,7 @@ std::string DojoFile::GetEntryPath(std::string entry_name)
 				chd_target = rom_paths[i] + "/" + nested_dir + "/" + chd_filename;
 		}
 
-		if (ghc::filesystem::exists(target))
+		if (ghc::filesystem::exists(target) && !ghc::filesystem::is_directory(target))
 			return target;
 		if (!chd_target.empty() && ghc::filesystem::exists(chd_target))
 			return chd_target;
