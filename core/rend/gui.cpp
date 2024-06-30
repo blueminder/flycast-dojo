@@ -2091,10 +2091,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				if (game_btn_name == nullptr)
 					game_btn_name = GetCurrentGameAxisName(systemMapping->key);
 			}
+
+			std::string control_txt = std::string(systemMapping->name);
 			if (game_btn_name != nullptr && game_btn_name[0] != '\0')
-				ImGui::Text("%s - %s", systemMapping->name, game_btn_name);
-			else
-				ImGui::Text("%s", systemMapping->name);
+				control_txt += " - " + std::string(game_btn_name);
+
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyleColorVec4(ImGuiCol_SeparatorHovered));
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, ImGui::GetStyle().ItemSpacing.y * 1.2));
+			bool control_selected = false;
+			ImGui::Selectable(control_txt.c_str(), &control_selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
 
 			ImGui::NextColumn();
 			displayMappedControl(gamepad, systemMapping->key);
@@ -2122,6 +2127,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				unmapControl(input_mapping, gamepad_port, systemMapping->key);
 			}
 			ImGui::NextColumn();
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
 			ImGui::PopID();
 		}
 		ImGui::Columns(1, nullptr, false);
