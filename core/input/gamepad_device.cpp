@@ -173,6 +173,50 @@ void GamepadDevice::CorrectCardinals(int port)
 	}
 }
 
+void GamepadDevice::comboPress(int port, std::vector<DreamcastKey> key_combo)
+{
+	u32 combo = 0;
+	for (auto key : key_combo)
+	{
+		dojo.button_check_pressed[port].insert((int)key);
+		if (key == DC_AXIS_LT)
+			lt[port] = 255;
+		else if (key == DC_AXIS_RT)
+			rt[port] = 255;
+		else
+			combo |= key;
+	}
+	kcode[port] &= ~(combo);
+}
+
+void GamepadDevice::comboRelease(int port, std::vector<DreamcastKey> key_combo)
+{
+	u32 combo = 0;
+	for (auto key : key_combo)
+	{
+		dojo.button_check_pressed[port].erase((int)key);
+		if (key == DC_AXIS_LT)
+			lt[port] = 0;
+		else if (key == DC_AXIS_RT)
+			rt[port] = 0;
+		else
+			combo |= key;
+	}
+	kcode[port] |= combo;
+}
+
+void GamepadDevice::comboAssign(int port, bool pressed, std::initializer_list<DreamcastKey> keys)
+{
+	if (gui_is_open() && gui_state != GuiState::ButtonCheck)
+		return;
+	std::vector<DreamcastKey> key_combo;
+	key_combo.insert(key_combo.end(), keys);
+	if (pressed)
+		comboPress(port, key_combo);
+	else
+		comboRelease(port, key_combo);
+}
+
 bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 {
 	if (key == EMU_BTN_NONE)
@@ -328,143 +372,73 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			}
 			break;
 		case EMU_CMB_X_Y_A_B:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_A | DC_BTN_B);
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_Y, DC_BTN_A, DC_BTN_B });
 			break;
 		case EMU_CMB_X_Y_A:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_A);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_A);
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_Y, DC_BTN_A });
 			break;
 		case EMU_CMB_X_Y_LT:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_Y);
-			lt[port] = pressed ? 255 : 0;
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_Y, DC_AXIS_LT });
 			break;
 		case EMU_CMB_A_B_RT:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B);
-			rt[port] = pressed ? 255 : 0;
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B, DC_AXIS_RT });
 			break;
 		case EMU_CMB_X_A:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_A);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_A);
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_A });
 			break;
 		case EMU_CMB_Y_B:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_Y | DC_BTN_B);
-			else
-				kcode[port] |= (DC_BTN_Y | DC_BTN_B);
+			comboAssign(port, pressed, { DC_BTN_Y, DC_BTN_B });
 			break;
 		case EMU_CMB_LT_RT:
-			lt[port] = pressed ? 255 : 0;
-			rt[port] = pressed ? 255 : 0;
+			comboAssign(port, pressed, { DC_AXIS_LT, DC_AXIS_RT });
 			break;
 		case EMU_CMB_1_2_3:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_C);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_C);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B, DC_BTN_C });
 			break;
 		case EMU_CMB_4_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_Y);
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_Y });
 			break;
 		case EMU_CMB_4_5_6:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_X | DC_BTN_Y | DC_BTN_Z);
-			else
-				kcode[port] |= (DC_BTN_X | DC_BTN_Y | DC_BTN_Z);
+			comboAssign(port, pressed, { DC_BTN_X, DC_BTN_Y, DC_BTN_Z });
 			break;
 		case EMU_CMB_1_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_X);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_X);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_X });
 			break;
 		case EMU_CMB_2_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_B | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_B | DC_BTN_Y);
+			comboAssign(port, pressed, { DC_BTN_B, DC_BTN_Y });
 			break;
 		case EMU_CMB_3_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_C | DC_BTN_X);
-			else
-				kcode[port] |= (DC_BTN_C | DC_BTN_X);
+			comboAssign(port, pressed, { DC_BTN_C, DC_BTN_X });
 			break;
-
 		case EMU_CMB_3_6:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_C | DC_BTN_Z);
-			else
-				kcode[port] |= (DC_BTN_C | DC_BTN_Z);
+			comboAssign(port, pressed, { DC_BTN_C, DC_BTN_Z });
 			break;
 		case EMU_CMB_1_2:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B });
 			break;
 		case EMU_CMB_1_3:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_C);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_C);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_C });
 			break;
 		case EMU_CMB_2_3:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_B | DC_BTN_C);
-			else
-				kcode[port] |= (DC_BTN_B | DC_BTN_C);
+			comboAssign(port, pressed, { DC_BTN_B, DC_BTN_C });
 			break;
 		case EMU_CMB_1_2_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_X);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_X);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B, DC_BTN_X });
 			break;
 		case EMU_CMB_1_2_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_Y);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B, DC_BTN_Y });
 			break;
 		case EMU_CMB_1_2_3_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_B | DC_BTN_C | DC_BTN_X);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_B | DC_BTN_C | DC_BTN_X);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_B, DC_BTN_C, DC_BTN_X });
 			break;
 		case EMU_CMB_2_4:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_B | DC_BTN_X);
-			else
-				kcode[port] |= (DC_BTN_B | DC_BTN_X);
+			comboAssign(port, pressed, { DC_BTN_B, DC_BTN_X });
 			break;
 		case EMU_CMB_1_5:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_Y);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_Y);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_Y });
 			break;
 		case EMU_CMB_A_START:
-			if (pressed && !gui_is_open())
-				kcode[port] &= ~(DC_BTN_A | DC_BTN_START);
-			else
-				kcode[port] |= (DC_BTN_A | DC_BTN_START);
+			comboAssign(port, pressed, { DC_BTN_A, DC_BTN_START });
 			break;
 		case DC_AXIS_LT:
 			if (port >= 0)

@@ -120,6 +120,10 @@ private:
 	std::tuple<u32, u32> CorrectDiags(int port);
 	void CorrectCardinals(int port);
 
+	void comboPress(int port, std::vector<DreamcastKey> key_combo);
+	void comboRelease(int port, std::vector<DreamcastKey> key_combo);
+	void comboAssign(int port, bool pressed, std::initializer_list<DreamcastKey> keys);
+
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
