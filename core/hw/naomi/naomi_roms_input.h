@@ -236,11 +236,11 @@ static InputDescriptors jambo_inputs = {
 static InputDescriptors mvsc2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
-			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
-			{ NAOMI_BTN2_KEY, "ASSIST A" },
+			{ NAOMI_BTN1_KEY, "HEAVY PUNCH" },
+			{ NAOMI_BTN2_KEY, "ASSIST 1" },
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
-			{ NAOMI_BTN4_KEY, "STRONG KICK" },
-			{ NAOMI_BTN5_KEY, "ASSIST B" },
+			{ NAOMI_BTN4_KEY, "HEAVY KICK" },
+			{ NAOMI_BTN5_KEY, "ASSIST 2" },
 			{ NAOMI_UP_KEY, "" },
 			{ NAOMI_DOWN_KEY, "" },
 			{ NAOMI_LEFT_KEY, "" },
