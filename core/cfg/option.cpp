@@ -231,6 +231,7 @@ Option<bool> HostJoinSelect("HostJoinSelect", false, "dojo");
 Option<bool> HideKey("HideKey", false, "dojo");
 
 Option<bool> CopyMissingSharedMem("CopyMissingSharedMem", true, "dojo");
+Option<bool> CheckLatestNetSave("CheckLatestNetSave", true, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

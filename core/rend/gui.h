@@ -20,6 +20,7 @@
 #include "types.h"
 
 #include <string>
+#include <chrono>
 
 #include "dojo/kenney_icon_font_extended.h"
 #include "dojo/IconsFontAwesome6.h"

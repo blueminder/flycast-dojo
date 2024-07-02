@@ -59,6 +59,8 @@
 
 #include "rend/gui_settings.h"
 
+#include <time.h>
+
 GuiSettings gui_settings;
 
 bool game_started;
@@ -733,6 +735,20 @@ void gui_open_settings()
 	}
 }
 
+time_t parseiso8601utc(const char *date) {
+  struct tm tt = {0};
+	double seconds;
+	if (sscanf(date, "%04d-%02d-%02dT%02d:%02d:%lfZ",
+	           &tt.tm_year, &tt.tm_mon, &tt.tm_mday,
+	           &tt.tm_hour, &tt.tm_min, &seconds) != 6)
+		return -1;
+	tt.tm_sec   = (int) seconds;
+	tt.tm_mon  -= 1;
+	tt.tm_year -= 1900;
+	tt.tm_isdst =-1;
+	return mktime(&tt) - timezone;
+}
+
 void gui_start_game(const std::string& path)
 {
 	if (cfgLoadBool("dojo", "Receiving", false))
@@ -804,9 +820,44 @@ void gui_start_game(const std::string& path)
 		}
 	}
 
+	bool new_save_available = false;
 	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
+	if (config::CheckLatestNetSave &&
+		(cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
+		file_exists(net_state_path))
+	{
+		NOTICE_LOG(NETWORK, "DOJO: Netplay Savestate: %s.state.net", game_name.c_str());
+
+		std::string remote_last_modified = dojo_file.get_net_save_last_modified(game_name);
+		if (remote_last_modified.size() > 0)
+		{
+			std::time_t net_save_last_write = parseiso8601utc(remote_last_modified.c_str());
+			NOTICE_LOG(NETWORK, "DOJO: Remote, Last modified: %s %u", remote_last_modified.c_str(), net_save_last_write);
+
+			const std::time_t last_write = std::chrono::system_clock::to_time_t(ghc::filesystem::last_write_time(net_state_path));
+			char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+			std::time_t local_last_write;
+			if(std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", std::gmtime(&last_write)))
+			{
+				local_last_write = parseiso8601utc(timeString);
+
+				NOTICE_LOG(NETWORK, "DOJO: Local, Last Modified: %s %u", timeString, local_last_write);
+			}
+
+			if (net_save_last_write > local_last_write)
+			{
+				if (file_exists(net_state_path + ".old"))
+					ghc::filesystem::remove(net_state_path + ".old");
+				ghc::filesystem::copy_file(net_state_path, net_state_path + ".old");
+				NOTICE_LOG(NETWORK, "DOJO: New Netplay State Detected. Starting Download.");
+				new_save_available = true;
+			}
+		}
+	}
+
 	if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
-		(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
+		((!file_exists(net_state_path) || (config::CheckLatestNetSave && new_save_available)) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
 			dojo_file.save_download_ended && dojo_file.post_save_launch))
 	{
 		if (!dojo_file.start_save_download)

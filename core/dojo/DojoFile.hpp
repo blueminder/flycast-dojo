@@ -118,6 +118,7 @@ public:
 	std::string root_path;
 
 	std::string get_savestate_commit(std::string filename);
+	std::string get_net_save_last_modified(std::string rom_desc);
 
 	void RefreshFileDefinitions();
 

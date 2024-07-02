@@ -2676,6 +2676,10 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 
 		if (ImGui::CollapsingHeader("Memory Management", ImGuiTreeNodeFlags_None))
 		{
+			OptionCheckbox("Check for Latest Netplay Savestate", config::CheckLatestNetSave);
+			ImGui::SameLine();
+			ShowHelpMarker("Automatically checks for new netplay savestates before starting online sessions. Disable to keep currently assigned netplay savestate.");
+
 			OptionCheckbox("Validate BIOS & ROMs before netplay session", config::NetStartVerifyRoms);
 			ImGui::SameLine();
 			ShowHelpMarker("Validates BIOSes & ROMs against provided flycast_roms.json. Ensures proper files for retrieved savestates and known netplay games.");

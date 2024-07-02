@@ -744,6 +744,8 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 
 	NOTICE_LOG(NETWORK, "save url: %s", net_state_url.data());
 
+	std::string last_modified = get_net_save_last_modified(rom_name);
+
 	status_text = "Downloading netplay savestate for " + rom_name + ".";
 
 	auto filename = DownloadFile(net_state_url, "data", commit);
@@ -1132,6 +1134,37 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 	std::string sha = "";
 #endif
 	return sha;
+}
+
+std::string DojoFile::get_net_save_last_modified(std::string rom_desc)
+{
+#ifndef __ANDROID__
+	std::string github_base = "https://github.com/";
+	size_t repo_pos = config::NetSaveBase.get().find(github_base);
+	if (repo_pos == std::string::npos)
+		return "";
+
+	size_t repo_end = config::NetSaveBase.get().find("/raw/main/");
+	std::string repo_name = config::NetSaveBase.get().substr(repo_pos + github_base.length(), repo_end - github_base.length());
+
+	cpr::Response r = cpr::Get(
+		cpr::Url{"https://api.github.com/repos/" + repo_name + "/commits"},
+		cpr::Parameters{{"path", rom_desc + ".state.net"}, {"page", "1"}, {"per_page", "1"}}
+	);
+	std::string ts = "";
+
+	if (r.status_code == 200 && r.text.length() > 0)
+	{
+		nlohmann::json j = nlohmann::json::parse(r.text);
+		if (j.size() > 0)
+		{
+			ts = j[0]["commit"]["committer"]["date"].get<std::string>();
+		}
+	}
+#else
+	std::string ts = "";
+#endif
+	return ts;
 }
 
 void DojoFile::WriteStringToOut(std::string name, std::string contents)

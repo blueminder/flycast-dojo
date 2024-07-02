@@ -601,6 +601,7 @@ extern Option<bool> HostJoinSelect;
 extern Option<bool> HideKey;
 
 extern Option<bool> CopyMissingSharedMem;
+extern Option<bool> CheckLatestNetSave;
 
 // Maple
 
