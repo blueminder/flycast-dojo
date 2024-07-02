@@ -352,6 +352,9 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 	ImGui::Spacing();
 	header("Other");
 	{
+#ifdef __linux__
+		OptionCheckbox("Linux: Copy Missing Shared EEPROM/NVMEM/VMU Files", config::CopyMissingSharedMem, "Copies game memory files from shared assets directory if missing from home directory.");
+#endif
 		OptionCheckbox("Output Session Details to Text Files", config::OutputStreamTxt, "Outputs in-game overlay details to external text files (in the 'out' folder). Useful for online streams.");
 		if (config::UseReios)
 		{

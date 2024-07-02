@@ -230,6 +230,8 @@ OptionString RelayAddressHistory("RelayAddressHistory", "", "dojo");
 Option<bool> HostJoinSelect("HostJoinSelect", false, "dojo");
 Option<bool> HideKey("HideKey", false, "dojo");
 
+Option<bool> CopyMissingSharedMem("CopyMissingSharedMem", true, "dojo");
+
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
 #endif
