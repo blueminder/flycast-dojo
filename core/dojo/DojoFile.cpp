@@ -5,6 +5,7 @@
 #include "DojoFile.hpp"
 
 #include <iostream>
+#include "log/LogManager.h"
 
 DojoFile dojo_file;
 
@@ -721,6 +722,15 @@ size_t writeFileFunction(const char *p, size_t size, size_t nmemb) {
 
 std::string DojoFile::DownloadNetSave(std::string rom_name)
 {
+	NOTICE_LOG(NETWORK, "DOJO: Updating Local Commits File.");
+	dojo_file.DownloadNetSaveCommits();
+
+	auto const now = std::chrono::system_clock::now();
+	std::time_t now_t = std::chrono::system_clock::to_time_t(now);
+
+	remote_last_commit = dojo_file.GetNetSaveEpochCommit(rom_name, now_t);
+	remote_last_write = dojo_file.GetNetSaveLatestEpoch(rom_name);
+
 	return DownloadNetSave(rom_name, "");
 }
 
@@ -755,8 +765,25 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	//std::FILE* file = std::fopen(filename.data(), "rb");
 	//settings.dojo.state_md5 = md5file(file);
 
-	if (commit.empty())
-		commit = get_savestate_commit(filename);
+	if (commit.empty() && !remote_last_commit.empty())
+	{
+		std::string commit_path = get_writable_data_path(rom_name + ".state.net.commit");
+
+		// write to standalone commit file for future reference
+		std::ofstream commit_file;
+		commit_file.open(commit_path);
+		commit_file << remote_last_commit << std::endl;
+		commit_file.close();
+
+		commit = remote_last_commit;
+	}
+
+	// set last write to remote last modified date if available
+	if (remote_last_write > 0)
+	{
+		ghc::filesystem::file_time_type ftime = std::chrono::system_clock::from_time_t(remote_last_write);
+		ghc::filesystem::last_write_time(ghc::filesystem::path(filename), ftime);
+	}
 
 	if (!commit.empty())
 	{
@@ -765,8 +792,19 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 
 		// keep local copy named with commit string as backup and for replays
 		if(!ghc::filesystem::exists(commit_net_state_path))
+		{
 			ghc::filesystem::copy(filename, commit_net_state_path);
+
+			if (remote_last_write > 0)
+			{
+				ghc::filesystem::file_time_type ftime = std::chrono::system_clock::from_time_t(remote_last_write);
+				ghc::filesystem::last_write_time(ghc::filesystem::path(commit_net_state_path), ftime);
+			}
+		}
 	}
+
+	remote_last_commit.clear();
+	remote_last_write = 0;
 
 	return filename;
 }
@@ -776,7 +814,7 @@ std::string DojoFile::DownloadNetSaveCommits()
 	auto net_state_base = config::NetSaveBase.get();
 	auto net_save_commits_url = net_state_base + "commits";
 	auto net_save_commits_path = get_writable_data_path("commits");
-	NOTICE_LOG(NETWORK, "DOJO: Downloading Netplay Savestate Commits from ", net_save_commits_url);
+	NOTICE_LOG(NETWORK, "DOJO: Downloading Netplay Savestate Commits from %s", net_save_commits_url.c_str());
 	auto filename = DownloadFile(net_save_commits_url, "data");
 
 	return filename;
@@ -820,7 +858,10 @@ std::string DojoFile::GetNetSaveEpochCommit(std::string rom_name, std::time_t ts
 	if (!ghc::filesystem::exists(net_save_commits_path))
 		DownloadNetSaveCommits();
 
-	LoadNetSaveCommits(rom_name);
+	bool commits_loaded = LoadNetSaveCommits(rom_name);
+
+	if (!commits_loaded)
+		return "";
 
 	std::map<std::time_t, std::string>::reverse_iterator it;
 	for (it = net_save_commits.rbegin(); it != net_save_commits.rend(); it++)
@@ -833,6 +874,28 @@ std::string DojoFile::GetNetSaveEpochCommit(std::string rom_name, std::time_t ts
 
 	return "";
 }
+
+std::time_t DojoFile::GetNetSaveLatestEpoch(std::string rom_name)
+{
+	auto net_save_commits_path = get_writable_data_path("commits");
+
+	if (!ghc::filesystem::exists(net_save_commits_path))
+		DownloadNetSaveCommits();
+
+	bool commits_loaded = LoadNetSaveCommits(rom_name);
+
+	if (!commits_loaded)
+		return 0;
+
+	std::map<std::time_t, std::string>::reverse_iterator it;
+	for (it = net_save_commits.rbegin(); it != net_save_commits.rend(); it++)
+	{
+		return it->first;
+	}
+
+	return 0;
+}
+
 
 void DojoFile::CopyMissingSharedArcadeMem(std::string path)
 {
@@ -981,7 +1044,16 @@ std::string DojoFile::DownloadFile(std::string download_url, std::string dest_fo
 	{
 		std::string old_path = path;
 		stringfix::replace(final_path, "%20", " ");
-		rename(old_path.c_str(), final_path.c_str());
+		bool copied = ghc::filesystem::copy_file(
+			ghc::filesystem::path(old_path),
+			ghc::filesystem::path(final_path),
+			ghc::filesystem::copy_options::overwrite_existing);
+		if (copied)
+		{
+			ghc::filesystem::remove(
+				ghc::filesystem::path(old_path)
+			);
+		}
 	}
 
 	if (response_code == 404
@@ -1170,37 +1242,55 @@ void DojoFile::SwitchVersion(std::string tag_name)
 	ghc::filesystem::remove_all(dirname);
 }
 
-std::string DojoFile::get_savestate_commit(std::string filename)
+std::vector<std::string> DojoFile::GetRemoteNetSaveLastAction(std::string rom_desc)
 {
+	std::vector<std::string> last_action;
 #ifndef __ANDROID__
 	std::string github_base = "https://github.com/";
 	size_t repo_pos = config::NetSaveBase.get().find(github_base);
 	if (repo_pos == std::string::npos)
-		return "";
+		return last_action;
 
 	size_t repo_end = config::NetSaveBase.get().find("/raw/main/");
 	std::string repo_name = config::NetSaveBase.get().substr(repo_pos + github_base.length(), repo_end - github_base.length());
 
-	cpr::Response r = cpr::Get(cpr::Url{ "https://api.github.com/repos/" + repo_name + "/commits/main" });
+	cpr::Response r = cpr::Get(
+		cpr::Url{"https://api.github.com/repos/" + repo_name + "/commits"},
+		cpr::Parameters{{"path", rom_desc + ".state.net"}, {"page", "1"}, {"per_page", "1"}}
+	);
+	std::string ts = "";
 	std::string sha = "";
 
-	if (r.text.length() > 0)
+	if (r.status_code == 200 && r.text.length() > 0)
 	{
 		nlohmann::json j = nlohmann::json::parse(r.text);
-
-		std::ofstream commit_file;
-		commit_file.open(filename + ".commit");
-
-		// use parent commit to account for post-commit hook write
-		sha = j["parents"][0]["sha"].get<std::string>();
-		cfgSaveStr("dojo", "LatestStateCommit", sha);
-		commit_file << sha << std::endl;
-		commit_file.close();
+		if (j.size() > 0)
+		{
+			ts = j[0]["commit"]["committer"]["date"].get<std::string>();
+			sha = j[0]["sha"];
+			last_action.push_back(ts);
+			last_action.push_back(sha);
+		}
 	}
-#else
-	std::string sha = "";
 #endif
-	return sha;
+	return last_action;
+}
+
+std::time_t DojoFile::UtcToTime(std::string utc_time)
+{
+	if(utc_time.size() == 0)
+		return 0;
+
+	struct std::tm tm;
+	std::istringstream ss(utc_time);
+	ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+#ifdef _WIN32
+	std::time_t time = _mkgmtime(&tm);
+#else
+	std::time_t time = mktime(&tm) - timezone;
+#endif
+
+	return time;
 }
 
 void DojoFile::WriteStringToOut(std::string name, std::string contents)

@@ -824,12 +824,15 @@ void gui_start_game(const std::string& path)
 	}
 
 	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
+
 	if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
-		(!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
-			dojo_file.save_download_ended && dojo_file.post_save_launch))
+		((!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
+			dojo_file.save_download_ended && dojo_file.post_save_launch)))
 	{
 		if (!dojo_file.start_save_download)
 			dojo_gui.invoke_download_save_popup(path, &dojo_gui.net_save_download, true);
+
+		return;
 	}
 
 	if (cfgLoadBool("network", "GGPO", false)

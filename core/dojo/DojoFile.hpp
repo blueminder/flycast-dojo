@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <vector>
 
@@ -77,6 +78,7 @@ public:
 	std::map<std::time_t, std::string> net_save_commits;
 
 	std::string GetNetSaveEpochCommit(std::string rom_name, std::time_t ts);
+	std::time_t GetNetSaveLatestEpoch(std::string rom_name);
 
 	void Update();
 	void DownloadDependencies(std::string rom_path);
@@ -123,7 +125,11 @@ public:
 
 	std::string root_path;
 
-	std::string get_savestate_commit(std::string filename);
+	std::vector<std::string> GetRemoteNetSaveLastAction(std::string rom_desc);
+	std::time_t UtcToTime(std::string utc_time);
+
+	std::time_t remote_last_write = 0;
+	std::string remote_last_commit = "";
 
 	void RefreshFileDefinitions();
 
