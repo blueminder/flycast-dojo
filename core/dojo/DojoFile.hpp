@@ -129,6 +129,8 @@ public:
 	std::string dest_path;
 
 	bool not_found;
+
+	void CopyMissingSharedArcadeMem(std::string game_mem_path);
 };
 
 extern DojoFile dojo_file;

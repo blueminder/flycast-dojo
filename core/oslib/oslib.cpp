@@ -42,9 +42,12 @@ std::string getVmuPath(const std::string& port)
 	if (!file_exists(apath))
 		apath = get_writable_data_path(tempy);
 #ifdef __linux__
-	auto game_fn = ghc::filesystem::path(settings.content.path).filename();
-	if (!file_exists(apath) && dojo.IsDefaultVmuGame(game_fn) && file_exists(get_readonly_data_path(tempy)))
-		ghc::filesystem::copy_file(get_readonly_data_path(tempy), apath);
+	if (config::CopyMissingSharedMem)
+	{
+		auto game_fn = ghc::filesystem::path(settings.content.path).filename();
+		if (!file_exists(apath) && dojo.IsDefaultVmuGame(game_fn) && file_exists(get_readonly_data_path(tempy)))
+			ghc::filesystem::copy_file(get_readonly_data_path(tempy), apath);
+	}
 #endif
 	return apath;
 }

@@ -748,6 +748,11 @@ void gui_start_game(const std::string& path)
 	dojo.current_delay = config::GGPODelay.get();
 	dojo.commandLineStart = commandLineStart;
 
+#ifdef __linux__
+	if (!settings.network.online && config::CopyMissingSharedMem)
+		dojo_file.CopyMissingSharedArcadeMem(path);
+#endif
+
 	if (cfgLoadBool("dojo", "Receiving", false) || dojo.PlayMatch && !dojo.offline_replay)
 	{
 		dojo.LaunchReceiver();

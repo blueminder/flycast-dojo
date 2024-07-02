@@ -768,6 +768,57 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	return filename;
 }
 
+void DojoFile::CopyMissingSharedArcadeMem(std::string path)
+{
+	auto fs_path = ghc::filesystem::path(path);
+	std::string game_fn = fs_path.filename();
+	std::vector<std::string> mem_targets;
+	mem_targets.push_back(get_writable_data_path(game_fn) + ".eeprom");
+	mem_targets.push_back(get_writable_data_path(game_fn) + ".nvmem");
+	for (auto & mem_target : mem_targets)
+	{
+		if (!file_exists(mem_target))
+		{
+			std::vector<std::string> dirs;
+
+			ghc::filesystem::path root_path;
+			ghc::filesystem::path exe_dir;
+
+			char result[PATH_MAX];
+			ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+			if (count != -1)
+			{
+				exe_dir = ghc::filesystem::path(result).parent_path();
+				root_path = exe_dir.parent_path();
+			}
+			auto sharePath = root_path / "share" / "flycast-dojo/";
+			if (ghc::filesystem::exists(sharePath))
+				dirs.push_back(sharePath);
+
+			auto sharePath_data = root_path / "share" / "flycast-dojo" / "data/";
+
+			if (ghc::filesystem::exists(sharePath_data))
+				dirs.push_back(sharePath_data);
+
+			auto exe_data = exe_dir / "data/";
+			if (ghc::filesystem::exists(exe_data))
+				dirs.push_back(exe_data);
+
+			std::string target_filename = ghc::filesystem::path(mem_target).filename();
+
+			for (auto dir : dirs)
+			{
+				if (file_exists(dir + target_filename))
+				{
+					ghc::filesystem::copy_file(dir + target_filename, mem_target);
+					std::cout << "COPYING FROM " << dir << target_filename << " to " << mem_target << std::endl;
+					break;
+				}
+			}
+		}
+	}
+}
+
 std::string DojoFile::DownloadFile(std::string download_url, std::string dest_folder, size_t download_size, std::string append)
 {
 	dojo_file.source_url = download_url;
