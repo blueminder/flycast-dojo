@@ -836,9 +836,9 @@ void gui_start_game(const std::string& path)
 			NOTICE_LOG(NETWORK, "DOJO: Remote, Last modified: %s %u", remote_last_modified.c_str(), net_save_last_write);
 
 			const std::time_t last_write = std::chrono::system_clock::to_time_t(ghc::filesystem::last_write_time(net_state_path));
-			char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+			char timeString[64] = { 0 };
 			std::time_t local_last_write;
-			if(std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", std::gmtime(&last_write)))
+			if(strftime((char *)timeString, 64, "%FT%TZ", gmtime(&last_write)))
 			{
 				local_last_write = parseiso8601utc(timeString);
 
