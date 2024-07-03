@@ -1275,6 +1275,8 @@ void DojoGui::gui_display_test_game( float scaling)
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
+		if (settings.platform.isArcade())
+			LoadButtonNames(settings.content.path.c_str());
 		gui_state = GuiState::Settings;
 	}
 	ImGui::NextColumn();
