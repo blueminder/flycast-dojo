@@ -920,7 +920,7 @@ void gui_stop_game(const std::string& message)
 	if (dojo.PlayMatch && dojo.replay_version > 1)
 		commandLineStart = true;
 
-	if (!commandLineStart && !config::TestGame.get())
+	if (!dojo.commandLineStart)
 	{
 		// Exit to main menu
 		emu.unloadGame();
@@ -3823,7 +3823,7 @@ static void gui_display_loadscreen()
 				s.detach();
 			}
 
-			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch && !config::TestGame)
+			if (config::GGPOEnable && !config::Receiving && !dojo.PlayMatch)
 			{
 				if (cfgLoadBool("dojo", "Relay", false))
 				{

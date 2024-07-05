@@ -1272,6 +1272,9 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	ImGui::Begin("##test_game", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
+	// track if # of buttons are even or odd for exit button size
+	int displayed_button_count = 0;
+
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -1279,6 +1282,7 @@ void DojoGui::gui_display_test_game( float scaling)
 			LoadButtonNames(settings.content.path.c_str());
 		gui_state = GuiState::Settings;
 	}
+	displayed_button_count++;
 	ImGui::NextColumn();
 	if (ImGui::Button("Start Game", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -1317,6 +1321,7 @@ void DojoGui::gui_display_test_game( float scaling)
 
 	}
 
+	displayed_button_count++;
 	ImGui::NextColumn();
 	if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
 	{
@@ -1329,6 +1334,7 @@ void DojoGui::gui_display_test_game( float scaling)
 		gui_state = GuiState::ButtonCheck;
 	}
 
+	displayed_button_count++;
 	ImGui::NextColumn();
 	if (ImGui::Button("Start Training", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -1369,6 +1375,7 @@ void DojoGui::gui_display_test_game( float scaling)
 		}
 
 	}
+	displayed_button_count++;
 	ImGui::NextColumn();
 
 	std::string filename = settings.content.path.substr(settings.content.path.find_last_of("/\\") + 1);
@@ -1403,6 +1410,7 @@ void DojoGui::gui_display_test_game( float scaling)
 	{
 		for (std::pair<std::string, std::string> link: game_links)
 		{
+			displayed_button_count++;
 			ImGui::NextColumn();
 			if (ImGui::Button(std::string("Open\n" + link.first).data(), ImVec2(150 * scaling, 50 * scaling)))
 			{
@@ -1421,6 +1429,37 @@ void DojoGui::gui_display_test_game( float scaling)
 		}
 	}
 #endif
+
+	displayed_button_count++;
+	ImGui::NextColumn();
+
+	if (displayed_button_count % 2 == 0)
+		ImGui::Columns(1, nullptr, false);
+
+	ImVec2 mm_size;
+
+	if (displayed_button_count % 2 == 0)
+		mm_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
+	else
+		mm_size = ScaledVec2(150, 50);
+
+	// Exit
+	if (ImGui::Button("Main Menu", mm_size))
+	{
+		cfgSetVirtual("dojo", "GameEntry", "");
+		settings.dojo.GameEntry = "";
+		settings.content.path = "";
+		settings.platform.system = DC_PLATFORM_DREAMCAST;
+
+		config::NetworkServer = "";
+		config::HostJoinSelect = true;
+		config::TestGame = false;
+
+		dojo.Init();
+		dojo.commandLineStart = false;
+
+		gui_state = GuiState::Main;
+	}
 
 	ImGui::End();
 }
