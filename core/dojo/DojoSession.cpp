@@ -824,6 +824,9 @@ void DojoSession::AppendHeaderToReplayFile(std::string rom_name)
 
 	if (version == 3)
 	{
+		if (settings.dojo.state_commit.empty())
+			settings.dojo.state_commit = dojo_file.GetLocalNetSaveCommit(get_game_save_prefix());
+
 		spectate_start.AppendString(settings.dojo.state_md5);
 		spectate_start.AppendString(settings.dojo.state_commit);
 	}
@@ -1654,6 +1657,9 @@ void DojoSession::transmitter_thread()
 			spectate_start.AppendInt((u32)config::GGPOAnalogAxes.get());
 		else
 			spectate_start.AppendInt(0);
+
+		if (settings.dojo.state_commit.empty())
+			settings.dojo.state_commit = dojo_file.GetLocalNetSaveCommit(get_game_save_prefix());
 
 		spectate_start.AppendString(settings.dojo.state_md5);
 		spectate_start.AppendString(settings.dojo.state_commit);

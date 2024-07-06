@@ -756,13 +756,16 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	//settings.dojo.state_md5 = md5file(file);
 
 	if (commit.empty())
-	{
-		std::string commit_str = get_savestate_commit(filename);
-		settings.dojo.state_commit = commit_str;
-	}
-	else
+		commit = get_savestate_commit(filename);
+
+	if (!commit.empty())
 	{
 		settings.dojo.state_commit = commit;
+		std::string commit_net_state_path = filename + "." + commit;
+
+		// keep local copy named with commit string as backup and for replays
+		if(!ghc::filesystem::exists(commit_net_state_path))
+			ghc::filesystem::copy(filename, commit_net_state_path);
 	}
 
 	return filename;
@@ -1148,4 +1151,20 @@ void DojoFile::WriteStringToOut(std::string name, std::string contents)
 	fout << contents;
 	fout.close();
 #endif
+}
+
+std::string DojoFile::GetLocalNetSaveCommit(std::string game_save_prefix)
+{
+	std::string commit_sha = "";
+	std::string net_state_path = game_save_prefix + ".state.net";
+	if (ghc::filesystem::exists(net_state_path + ".commit"))
+	{
+		std::fstream commit_file;
+		commit_file.open(net_state_path + ".commit");
+		if (commit_file.is_open())
+		{
+			getline(commit_file, commit_sha);
+		}
+	}
+	return commit_sha;
 }

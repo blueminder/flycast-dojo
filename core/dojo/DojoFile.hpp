@@ -122,6 +122,7 @@ public:
 	void RefreshFileDefinitions();
 
 	void WriteStringToOut(std::string name, std::string contents);
+	std::string GetLocalNetSaveCommit(std::string game_save_prefix);
 
 	std::vector<std::string> versions;
 
