@@ -122,6 +122,25 @@ static void emuEventCallback(Event event, void *)
 				if (strlen(settings.dojo.state_commit.c_str()) > 0)
 				{
 					std::string commit_net_save_path = net_save_path + "." + settings.dojo.state_commit;
+				
+					if(!file_exists(commit_net_save_path))
+					{
+						std::string commit_path = net_save_path + ".commit";
+						std::fstream commit_file;
+						commit_file.open(commit_path);
+						if (commit_file.is_open())
+						{
+							std::string commit_sha;
+							getline(commit_file, commit_sha);
+							if (commit_sha.size() > 0 && commit_sha.find(settings.dojo.state_commit) != std::string::npos)
+							{
+								std::string sha_net_state_path = net_save_path + "." + commit_sha;
+								if (!file_exists(sha_net_state_path))
+									ghc::filesystem::copy_file(net_save_path, sha_net_state_path);
+							}
+						}
+					}
+
 					if(file_exists(commit_net_save_path))
 					{
 						NOTICE_LOG(NETWORK, "LOADING %s", commit_net_save_path.data());
