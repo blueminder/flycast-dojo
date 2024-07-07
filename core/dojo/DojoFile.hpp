@@ -72,6 +72,12 @@ public:
 	std::string DownloadNetSave(std::string rom_name);
 	std::string DownloadNetSave(std::string rom_name, std::string commit);
 
+	std::string DownloadNetSaveCommits();
+	bool LoadNetSaveCommits(std::string rom_name);
+	std::map<std::time_t, std::string> net_save_commits;
+
+	std::string GetNetSaveEpochCommit(std::string rom_name, std::time_t ts);
+
 	void Update();
 	void DownloadDependencies(std::string rom_path);
 	std::string DownloadEntry(std::string entry_name);

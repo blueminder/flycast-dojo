@@ -771,6 +771,69 @@ std::string DojoFile::DownloadNetSave(std::string rom_name, std::string commit)
 	return filename;
 }
 
+std::string DojoFile::DownloadNetSaveCommits()
+{
+	auto net_state_base = config::NetSaveBase.get();
+	auto net_save_commits_url = net_state_base + "commits";
+	auto net_save_commits_path = get_writable_data_path("commits");
+	NOTICE_LOG(NETWORK, "DOJO: Downloading Netplay Savestate Commits from ", net_save_commits_url);
+	auto filename = DownloadFile(net_save_commits_url, "data");
+
+	return filename;
+}
+
+bool DojoFile::LoadNetSaveCommits(std::string rom_name)
+{
+	net_save_commits.clear();
+
+	auto net_save_commits_path = get_writable_data_path("commits");
+	if (!ghc::filesystem::exists(net_save_commits_path))
+		return false;
+
+	std::ifstream file(net_save_commits_path);
+
+	if (!file.is_open()) {
+		return false;
+	}
+
+	std::string line;
+
+	while (std::getline(file, line)) {
+		if (line.find(rom_name) != std::string::npos)
+		{
+			auto commit_entry = stringfix::split(" ", line);
+			std::time_t ts = std::stol(commit_entry[0]);
+			std::string sha = commit_entry[1];
+
+			net_save_commits[ts] = sha;
+		}
+	}
+	file.close();
+
+	return true;
+}
+
+std::string DojoFile::GetNetSaveEpochCommit(std::string rom_name, std::time_t ts)
+{
+	auto net_save_commits_path = get_writable_data_path("commits");
+
+	if (!ghc::filesystem::exists(net_save_commits_path))
+		DownloadNetSaveCommits();
+
+	LoadNetSaveCommits(rom_name);
+
+	std::map<std::time_t, std::string>::reverse_iterator it;
+	for (it = net_save_commits.rbegin(); it != net_save_commits.rend(); it++)
+	{
+		if (ts > it->first)
+		{
+			return it->second;
+		}
+	}
+
+	return "";
+}
+
 void DojoFile::CopyMissingSharedArcadeMem(std::string path)
 {
 #if defined(__linux__)
@@ -1128,7 +1191,8 @@ std::string DojoFile::get_savestate_commit(std::string filename)
 		std::ofstream commit_file;
 		commit_file.open(filename + ".commit");
 
-		sha = j["sha"].get<std::string>();
+		// use parent commit to account for post-commit hook write
+		sha = j["parents"][0]["sha"].get<std::string>();
 		cfgSaveStr("dojo", "LatestStateCommit", sha);
 		commit_file << sha << std::endl;
 		commit_file.close();
