@@ -1326,29 +1326,32 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		std::cout << "Quark: " << Quark << std::endl;
 		std::cout << "Match Code: " << MatchCode << std::endl;
 
+		if (replay_version >= 3)
+		{
+			net_save_path = get_writable_data_path(game_name.substr(0, game_name.size() - 1) + ".state.net");
+			std::string commit_net_save_path = net_save_path + "." + settings.dojo.state_commit;
+			if (!ghc::filesystem::exists(commit_net_save_path))
+			{
+				if(Quark.size() >= 10)
+				{
+					std::time_t quark_epoch = 0;
+					quark_epoch = (std::time_t) std::stol(Quark.substr(0, 10));
+
+					if (quark_epoch > 0)
+					{
+						NOTICE_LOG(NETWORK, "Using Quark Epoch for Savestate Assignment %l: ", quark_epoch);
+						std::string epoch_commit = dojo_file.GetNetSaveEpochCommit(game_name.substr(0, game_name.size() - 1), quark_epoch);
+						settings.dojo.state_commit = epoch_commit;
+						NOTICE_LOG(NETWORK, "Savestate Commit Assigned: %s", epoch_commit.data());
+					}
+				}
+			}
+		}
+
 		if (replay_version == 3)
 		{
 			std::cout << "Savestate MD5: " << settings.dojo.state_md5 << std::endl;
 			std::cout << "Savestate Commit SHA: " << settings.dojo.state_commit << std::endl;
-		}
-
-		if (replay_version >= 3)
-		{
-			std::string s = settings.dojo.state_commit;
-			if(settings.dojo.state_commit.size() <= 1 && !Quark.empty())
-			{
-				NOTICE_LOG(NETWORK, "Savestate Commit not found, Using Quark Epoch for Savestate Assignment", game_name.c_str());
-				std::time_t quark_epoch = 0;
-				if (Quark.size() >= 10)
-					quark_epoch = (std::time_t) std::stol(Quark.substr(0, 10));
-
-				if (quark_epoch > 0)
-				{
-					std::string epoch_commit = dojo_file.GetNetSaveEpochCommit(game_name.substr(0, game_name.size() - 1), quark_epoch);
-					settings.dojo.state_commit = epoch_commit;
-					NOTICE_LOG(NETWORK, "Savestate Commit Assigned: %s", epoch_commit.data());
-				}
-			}
 		}
 
 		dojo.receiver_header_read = true;
