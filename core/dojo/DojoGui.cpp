@@ -1278,6 +1278,11 @@ void DojoGui::gui_display_test_game( float scaling)
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
+		config::Delay = 0;
+		cfgSetVirtual("dojo", "Enable", "no");
+		config::GGPOEnable = false;
+		settings.dojo.training = true;
+
 		if (settings.platform.isArcade())
 			LoadButtonNames(settings.content.path.c_str());
 		gui_state = GuiState::Settings;
@@ -1286,6 +1291,10 @@ void DojoGui::gui_display_test_game( float scaling)
 	ImGui::NextColumn();
 	if (ImGui::Button("Start Game", ImVec2(150 * scaling, 50 * scaling)))
 	{
+		config::Delay = 0;
+		cfgSetVirtual("dojo", "Enable", "no");
+		config::GGPOEnable = false;
+		settings.dojo.training = true;
 		gui_state = GuiState::Closed;
 
 		if (strlen(settings.content.path.data()) > 0)

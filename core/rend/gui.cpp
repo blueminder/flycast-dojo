@@ -942,6 +942,11 @@ void gui_stop_game(const std::string& message)
 	if (dojo.PlayMatch && dojo.replay_version > 1)
 		commandLineStart = true;
 
+	if (config::TestGame)
+	{
+		dc_exit();
+	}
+
 	if (!dojo.commandLineStart)
 	{
 		// Exit to main menu
