@@ -1702,6 +1702,45 @@ void DojoSession::transmitter_thread()
 
 		for (;;)
 		{
+			asio::write(socket, asio::buffer(spectate_start_message));
+
+			if (config::SpectatorIP.get() == "ggpo.fightcade.com")
+			{
+				// read player info reply
+				char header_buf[HEADER_LEN] = { 0 };
+				std::vector<unsigned char> body_buf;
+				int offset = 0;
+
+				// read header
+				memset((void*)header_buf, 0, HEADER_LEN);
+				try
+				{
+					asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
+				}
+				catch (const std::system_error& e)
+				{
+					//break;
+				}
+
+				unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
+				unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+				// read body
+				body_buf.resize(body_size);
+
+				try
+				{
+					asio::read(socket, asio::buffer(body_buf, body_size));
+				}
+				catch (const std::system_error& e)
+				{
+					//break;
+				}
+				offset = 0;
+
+				dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
+			}
+
 			if (config::Transmitting)
 			{
 				transmission_in_progress = !dojo.transmission_frames.empty() && !transmitter_ended;
@@ -1723,45 +1762,6 @@ void DojoSession::transmitter_thread()
 						// delay start message until first frame batch
 						if (!start_sent && transmit_frame_count == FRAME_BATCH)
 						{
-							asio::write(socket, asio::buffer(spectate_start_message));
-
-							if (config::SpectatorIP.get() == "ggpo.fightcade.com")
-							{
-								// read player info reply
-								char header_buf[HEADER_LEN] = { 0 };
-								std::vector<unsigned char> body_buf;
-								int offset = 0;
-
-								// read header
-								memset((void*)header_buf, 0, HEADER_LEN);
-								try
-								{
-									asio::read(socket, asio::buffer(header_buf, HEADER_LEN));
-								}
-								catch (const std::system_error& e)
-								{
-									//break;
-								}
-
-								unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
-								unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
-
-								// read body
-								body_buf.resize(body_size);
-
-								try
-								{
-									asio::read(socket, asio::buffer(body_buf, body_size));
-								}
-								catch (const std::system_error& e)
-								{
-									//break;
-								}
-								offset = 0;
-
-								dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
-							}
-
 							// clear local match code after transmission starts
 							config::MatchCode = "";
 							cfgSaveStr("dojo", "MatchCode", "");

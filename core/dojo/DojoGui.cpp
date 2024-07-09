@@ -2313,6 +2313,10 @@ void DojoGui::show_button_check(float scaling)
 
 void DojoGui::show_player_name_overlay(float scaling, bool paused)
 {
+	// on fightcade, hide player name overlay until player info is received
+	if (config::SpectatorIP.get() == "ggpo.fightcade.com" && !dojo.received_player_info)
+		return;
+
 	// if both player names are defaults, hide overlay
 	if (dojo.player_2.length() <= 1 ||
 		strcmp(dojo.player_1.data(), "Player") == 0 &&
