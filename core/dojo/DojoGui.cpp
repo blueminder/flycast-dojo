@@ -1294,7 +1294,7 @@ void DojoGui::gui_display_test_game( float scaling)
 		config::Delay = 0;
 		cfgSetVirtual("dojo", "Enable", "no");
 		config::GGPOEnable = false;
-		settings.dojo.training = true;
+		settings.dojo.training = false;
 		gui_state = GuiState::Closed;
 
 		if (strlen(settings.content.path.data()) > 0)
