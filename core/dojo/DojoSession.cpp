@@ -2309,7 +2309,7 @@ void DojoSession::StopUPnP()
 
 void DojoSession::AssignNames(bool player_info)
 {
-	if (dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
+	if (player_info || dojo.hosting || dojo.PlayMatch || config::Receiving || config::ActAsServer)
 	{
 		player_1 = settings.dojo.PlayerName;
 		player_2 = settings.dojo.OpponentName;
