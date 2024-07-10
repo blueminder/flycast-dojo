@@ -1,0 +1,206 @@
+<html>
+
+<head>
+	<title>Flycast Dojo</title>
+	<style type="text/css">
+		h1 {
+			margin-bottom: 0;
+		}
+
+		.tabs {
+			display: flex;
+			flex-wrap: wrap;
+		}
+
+		.tabs label {
+			order: 1;
+			display: block;
+			padding: 1rem 2rem;
+			margin-right: 0.2rem;
+			cursor: pointer;
+			background: #fff;
+			font-weight: bold;
+			transition: background ease 0.2s;
+			width: 244px;
+		}
+
+		.tabs .tab {
+			order: 99;
+			width: 900px;
+			height: 310px;
+			display: none;
+			padding: 1rem;
+			background: #99bff0;
+			/* text-align: center; */
+		}
+
+		.tabs .tab td.desc-left {
+			font-size: 112%;
+			padding-right: 10px;
+		}
+
+		.tabs .tab td.desc-right {
+			vertical-align: top;
+			padding-top: 20px;
+			font-size: 112%;
+			padding-left: 10px;
+		}
+
+		.tabs input[type="radio"] {
+			display: none;
+		}
+
+		.tabs input[type="radio"]:checked+label {
+			background: #99bff0;
+		}
+
+		.tabs input[type="radio"]:checked+label+.tab {
+			display: block;
+		}
+
+		@media (max-width: 45em) {
+
+			.tabs .tab,
+			.tabs label {
+				order: initial;
+			}
+
+			.tabs label {
+				width: 100%;
+				margin-right: 0;
+				margin-top: 0.2rem;
+			}
+		}
+
+		a.small {
+			font-size: 10px;
+			font-weight: bold;
+			vertical-align: super;
+		}
+
+		body {
+			background: #eee;
+			min-height: 100vh;
+			box-sizing: border-box;
+			padding-top: 10vh;
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", serif;
+			font-weight: 300;
+			line-height: 1.5;
+			max-width: 60rem;
+			margin: 0 auto;
+			font-size: 112%;
+		}
+
+		b {
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body>
+	<h1><img src="FlycastDojoFoxlum.png" height="25"> Flycast Dojo</h1>
+	<i>Peer-to-peer Netplay for Dreamcast / NAOMI / Atomiswave</i>
+
+	<p>
+		<b>Download
+			(<a href="https://github.com/blueminder/flycast-dojo/releases/download/dojo-6.45/flycast-dojo-6.45.zip"><img
+					src="windows.svg" width="15"> Windows</a>,
+			<a
+				href="https://github.com/blueminder/flycast-dojo/releases/download/dojo-6.45/linux-flycast-dojo-6.45.zip"><img
+					src="tux.svg" width="15"> Linux</a>,
+			<a
+				href="https://github.com/blueminder/flycast-dojo/releases/download/dojo-6.45/macos-flycast-dojo-6.45.zip"><img
+					src="apple.svg" width="15"> Mac</a>)<br>
+		</b>
+		<b>Donate (<a href="https://www.patreon.com/projectdojo"><img src="patreon.svg" width="15"> Patreon</a>, <a
+				href="https://ko-fi.com/blueminder"><img src="ko-fi.svg" width="15"> Ko-fi</a>)</b>
+	</p>
+
+	<h3>Ways To Play</h3>
+	<div class="tabs">
+		<input type="radio" name="tabs" id="tab_match_code" checked="checked">
+		<label for="tab_match_code"><img src="tower-cell.svg" width="25" style="padding-right: 5px;"> <span style="vertical-align: top;">P2P &
+			Relays</span></label>
+		<div class="tab">
+			<table>
+				<tr>
+
+					<td>
+						<img src="match_code_fotns_combined.png" width="350">
+					</td>
+					<td class="desc-right">
+						Using P2P Match Codes &amp; <b><a
+								href="https://github.com/blueminder/flycast-dojo/releases/tag/dojo-6.30#relay_servers">Relay
+								Servers</a></b>, Flycast Dojo can start game sessions behind firewalls, so that you
+						can play against others without the need for a Virtual LAN or matchmaking service.<br><br>
+						Just exchange codes with your opponent and start your game!
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<input type="radio" name="tabs" id="tab_fightcade">
+		<label for="tab_fightcade"><img src="fightcade.svg" width="25" style="padding-right: 5px"> <span style="vertical-align: top;">Fightcade(+)</span></label>
+		<div class="tab">
+			<table>
+				<tr>
+					<td>
+						<iframe width="400" height="263" src="https://www.youtube-nocookie.com/embed/47oJOUoGYmI"
+							frameborder="0"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+							allowfullscreen></iframe>
+					</td>
+					<td class="desc-right">
+						Bundled in <b><a href="https://www.fightcade.com/">Fightcade</a></b>, the leading online
+						matchmaking service for retro games.<br><br>To keep up with the latest Flycast Dojo prereleases,
+						service customizations, and extra Lua scripts, check out the FC+ Installer <b>(<a
+								href="https://github.com/blueminder/fcplus-windows-installer?tab=readme-ov-file#-fc-windows-installer">Windows</a>,
+							<a href="https://github.com/blueminder/fcplus-linux-installer">Linux</a>)</b>.
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<input type="radio" name="tabs" id="tab_arkadyzja">
+		<label for="tab_arkadyzja"><img src="arkadyzja.png" width="25" style="padding-right: 5px;"> <span style="vertical-align: top;">Arkadyzja</span></label>
+		<div class="tab">
+			<table>
+				<tr>
+					<td>
+						<a href="flycast_dojo_arkadyzja.png"><img src="flycast_dojo_arkadyzja.png" width="350"></a>
+					</td>
+					<td class="desc-right">
+						Bundled in <b><a
+								href="https://www.honmaru.pl/en/arkadyzja-0-0-14-latest-flycast-dojo-added/">Arkadyzja</a></b>,
+						a new matchmaking platform, initially created for DuckStation multiplayer, that provides
+						matchmaking and a slick game management interface running on top of Flycast Dojo's existing P2P
+						& Relay features.
+					</td>
+				</tr>
+			</table>
+		</div>
+
+	</div>
+
+	<h3>Support</h3>
+	<p>
+		Need help? Check out the <b><a
+				href="https://dojo-project.gitbook.io/flycast-dojo/overview/frequently-asked-questions"><img
+					src="circle-question.svg" width="15"> Frequently Asked
+				Questions</a></b>.<br>
+		For Fightcade-specific questions, head to <b>#🎮-flycast-emulator</b> on the <b>
+			<a href="https://discord.gg/EyERRSg"><img src="discord.svg" width="15"> Fightcade Discord</a></b>.<br>
+		For emulation and general netplay questions, chat with us on the <b><a href="https://discord.gg/X8YWP8w"><img
+					src="discord.svg" width="15"> Flycast Discord</a></b>.<br>
+		For Flycast Dojo and its associated projects, chat with us on the <b><a href="https://discord.gg/X8YWP8w"><img
+					src="discord.svg" width="15"> Dojo Project Discord</a></b>.<br>
+		
+	</p>
+
+	<p><b>
+			<a href="https://github.com/blueminder/flycast-dojo"><img src="github-mark.svg" width="18"> GitHub</a> |
+			<a href="https://dojo-project.gitbook.io/flycast-dojo/"><img src="book.svg" width="15"> Documentation</a>
+		</b></p>
+</body>
+
+</html>

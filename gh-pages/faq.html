@@ -1,0 +1,240 @@
+<html>
+	<head>
+		<title>Flycast Dojo - FAQ</title>
+		<style type="text/css">
+h1 {
+	margin-bottom: 0;
+}
+		
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.tabs label {
+	order: 1;
+	display: block;
+	padding: 1rem 2rem;
+	margin-right: 0.2rem;
+	cursor: pointer;
+	background: #fff;
+	font-weight: bold;
+	transition: background ease 0.2s;
+	width: 245px;
+}
+
+.tabs .tab {
+	order: 99;
+	width: 900px;
+	height: 394px;
+	display: none;
+	padding: 1rem;
+	background: #ffb4b4;
+	text-align: center;
+}
+
+.tabs input[type="radio"] {
+	display: none;
+}
+
+.tabs input[type="radio"]:checked + label {
+	background: #ffb4b4;
+}
+
+.tabs input[type="radio"]:checked + label + .tab {
+	display: block;
+}
+
+@media (max-width: 45em) {
+	.tabs .tab,
+	.tabs label {
+		order: initial;
+	}
+	.tabs label {
+		width: 100%;
+		margin-right: 0;
+		margin-top: 0.2rem;
+	}
+}
+
+a.small {
+	font-size: 10px;
+	font-weight: bold;
+	vertical-align: super;
+}
+
+body {
+	background: #eee;
+	min-height: 100vh;
+	box-sizing: border-box;
+	padding-top: 10vh;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", serif; 
+	font-weight: 300;
+	line-height: 1.5;
+	max-width: 60rem;
+	margin: 0 auto;
+	font-size: 112%;
+}
+		</style>
+	</head>
+	<body>
+<h1>Frequently Asked Questions</h1>
+
+<p>
+	<a href="#install">How do I install Flycast Dojo?</a><br />
+	<a href="#romset">What is the preferred romset?</a><br />
+	<a href="#where-bios">Where do I put my BIOS & ROMs?</a><br />
+	<a href="#button-6">When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</a><br />
+	<a href="#analog-joy">How do I map my analog joystick to the directions?</a><br />
+	<a href="#input-latency">What are the optimal settings for the least input latency? / Why is the frame pacing weird on my computer?</a><br />
+	<a href="#training-x">Does game X have a training mode?</a><br />
+	<a href="#training-behavior">Using the internal training mode, why do enemies still attack me/why is my health bar diminishing?</a><br />
+	<a href="#feature-add">When will feature X be added?</a><br />
+	<a href="#stuck-start-networking">My screen is stuck on STARTING NETWORK. What do I do?</a><br />
+	<a href="#match-code-connect">I can't establish a connection using Match Codes, is there anything I can do about this?</a><br />
+	<a href="#can-join-cant-host">Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</a><br />
+	<a href="#can-host-cant-join">Why am I able to host games just fine, but I am unable join others?</a><br />
+	<a href="#set-defaults">How do I reset my settings to their defaults?</a><br />
+	<a href="#cant-click">My mouse and keyboard are unable to make any menu selections. What do I do?</a><br />
+	<a href="#no-video">My video is just a blank screen, but I am still able to hear sound. How do I fix this?</a><br />
+	<a href="#desync">Why is my game desyncing? What can I do about it?</a><br />
+	<a href="#crash">Flycast crashes on launch. What do I do?</a><br />
+	<a href="#wifi">I'm playing on WiFi and my game performance is crap. Is there anything I can do to improve performance?</a><br />
+	<a href="#more-wifi">Wi-Fi has always worked fine for me. / My landlord won't let me access the router. / (Insert insistent Wi-Fi excuse here.)</a>
+</p>
+
+<h3></b><a name="install">How do I install Flycast Dojo?</a></h3>
+
+<p>In broad strokes:
+<ol>
+	<li>Place your arcade BIOSes (<code>awbios.zip</code>, <code>naomi.zip</code>) and Dreamcast/Atomiswave/NAOMI ROMs into the provided <code>ROMs</code> folder.</li>
+	<li>Map your controls. Make sure your input method of choice is set to <b>Port A</b>.</li>
+	<li>For GGPO support, retrieve a savestate for your game. Right-click on its menu entry and selecting <b>Download Savestate</b>. This ensures a synced session with your opponent. If a savestate isn't available, you should <a href="https://wiki.gbl.gg/w/Help:Flycast_GGPO#Creating_a_save_state_for_netplay">generate one</a>.</li>
+</ol></p>
+	
+<p>Once you have done this, you should be ready to host or join any games. Specifics may be found in the <a href="https://github.com/blueminder/flycast-dojo#readme">README</a>, or in the rest of this FAQ.</p>
+
+<img src="dojo-install.gif" alt="Animated Flycast Dojo Install Procedure" height="418">
+
+<h3></b><a name="romset">What is the preferred romset?</a></h3>
+
+<p>For the BIOSes, we use <code>awbios.zip</code> and <code>naomi.zip</code> validated against RetroArch's <a href="https://github.com/libretro/libretro-database/blob/master/dat/System.dat">System.dat</a> file. This should serve as a standard for all system BIOSes used. Dreamcast games use Flycast's built-in HLE BIOS by default.</p>
+
+<p>As a general rule, players use the <b>MAME 0.218</b> romset for NAOMI games, and the <b>MAME 0.226</b> romset for Atomiswave games. For Dreamcast games, CHD files based on the Redump set are preferred. You may also look at the included <code>flycast_roms.json</code> file to see a list of filenames and checksums corresponding with the current preferred ROMs as well.</p>
+
+<p>For more information on specific games, try asking on the relevant <a href="community.html">Community Discord</a>. They typically know what is best for competition play at any point in time.</p>
+
+<a name="where-bios" /><h3>Where do I put my BIOS & ROMs?</h3>
+
+<p>For the BIOS, be sure to add <code>awbios.zip</code> for Atomiswave games or <code>naomi.zip</code> for NAOMI games into your <code>data</code> directory in the folder you have Flycast installed. In your settings, the folder Flycast is installed in is your <b>Home Directory</b>.</p>
+
+<p>If you are running Fightcade, you can find the ROMs folder at <code>Fightcade\emulator\flycast\ROMs</code>. Non-Fightcade users can use the included <code>ROMs</code> directory, or specify any other folder as a <b>Content Directory</b> in the settings.</p>
+
+<a name="button-6" /><h3>When I map my controller, why am I unable to map Button 6 (Hard Kick / 2nd Assist) ?</h3>
+
+<p>It's likely that the button you are trying to set is configured as an axis input on your controller. On the right hand side of the controller mapping screen, there is a section called <b>Analog Axes</b>. Find the button you want to map, and try to assign it again.</p>
+
+<a name="analog-joy" /><h3>How do I map my analog joystick to the directions?</h3>
+
+<p>On the <b>Analog Axes</b> side of your controller mapping screen, find <b>DPad X</b> for horizontal movement, and <b>DPad Y</b> for vertical movement. Once you click on <b>Map</b>, flick the joystick in the direction you want to map.</p>
+
+<a name="input-latency" /><h3>What are the optimal settings for the least input latency? / Why is the frame pacing weird on my computer?</h3>
+
+<p>To improve input latency, and to ensure the correct frame pacing for monitors that run above 60Hz, you can disable VSync in your Flycast video settings and set <code>flycast.exe</code> to be limited to <b>59.94 frames per second</b>, either in your video card settings or an FPS limiter like <a href="https://www.guru3d.com/content-page/rivatuner.html">Rivatuner Statistics Server</a>. Just make sure that you and your opponent are operating at approximately <b>59.94 FPS</b> to ensure proper syncing in netplay. We hope to eventually make this an internal option.</p>
+
+<a name="training-x" /><h3>Does game X have a training mode?</h3>
+
+<p>If you're playing a NAOMI or Atomiswave game, it's likely not the case by default (Akatsuki Blitzkampf Ausf Achse appears to be the exception to this rule). If there is a Dreamcast port of the game though, your best bet is finding that version and running it for training.<p>
+
+<p>Flycast Dojo itself has a universal training mode to help you lab in games that may or may not have one built-in, allowing you to switch players on the same controller with a single keystroke, record/play/loop inputs, load RetroArch cheat files and savestates at will. You can access this through the Menu button (TAB by default) or through keyboard/controller mappings. For details on how to use this, check out the <a href="https://github.com/blueminder/flycast-dojo#training-mode">Training Mode section</a> of the <a href="https://github.com/blueminder/flycast-dojo#readme">README</a>.</p>
+
+<a name="training-behavior" /><h3>Using the internal training mode, why do enemies still attack me/why is my health bar diminishing?</h3>
+
+<p>Flycast Dojo's internal universal training mode, being applicable to all games, isn't magical. You need to load the relevant cheat files or savestate for your game to get it to the state you want. If applicable, using it in tandem with a game's existing training mode would give you the largest set of features.</p>
+
+<a name="feature-add" /><h3>When will feature X be added?</h3>
+
+<p>When it's ready.</p>
+	
+<a name="stuck-start-networking" /><h3>My screen is stuck on STARTING NETWORK. What do I do?</h3>
+
+<p>This is most likely a networking issue. The problem can either be on your end, or your opponent's, with the culprit usually being your router or something in the connection between you. Refer to the question below for troubleshooting tips.</p>
+
+<a name="match-code-connect" /><h3>I can't establish a connection using Match Codes/Public IP, is there anything I can do about this?</h3>
+
+<p>In some edge cases, Match Codes don't work out of the box if someone is behind a double NAT or has a noncompliant router. Sometimes this can be resolved by switching who is hosting and who is joining. If that doesn't work, try the following:
+
+<ol>
+	<li>Make sure Windows Firewall isn't blocking any connections to/from Flycast Dojo. The easiest way to determine this is to have you and your opponent temporarily disable Windows Firewall and start a game. If it ends up working, then be sure to <a href="https://www.tenforums.com/tutorials/70903-add-remove-allowed-apps-through-windows-firewall-windows-10-a.html">add a rule</a> to not have it get in your way in the future.</li>
+	<li>Keep Internet Matchmaking enabled and try forwarding <b>UDP Port 19713</b> for GGPO and <b>UDP Port 6000</b> for the initial handshake/delay netcode to your machine from your router.<br /></li>
+	<li>Disable Internet Matchmaking and try using your opponent's Public IP. Even in setups where routers get in the way, this has been shown to work in some setups.<br /></li>
+	<li>If all else fails, you can disable Internet Matchmaking in the settings and use IP entry over a virtual LAN like Radmin VPN or ZeroTier. This would be a last resort, but should consistently work.</li>
+</ol></p>
+
+<a name="can-join-cant-host" /><h3>Why is my opponent unable to join a game when I challenge them even though I am able to accept challenges just fine?</h3>
+
+<a name="can-host-cant-join" /><h3>Why am I able to host games just fine, but I am unable join others?</h3>
+
+<p>It's possible that your computer's firewall is disallowing Flycast Dojo from sending or receiving connections. Check your Windows Firewall and make sure that <code>flycast.exe</code> is able to connect to all networks and that connections are allowed, both inbound and outbound.</p>
+
+<a name="no-video" /><h3>My video is just a blank screen, but I am still able to hear sound. How do I fix this?</h3>
+
+<p>In your <b>Video</b> settings, try switching between OpenGL, Vulkan, or DirectX rendering. To toggle this, check your Video settings and change the <b>Graphics API</b>. Ideal settings depend on your video card. DirectX is intended for older PCs and is largely around as a fallback for older PCs.</p>
+
+<a name="set-defaults" /><h3>How do I reset my settings to their defaults?</h3>
+
+<a name="cant-click" /><h3>My mouse and keyboard are unable to make any menu selections. What do I do?</h3>
+
+<p>Delete the <code>emu.cfg</code> file in your flycast directory. If you are using Fightcade, you can find it at <code>Fightcade\emulator\flycast\emu.cfg</code>. One will be regenerated the next time you launch Flycast.</p>
+
+<p>As of Flycast Dojo 0.4.1.0, upstream changes by Flycast have changed how mice and keyboards are defined. Deleting the <code>emu.cfg</code> redefines them upon regeneration.</p>
+
+<a name="desync" /><h3>Why is my game desyncing? What can I do about it?</h3>
+
+<p>Games desynchronize when your memory and opponent's memory have mismatched, leading to two different game states. Common causes include not loading the same ROM or BIOS, having different savestates or dipswitches, or using different builds of Flycast Dojo.</p>
+
+<p>First, make sure that you and your opponent are using the same version of the software. What version of Flycast Dojo you use determines the common arcade dipswitches/VMUs are, as well as individual software builds. Next, <a href="https://github.com/blueminder/flycast-dojo/blob/master/README.md#md5-checksum-calculation--validation">validate your ROM against your opponent's ROM</a>.</p>
+
+<p>If you are on Wi-Fi, the performance hit of it being <a href="https://en.wikipedia.org/wiki/Duplex_(telecommunications)#Half_duplex">half duplex</a> has occasionally been known to cause desyncs between clients. It is recommended that you play on a wired network to ensure synchronization, and to generally not have a bad time.</p>
+
+<p>In general, anything that can lead to a different memory state than your opponent would contribute to desyncs. For more information, check out <a href="https://www.smashladder.com/guides/view/26pv/desync-troubleshooting-guide">E2xD's Desync Troubleshooting Guide</a>. While Smash is a different scene, the causes for desyncs are much the same.</p>
+
+<a name="crash" /><h3>Flycast crashes on launch. What do I do?</h3>
+
+<p>Here are a few steps to help troubleshoot and diagnose what's going on.
+
+<ol>
+	<li>Delete the <code>emu.cfg</code> file.</li>
+	<p>Sometimes, Fightcade upgrades or incompatible defaults in <code>emu.cfg</code> may cause crashes. Just delete <code>emu.cfg</code> from the same directory as <code>flycast.exe</code>. A new one will be generated the next time Flycast is launched. For Fightcade users, this will be in the <code>Fightcade\emulator\flycast</code> folder. Open Flycast after deleting the file and verify that the emulator works.</p>
+
+	<li>Re-assign or delete controller mappings.</li>
+	<p>Device-specific controls were fixed in a recent bug, but may be a culprit older mappings still exist. Be sure to set your controller mappings for both "Dreamcast Controls" and "Arcade Controls". You may also want to try deleting the contents of the <code>mappings/</code> directory and mapping your controls before launching a game.</p>
+
+	<li>(Online Games & Replays) Check Windows Firewall.</li>
+	<p>If a session isn't established within Fightcade, the client will automatically close Flycast. The firewall may be the culprit in this instance. To diagnose this, you can either temporarily disable Windows Firewall and try to start a replay or connect with your opponent. If this works, add a rule in Windows Firewall allowing Flycast to use your network.</p>
+
+	<li>Send Breakpad dump.</li>
+	<p>Check your <code>%USERPROFILE%\AppData\Local\Temp</code> directory for a file ending in <code>.dmp</code>. If one exists at the time of the crash, send it over to us in the Flycast Discord so that we can determine the issue. If one isn't available, then it's likely that a crash technically didn't happen, but is still likely unintended behavior.</p>
+	
+	<li>Report crash log.</li>
+	<p>If none of the steps above worked, please run <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/debugview">DebugView</a>, replicate the crash, and send the log to me through the <code>#flycast-emulator</code> channel on the <a href="https://discord.gg/EyERRSg">Fightcade Discord</a> or via a <a href="https://github.com/blueminder/flycast-dojo/issues">GitHub issue</a>. Be sure to include Flycast Dojo version, your hardware specs and OS version.</p>
+</ol></p>
+
+<a name="wifi"><h3>I'm playing on Wi-Fi and my game performance is crap. Is there anything I can do to improve performance?</h3>
+
+<p>Don't play on Wi-Fi. Buy an ethernet cord, or get a powerline adapter if you don't want wires running across your house.</p>
+
+<p>Wi-Fi is <a href="https://en.wikipedia.org/wiki/Duplex_(telecommunications)#Half_duplex">half duplex</a>, meaning that it can only send or receive packets at one time. This is in contrast with Ethernet which is <a href="https://en.wikipedia.org/wiki/Duplex_(telecommunications)#Full-duplex">full duplex</a>, meaning both sending and receiving can happen at the same time. Wi-Fi also has a tendency to have ping spikes throughout a session, leading to speed issues when a connection isn't consistent.</p>
+
+<p>Other games and emulators with rollback can sometimes mitigate network issues presented by Wi-Fi. In spite of this, it's generally recommended to have a wired connection when playing online, no matter what you're playing.</p>
+
+<a name="more-wifi"><h3>Wi-Fi has always worked fine for me. / My landlord won't let me access the router. / (Insert insistent Wi-Fi excuse here.)</h3>
+
+<p><i>(These are less like questions and more like statements, but I definitely get these frequently. Please stop pestering me with this.)</i></p>
+
+<p>As a general rule, while you may not feel the difference, your opponent most certainly does. This is why Fightcade and many popular games have a Wi-Fi detector. Everyone's trying to avoid you. In general though, the laws of physics and protocol limitations do not care about your excuses. Sorry.</p>
+
+
+<p><a href="index.html">Back Home</a></p>
+</body>
+</html>
