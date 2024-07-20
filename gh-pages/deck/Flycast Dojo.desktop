@@ -1,0 +1,19 @@
+[Desktop Entry]
+Categories=Game;Emulator;ArcadeGame
+Comment[en_US]=Flycast Dojo
+Comment=Flycast Dojo
+Exec=env FLYCAST_ROOT=/home/deck/Fightcade/emulator/flycast /home/deck/Fightcade/emulator/flycast/flycast.elf
+GenericName[en_US]=
+GenericName=
+Icon=draw-spiral
+MimeType=
+Name[en_US]=Flycast Dojo
+Name=Flycast Dojo
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+Version=1.0
+X-KDE-SubstituteUID=false
+X-KDE-Username=
