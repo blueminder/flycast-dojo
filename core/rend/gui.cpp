@@ -1163,7 +1163,7 @@ static void gui_display_commands()
     	DisabledScope scope(settings.content.path.empty() || settings.network.online);
 
 		// Load State
-		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Load State", ScaledVec2(120, 50)) && !scope.isDisabled())
 		{
 			gui_state = GuiState::Closed;
 			dc_loadstate(config::SavestateSlot);
@@ -1172,7 +1172,7 @@ static void gui_display_commands()
 
 		// Slot #
 		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+		if (ImGui::Button(slot.c_str(), ImVec2(60 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
 			ImGui::OpenPopup("slot_select_popup");
 		if (ImGui::BeginPopup("slot_select_popup"))
 		{
@@ -1187,7 +1187,7 @@ static void gui_display_commands()
 		ImGui::SameLine();
 
 		// Save State
-		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Save State", ScaledVec2(120, 50)) && !scope.isDisabled())
 		{
 			gui_state = GuiState::Closed;
 			dc_savestate(config::SavestateSlot);
@@ -1195,6 +1195,40 @@ static void gui_display_commands()
     }
 
 	} // if !config::DojoEnable
+
+	if (settings.dojo.training)
+	{
+		if (ImGui::Button("Load Recordings", ScaledVec2(120, 50)))
+		{
+			dojo.LoadRecordSlotsFile();
+		}
+
+		ImGui::SameLine();
+		//ImGui::NextColumn();
+
+		// Slot #
+		std::string slot = "File " + std::to_string((int)config::RecSlotFile + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(60 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+			ImGui::OpenPopup("rec_slot_select_popup");
+		if (ImGui::BeginPopup("rec_slot_select_popup"))
+		{
+			for (int i = 0; i < 10; i++)
+				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::RecSlotFile == i, 0,
+						ImVec2(ImGui::CalcTextSize("File 8").x, 0))) {
+					config::RecSlotFile = i;
+					SaveSettings();
+				}
+			ImGui::EndPopup();
+		}
+		ImGui::SameLine();
+
+		if (ImGui::Button("Save Recordings", ScaledVec2(120, 50)))
+		{
+			dojo.SaveRecordSlotsFile();
+		}
+		
+		ImGui::NextColumn();
+	}
 
 	ImGui::Columns(2, "buttons", false);
 

@@ -1456,6 +1456,20 @@ void DojoSession::ProcessBody(unsigned int cmd, unsigned int body_size, const ch
 		else if (player == 1)
 			final_p2_wins++;
 	}
+	else if (cmd == RECORD_BUFFER)
+	{
+		unsigned int slot_index = MessageReader::ReadInt((const char*)buffer, offset);
+		unsigned int slot_size = MessageReader::ReadInt((const char*)buffer, offset);
+
+		record_slot[slot_index].clear();
+		recorded_slots.insert(slot_index);
+
+		while (*offset < body_size)
+		{
+			std::string frame = MessageReader::ReadContinuousData((const char*)buffer, offset, FRAME_SIZE);
+			record_slot[slot_index].push_back(frame);
+		}
+	}
 }
 
 void DojoSession::LoadReplayFileV1(std::string path)
@@ -2208,6 +2222,77 @@ void DojoSession::PlayRecording(int slot)
 		}
 		next_playback_frame = target_frame;
 		playing_input = false;
+	}
+}
+
+void join(const std::vector<std::string>& v, char c, std::string& s) {
+
+   s.clear();
+
+   for (std::vector<std::string>::const_iterator p = v.begin();
+        p != v.end(); ++p) {
+      s += *p;
+      if (p != v.end() - 1)
+        s += c;
+   }
+}
+
+void DojoSession::SaveRecordSlotsFile()
+{
+	std::string filename = get_readonly_data_path(get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec");
+
+	std::ofstream fout(filename,
+			std::ios::out | std::ios::binary | std::ios_base::app);
+
+
+	for (unsigned int i : recorded_slots)
+	{
+		MessageWriter record_msg;
+		record_msg.AppendHeader(0, RECORD_BUFFER);
+		record_msg.AppendInt(i);
+		record_msg.AppendInt(record_slot[i].size());
+
+		for (auto s: record_slot[i])
+		{
+			record_msg.AppendContinuousData(s.data(), FRAME_SIZE);
+		}
+
+		std::vector<unsigned char> message = record_msg.Msg();
+		fout.write((const char*)&message[0], message.size());
+	}
+
+	fout.close();
+}
+
+void DojoSession::LoadRecordSlotsFile()
+{
+	std::string filename = get_readonly_data_path(get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec");
+
+	std::ifstream fin(filename,
+		std::ios::in | std::ios::binary);
+
+	char header_buf[HEADER_LEN] = { 0 };
+	std::vector<unsigned char> body_buf;
+
+	recorded_slots.clear();
+
+	while (fin)
+	{
+		// read header
+		memset((void*)header_buf, 0, HEADER_LEN);
+		fin.read(header_buf, HEADER_LEN);
+
+		unsigned int body_size = HeaderReader::GetSize((unsigned char*)header_buf);
+		unsigned int seq = HeaderReader::GetSeq((unsigned char*)header_buf);
+		unsigned int cmd = HeaderReader::GetCmd((unsigned char*)header_buf);
+
+		// read body
+		body_buf.resize(body_size);
+		fin.read((char*)body_buf.data(), body_size);
+
+		int offset = 0;
+		
+		dojo.ProcessBody(cmd, body_size, (const char*)body_buf.data(), &offset);
 	}
 }
 

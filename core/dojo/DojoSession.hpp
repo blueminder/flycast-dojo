@@ -278,6 +278,9 @@ public:
 	u32 next_playback_frame;
 	int record_player;
 
+	void SaveRecordSlotsFile();
+	void LoadRecordSlotsFile();
+
 	bool player_switched;
 	int current_record_slot;
 

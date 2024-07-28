@@ -9,6 +9,7 @@
 #define PLAYER_INFO 5
 #define MAPLE_BUFFER 6
 #define PLAYER_WIN 7
+#define RECORD_BUFFER 8
 
 #define HEADER_LEN 12
 

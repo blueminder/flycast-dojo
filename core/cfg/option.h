@@ -602,6 +602,8 @@ extern Option<bool> HideKey;
 
 extern Option<bool> CopyMissingSharedMem;
 
+extern Option<int, false> RecSlotFile;
+
 // Maple
 
 extern Option<int> MouseSensitivity;
