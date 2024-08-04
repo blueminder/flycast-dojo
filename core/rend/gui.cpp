@@ -3070,6 +3070,8 @@ static void gui_display_content()
 		dojo_gui.invoke_spectate_popup = false;
 		config::Receiving = false;
 		cfgSetVirtual("dojo", "Receiving", "no");
+		commandLineStart = false;
+		dojo.commandLineStart = false;
 	}
 
 	ImGui::SameLine();
