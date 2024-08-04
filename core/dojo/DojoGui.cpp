@@ -539,6 +539,7 @@ void DojoGui::gui_display_host_join_select(float scaling)
 				dc_reset(true);
 
 				config::NetworkServer.set("");
+				config::EnableMatchCode = false;
 			}
 		}
 	}
