@@ -233,6 +233,7 @@ Option<bool> HideKey("HideKey", false, "dojo");
 Option<bool> CopyMissingSharedMem("CopyMissingSharedMem", true, "dojo");
 
 Option<int, false> RecSlotFile("RecSlotFile");
+Option<bool> MultiOutputStreamTxt("MultiOutputStreamTxt", false, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

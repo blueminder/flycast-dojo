@@ -1293,14 +1293,55 @@ std::time_t DojoFile::UtcToTime(std::string utc_time)
 	return time;
 }
 
+void DojoFile::AssignMultiOutputStreamIndex()
+{
+	std::vector<int> output_stream_indices;
+
+	auto out_dir_path = get_writable_config_path("out");
+	if (!ghc::filesystem::exists(out_dir_path))
+		ghc::filesystem::create_directories(out_dir_path);
+
+	for (const auto &entry : ghc::filesystem::directory_iterator(out_dir_path))
+	{
+		if (entry.is_directory())
+		{
+			std::string leaf_str = entry.path().filename().string();
+			try
+			{
+				int leaf_int = std::stoi(leaf_str);
+				output_stream_indices.push_back(leaf_int);
+			}
+			catch (const std::exception &e)
+			{
+				continue;
+			}
+		}
+	}
+
+	if (output_stream_indices.empty())
+	{
+		multi_stream_txt_idx = 1;
+	}
+	else
+	{
+		auto max_idx_it = max_element(output_stream_indices.begin(), output_stream_indices.end());
+		multi_stream_txt_idx = *max_idx_it + 1;
+	}
+}
+
 void DojoFile::WriteStringToOut(std::string name, std::string contents)
 {
 #ifndef __ANDROID__
-	auto dir_name = get_writable_config_path("out/");
-	if (!ghc::filesystem::exists(dir_name))
-		ghc::filesystem::create_directory(dir_name);
+	std::string dir_name;
+	if (config::MultiOutputStreamTxt)
+		dir_name = get_writable_config_path("out") + "/" + std::to_string(multi_stream_txt_idx);
+	else
+		dir_name = get_writable_config_path("out");
 
-	std::string path = dir_name + name + ".txt";
+	if (!ghc::filesystem::exists(dir_name))
+		ghc::filesystem::create_directories(dir_name);
+
+	std::string path = dir_name + "/" + name + ".txt";
 	std::ofstream fout(path);
 	fout << contents;
 	fout.close();

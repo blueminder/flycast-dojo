@@ -924,6 +924,9 @@ void gui_start_game(const std::string& path)
 
 	if (config::OutputStreamTxt)
 	{
+		if (config::MultiOutputStreamTxt)
+			dojo_file.AssignMultiOutputStreamIndex();
+
 		dojo_file.WriteStringToOut("p1name", dojo.player_1);
 		dojo_file.WriteStringToOut("p2name", dojo.player_2);
 		dojo_file.WriteStringToOut("game", dojo.game_name);

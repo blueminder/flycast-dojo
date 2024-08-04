@@ -603,6 +603,7 @@ extern Option<bool> HideKey;
 extern Option<bool> CopyMissingSharedMem;
 
 extern Option<int, false> RecSlotFile;
+extern Option<bool> MultiOutputStreamTxt;
 
 // Maple
 

@@ -133,6 +133,7 @@ public:
 
 	void RefreshFileDefinitions();
 
+	void AssignMultiOutputStreamIndex();
 	void WriteStringToOut(std::string name, std::string contents);
 	std::string GetLocalNetSaveCommit(std::string game_save_prefix);
 
@@ -144,6 +145,8 @@ public:
 	bool not_found;
 
 	void CopyMissingSharedArcadeMem(std::string game_mem_path);
+
+	int multi_stream_txt_idx = 0;
 };
 
 extern DojoFile dojo_file;
