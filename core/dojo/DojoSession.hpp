@@ -253,7 +253,7 @@ public:
 
 	bool recording;
 	bool recording_started = false;
-	std::vector<std::string> record_slot[3];
+	std::vector<std::string> record_slot[6];
 	std::set<int> recorded_slots;
 
 	void ToggleRecording(int slot);
