@@ -2996,6 +2996,7 @@ static void gui_display_content()
 	}
 	else if (dojo_gui.item_current_idx == 3)
 	{
+		dojo_gui.invoke_spectate_popup = true;
 		settings.dojo.training = false;
 		cfgSetVirtual("dojo", "Receiving", "yes");
 
@@ -3066,6 +3067,9 @@ static void gui_display_content()
 		SaveSettings();
 		dojo_gui.last_item_current_idx = dojo_gui.item_current_idx;
 		config::SpectateKey = "";
+		dojo_gui.invoke_spectate_popup = false;
+		config::Receiving = false;
+		cfgSetVirtual("dojo", "Receiving", "no");
 	}
 
 	ImGui::SameLine();
@@ -3302,7 +3306,7 @@ if (config::EnableLobby && !config::Receiving && !settings.dojo.training)
 							std::string gamePath(game.path);
 
 							scanner.get_mutex().unlock();
-							if (cfgLoadBool("dojo", "Receiving", false) && config::SpectateKey.get().empty())
+							if (dojo_gui.invoke_spectate_popup && cfgLoadBool("dojo", "Receiving", false) && config::SpectateKey.get().empty())
 							{
 								dojo_gui.invoke_spectate_key_popup(game.path);
 							}

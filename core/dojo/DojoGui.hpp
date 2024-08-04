@@ -127,6 +127,8 @@ public:
 
 	void invoke_spectate_key_popup(std::string game_path);
 	void spectate_key_popup();
+
+	bool invoke_spectate_popup = false;
 };
 
 extern DojoGui dojo_gui;

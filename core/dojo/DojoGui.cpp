@@ -3520,6 +3520,9 @@ void DojoGui::spectate_key_popup()
 		sprintf(cancel_btn_txt, "%s Cancel", ICON_FA_CIRCLE_XMARK);
 		if (ImGui::Button(cancel_btn_txt))
 		{
+			dojo_gui.invoke_spectate_popup = false;
+			config::Receiving = false;
+			cfgSetVirtual("dojo", "Receiving", "no");
 			ImGui::CloseCurrentPopup();
 			gui_state = GuiState::Main;
 			settings.content.path = "";
