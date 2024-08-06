@@ -416,6 +416,26 @@ void CheatManager::loadCheatFile(const std::string& filename)
 #endif
 }
 
+int CheatManager::enabledCheatCount()
+{
+	int enabledCheatCount = 0;
+	for (int i = 0; i < cheatCount(); i++)
+	{
+		if (cheatEnabled(i))
+		{
+			enabledCheatCount++;
+		}
+	}
+	return enabledCheatCount;
+}
+
+void CheatManager::reset()
+{
+	cheats.clear();
+	setActive(false);
+	cfgSaveStr("cheats", gameId, "");
+}
+
 void CheatManager::reset(const std::string& gameId)
 {
 	widescreen_cheat = nullptr;

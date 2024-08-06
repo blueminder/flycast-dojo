@@ -129,6 +129,8 @@ public:
 	void spectate_key_popup();
 
 	bool invoke_spectate_popup = false;
+
+	bool net_state_selected = false;
 };
 
 extern DojoGui dojo_gui;

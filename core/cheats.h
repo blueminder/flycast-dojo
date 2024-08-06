@@ -70,11 +70,13 @@ class CheatManager
 {
 public:
 	void reset(const std::string& gameId);
+	void reset();
 	void apply();
 	size_t cheatCount() const { return cheats.size(); }
 	const std::string& cheatDescription(size_t index) const { return cheats[index].description; }
 	bool cheatEnabled(size_t index) const { return cheats[index].enabled; }
 	void enableCheat(size_t index, bool enabled) { cheats[index].enabled = enabled; }
+	int enabledCheatCount();
 	void loadCheatFile(const std::string& filename);
 	void saveCheatFile(const std::string& filename);
 	// Returns true if using 16:9 anamorphic screen ratio

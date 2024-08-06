@@ -59,6 +59,8 @@
 
 #include "rend/gui_settings.h"
 
+#include "cheats.h"
+
 GuiSettings gui_settings;
 
 bool game_started;
@@ -1155,9 +1157,12 @@ static void gui_display_commands()
    	imguiDriver->displayVmus();
 
     centerNextWindow();
-    ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+    ImGui::SetNextWindowSize(ScaledVec2(430, 0));
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	std::string net_state_path = get_savestate_file_path(0, false);
+	net_state_path.append(".net");
 
 	if (!config::DojoEnable)
 	{
@@ -1165,23 +1170,79 @@ static void gui_display_commands()
     {
     	DisabledScope scope(settings.content.path.empty() || settings.network.online);
 
+		bool net_save_exists = false;
+
+		if (settings.dojo.training && dojo_gui.net_state_selected)
+		{
+
+			if(ghc::filesystem::exists(net_state_path))
+				net_save_exists = true;
+
+			if(!net_save_exists)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+		}
+
 		// Load State
-		if (ImGui::Button("Load State", ScaledVec2(120, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Load State", ScaledVec2(160, 40)) && !scope.isDisabled())
 		{
 			gui_state = GuiState::Closed;
-			dc_loadstate(config::SavestateSlot);
+			if (settings.dojo.training && dojo_gui.net_state_selected)
+				dc_loadstate(net_state_path);
+			else
+				dc_loadstate(config::SavestateSlot);
+		}
+
+		if (settings.dojo.training && dojo_gui.net_state_selected && !net_save_exists)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
 		}
 		ImGui::SameLine();
 
+		char net_ico_txt[64];
+		sprintf(net_ico_txt, "%s  Net", ICON_FA_GLOBE);
+	
 		// Slot #
-		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-		if (ImGui::Button(slot.c_str(), ImVec2(60 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+		std::string slot;
+		if (settings.dojo.training && dojo_gui.net_state_selected)
+		{
+
+			if(ghc::filesystem::exists(net_state_path))
+				net_save_exists = true;
+
+			if(!net_save_exists)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+
+			slot = std::string(net_ico_txt);
+		}
+		else
+		{
+			char file_ico_txt[64];
+			sprintf(file_ico_txt, "%s  ", ICON_FA_FLOPPY_DISK);
+			slot = std::string(file_ico_txt) + std::to_string((int)config::SavestateSlot + 1);
+		}
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 40 * settings.display.uiScale)))
 			ImGui::OpenPopup("slot_select_popup");
 		if (ImGui::BeginPopup("slot_select_popup"))
 		{
+			if (settings.dojo.training)
+			{
+				if (ImGui::Selectable("Net", dojo_gui.net_state_selected, 0,
+						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					dojo_gui.net_state_selected = true;
+				}
+			}
+
 			for (int i = 0; i < 10; i++)
 				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
 						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					dojo_gui.net_state_selected = false;
 					config::SavestateSlot = i;
 					SaveSettings();
 				}
@@ -1189,11 +1250,21 @@ static void gui_display_commands()
 		}
 		ImGui::SameLine();
 
+		if (settings.dojo.training && dojo_gui.net_state_selected)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
 		// Save State
-		if (ImGui::Button("Save State", ScaledVec2(120, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Save State", ScaledVec2(160, 40)) && !scope.isDisabled())
 		{
 			gui_state = GuiState::Closed;
 			dc_savestate(config::SavestateSlot);
+		}
+		if (settings.dojo.training && dojo_gui.net_state_selected)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
 		}
     }
 
@@ -1201,7 +1272,8 @@ static void gui_display_commands()
 
 	if (settings.dojo.training)
 	{
-		if (ImGui::Button("Load Recordings", ScaledVec2(120, 50)))
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.078f, 0.196f, 0.314f, 1.000f)); //dark blue
+		if (ImGui::Button("Load Record Slots", ScaledVec2(160, 40)))
 		{
 			dojo.LoadRecordSlotsFile();
 		}
@@ -1210,8 +1282,10 @@ static void gui_display_commands()
 		//ImGui::NextColumn();
 
 		// Slot #
-		std::string slot = "File " + std::to_string((int)config::RecSlotFile + 1);
-		if (ImGui::Button(slot.c_str(), ImVec2(60 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+		char film_ico_txt[64];
+		sprintf(film_ico_txt, "%s  ", ICON_FA_FILM);
+		std::string slot = std::string(film_ico_txt) + std::to_string((int)config::RecSlotFile + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 40 * settings.display.uiScale)))
 			ImGui::OpenPopup("rec_slot_select_popup");
 		if (ImGui::BeginPopup("rec_slot_select_popup"))
 		{
@@ -1225,10 +1299,11 @@ static void gui_display_commands()
 		}
 		ImGui::SameLine();
 
-		if (ImGui::Button("Save Recordings", ScaledVec2(120, 50)))
+		if (ImGui::Button("Save Record Slots", ScaledVec2(160, 40)))
 		{
 			dojo.SaveRecordSlotsFile();
 		}
+		ImGui::PopStyleColor();
 		
 		ImGui::NextColumn();
 	}
@@ -1243,52 +1318,45 @@ static void gui_display_commands()
 
 	if (settings.dojo.training)
 	{
-		std::string net_state_path = get_savestate_file_path(0, false);
-		net_state_path.append(".net");
-
-		bool save_exists = false;
-		if(ghc::filesystem::exists(net_state_path))
-			save_exists = true;
-
-		if(!save_exists)
-		{
-			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		}
-
-		if (ImGui::Button("Load Net State", ScaledVec2(150, 50)))
-		{
-			gui_state = GuiState::Closed;
-			dc_loadstate(net_state_path);
-		}
-
-		if(!save_exists)
-		{
-			ImGui::PopItemFlag();
-			ImGui::PopStyleVar();
-		}
-
-		displayed_button_count++;
-		ImGui::NextColumn();
-
-		std::ostringstream watch_text;
-		watch_text << "Controlling Player " << dojo.record_player + 1;
-		if (ImGui::Button(watch_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
-		{
-			dojo.TrainingSwitchPlayer();
-		}
-		displayed_button_count++;
-		ImGui::NextColumn();
+		char loop_ico_txt[64];
+		if (dojo.playback_loop)
+			sprintf(loop_ico_txt, "%s  ", ICON_FA_REPEAT);
+		else
+			sprintf(loop_ico_txt, "%s  ", ICON_FA_ARROW_RIGHT);
 
 		std::ostringstream playback_loop_text;
-		playback_loop_text << "Playback Loop ";
+		playback_loop_text << std::string(loop_ico_txt) << "Playback Loop ";
 		playback_loop_text << (dojo.playback_loop ? "On" : "Off");
-		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+
+		if (dojo.playback_loop)
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+		else
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red
+		if (ImGui::Button(playback_loop_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
 		{
 			dojo.playback_loop = (dojo.playback_loop ? false : true);
 			if (!dojo.playback_loop)
 				dojo.rnd_playback_loop = false;
 		}
+		ImGui::PopStyleColor();
+		displayed_button_count++;
+		ImGui::NextColumn();
+
+		char player_ico_txt[64];
+		if (dojo.record_player == 0)
+			sprintf(player_ico_txt, "%s ", ICON_FA_USER_LARGE);
+		else
+			sprintf(player_ico_txt, "%s ", ICON_FA_USER_GROUP);
+
+		std::ostringstream watch_text;
+		watch_text << std::string(player_ico_txt) << " Control Player " << dojo.record_player + 1;
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.054f, 0.196f, 0.054f, 1.000f)); //dark green
+		if (ImGui::Button(watch_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
+		{
+			dojo.TrainingSwitchPlayer();
+		}
+		ImGui::PopStyleColor();
 		displayed_button_count++;
 		ImGui::NextColumn();
 	}
@@ -1300,25 +1368,43 @@ static void gui_display_commands()
 		//if (!dojo.PlayMatch && !settings.dojo.training)
 			//ImGui::NextColumn();
 
+		char disp_ico_txt[64];
+		if ((dojo.PlayMatch && config::ShowReplayInputDisplay.get()) ||
+			(settings.dojo.training && config::ShowInputDisplay.get()))
+			sprintf(disp_ico_txt, "%s  ", ICON_FA_EYE);
+		else
+			sprintf(disp_ico_txt, "%s  ", ICON_FA_EYE_SLASH);
+
 		std::ostringstream input_display_text;
-		input_display_text << "Input Display ";
+		input_display_text << std::string(disp_ico_txt) << "Input Display ";
 
 		if (dojo.PlayMatch)
 		{
+			if (config::ShowReplayInputDisplay.get())
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+			else
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red
+
 			input_display_text << (config::ShowReplayInputDisplay.get() ? "On" : "Off");
-			if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+			if (ImGui::Button(input_display_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
 			{
 				config::ShowReplayInputDisplay = (config::ShowReplayInputDisplay.get() ? false : true);
 			}
 		}
 		else
 		{
+			if (config::ShowInputDisplay.get())
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+			else
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red
+
 			input_display_text << (config::ShowInputDisplay.get() ? "On" : "Off");
-			if (ImGui::Button(input_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+			if (ImGui::Button(input_display_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
 			{
 				config::ShowInputDisplay = (config::ShowInputDisplay.get() ? false : true);
 			}
 		}
+		ImGui::PopStyleColor();
 		displayed_button_count++;
 		ImGui::NextColumn();
 	}
@@ -1326,11 +1412,22 @@ static void gui_display_commands()
 #if !defined(__APPLE__)
 	if (settings.dojo.training && dojo.GetTrainingLua() != "")
 	{
-		std::ostringstream lua_display_text;
-		lua_display_text << "Training Lua ";
+		char lua_ico_txt[64];
+		if (config::EnableTrainingLua.get())
+			sprintf(lua_ico_txt, "%s  ", ICON_FA_MOON);
+		else
+			sprintf(lua_ico_txt, "%s  ", ICON_FA_CLOUD);
 
+		std::ostringstream lua_display_text;
+		lua_display_text << std::string(lua_ico_txt) << "Training Lua ";
 		lua_display_text << (config::EnableTrainingLua.get() ? "On" : "Off");
-		if (ImGui::Button(lua_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+
+		if (config::EnableTrainingLua.get())
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+		else
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red	
+
+		if (ImGui::Button(lua_display_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
 		{
 			config::EnableTrainingLua = (config::EnableTrainingLua.get() ? false : true);
 			if (config::EnableTrainingLua)
@@ -1347,19 +1444,32 @@ static void gui_display_commands()
 				lua::term();
 			}
 		}
+		ImGui::PopStyleColor();
 		displayed_button_count++;
 		ImGui::NextColumn();
 
-		if (config::EnableTrainingLua)
+		if (config::EnableTrainingLua.get())
 		{
-			std::ostringstream lua_display_text;
-			lua_display_text << "Training Overlay ";
+			char overlay_ico_txt[64];
+			if (config::ShowTrainingGameOverlay.get())
+				sprintf(overlay_ico_txt, "%s  ", ICON_FA_WINDOW_RESTORE);
+			else
+				sprintf(overlay_ico_txt, "%s  ", ICON_FA_RECTANGLE_XMARK);
 
+			std::ostringstream lua_display_text;
+			lua_display_text << std::string(overlay_ico_txt) << "Training Overlay ";
 			lua_display_text << (config::ShowTrainingGameOverlay.get() ? "On" : "Off");
-			if (ImGui::Button(lua_display_text.str().data(), ImVec2(150 * settings.display.uiScale, 50 * settings.display.uiScale)))
+
+			if (config::ShowTrainingGameOverlay.get())
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+			else
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red	
+
+			if (ImGui::Button(lua_display_text.str().data(), ImVec2(200 * settings.display.uiScale, 40 * settings.display.uiScale)))
 			{
 				config::ShowTrainingGameOverlay = (config::ShowTrainingGameOverlay.get() ? false : true);
 			}
+			ImGui::PopStyleColor();
 			displayed_button_count++;
 			ImGui::NextColumn();
 		}
@@ -1369,9 +1479,39 @@ static void gui_display_commands()
 	if (!dojo.PlayMatch)
 	{
 
+	// Cheats
+	if (settings.network.online)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+
+	char cheats_txt[64];
+	if (cheatManager.enabledCheatCount() == 0)
+		sprintf(cheats_txt, "%s  Cheats Disabled", ICON_FA_FLASK);
+	else if (cheatManager.enabledCheatCount() == 1)
+		sprintf(cheats_txt, "%s  %d Cheat Enabled", ICON_FA_FLASK_VIAL, cheatManager.enabledCheatCount());
+	else
+		sprintf(cheats_txt, "%s  %d Cheats Enabled", ICON_FA_FLASK_VIAL, cheatManager.enabledCheatCount());
+
+	if (cheatManager.enabledCheatCount() == 0)
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.492f, 0.163f, 0.000f, 0.900f)); //red	
+	else
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.087f, 0.492f, 0.000f, 0.900f)); //green
+
+	if (ImGui::Button(cheats_txt, ScaledVec2(200, 40)) && !settings.network.online)
+	{
+		gui_state = GuiState::Cheats;
+	}
+	ImGui::PopStyleColor();
+	displayed_button_count++;
+	ImGui::NextColumn();
+
 	if (dojo.current_gamepad != "virtual_gamepad_uid")
 	{
-		if (ImGui::Button("Button Check", ScaledVec2(150, 50)) && !settings.network.online)
+		char button_check_txt[64];
+		sprintf(button_check_txt, "%s  Button Check", ICON_FA_BULLSEYE);
+		if (ImGui::Button(button_check_txt, ScaledVec2(200, 40)) && !settings.network.online)
 		{
 			gui_state = GuiState::ButtonCheck;
 		}
@@ -1385,8 +1525,17 @@ static void gui_display_commands()
 	{
 		if (gamepad != nullptr)
 		{
-			std::string quick_player_select_title = "Quick Map\n(" + gamepad->name() + ")";
-			if (ImGui::Button(quick_player_select_title.c_str(), ScaledVec2(150, 50)) && !settings.network.online)
+			char quick_ico_txt[64];
+			sprintf(quick_ico_txt, "%s  ", ICON_FA_GAMEPAD);
+			std::string gamepad_name = gamepad->name();
+			if (gamepad_name.rfind("Controller (", 0) == 0)
+			{
+				gamepad_name = gamepad_name.substr(12);
+				if (gamepad_name.back() == ')')
+					gamepad_name.pop_back();
+			}
+			std::string quick_player_select_title = std::string(quick_ico_txt) + "Quick Map\n(" + gamepad_name + ")";
+			if (ImGui::Button(quick_player_select_title.c_str(), ScaledVec2(200, 40)) && !settings.network.online)
 			{
 				dojo_gui.current_map_button = 0;
 				dojo_gui.quick_map_settings_call = false;
@@ -1411,7 +1560,7 @@ static void gui_display_commands()
 /*
 	if (settings.dojo.training || dojo.PlayMatch)
 	{
-		if (ImGui::Button("Show Hotkeys", ScaledVec2(150, 50)) && !settings.network.online)
+		if (ImGui::Button("Show Hotkeys", ScaledVec2(150, 40)) && !settings.network.online)
 		{
 			gui_state = GuiState::Hotkeys;
 		}
@@ -1434,7 +1583,7 @@ static void gui_display_commands()
 	{
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-	if (ImGui::Button(disk_label, ScaledVec2(150, 50)))
+	if (ImGui::Button(disk_label, ScaledVec2(200, 40)))
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
@@ -1450,22 +1599,11 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	}
 
-	// Cheats
-	if (settings.network.online)
-	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-	{
-		gui_state = GuiState::Cheats;
-	}
-	displayed_button_count++;
-	ImGui::NextColumn();
-
 	// Settings
-	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
+	char settings_txt[64];
+	sprintf(settings_txt, "%s  Settings", ICON_FA_WRENCH);
+	if (ImGui::Button(settings_txt, ScaledVec2(200, 40)))
+	//if (ImGui::Button("Settings", ScaledVec2(200, 40)))
 	{
 		gui_state = GuiState::Settings;
 	}
@@ -1480,7 +1618,10 @@ static void gui_display_commands()
 
 	}
 
-	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
+	char resume_txt[64];
+	sprintf(resume_txt, "%s  Resume", ICON_FA_PLAY);
+	if (ImGui::Button(resume_txt, ScaledVec2(200, 40)))
+	//if (ImGui::Button("Resume", ScaledVec2(200, 40)))
 	{
 		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
@@ -1511,12 +1652,15 @@ static void gui_display_commands()
 	ImVec2 exit_size;
 
 	if (displayed_button_count % 2 == 0)
-		exit_size = ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
+		exit_size = ScaledVec2(400, 40) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0);
 	else
-		exit_size = ScaledVec2(150, 50);
+		exit_size = ScaledVec2(200, 40);
 
 	// Exit
-	if (ImGui::Button("Exit", exit_size))
+	char exit_txt[64];
+	sprintf(exit_txt, "%s  Exit", ICON_FA_DOOR_OPEN);
+	if (ImGui::Button(exit_txt, exit_size))
+	//if (ImGui::Button("Exit", exit_size))
 	{
 		if (config::DojoEnable && dojo.isMatchStarted)
 		{
@@ -1544,10 +1688,12 @@ static void gui_display_commands()
 		snprintf(buffer, 10, "%s", ICON_KI_SOUND_ON);
 	else
 		snprintf(buffer, 10, "%s", ICON_KI_SOUND_OFF);
+	ImGui::PushItemWidth(370);
 	if (OptionSlider(buffer, config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
 	{
 		config::AudioVolume.calcDbPower();
 	};
+	ImGui::PopItemWidth();
 
 	float menu_height = ImGui::GetWindowHeight();
 	ImGui::End();
