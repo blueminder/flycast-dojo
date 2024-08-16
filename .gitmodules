@@ -22,3 +22,6 @@
 [submodule "core/deps/oboe"]
 	path = core/deps/oboe
 	url = https://github.com/google/oboe.git
+[submodule "core/deps/libzip"]
+	path = core/deps/libzip
+	url = https://github.com/nih-at/libzip.git
