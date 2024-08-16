@@ -20,7 +20,7 @@ jobs:
         config:
           - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-w64-mingw32, os: windows-2019, shell: 'msys2 {0}', cmakeArgs: -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_FORCE_OPENSSL_BACKEND=ON -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
+          - {name: x86_64-w64-mingw32, os: windows-2019, shell: 'msys2 {0}', cmakeArgs:  -DCMAKE_INSTALL_PREFIX=artifact -DCPR_FORCE_USE_SYSTEM_CURL=ON -DCPR_FORCE_OPENSSL_BACKEND=ON -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
 
     steps:
       - name: Set up build environment (macOS)
