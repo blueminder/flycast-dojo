@@ -492,7 +492,7 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    {
       settings.dojo.OpponentName = std::string(opponent_name);
       config::OpponentName = std::string(opponent_name);
-      dojo.AssignNames(true);
+      dojo.AssignNames(false);
    }
 
    if (verification.size() != 0)
