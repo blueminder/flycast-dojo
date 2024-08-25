@@ -358,7 +358,7 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 		OptionCheckbox("Output Session Details to Text Files", config::OutputStreamTxt, "Outputs in-game overlay details to external text files (in the 'out' folder). Useful for online streams.");
 		if (config::OutputStreamTxt)
 		{
-			OptionCheckbox("Output Data For Multiple Sessions", config::MultiOutputStreamTxt, "Outputs folders for multiple concurrent sessions. Separated by Quark ID.");
+			OptionCheckbox("Output Data For Multiple Sessions", config::MultiOutputStreamTxt, "Outputs folders for multiple concurrent sessions. Separated into folders by consecutive session count.");
 		}
 		if (config::UseReios)
 		{
