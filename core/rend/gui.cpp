@@ -2471,13 +2471,25 @@ void error_popup()
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
 			ImGui::TextWrapped("%s", error_msg.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
-			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (dojo.commandLineStart || error_msg.find("Peer verification failed") != std::string::npos)
 			{
+				ImGui::PopStyleVar();
+#if !defined(__ANDROID__)
+#ifdef _WIN32
+				if (ImGui::Button("More Information"))
+					ShellExecute(0, 0, "https://dojo-project.gitbook.io/flycast-dojo/overview/frequently-asked-questions#i-keep-getting-a-peer-verification-failed-error.-how-do-i-resolve-this", 0, 0 , SW_SHOW );
+#elif defined(__APPLE__)
+				if (ImGui::Button("More Information"))
+					system("open https://dojo-project.gitbook.io/flycast-dojo/overview/frequently-asked-questions#i-keep-getting-a-peer-verification-failed-error.-how-do-i-resolve-this");
+#elif defined(__linux__)
+				if (ImGui::Button("More Information"))
+					system("xdg-open https://dojo-project.gitbook.io/flycast-dojo/overview/frequently-asked-questions#i-keep-getting-a-peer-verification-failed-error.-how-do-i-resolve-this");
+#endif
+				ImGui::SameLine();
+#endif
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 				if (ImGui::Button("Exit", ImVec2(80.f * settings.display.uiScale, 0.f)))
 					dc_exit();
-
 			}
 			else
 			{
