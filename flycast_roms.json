@@ -143,6 +143,14 @@
             "SuperCombo Wiki - MvC2 Ratios": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2/Ratios"
         }
     },
+    "flycast_mvsc2_ratio_2022": {
+        "filename": "MarvelVsCapcom2_Ratio2022.bin",
+        "md5_checksum": "66bd661b68abb19ccaa57bf60faede7c",
+        "resource_links": {
+            "SuperCombo Wiki": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2",
+            "SuperCombo Wiki - MvC2 Ratios": "https://wiki.supercombo.gg/w/Marvel_vs_Capcom_2/Ratios"
+        }
+    },
     "flycast_ngbc": {
         "filename": "ngbc.zip",
         "md5_checksum": "02f763ec17e2046edc83c32459ce17b7",
