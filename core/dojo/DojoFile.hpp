@@ -146,8 +146,6 @@ public:
 	bool not_found;
 
 	void CopyMissingSharedArcadeMem(std::string game_mem_path);
-
-	int multi_stream_txt_idx = 0;
 };
 
 extern DojoFile dojo_file;

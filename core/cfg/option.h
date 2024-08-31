@@ -604,6 +604,8 @@ extern Option<bool> CopyMissingSharedMem;
 
 extern Option<int, false> RecSlotFile;
 extern Option<bool> MultiOutputStreamTxt;
+extern Option<int> MultiOutputStreamTxtMax;
+extern Option<int> MultiOutputStreamTxtIdx;
 
 // Maple
 

@@ -359,6 +359,12 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 		if (config::OutputStreamTxt)
 		{
 			OptionCheckbox("Output Data For Multiple Sessions", config::MultiOutputStreamTxt, "Outputs folders for multiple concurrent sessions. Separated into folders by consecutive session count.");
+			if (config::MultiOutputStreamTxt)
+			{
+				int one = 1;
+				ImGui::InputScalar("Max Sessions", ImGuiDataType_S32, &config::MultiOutputStreamTxtMax.get(), &one, NULL, "%d");
+				ImGui::InputScalar("Current Index", ImGuiDataType_S32, &config::MultiOutputStreamTxtIdx.get(), &one, NULL, "%d");
+			}
 		}
 		if (config::UseReios)
 		{

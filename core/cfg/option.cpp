@@ -234,6 +234,9 @@ Option<bool> CopyMissingSharedMem("CopyMissingSharedMem", true, "dojo");
 
 Option<int, false> RecSlotFile("RecSlotFile");
 Option<bool> MultiOutputStreamTxt("MultiOutputStreamTxt", false, "dojo");
+Option<int> MultiOutputStreamTxtMax("MultiOutputStreamTxtMax", 4, "dojo");
+Option<int> MultiOutputStreamTxtIdx("MultiOutputStreamTxtIdx", 4, "dojo");
+Option<bool> CustomOutputStreamTxt("CustomOutputStreamTxt", false, "dojo");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
