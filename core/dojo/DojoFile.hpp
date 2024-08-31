@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <cstdio>
@@ -146,6 +147,13 @@ public:
 	bool not_found;
 
 	void CopyMissingSharedArcadeMem(std::string game_mem_path);
+
+	void ReadSessionTxtValues(std::string game_name);
+	void WriteSessionTxtValues();
+
+	std::map<std::string, u32> out_addrs;
+	std::map<std::string, std::string> out_types;
+	std::map<std::string, std::vector<std::string>> out_str_values;
 };
 
 extern DojoFile dojo_file;

@@ -926,6 +926,9 @@ void gui_start_game(const std::string& path)
 
 	if (config::OutputStreamTxt)
 	{
+		if (config::CustomOutputStreamTxt)
+			dojo_file.ReadSessionTxtValues(dojo.game_name);
+
 		if (config::MultiOutputStreamTxt)
 			dojo_file.AssignMultiOutputStreamIndex();
 

@@ -350,14 +350,13 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
 	}
 	ImGui::Spacing();
-	header("Other");
+
+	header("Text Output");
 	{
-#ifdef __linux__
-		OptionCheckbox("Linux: Copy Missing Shared EEPROM/NVMEM/VMU Files", config::CopyMissingSharedMem, "Copies game memory files from shared assets directory if missing from home directory.");
-#endif
 		OptionCheckbox("Output Session Details to Text Files", config::OutputStreamTxt, "Outputs in-game overlay details to external text files (in the 'out' folder). Useful for online streams.");
 		if (config::OutputStreamTxt)
 		{
+			OptionCheckbox("Custom Output Data", config::CustomOutputStreamTxt, "Exports custom memory values by game. Definitions by game name found in 'game_values' directory.");
 			OptionCheckbox("Output Data For Multiple Sessions", config::MultiOutputStreamTxt, "Outputs folders for multiple concurrent sessions. Separated into folders by consecutive session count.");
 			if (config::MultiOutputStreamTxt)
 			{
@@ -366,6 +365,12 @@ void GuiSettings::settings_body_advanced(ImVec2 normal_padding)
 				ImGui::InputScalar("Current Index", ImGuiDataType_S32, &config::MultiOutputStreamTxtIdx.get(), &one, NULL, "%d");
 			}
 		}
+	}
+	header("Other");
+	{
+#ifdef __linux__
+		OptionCheckbox("Linux: Copy Missing Shared EEPROM/NVMEM/VMU Files", config::CopyMissingSharedMem, "Copies game memory files from shared assets directory if missing from home directory.");
+#endif
 		if (config::UseReios)
 		{
 			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);

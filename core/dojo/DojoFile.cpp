@@ -6,6 +6,9 @@
 
 #include <iostream>
 #include "log/LogManager.h"
+#include <emulator.h>
+
+#include "hw/mem/_vmem.h"
 
 DojoFile dojo_file;
 
@@ -1341,4 +1344,72 @@ std::string DojoFile::GetLocalNetSaveCommit(std::string game_save_prefix)
 		}
 	}
 	return commit_sha;
+}
+
+void DojoFile::ReadSessionTxtValues(std::string game_name)
+{
+	dojo_file.out_addrs.clear();
+	dojo_file.out_types.clear();
+	dojo_file.out_str_values.clear();
+
+	std::string game_values_dir = get_readonly_data_path("/game_values/");
+	std::string session_txt_filename = game_values_dir + game_name + ".json";
+
+	if (!ghc::filesystem::exists(session_txt_filename))
+		return;
+
+	std::ifstream f(session_txt_filename);
+	nlohmann::json data = nlohmann::json::parse(f);
+
+	auto values = data["values"];
+
+	for (auto& v : values)
+	{
+		out_addrs.emplace(v["name"], std::stoul(v["address"].get<std::string>(), nullptr, 16));
+		out_types.emplace(v["name"], v["type"].get<std::string>());
+
+		if (v["type"] == "string_list")
+		{
+			std::vector<std::string> out_strings;
+			for (auto& el : v["strings"].items())
+			{
+				std::cout << el.value() << std::endl;
+				out_strings.push_back(el.value());
+			}
+			out_str_values.emplace(v["name"], out_strings);
+		}
+	}
+}
+
+void DojoFile::WriteSessionTxtValues()
+{
+	for (const auto& [key, value] : out_addrs)
+	{
+		try {
+			u32 out_val;
+
+			if (out_types[key] == "u16")
+				out_val = (u32)_vmem_readt<u16, u16>(value);
+			else if (out_types[key] == "u32")
+				out_val = (u32)_vmem_readt<u32, u32>(value);
+			else
+				out_val = (u32)_vmem_readt<u8, u8>(value);
+
+			if (out_types[key] == "string_list" && out_str_values.count(key) == 1)
+			{
+				if (out_val < out_str_values[key].size())
+				{
+					std::string out_str = out_str_values[key].at(out_val);
+					WriteStringToOut(key, out_str);
+				}
+			}
+			else
+			{
+				WriteStringToOut(key, std::to_string(out_val));
+			}
+		}
+		catch (...) {
+
+		}
+	}
 }

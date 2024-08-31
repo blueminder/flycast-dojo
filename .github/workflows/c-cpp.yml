@@ -176,6 +176,12 @@ jobs:
           zip default.zip default/*
           mv default data
           mv default.zip data/
+          wget https://github.com/blueminder/flycast-dojo-game-values/archive/main.tar.gz
+          tar zxvf master.tar.gz
+          rm master.tar.gz
+          mkdir data/game_values
+          cp flycast-dojo-game-values-main/*.json data/game_values/
+          rm -rf flycast-dojo-game-values-main
           wget https://github.com/blueminder/flycast-dojo-training/archive/main.tar.gz
           tar zxvf main.tar.gz
           rm main.tar.gz

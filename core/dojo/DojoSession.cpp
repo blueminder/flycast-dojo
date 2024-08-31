@@ -2014,6 +2014,9 @@ u16 DojoSession::ApplyOfflineInputs(PlainJoystickState* pjs, u16 buttons, u32 po
 
 		UpdateScore();
 
+		if (config::OutputStreamTxt && config::CustomOutputStreamTxt)
+			dojo_file.WriteSessionTxtValues();
+
 		if (settings.dojo.training)
 		{
 			std::string current_p1_frame_data = AddToInputDisplay((u8*)p1_frame.data());

@@ -606,6 +606,7 @@ extern Option<int, false> RecSlotFile;
 extern Option<bool> MultiOutputStreamTxt;
 extern Option<int> MultiOutputStreamTxtMax;
 extern Option<int> MultiOutputStreamTxtIdx;
+extern Option<bool> CustomOutputStreamTxt;
 
 // Maple
 
