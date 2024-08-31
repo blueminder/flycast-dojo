@@ -2239,11 +2239,16 @@ void join(const std::vector<std::string>& v, char c, std::string& s) {
 
 void DojoSession::SaveRecordSlotsFile()
 {
-	std::string filename = get_readonly_data_path(get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec");
+	std::string rec_dir = get_writable_data_path("recordings");
+	std::string game_rec_dir = rec_dir + "/" + get_game_name();
+
+	if (!ghc::filesystem::exists(game_rec_dir))
+		ghc::filesystem::create_directories(game_rec_dir);
+
+	std::string filename = game_rec_dir + "/" + get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec";
 
 	std::ofstream fout(filename,
 			std::ios::out | std::ios::binary | std::ios_base::app);
-
 
 	for (unsigned int i : recorded_slots)
 	{
@@ -2266,7 +2271,12 @@ void DojoSession::SaveRecordSlotsFile()
 
 void DojoSession::LoadRecordSlotsFile()
 {
-	std::string filename = get_readonly_data_path(get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec");
+	std::string rec_dir = get_writable_data_path("recordings");
+	std::string game_rec_dir = rec_dir + "/" + get_game_name();
+	std::string filename = game_rec_dir + "/" + get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec";
+
+	if (!ghc::filesystem::exists(filename))
+		return;
 
 	std::ifstream fin(filename,
 		std::ios::in | std::ios::binary);
