@@ -11,3 +11,7 @@ out/
 # JetBrains IDES
 .idea/
 cmake-build-*/
+
+artifact
+default
+training
