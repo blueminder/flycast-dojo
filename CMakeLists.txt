@@ -1617,8 +1617,8 @@ if(NOT LIBRETRO)
 				COMMAND mv default.zip data/
 				COMMAND cp flycast_roms.json data/
 				COMMAND wget https://github.com/blueminder/flycast-dojo-game-values/archive/main.tar.gz
-				COMMAND tar zxvf master.tar.gz
-				COMMAND rm master.tar.gz
+				COMMAND tar zxvf main.tar.gz
+				COMMAND rm main.tar.gz
 				COMMAND mkdir data/game_values
 				COMMAND cp flycast-dojo-game-values-main/*.json data/game_values/
 				COMMAND rm -rf flycast-dojo-game-values-main
@@ -1801,8 +1801,8 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 		COMMAND mv default data
 		COMMAND mv default.zip data/
 		COMMAND wget https://github.com/blueminder/flycast-dojo-game-values/archive/main.tar.gz
-		COMMAND tar zxvf master.tar.gz
-		COMMAND rm master.tar.gz
+		COMMAND tar zxvf main.tar.gz
+		COMMAND rm main.tar.gz
 		COMMAND mkdir data/game_values
 		COMMAND cp flycast-dojo-game-values-main/*.json data/game_values/
 		COMMAND rm -rf flycast-dojo-game-values-main
