@@ -3327,6 +3327,7 @@ void DojoGui::download_save_popup()
 				{
 					if (ImGui::Button("Launch Game"))
 					{
+						dojo_file.download_skipped = true;
 						dojo_file.entry_name = "";
 						std::string game_path = dojo_file.game_path;
 						settings.content.path = game_path;

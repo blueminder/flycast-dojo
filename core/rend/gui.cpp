@@ -827,7 +827,7 @@ void gui_start_game(const std::string& path)
 
 	std::string net_state_path = get_writable_data_path(game_name + ".state.net");
 
-	if ((cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
+	if (!dojo_file.download_skipped && (cfgLoadBool("network", "GGPO", false) || config::Receiving) &&
 		((!file_exists(net_state_path) || dojo_file.start_save_download && !dojo_file.save_download_ended ||
 			dojo_file.save_download_ended && dojo_file.post_save_launch)))
 	{

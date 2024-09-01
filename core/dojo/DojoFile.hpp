@@ -110,6 +110,7 @@ public:
 	bool save_download_ended;
 	std::tuple<std::string, std::string> tag_download;
 
+	bool download_skipped = false;
 	bool download_only = false;
 
 	bool start_switch;
