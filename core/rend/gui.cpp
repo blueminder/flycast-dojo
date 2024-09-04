@@ -697,6 +697,8 @@ void gui_open_settings()
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed || gui_state == GuiState::ReplayPause || gui_state == GuiState::Hotkeys)
 	{
+		if (settings.dojo.training && config::EnableTrainingLua)
+			lua::releasePressedButtons();
 		if (!ggpo::active() || dojo.PlayMatch)
 		{
 			gui_state = GuiState::Commands;
@@ -744,6 +746,9 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands)
 	{
+		if (settings.dojo.training && config::EnableTrainingLua)
+			lua::restorePressedButtons();
+
 		if (dojo.manual_pause)
 			gui_state = GuiState::ReplayPause;
 		else

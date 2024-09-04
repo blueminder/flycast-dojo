@@ -29,6 +29,9 @@ void reinit(const std::string& initFile);
 void exec(const std::string& path);
 void overlay();
 
+void releasePressedButtons();
+void restorePressedButtons();
+
 #else
 
 inline static void init() {}
@@ -36,6 +39,9 @@ inline static void term() {}
 inline static void reinit(const std::string& initFile) {}
 inline static void exec(const std::string& path) {}
 inline static void overlay() {}
+
+inline static void releasePressedButtons() {};
+inline static void restorePressedButtons() {};
 
 #endif
 }

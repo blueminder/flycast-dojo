@@ -42,6 +42,28 @@ using namespace luabridge;
 static std::recursive_mutex mutex;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
 
+u32 pressed_buttons[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+
+void releasePressedButtons()
+{
+	for (int i = 0; i < 2; i++)
+	{
+		pressed_buttons[i] = kcode[i];
+		kcode[i] = ~0;
+	}
+}
+
+void restorePressedButtons()
+{
+	for (int i = 0; i < 2; i++)
+	{
+		if (dojo.record_player == i)
+			continue;
+		kcode[i] = pressed_buttons[i];
+		pressed_buttons[i] = ~0;
+	}
+}
+
 static void emuEventCallback(Event event, void *)
 {
 	if (L == nullptr)
