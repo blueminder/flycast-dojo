@@ -538,6 +538,16 @@ static int getFrameNumber()
 	return (int)dojo.FrameNumber.load();
 }
 
+static void loadRecordSlotsFile(std::string filename)
+{
+	dojo.LoadRecordSlotsFile(filename);
+}
+
+static void playRecordSlot(int slot)
+{
+	dojo.PlayRecording(slot);
+}
+
 static void luaRegister(lua_State *L)
 {
 	getGlobalNamespace(L)
@@ -696,6 +706,8 @@ static void luaRegister(lua_State *L)
 				.addFunction("setAbsCoordinates", setAbsCoordinates)
 				.addFunction("getRelCoordinates", getRelCoordinates)
 				.addFunction("setRelCoordinates", setRelCoordinates)
+				.addFunction("loadRecordSlotsFile", loadRecordSlotsFile)
+				.addFunction("playRecordSlot", playRecordSlot)
 			.endNamespace()
 
 			.beginNamespace("state")

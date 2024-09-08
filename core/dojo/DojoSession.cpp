@@ -2278,6 +2278,11 @@ void DojoSession::LoadRecordSlotsFile()
 	std::string game_rec_dir = rec_dir + "/" + get_game_name();
 	std::string filename = game_rec_dir + "/" + get_game_name() + "_" + std::to_string(config::RecSlotFile.get()) + ".rec";
 
+	LoadRecordSlotsFile(filename);
+}
+
+void DojoSession::LoadRecordSlotsFile(std::string filename)
+{
 	if (!ghc::filesystem::exists(filename))
 		return;
 

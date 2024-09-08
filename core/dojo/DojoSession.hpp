@@ -280,6 +280,7 @@ public:
 
 	void SaveRecordSlotsFile();
 	void LoadRecordSlotsFile();
+	void LoadRecordSlotsFile(std::string filename);
 
 	bool player_switched;
 	int current_record_slot;
