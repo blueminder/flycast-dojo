@@ -195,7 +195,7 @@ jobs:
           rm -rf $CURRENT_VERSION
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-dojo-${{ matrix.config.name }}
           path: artifact/bin
