@@ -2358,6 +2358,29 @@ void DojoGui::show_player_name_overlay(float scaling, bool paused)
 		ImGui::End();
 	}
 
+	if (config::FirstTo > 0)
+	{
+		std::string ft_num = "FT" + std::to_string(config::FirstTo.get());
+		float font_size = ImGui::CalcTextSize(ft_num.data()).x + 10;
+		ImGui::SetNextWindowPos(ImVec2((settings.display.width / 2) - ((font_size + 30) / 2), 0));
+
+#if defined(__APPLE__) || defined(__ANDROID__)
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 42));
+#else
+		ImGui::SetNextWindowSize(ImVec2(font_size + 30, 35));
+#endif
+		ImGui::SetNextWindowBgAlpha(0.5f);
+
+		ImGui::Begin("#ft", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+
+		ImGui::SameLine(
+			(ImGui::GetContentRegionAvail().x / 4) -
+			(font_size / 2) + 25
+		);
+
+		ImGui::TextUnformatted(ft_num.c_str());
+	}
+
 	if (dojo.player_2.length() > 1)
 	{
 		float font_size = ImGui::CalcTextSize(dojo.player_2.data()).x + 10;
