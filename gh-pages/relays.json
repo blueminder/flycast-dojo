@@ -1,0 +1,32 @@
+{
+	"relays": [
+		{
+			"name": "US West",
+			"url": "us-west-1.match.dojo.ooo"
+		},
+		{
+			"name": "US East",
+			"url": "us-east-1.match.dojo.ooo"
+		},
+		{
+			"name": "Chile",
+			"url": "chl-1.match.dojo.ooo"
+		},
+		{
+			"name": "Spain",
+			"url": "esp-1.match.dojo.ooo"
+		},
+		{
+			"name": "Finland",
+			"url": "fin-1.match.dojo.ooo"
+		},
+		{
+			"name": "South Korea",
+			"url": "kor-1.match.dojo.ooo"
+		},
+		{
+			"name": "Australia",
+			"url": "aus-1.match.dojo.ooo"
+		}
+	]
+}
