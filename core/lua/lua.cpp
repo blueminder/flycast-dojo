@@ -673,6 +673,7 @@ static void luaRegister(lua_State *L)
 				.endNamespace()
 
 				.beginNamespace("dojo")
+					.addProperty("IsTraining", &settings.dojo.training, false)
 					CONFIG_PROPERTY(ShowTrainingGameOverlay, bool)
 				.endNamespace()
 			.endNamespace()
