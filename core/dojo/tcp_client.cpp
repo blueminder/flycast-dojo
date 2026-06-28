@@ -66,7 +66,6 @@ void TcpClient::Connect()
 	hostname_to_ip(host.data(), ip);
 	std::string host_ip = std::string(ip, strlen(ip));
 
-	struct sockaddr_in host_addr;
 	memset(&host_addr, 0, sizeof(host_addr));
 
 	host_addr.sin_family = AF_INET;
@@ -108,13 +107,14 @@ void TcpClient::TransmissionLoop()
 			last_sent_msg = outgoing_msgs.front();
 			memcpy((void *)to_send, last_sent_msg.data(), last_sent_msg.size());
 
-			int sendResult = sendto(sock, (const char *)to_send, last_sent_msg.size(), 0, (const struct sockaddr *)&host_addr, sizeof(host_addr));
+			int sendResult = send(sock, (const char *)to_send, last_sent_msg.size(), 0);
 			if (VALID(sendResult))
 			{
 				outgoing_msgs.pop();
 				memset(to_send, 0, 4096);
 			}
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
@@ -146,7 +146,7 @@ void TcpClient::ReceivingInit()
 	std::vector<unsigned char> message = spectate_request.Msg();
 
 	memcpy((void *)to_send, message.data(), message.size());
-	int sendResult = sendto(sock, (const char *)to_send, message.size(), 0, (const struct sockaddr *)&host_addr, sizeof(host_addr));
+	int sendResult = send(sock, (const char *)to_send, message.size(), 0);
 	if (VALID(sendResult))
 	{
 		memset(to_send, 0, 256);
