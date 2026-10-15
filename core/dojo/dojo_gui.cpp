@@ -1,5 +1,7 @@
 #include "dojo_gui.h"
 
+#include <algorithm>
+
 void DojoGui::copy_btn(const char *si, std::string name)
 {
 #ifndef __ANDROID__
@@ -1768,21 +1770,38 @@ void DojoGui::gui_display_replays()
 					ImGui::TableSetupScrollFreeze(0, 1);
 					ImGui::TableHeadersRow();
 
-					int row = 0;
-
+					// collect valid replays, sort by date (newest first).
+					std::vector<std::pair<std::time_t, ghc::filesystem::path>> replays;
 					for (const auto &entry : ghc::filesystem::directory_iterator(game_replays_dir))
 					{
 						if (entry.is_directory() || entry.path().extension().string() != ".flyr")
 							continue;
-
 						std::string filename = entry.path().filename().string();
 						std::vector<std::string> fn_elements;
 						std::string fn_copy = filename;
 						dojo.Replace(fn_copy, "__", "#");
 						dojo.Split(fn_copy, '#', fn_elements);
-
 						if (fn_elements.size() < 3)
 							continue;
+
+						auto ftime = ghc::filesystem::last_write_time(entry.path());
+						std::time_t t = std::chrono::system_clock::to_time_t(ftime);
+						replays.push_back({ t, entry.path() });
+					}
+					std::sort(replays.begin(), replays.end(),
+							[](const auto &a, const auto &b) { return a.first > b.first; });
+
+					int row = 0;
+
+					for (const auto &replay : replays)
+					{
+						const ghc::filesystem::path &replay_path = replay.second;
+
+						std::string filename = replay_path.filename().string();
+						std::vector<std::string> fn_elements;
+						std::string fn_copy = filename;
+						dojo.Replace(fn_copy, "__", "#");
+						dojo.Split(fn_copy, '#', fn_elements);
 
 						ImGui::TableNextRow();
 						ImGui::PushID(row);
@@ -1801,9 +1820,7 @@ void DojoGui::gui_display_replays()
 							player2 = "";
 						}
 
-						auto ftime = ghc::filesystem::last_write_time(entry.path());
-						std::time_t t = std::chrono::system_clock::to_time_t(ftime);
-						std::tm *ptm = std::localtime(&t);
+						std::tm *ptm = std::localtime(&replay.first);
 						char buffer[32];
 						std::strftime(buffer, 32, "%Y-%m-%d\n%H:%M:%S", ptm);
 						std::string date = std::string(buffer);
@@ -1817,7 +1834,7 @@ void DojoGui::gui_display_replays()
 								{
 									cfgSetVirtual("dojo", "Receiving", "no");
 									cfgSetVirtual("dojo", "Replay", "yes");
-									cfgSetVirtual("dojo", "ReplayFilename", entry.path().string());
+									cfgSetVirtual("dojo", "ReplayFilename", replay_path.string());
 									ImGui::CloseCurrentPopup();
 									gui_setState(GuiState::Main);
 								}
