@@ -1772,16 +1772,22 @@ void DojoGui::gui_display_replays()
 
 					for (const auto &entry : ghc::filesystem::directory_iterator(game_replays_dir))
 					{
-						ImGui::TableNextRow();
-						ImGui::PushID(row);
-
-						bool selected = false;
+						if (entry.is_directory() || entry.path().extension().string() != ".flyr")
+							continue;
 
 						std::string filename = entry.path().filename().string();
 						std::vector<std::string> fn_elements;
 						std::string fn_copy = filename;
 						dojo.Replace(fn_copy, "__", "#");
 						dojo.Split(fn_copy, '#', fn_elements);
+
+						if (fn_elements.size() < 3)
+							continue;
+
+						ImGui::TableNextRow();
+						ImGui::PushID(row);
+
+						bool selected = false;
 
 						std::string player1 = fn_elements[2];
 						std::string player2 = "";
