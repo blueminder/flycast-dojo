@@ -24,16 +24,23 @@ jobs:
     steps:
       - name: Set up build environment (macOS)
         run: |
-          sudo xcode-select -switch /Applications/Xcode_15.3.app
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update || :
           brew install libao ldid ninja pulseaudio
-          VULKAN_VER=1.3.261.1 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
-          hdiutil attach ./vulkansdk-macos-*.dmg -mountpoint /Volumes/VulkanSDK
-          sudo /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
-          hdiutil detach /Volumes/VulkanSDK
-          echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
+          # Vulkan SDK dmg is no longer hosted by Lunarg; fetch MoltenVK from GitHub releases instead
+          moltenvk_tag="v1.2.9"
+          moltenvk_root="$RUNNER_TEMP/MoltenVK-$moltenvk_tag"
+          mkdir -p "$moltenvk_root" "$HOME/VulkanSDK/lib"
+          aria2c "https://github.com/KhronosGroup/MoltenVK/releases/download/$moltenvk_tag/MoltenVK-macos.tar" -d "$RUNNER_TEMP" -o "MoltenVK-macos-$moltenvk_tag.tar"
+          tar -xf "$RUNNER_TEMP/MoltenVK-macos-$moltenvk_tag.tar" -C "$moltenvk_root"
+          moltenvk_dylib="$(find "$moltenvk_root" -type f -path '*/macOS/*' -name libMoltenVK.dylib | head -n 1)"
+          if [ -z "$moltenvk_dylib" ]; then
+            echo "MoltenVK $moltenvk_tag was downloaded, but macOS libMoltenVK.dylib was not found." >&2
+            exit 1
+          fi
+          cp "$moltenvk_dylib" "$HOME/VulkanSDK/lib/libMoltenVK.dylib"
+          echo "VULKAN_SDK=$HOME/VulkanSDK" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
       - name: Set up build environment (Linux)
@@ -68,7 +75,7 @@ jobs:
           submodules: true
 
       - name: Compile a universal OpenMP (macOS)
-        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: matrix.config.name == 'apple-darwin'
 
       - name: Compile OpenMP.xcframework (iOS)
