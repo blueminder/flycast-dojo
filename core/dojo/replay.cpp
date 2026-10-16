@@ -2,7 +2,8 @@
 
 void Replay::Init()
 {
-	filename = config::ReplayFilename.get();
+	// read cfg directly. virtual value set by gui not yet in option cache
+	filename = cfgLoadStr("dojo", "ReplayFilename", "");
 
 	// reset flags before header parse
 	ggpo_session = false;
