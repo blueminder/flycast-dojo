@@ -563,9 +563,16 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	// load the replay first: the header ggpo flag decides if the net state is needed
+	if (cfgLoadBool("dojo", "Replay", false))
+	{
+		dojo.Reset();
+		dojo.replay.Init();
+	}
+
 	if ((cfgLoadBool("network", "GGPO", false) ||
 		 cfgLoadBool("dojo", "Receiving", false) ||
-		 cfgLoadBool("dojo", "Replay", false)) &&
+		 (cfgLoadBool("dojo", "Replay", false) && dojo.replay.ggpo_session)) &&
 		cfgLoadBool("dojo", "AutoLoadNetState", true) &&
 		!dojo_file.NetSaveExists(path) &&
 		!dojo_file.no_save_launch)

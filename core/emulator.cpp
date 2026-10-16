@@ -582,7 +582,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			if ((cfgLoadBool("network", "GGPO", false) && config::AutoLoadNetState) ||
 				(cfgLoadBool("dojo", "Training", false) && config::AutoLoadTrainingNetState) ||
 				(cfgLoadBool("dojo", "Receiving", false) && config::AutoLoadNetState) ||
-				(cfgLoadBool("dojo", "Replay", false) && config::AutoLoadNetState))
+				(cfgLoadBool("dojo", "Replay", false) && dojo.replay.ggpo_session && config::AutoLoadNetState))
 				dc_loadstate(-1);
 			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);

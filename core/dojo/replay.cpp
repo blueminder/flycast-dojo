@@ -3,6 +3,11 @@
 void Replay::Init()
 {
 	filename = config::ReplayFilename.get();
+
+	// reset flags before header parse
+	ggpo_session = false;
+	dojo.session_inputs.clear();
+
 	if (!LoadReplayFile(filename))
 		return;
 
