@@ -8,6 +8,16 @@ void Replay::Init()
 
 	dojo.play_match = true;
 
+	// rebase frame keys to 0. recording can start mid-session.
+	if (!dojo.session_inputs.empty() && dojo.session_inputs.begin()->first > 0)
+	{
+		u32 base = dojo.session_inputs.begin()->first;
+		std::map<u32, std::vector<u8>> rebased;
+		for (auto &kv : dojo.session_inputs)
+			rebased[kv.first - base] = std::move(kv.second);
+		dojo.session_inputs = std::move(rebased);
+	}
+
 	if (ggpo_session)
 	{
 		config::GGPOEnable = true;

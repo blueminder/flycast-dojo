@@ -506,7 +506,7 @@ void Dojo::MapleApplyAction(MapleInputState inputState[4])
 		return;
 	}
 
-	if (dojo.play_match && (dojo.frame_number == dojo.session_inputs.size() - 1))
+	if (dojo.play_match && (dojo.frame_number >= dojo.session_inputs.size() - 1))
 		gui_setState(GuiState::ReplayEnd);
 
 	// set by reading replay/spectating header
@@ -519,7 +519,13 @@ void Dojo::MapleApplyAction(MapleInputState inputState[4])
 	}
 
 	u32 inputSize = sizeof(FrameInputs);
-	std::vector<u8> current_inputs = dojo.session_inputs[dojo.frame_number];
+	std::vector<u8> current_inputs;
+	auto frame_it = dojo.session_inputs.find(dojo.frame_number);
+	if (frame_it != dojo.session_inputs.end())
+		current_inputs = frame_it->second;
+	// pad missing or short frames. do not use operator[]: it inserts empty frames.
+	if (current_inputs.size() < inputSize * MAX_PLAYERS)
+		current_inputs.resize(inputSize * MAX_PLAYERS, 0);
 
 	if (cfgLoadBool("dojo", "Training", false))
 	{
@@ -680,7 +686,10 @@ void Dojo::AddToInputDisplay(MapleInputState inputState[4])
 	u32 analogAxes = dojo.replay.analog;
 
 	u32 inputSize = sizeof(u32) + analogAxes;
-	std::vector<u8> inputs = dojo.session_inputs[dojo.frame_number];
+	std::vector<u8> inputs;
+	auto inputs_it = dojo.session_inputs.find(dojo.frame_number);
+	if (inputs_it != dojo.session_inputs.end())
+		inputs = inputs_it->second;
 
 	constexpr int MAX_PLAYERS = 2;
 	constexpr u32 BTN_TRIGGER_LEFT = DC_BTN_RELOAD << 1;
