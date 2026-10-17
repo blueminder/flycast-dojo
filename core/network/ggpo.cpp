@@ -619,12 +619,13 @@ void startSession(int localPort, int localPlayerNum)
 
 void stopSession()
 {
-	dojo.replay.Flush();
 	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
+	// closing drains pending confirmed frames to the recording
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
+	dojo.replay.Flush();
 	miniupnp.Term();
 	emu.setNetworkState(false);
 	memwatch::unprotect();

@@ -66,6 +66,34 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
   
 Peer2PeerBackend::~Peer2PeerBackend()
 {
+   // drain confirmed inputs to spectators and the recording before closing
+   if (!_synchronizing) {
+      _poll.Pump(0);
+      PollUdpProtocolEvents();
+      int total_min_confirmed = MAX_INT;
+      for (int i = 0; i < _num_players; i++) {
+         if (!_local_connect_status[i].disconnected) {
+            total_min_confirmed = MIN(_local_connect_status[i].last_frame, total_min_confirmed);
+         }
+      }
+      if (total_min_confirmed >= 0 && total_min_confirmed != MAX_INT
+            && (_num_spectators > 0 || config::RecordMatches || config::Transmitting)) {
+         while (_next_spectator_frame <= total_min_confirmed) {
+            GameInput input;
+            input.frame = _next_spectator_frame;
+            input.size = _input_size * _num_players;
+            _sync.GetConfirmedInputs(input.bits, _input_size * _num_players, _next_spectator_frame);
+            for (int i = 0; i < _num_spectators; i++) {
+               _spectators[i].SendInput(input);
+            }
+            if (config::RecordMatches || config::Transmitting)
+            {
+               dojo.GGPORecordAction(input.frame, input.size, (unsigned char*)input.bits);
+            }
+            _next_spectator_frame++;
+         }
+      }
+   }
    delete [] _endpoints;
 }
 
