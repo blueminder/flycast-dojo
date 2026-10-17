@@ -88,29 +88,32 @@ void Replay::AppendToReplay(std::string frame, int version)
 				replay_msg.AppendHeader(0, MAPLE_BUFFER);
 				replay_msg.AppendInt(MAPLE_FRAME_SIZE);
 			}
-
-			if (memcmp(frame.data(), "0000000000000000", MAPLE_FRAME_SIZE) == 0)
-			{
-				// send remaining frames
-				if (replay_frame_count % FRAME_BATCH > 0)
-				{
-					std::vector<unsigned char> message = replay_msg.Msg();
-					std::string msg((const char *)message.data(), message.size());
-
-					if (config::RecordMatches)
-					{
-						std::ofstream fout(filename,
-										   std::ios::out | std::ios::binary | std::ios_base::app);
-						fout.write(msg.data(), msg.size());
-						fout.close();
-					}
-
-					if (config::Transmitting)
-						dojo.tcp_client.outgoing_msgs.push(msg);
-				}
-			}
 		}
 	}
+}
+
+void Replay::Flush()
+{
+	// write remaining frames at match end
+	if (replay_frame_count % FRAME_BATCH == 0)
+		return;
+
+	std::vector<unsigned char> message = replay_msg.Msg();
+	std::string msg((const char *)message.data(), message.size());
+
+	if (config::RecordMatches)
+	{
+		std::ofstream fout(filename,
+				std::ios::out | std::ios::binary | std::ios_base::app);
+		fout.write(msg.data(), msg.size());
+		fout.close();
+	}
+
+	if (config::Transmitting)
+		dojo.tcp_client.outgoing_msgs.push(msg);
+
+	replay_msg = MessageWriter();
+	replay_frame_count = 0;
 }
 
 std::string currentISO8601TimeUTC()

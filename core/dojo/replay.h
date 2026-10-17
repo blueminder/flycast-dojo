@@ -10,6 +10,7 @@ public:
     std::string filename = "";
     void Init();
     void StartRecording();
+    void Flush();
     void AppendToReplay(std::string frame, int version);
 
     std::vector<u8> GenHeader(std::string rom_name);

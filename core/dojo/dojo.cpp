@@ -1178,6 +1178,8 @@ uint64_t Dojo::UnixTimestamp()
 
 void Dojo::Reset()
 {
+	replay.Flush();
+
 	if (play_match)
 	{
 		tcp_client.Stop();

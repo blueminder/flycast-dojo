@@ -619,6 +619,7 @@ void startSession(int localPort, int localPlayerNum)
 
 void stopSession()
 {
+	dojo.replay.Flush();
 	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
