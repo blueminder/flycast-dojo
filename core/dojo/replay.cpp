@@ -347,6 +347,27 @@ ReplayHeader Replay::ReadReplayHeader(std::string path)
 	return meta;
 }
 
+// count maple frames by scanning message headers only, bodies skipped
+u32 Replay::GetReplayFrameCount(std::string path)
+{
+	std::ifstream fin(path,
+					  std::ios::in | std::ios::binary);
+	if (!fin.is_open())
+		return 0;
+
+	char header_buf[HEADER_LEN] = {0};
+	u32 frames = 0;
+	while (fin.read(header_buf, HEADER_LEN) && fin.gcount() == (std::streamsize)HEADER_LEN)
+	{
+		unsigned int body_size = HeaderReader::GetSize((unsigned char *)header_buf);
+		unsigned int cmd = HeaderReader::GetCmd((unsigned char *)header_buf);
+		if (cmd == MAPLE_BUFFER && body_size > 4)
+			frames += (body_size - 4) / MAPLE_FRAME_SIZE;
+		fin.seekg(body_size, std::ios_base::cur);
+	}
+	return frames;
+}
+
 void Replay::LoadReplayFileV1(std::string path)
 {
 	// add string in increments of FRAME_SIZE to net_inputs
