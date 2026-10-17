@@ -1787,6 +1787,7 @@ void DojoGui::gui_display_replays()
 					ImGui::TableSetupColumn("Date", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 					ImGui::TableSetupColumn("Player 1", ImGuiTableColumnFlags_WidthStretch, 100.0f);
 					ImGui::TableSetupColumn("Player 2", ImGuiTableColumnFlags_WidthStretch, 100.0f);
+					ImGui::TableSetupColumn("Duration", ImGuiTableColumnFlags_WidthFixed, 60.0f);
 					ImGui::TableSetupScrollFreeze(0, 1);
 					ImGui::TableHeadersRow();
 
@@ -1836,8 +1837,11 @@ void DojoGui::gui_display_replays()
 						static std::map<std::string, ReplayHeader> header_cache;
 						auto hdr_it = header_cache.find(path_str);
 						if (hdr_it == header_cache.end())
-							hdr_it = header_cache.emplace(path_str,
-									dojo.replay.ReadReplayHeader(path_str)).first;
+						{
+							ReplayHeader rh = dojo.replay.ReadReplayHeader(path_str);
+							rh.frame_count = dojo.replay.GetReplayFrameCount(path_str);
+							hdr_it = header_cache.emplace(path_str, rh).first;
+						}
 						const ReplayHeader &hdr = hdr_it->second;
 
 						std::string player1 = hdr.valid ? hdr.player1 : fn_elements[2];
@@ -1859,7 +1863,7 @@ void DojoGui::gui_display_replays()
 						std::strftime(buffer, 32, "%Y-%m-%d\n%H:%M:%S", ptm);
 						std::string date = std::string(buffer);
 
-						for (int column = 0; column < 3; column++)
+						for (int column = 0; column < 4; column++)
 						{
 							ImGui::TableSetColumnIndex(column);
 							if (column == 0)
@@ -1880,6 +1884,11 @@ void DojoGui::gui_display_replays()
 							else if (column == 2)
 							{
 								ImGui::Text("%s", player2.data());
+							}
+							else if (column == 3)
+							{
+								u32 secs = hdr.frame_count / 60;
+								ImGui::Text("%u:%02u", secs / 60, secs % 60);
 							}
 						}
 

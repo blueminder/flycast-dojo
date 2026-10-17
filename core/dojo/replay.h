@@ -7,6 +7,7 @@ struct ReplayHeader
     bool valid = false;
     std::string player1;
     std::string player2;
+    u32 frame_count = 0;
 };
 
 class Replay
@@ -33,6 +34,7 @@ public:
     void LoadReplayFileV1(std::string path);
 
     ReplayHeader ReadReplayHeader(std::string path);
+    u32 GetReplayFrameCount(std::string path);
 
     u32 GetFrameNumber(u8 *data);
 
