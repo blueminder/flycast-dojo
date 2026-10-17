@@ -41,6 +41,9 @@ void Replay::StartRecording()
 	dojo.play_match = false;
 	analog = 2;
 
+	replay_msg = MessageWriter();
+	replay_frame_count = 0;
+
 	if (config::RecordMatches)
 		CreateReplayFile();
 	else if (config::Transmitting)
