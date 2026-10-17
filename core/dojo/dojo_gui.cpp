@@ -1,6 +1,8 @@
 #include "dojo_gui.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <ctime>
 
 void DojoGui::copy_btn(const char *si, std::string name)
 {
@@ -1736,6 +1738,24 @@ void DojoGui::gui_display_select_platform()
 	ImGui::End();
 }
 
+// parse iso8601 utc timestamp from replay filename (colons replaced by underscores)
+static std::time_t parseReplayTimestamp(const std::string &ts)
+{
+	std::tm tm = {};
+	if (sscanf(ts.c_str(), "%d-%d-%dT%d_%d_%d",
+			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+			&tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 6)
+		return -1;
+	tm.tm_year -= 1900;
+	tm.tm_mon -= 1;
+	tm.tm_isdst = 0;
+#ifdef _MSC_VER
+	return _mkgmtime(&tm);
+#else
+	return timegm(&tm);
+#endif
+}
+
 void DojoGui::gui_display_replays()
 {
 	char replays_txt[128];
@@ -1784,8 +1804,12 @@ void DojoGui::gui_display_replays()
 						if (fn_elements.size() < 3)
 							continue;
 
-						auto ftime = ghc::filesystem::last_write_time(entry.path());
-						std::time_t t = std::chrono::system_clock::to_time_t(ftime);
+						std::time_t t = parseReplayTimestamp(fn_elements[1]);
+						if (t == -1)
+						{
+							auto ftime = ghc::filesystem::last_write_time(entry.path());
+							t = std::chrono::system_clock::to_time_t(ftime);
+						}
 						replays.push_back({ t, entry.path() });
 					}
 					std::sort(replays.begin(), replays.end(),
@@ -1808,7 +1832,15 @@ void DojoGui::gui_display_replays()
 
 						bool selected = false;
 
-						std::string player1 = fn_elements[2];
+						std::string path_str = replay_path.string();
+						static std::map<std::string, ReplayHeader> header_cache;
+						auto hdr_it = header_cache.find(path_str);
+						if (hdr_it == header_cache.end())
+							hdr_it = header_cache.emplace(path_str,
+									dojo.replay.ReadReplayHeader(path_str)).first;
+						const ReplayHeader &hdr = hdr_it->second;
+
+						std::string player1 = hdr.valid ? hdr.player1 : fn_elements[2];
 						std::string player2 = "";
 						if (fn_elements.size() > 3)
 						{
@@ -1819,6 +1851,8 @@ void DojoGui::gui_display_replays()
 						{
 							player2 = "";
 						}
+						if (hdr.valid)
+							player2 = hdr.player2;
 
 						std::tm *ptm = std::localtime(&replay.first);
 						char buffer[32];

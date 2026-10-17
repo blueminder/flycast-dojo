@@ -289,6 +289,64 @@ u32 Replay::GetFrameNumber(u8 *data)
 	return (int)(*(u32 *)(data));
 }
 
+// read player names from the first SPECTATE_START message, without ProcessBody side effects
+ReplayHeader Replay::ReadReplayHeader(std::string path)
+{
+	ReplayHeader meta;
+	std::ifstream fin(path,
+					  std::ios::in | std::ios::binary);
+
+	char header_buf[HEADER_LEN] = {0};
+	fin.read(header_buf, HEADER_LEN);
+	if (fin.gcount() < (std::streamsize)HEADER_LEN)
+		return meta;
+
+	unsigned int body_size = HeaderReader::GetSize((unsigned char *)header_buf);
+	unsigned int cmd = HeaderReader::GetCmd((unsigned char *)header_buf);
+	if (cmd != SPECTATE_START || body_size < 4)
+		return meta;
+
+	std::vector<char> body(body_size);
+	fin.read(body.data(), body_size);
+	if (fin.gcount() < (std::streamsize)body_size)
+		return meta;
+
+	const char *buffer = body.data();
+	int offset = 0;
+	auto readInt = [&]() -> u32 {
+		if (offset + 4 > (int)body_size)
+			return 0;
+		u32 v;
+		memcpy(&v, buffer + offset, 4);
+		offset += 4;
+		return v;
+	};
+	auto readString = [&]() -> std::string {
+		u32 len = readInt();
+		if (len > 0 && offset + (int)len <= (int)body_size)
+		{
+			std::string s(buffer + offset, len);
+			offset += len;
+			return s;
+		}
+		offset = (int)body_size + 1;
+		return "";
+	};
+
+	u32 v = readInt();
+	if (v < 1 || v > 4)
+		return meta;
+
+	readString(); // game name
+	meta.player1 = readString();
+	meta.player2 = readString();
+
+	if (offset <= (int)body_size)
+		meta.valid = true;
+
+	return meta;
+}
+
 void Replay::LoadReplayFileV1(std::string path)
 {
 	// add string in increments of FRAME_SIZE to net_inputs

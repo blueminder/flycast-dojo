@@ -2,6 +2,13 @@
 
 #include "dojo.h"
 
+struct ReplayHeader
+{
+    bool valid = false;
+    std::string player1;
+    std::string player2;
+};
+
 class Replay
 {
 public:
@@ -24,6 +31,8 @@ public:
 
     bool LoadReplayFile(std::string path);
     void LoadReplayFileV1(std::string path);
+
+    ReplayHeader ReadReplayHeader(std::string path);
 
     u32 GetFrameNumber(u8 *data);
 
