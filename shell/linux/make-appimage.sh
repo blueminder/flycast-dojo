@@ -90,17 +90,18 @@ echo "Building checkrt"
 mkdir -p "$OUTDIR/tmp"
 pushd "$OUTDIR/tmp"
 git clone https://github.com/darealshinji/AppImageKit-checkrt
-cd AppImageKit-checkrt/src
-make
-cp -a checkrt ../../../usr/optional
-cd ../../..
+cd AppImageKit-checkrt
+# upstream repo dropped the src/ Makefile layout; build the standalone tool directly
+cc -O2 -o checkrt checkrt.c -ldl
+cp -a checkrt ../../usr/optional
+cd ../..
 rm -rf tmp
 popd
 if [ ! -f "$OUTDIR/usr/optional/checkrt" ]; then
 	echo "checkrt build failed"
 	exit 1
 fi
-"$OUTDIR/usr/optional/checkrt" --copy-libraries
+"$OUTDIR/usr/optional/checkrt" --copy
 
 cp -a "$ARTDIR/flycast" "$OUTDIR/usr/bin"
 patchelf --set-rpath '$ORIGIN/../lib' "$OUTDIR/usr/bin/flycast"

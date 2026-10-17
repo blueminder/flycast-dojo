@@ -11,3 +11,8 @@ out/
 # JetBrains IDES
 .idea/
 cmake-build-*/
+
+# appimage build artifacts
+appimage/
+*.AppImage
+appimagetool-x86_64.AppImage
