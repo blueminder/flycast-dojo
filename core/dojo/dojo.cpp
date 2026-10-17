@@ -506,7 +506,8 @@ void Dojo::MapleApplyAction(MapleInputState inputState[4])
 		return;
 	}
 
-	if (dojo.play_match && (dojo.frame_number >= dojo.session_inputs.size() - 1))
+	if (dojo.play_match && !dojo.session_inputs.empty()
+			&& dojo.frame_number >= dojo.session_inputs.rbegin()->first)
 		gui_setState(GuiState::ReplayEnd);
 
 	// set by reading replay/spectating header
