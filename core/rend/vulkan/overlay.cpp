@@ -70,7 +70,7 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
 			std::unique_ptr<Texture>& texture = vmuTextures[i];
-			if (!vmu_lcd_status[i])
+			if (!vmu_lcd_status[i] || vmuHidden(i))
 			{
 				if (texture)
 				{
@@ -138,7 +138,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
-			if (!vmuTextures[i])
+			if (!vmuTextures[i] || vmuHidden(i))
 				continue;
 			float x;
 			float y;

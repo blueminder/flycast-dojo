@@ -200,6 +200,7 @@ OptionString DojoProtoCall("DojoProtoCall", "", "dojo");
 Option<bool> EnablePlayerNameOverlay("EnablePlayerNameOverlay", true, "dojo");
 Option<bool> IgnoreNetSave("IgnoreNetSave", false, "dojo");
 Option<bool> NetCustomVmu("NetCustomVmu", false, "dojo");
+Option<bool> NetHideOtherVmus("NetHideOtherVmus", true, "dojo");
 Option<bool> ShowPlaybackControls("ShowPlaybackControls", true, "dojo");
 Option<int> RxFrameBuffer("RxFrameBuffer", 1800, "dojo");
 Option<bool> LaunchReplay("LaunchReplay", false, "dojo");

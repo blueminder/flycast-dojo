@@ -41,7 +41,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
-			if (!vmu_lcd_status[i])
+			if (!vmu_lcd_status[i] || vmuHidden(i))
 			{
 				vmuTextureViews[i].reset();
 				vmuTextures[i].reset();

@@ -2250,6 +2250,9 @@ void DojoGui::insert_netplay_tab(ImVec2 normal_padding)
 		OptionCheckbox("Show Network Statistics Overlay", config::NetworkStats,
 			"Display network statistics on screen");
 
+		OptionCheckbox("Hide Other Players' VMUs", config::NetHideOtherVmus,
+			"Hide the VMU screens of other players during netplay sessions");
+
 		OptionCheckbox("Enable Player Name Overlay", config::EnablePlayerNameOverlay);
 		ImGui::SameLine();
 		ShowHelpMarker("Enable overlay showing player names during netplay sessions & replays");

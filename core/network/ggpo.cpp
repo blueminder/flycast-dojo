@@ -860,6 +860,16 @@ bool active()
 		return ggpoSession != nullptr;
 }
 
+bool inPlayerSession()
+{
+	return ggpoSession != nullptr;
+}
+
+int getLocalPlayerNum()
+{
+	return localPlayerNum;
+}
+
 std::future<bool> startNetwork()
 {
 	synchronized = false;
@@ -1197,6 +1207,14 @@ bool nextFrame() {
 
 bool active() {
 	return false;
+}
+
+bool inPlayerSession() {
+	return false;
+}
+
+int getLocalPlayerNum() {
+	return 0;
 }
 
 std::future<bool> startNetwork() {

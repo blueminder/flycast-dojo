@@ -1067,7 +1067,7 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 	if (settings.platform.isConsole())
 	{
 		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-			if (vmu_lcd_status[vmu_screen_number * 2])
+			if (vmu_lcd_status[vmu_screen_number * 2] && !vmuHidden(vmu_screen_number * 2))
 				DrawVmuTexture(vmu_screen_number);
 	}
 

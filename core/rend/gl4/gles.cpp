@@ -698,7 +698,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-				if (vmu_lcd_status[vmu_screen_number * 2])
+				if (vmu_lcd_status[vmu_screen_number * 2] && !vmuHidden(vmu_screen_number * 2))
 					gl4DrawVmuTexture(vmu_screen_number);
 		}
 

@@ -88,7 +88,7 @@ void OpenGLDriver::displayVmus()
 	const float padding = VMU_PADDING * settings.display.uiScale;
 	for (int i = 0; i < 8; i++)
 	{
-		if (!vmu_lcd_status[i])
+		if (!vmu_lcd_status[i] || vmuHidden(i))
 			continue;
 
 		if (vmu_lcd_changed[i] || vmu_lcd_tex_ids[i] == ImTextureID())

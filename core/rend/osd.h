@@ -18,6 +18,7 @@
 
 #include "types.h"
 #include "cfg/option.h"
+#include "network/ggpo.h"
 #include <vector>
 
 #define VJOY_VISIBLE 14
@@ -43,6 +44,13 @@ extern bool vmu_lcd_status[8];
 extern bool vmu_lcd_changed[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
+
+// hide other players' VMUs during ggpo player sessions
+static inline bool vmuHidden(int vmuIndex)
+{
+	return config::NetHideOtherVmus && ggpo::inPlayerSession()
+			&& vmuIndex / 2 != ggpo::getLocalPlayerNum();
+}
 
 // Crosshair
 const u32 *getCrosshairTextureData();
