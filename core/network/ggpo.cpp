@@ -684,6 +684,11 @@ void getInput(MapleInputState inputState[4])
 	}
 }
 
+int getInputSize()
+{
+	return inputSize;
+}
+
 bool nextFrame()
 {
 	if (dojo.play_match)
@@ -999,6 +1004,11 @@ void stopSession() {
 void getInput(MapleInputState inputState[4])
 {
 	getLocalInput(inputState);
+}
+
+int getInputSize()
+{
+	return sizeof(u32);
 }
 
 bool nextFrame() {

@@ -31,6 +31,7 @@ std::future<bool> startNetwork();
 void startSession(int localPort, int localPlayerNum);
 void stopSession();
 void getInput(MapleInputState inputState[4]);
+int getInputSize();
 bool nextFrame();
 bool active();
 void displayStats();

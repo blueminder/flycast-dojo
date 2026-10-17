@@ -670,7 +670,7 @@ void Dojo::PrintMapleInputState(MapleInputState inputState[4])
 void Dojo::GGPORecordAction(int frame, int size, unsigned char *bits)
 {
 	std::vector<u8> m_inputs(sizeof(FrameInputs) * MAX_PLAYERS, 0);
-	int player_input_size = sizeof(u32) + config::GGPOAnalogAxes.get();
+	int player_input_size = ggpo::getInputSize();
 	for (int p = 0; p < MAX_PLAYERS; p++)
 	{
 		std::memcpy(m_inputs.data() + (p * sizeof(FrameInputs)), bits + (p * player_input_size), player_input_size);
