@@ -6,6 +6,11 @@ void RelayClient::ConnectRelayServer()
 {
 	struct hostent *mm_host;
 	mm_host = gethostbyname(target_hostname.data());
+	if (mm_host == nullptr)
+	{
+		ERROR_LOG(NETWORK, "Failed to resolve relay host: %s", target_hostname.c_str());
+		return;
+	}
 
 	mms_addr.sin_family = AF_INET;
 	mms_addr.sin_port = htons((u16)cfgLoadInt("dojo", "RelayPort", 8001));
@@ -305,6 +310,12 @@ void RelayClient::ClientLoop()
 
 			struct hostent *target_host;
 			target_host = gethostbyname(target_address.data());
+			if (target_host == nullptr)
+			{
+				ERROR_LOG(NETWORK, "Failed to resolve target: %s", target_address.c_str());
+				target_ping_msgs[ping_target].clear();
+				continue;
+			}
 
 			target_addr.sin_family = AF_INET;
 			target_addr.sin_port = htons((u16)std::stol(target_port));
@@ -502,6 +513,11 @@ int RelayClient::PingTarget(std::string target, int add_to_seed)
 
 	struct hostent *target_host;
 	target_host = gethostbyname(target_address.data());
+	if (target_host == nullptr)
+	{
+		ERROR_LOG(NETWORK, "Failed to resolve target: %s", target_address.c_str());
+		return 0;
+	}
 	std::string target_ip = inet_ntoa(*((in_addr *)target_host->h_addr));
 
 	std::string target_s = target_ip + ":" + target_port;
@@ -551,6 +567,11 @@ std::string RelayClient::GetTargetStr(std::string target)
 
 	struct hostent *target_host;
 	target_host = gethostbyname(target_address.data());
+	if (target_host == nullptr)
+	{
+		ERROR_LOG(NETWORK, "Failed to resolve target: %s", target_address.c_str());
+		return "";
+	}
 	std::string target_ip = inet_ntoa(*((in_addr *)target_host->h_addr));
 
 	std::string target_s = target_ip + ":" + target_port;
@@ -561,6 +582,9 @@ std::string RelayClient::GetTargetStr(std::string target)
 uint64_t RelayClient::GetTargetAvgPing(std::string target)
 {
 	std::string target_s = GetTargetStr(target);
+	// unresolvable target: sort last
+	if (target_s.empty())
+		return 999999;
 
 	return target_avg_ping_ms[target_s];
 }
