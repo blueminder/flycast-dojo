@@ -47,10 +47,14 @@ jobs:
 
       - name: Set up build environment (Linux)
         run: |
-          sudo add-apt-repository ppa:christianrauch/libdecoration
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev libfuse2
-          sudo apt-get -y install libwayland-dev libdecor-0-dev libaudio-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
+          sudo apt-get -y install libwayland-dev libaudio-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev libcairo2-dev libpango1.0-dev wayland-protocols pkg-config meson
+          # Build libdecor (SDL2 Wayland client-side decorations); jammy's 0.1.0 is too old and the PPA is unreliable
+          git clone --depth 1 --branch 0.2.2 https://gitlab.freedesktop.org/libdecor/libdecor.git /tmp/libdecor
+          meson setup /tmp/libdecor/build /tmp/libdecor --prefix=/usr -Ddemo=false -Dgtk=disabled
+          sudo meson install -C /tmp/libdecor/build
+          sudo ldconfig
         if: runner.os == 'Linux'
 
       - name: Set up build environment (Windows, MinGW)
