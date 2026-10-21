@@ -1,6 +1,8 @@
 name: C/C++ CI
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   build:
@@ -128,11 +130,6 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: flycast-${{ matrix.config.name }}
-          path: artifact/bin
-
       - name: Package app (macos)
         run: |
           cd artifact/bin
@@ -141,9 +138,14 @@ jobs:
 
       - name: Package app (windows)
         run: |
-          powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip 
+          powershell -Command '$ErrorActionPreference = "Stop"; Compress-Archive -Path artifact/bin/flycast.exe -DestinationPath artifact/bin/flycast.zip -Force'
           rm artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flycast-${{ matrix.config.name }}
+          path: artifact/bin
 
       - name: Configure AWS Credentials
         id: aws-credentials

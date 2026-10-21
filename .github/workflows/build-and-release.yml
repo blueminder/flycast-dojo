@@ -1,0 +1,54 @@
+name: Build and Release
+
+on:
+  push:
+    tags:            # Release on tagged commits
+      - 'dojo-*'
+      - 'v*'
+  workflow_dispatch:    # Manual triggering only
+
+jobs:
+  build:
+    uses: ./.github/workflows/c-cpp.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(git describe --tags --always)
+          # Release tag matches the git tag; display name drops the dojo- prefix
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "name=${VERSION#dojo-}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Debug downloaded artifacts
+        run: |
+          echo "=== Downloaded artifacts structure ==="
+          find artifacts -type f -name "*.zip" -o -name "*.AppImage" | sort
+          echo "=== End debug ==="
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "${{ steps.version.outputs.tag }}"
+          name: "Flycast Dojo ${{ steps.version.outputs.name }}"
+          files: |
+            artifacts/*/*.zip
+            artifacts/*/*.AppImage
+          body: "Automated release with builds for Windows, Linux, and macOS."
+          draft: false
+          prerelease: false
+          generate_release_notes: true
