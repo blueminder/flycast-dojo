@@ -40,14 +40,46 @@ jobs:
           find artifacts -type f -name "*.zip" -o -name "*.AppImage" | sort
           echo "=== End debug ==="
 
+      - name: Package deterministic release assets
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          # Linux artifact carries the AppImage; rezip under a fixed name so
+          # downstream consumers (dojo-lobby) can fetch it without guessing.
+          appimage=$(find artifacts -name 'flycast-x86_64.AppImage' -type f | head -1)
+          if [ -z "$appimage" ]; then
+            echo "ERROR: flycast-x86_64.AppImage not found in artifacts" >&2
+            exit 1
+          fi
+          cp "$appimage" flycast-x86_64.AppImage
+          zip -q dist/flycast-dojo-linux.zip flycast-x86_64.AppImage
+
+          # Windows artifact carries flycast.zip (holds flycast.exe alone);
+          # repackage as flycast-dojo-windows.zip with the exe at zip root.
+          winzip=$(find artifacts -name 'flycast.zip' -type f | head -1)
+          if [ -z "$winzip" ]; then
+            echo "ERROR: flycast.zip not found in artifacts" >&2
+            exit 1
+          fi
+          mkdir -p win && unzip -q "$winzip" -d win
+          if [ ! -f win/flycast.exe ]; then
+            echo "ERROR: flycast.exe not found inside $winzip" >&2
+            exit 1
+          fi
+          (cd win && zip -q "../dist/flycast-dojo-windows.zip" flycast.exe)
+
+          ls -la dist
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: "${{ steps.version.outputs.tag }}"
           name: "Flycast Dojo ${{ steps.version.outputs.name }}"
           files: |
-            artifacts/*/*.zip
-            artifacts/*/*.AppImage
+            dist/flycast-dojo-linux.zip
+            dist/flycast-dojo-windows.zip
+            artifacts/*/flycast.app.zip
           body: "Automated release with builds for Windows, Linux, and macOS."
           draft: false
           prerelease: false

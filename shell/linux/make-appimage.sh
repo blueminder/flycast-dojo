@@ -20,9 +20,7 @@ SHLIBS=(
 	librtmp.so.1
 	libssh.so.4
 	libpsl.so.5
-	libssl.so.1.1
 	libssl.so.3
-	libcrypto.so.1.1
 	libcrypto.so.3
 	libgssapi_krb5.so.2
 	libldap-2.5.so.0
@@ -48,7 +46,6 @@ SHLIBS=(
 	libbrotlicommon.so.1
 	libxcb.so.1
 	libsystemd.so.0
-	libwrap.so.0
 	libsndfile.so.1
 	libasyncns.so.0
 	libapparmor.so.1
