@@ -63,3 +63,64 @@ TEST_F(DojoReplayTest, InitResetsPreciseTriggersBeforeHeaderParse)
 	dojo.replay.Init();
 	EXPECT_TRUE(dojo.precise_triggers);
 }
+
+// read the analog-axes field from a queued SPECTATE_START message
+static u32 parseQueuedHeaderAnalog(const std::string& msg)
+{
+	int offset = HEADER_LEN;
+	MessageReader::ReadInt(msg.data(), &offset);          // version
+	for (int i = 0; i < 5; i++)
+		MessageReader::ReadString(msg.data(), &offset);     // rom, players, quark, relay key
+	return MessageReader::ReadInt(msg.data(), &offset);   // analog axes
+}
+
+TEST_F(DojoReplayTest, PreservesNegotiatedAnalogModeWhenRecording)
+{
+	config::GGPOEnable = true;
+	config::RecordMatches = false;
+	config::Transmitting = true;
+
+	for (u32 mode = 0; mode <= 2; mode++)
+	{
+		// ggpo.cpp stores the negotiated session mode before recording starts
+		dojo.replay.analog = mode;
+		dojo.replay.StartRecording();
+		ASSERT_FALSE(dojo.tcp_client.outgoing_msgs.empty());
+		std::string msg = dojo.tcp_client.outgoing_msgs.back();
+		EXPECT_EQ(dojo.replay.analog, mode);
+		EXPECT_EQ(parseQueuedHeaderAnalog(msg), mode);
+	}
+
+	config::GGPOEnable = false;
+}
+
+TEST_F(DojoReplayTest, HeaderUsesNegotiatedModeNotCurrentConfig)
+{
+	config::GGPOEnable = true;
+	config::RecordMatches = false;
+	config::Transmitting = true;
+	settings.platform.system = DC_PLATFORM_DREAMCAST;
+	config::GGPOAnalogAxes = 2;
+
+	// negotiated at session start. the header must not rewrite it from the current config
+	dojo.replay.analog = 1;
+	dojo.replay.StartRecording();
+	std::string msg = dojo.tcp_client.outgoing_msgs.back();
+	EXPECT_EQ(parseQueuedHeaderAnalog(msg), 1u);
+
+	config::GGPOEnable = false;
+	settings.platform.system = DC_PLATFORM_DREAMCAST;
+}
+
+TEST_F(DojoReplayTest, AppliesOfflineDefaultToOfflineRecordings)
+{
+	config::GGPOEnable = false;
+	config::RecordMatches = false;
+	config::Transmitting = true;
+
+	dojo.replay.analog = 0;
+	dojo.replay.StartRecording();
+	std::string msg = dojo.tcp_client.outgoing_msgs.back();
+	EXPECT_EQ(dojo.replay.analog, 2u);
+	EXPECT_EQ(parseQueuedHeaderAnalog(msg), 2u);
+}

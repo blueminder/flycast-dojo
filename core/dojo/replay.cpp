@@ -41,7 +41,9 @@ void Replay::Init()
 void Replay::StartRecording()
 {
 	dojo.play_match = false;
-	analog = 2;
+	// ggpo.cpp sets the negotiated mode for ggpo sessions. apply the offline default only.
+	if (!config::GGPOEnable)
+		analog = 2;
 
 	replay_msg = MessageWriter();
 	replay_frame_count = 0;
@@ -227,8 +229,6 @@ std::vector<u8> Replay::GenHeader(std::string rom_name)
 	spectate_start.AppendString(server_key);
 
 	u32 analogAxes = analog;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::GGPOEnable)
-		analogAxes = (u32)config::GGPOAnalogAxes.get();
 	spectate_start.AppendInt(analogAxes);
 
 	u32 precise_triggers = (u32)(!config::GGPOEnable.get());
