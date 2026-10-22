@@ -124,3 +124,65 @@ TEST_F(DojoReplayTest, AppliesOfflineDefaultToOfflineRecordings)
 	EXPECT_EQ(dojo.replay.analog, 2u);
 	EXPECT_EQ(parseQueuedHeaderAnalog(msg), 2u);
 }
+
+static void resetRecordingState()
+{
+	config::GGPOEnable = false;
+	config::RecordMatches = false;
+	config::Transmitting = true;
+	dojo.recording_started = false;
+	dojo.replay.finalizing = false;
+	dojo.replay.replay_frame_count = 0;
+	dojo.replay.replay_msg = MessageWriter();
+	std::queue<std::string> empty;
+	std::swap(dojo.tcp_client.outgoing_msgs, empty);
+	dojo.session_inputs.clear();
+}
+
+TEST_F(DojoReplayTest, DrainDoesNotStartANewRecording)
+{
+	resetRecordingState();
+	config::GGPOEnable = true;
+	// recorder finalized before the session drain ran
+	dojo.replay.finalizing = true;
+
+	u8 bits[sizeof(FrameInputs) * MAX_PLAYERS] = {0};
+	dojo.PollRecordAction(100, sizeof(bits), bits);
+	EXPECT_FALSE(dojo.recording_started);
+	EXPECT_TRUE(dojo.tcp_client.outgoing_msgs.empty());
+	EXPECT_EQ(dojo.replay.replay_frame_count, 0u);
+}
+
+TEST_F(DojoReplayTest, DrainAppendsToTheStartedRecording)
+{
+	resetRecordingState();
+	config::GGPOEnable = true;
+	dojo.recording_started = true;
+	// session closing: confirmed frames still drain into the live recording
+	dojo.replay.finalizing = true;
+
+	u8 bits[sizeof(FrameInputs) * MAX_PLAYERS] = {0};
+	dojo.PollRecordAction(100, sizeof(bits), bits);
+	EXPECT_EQ(dojo.replay.replay_frame_count, 1u);
+	EXPECT_TRUE(dojo.session_inputs.count(100));
+}
+
+TEST_F(DojoReplayTest, PollStartsRecordingWhileSessionRuns)
+{
+	resetRecordingState();
+	config::GGPOEnable = true;
+
+	u8 bits[sizeof(FrameInputs) * MAX_PLAYERS] = {0};
+	dojo.PollRecordAction(100, sizeof(bits), bits);
+	EXPECT_TRUE(dojo.recording_started);
+	EXPECT_EQ(dojo.replay.replay_frame_count, 1u);
+	EXPECT_FALSE(dojo.tcp_client.outgoing_msgs.empty());
+}
+
+TEST_F(DojoReplayTest, ResetClearsFinalizing)
+{
+	resetRecordingState();
+	dojo.replay.finalizing = true;
+	dojo.Reset();
+	EXPECT_FALSE(dojo.replay.finalizing);
+}

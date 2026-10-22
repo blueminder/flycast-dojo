@@ -629,6 +629,7 @@ void gui_start_game(const std::string& path)
 void gui_stop_game(const std::string& message)
 {
 	const LockGuard lock(guiMutex);
+	ggpo::stopSession();
 	dojo.Reset();
 
 	if (!commandLineStart)

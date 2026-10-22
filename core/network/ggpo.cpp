@@ -622,10 +622,13 @@ void stopSession()
 	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
+	// the final drain must not start a new recording
+	dojo.replay.finalizing = true;
 	// closing drains pending confirmed frames to the recording
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
 	dojo.replay.Flush();
+	dojo.replay.finalizing = false;
 	miniupnp.Term();
 	emu.setNetworkState(false);
 	memwatch::unprotect();

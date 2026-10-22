@@ -43,6 +43,9 @@ public:
     MessageWriter replay_msg;
     u32 replay_frame_count = 0;
 
+    // set while a ggpo session closes. the drain must not start a new recording.
+    bool finalizing = false;
+
     bool ggpo_session = false;
 
     std::string DownloadReplayJson(std::string game_name);

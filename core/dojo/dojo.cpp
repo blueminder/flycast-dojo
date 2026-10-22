@@ -400,16 +400,20 @@ void Dojo::PollRecordAction(int frame, int size, unsigned char *bits)
 	if (config::GGPOEnable && !play_match &&
 		(config::RecordMatches || config::Transmitting))
 	{
-		if (!recording_started)
+		// the close-time drain must not start a new recording after finalization
+		if (!recording_started && !replay.finalizing)
 			replay.StartRecording();
 
-		// create frame container for export
-		unsigned char new_frame[MAPLE_FRAME_SIZE] = {0};
-		memcpy(new_frame, (unsigned char *)&frame_num, sizeof(unsigned int));
-		memcpy(new_frame + 4, (unsigned char *)m_inputs.data(), m_inputs.size());
-		std::string frame_((const char *)new_frame, MAPLE_FRAME_SIZE);
+		if (recording_started)
+		{
+			// create frame container for export
+			unsigned char new_frame[MAPLE_FRAME_SIZE] = {0};
+			memcpy(new_frame, (unsigned char *)&frame_num, sizeof(unsigned int));
+			memcpy(new_frame + 4, (unsigned char *)m_inputs.data(), m_inputs.size());
+			std::string frame_((const char *)new_frame, MAPLE_FRAME_SIZE);
 
-		replay.AppendToReplay(frame_, 4);
+			replay.AppendToReplay(frame_, 4);
+		}
 	}
 
 	// NOTICE_LOG(NETWORK, "FRAME %u SIZE %u", frame, m_inputs.size());
@@ -1195,6 +1199,7 @@ void Dojo::Reset()
 	manual_pause = false;
 	target_step_frame = 0;
 	recording_started = false;
+	replay.finalizing = false;
 
 	settings.dojo.Training = false;
 
