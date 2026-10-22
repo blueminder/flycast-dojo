@@ -7,6 +7,8 @@ void Replay::Init()
 
 	// reset flags before header parse
 	ggpo_session = false;
+	// defined value until the header sets the recorded mode
+	dojo.precise_triggers = true;
 	dojo.session_inputs.clear();
 
 	if (!LoadReplayFile(filename))

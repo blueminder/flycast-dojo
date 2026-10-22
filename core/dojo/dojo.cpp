@@ -930,7 +930,7 @@ void Dojo::ProcessBody(unsigned int cmd, unsigned int body_size, const char *buf
 		settings.content.path = dojo.GetEntryPath(dojo.game_name);
 		config::Quark = Quark;
 		config::RelayKey = RelayKey;
-		precise_triggers = (bool)precise_triggers;
+		this->precise_triggers = (bool)precise_triggers;
 		if (ggpo)
 			replay.ggpo_session = true;
 

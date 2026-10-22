@@ -1787,7 +1787,8 @@ if(BUILD_TESTING)
 			tests/src/serialize_test.cpp
 			tests/src/AicaArmTest.cpp
 			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp)
+			tests/src/MmuTest.cpp
+			tests/src/DojoReplayTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)
