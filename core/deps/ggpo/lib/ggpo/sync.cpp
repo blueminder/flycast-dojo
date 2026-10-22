@@ -94,8 +94,10 @@ Sync::GetConfirmedInputs(void *values, int size, int frame)
       if (_local_connect_status[i].disconnected && frame > _local_connect_status[i].last_frame) {
          disconnect_flags |= (1 << i);
          input.erase();
-      } else {
-         _input_queues[i].GetConfirmedInput(frame, &input);
+      } else if (!_input_queues[i].GetConfirmedInput(frame, &input)) {
+         // Frame not found in the queue: zero the input, do not copy uninitialized bits.
+         input.erase();
+         Log("Missing confirmed input for queue %d at frame %d; using zero input.", i, frame);
       }
       memcpy(output + (i * _config.input_size), input.bits, _config.input_size);
    }
