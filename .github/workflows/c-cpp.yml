@@ -61,7 +61,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git make mingw-w64-x86_64-ccache mingw-w64-x86_64-cmake mingw-w64-x86_64-lua mingw-w64-x86_64-ninja mingw-w64-x86_64-SDL2 mingw-w64-x86_64-toolchain
+          install: git make mingw-w64-x86_64-ccache mingw-w64-x86_64-cmake mingw-w64-x86_64-lua mingw-w64-x86_64-ninja mingw-w64-x86_64-SDL2 mingw-w64-x86_64-toolchain mingw-w64-x86_64-curl
         if: matrix.config.shell == 'msys2 {0}'
 
       - name: Set up build environment (Windows, Visual Studio)
@@ -109,6 +109,22 @@ jobs:
           ./build/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
+      - name: Collect runtime DLLs
+        run: |
+          # Copy the full recursive DLL closure of the exe from /mingw64/bin
+          collect() {
+            for dll in $(objdump -p "$1" | awk '/DLL Name/ {print $3}'); do
+              src="/mingw64/bin/$dll"
+              if [ -f "$src" ] && [ ! -f artifact/bin/"$dll" ]; then
+                cp "$src" artifact/bin/
+                collect "artifact/bin/$dll"
+              fi
+            done
+          }
+          collect artifact/bin/flycast.exe
+          ls artifact/bin
+        if: matrix.config.name == 'x86_64-w64-mingw32'
+
       - name: Dump symbols
         run: |
           mkdir -p symbols
@@ -142,8 +158,9 @@ jobs:
 
       - name: Package app (windows)
         run: |
-          powershell -Command '$ErrorActionPreference = "Stop"; Compress-Archive -Path artifact/bin/flycast.exe -DestinationPath artifact/bin/flycast.zip -Force'
+          powershell -Command '$ErrorActionPreference = "Stop"; Compress-Archive -Path artifact/bin/* -DestinationPath artifact/bin/flycast.zip -Force'
           rm artifact/bin/flycast.exe
+          rm artifact/bin/*.dll
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - uses: actions/upload-artifact@v4

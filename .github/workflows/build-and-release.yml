@@ -67,7 +67,9 @@ jobs:
             echo "ERROR: flycast.exe not found inside $winzip" >&2
             exit 1
           fi
-          (cd win && zip -q "../dist/flycast-dojo-windows.zip" flycast.exe)
+          # Keep runtime DLLs shipped next to the exe
+          (cd win && ls *.dll >/dev/null 2>&1 && zip -q "../dist/flycast-dojo-windows.zip" flycast.exe *.dll)
+          (cd win && [ -f flycast.exe ] && zip -q "../dist/flycast-dojo-windows.zip" flycast.exe)
 
           ls -la dist
 
