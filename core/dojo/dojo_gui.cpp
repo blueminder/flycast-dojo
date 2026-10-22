@@ -1899,11 +1899,13 @@ void DojoGui::gui_display_replays()
 					ImGui::EndTable();
 				}
 
+				ImGui::PopStyleColor();
 				ImGui::EndChild();
 
 				ImGui::EndTabItem();
 			}
 
+			/* TODO: reimplement Remote tab to use atdojo, dojo-lobby parity
 			char remote_txt[128];
 			sprintf(remote_txt, " %s Remote ", ICON_FA_GLOBE);
 			if (ImGui::BeginTabItem(remote_txt))
@@ -2217,6 +2219,7 @@ void DojoGui::gui_display_replays()
 
 				ImGui::EndTabItem();
 			}
+			*/
 
 			char close_btn_txt[128];
 			sprintf(close_btn_txt, "%s Close", ICON_FA_CIRCLE_XMARK);
