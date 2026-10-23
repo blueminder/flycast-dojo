@@ -122,6 +122,7 @@ static int localPlayerNum;
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
 static bool synchronized;
+static bool peerDisconnected;
 static std::recursive_mutex ggpoMutex;
 static std::array<int, 5> msPerFrame;
 static int msPerFrameIndex;
@@ -244,8 +245,9 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
 		INFO_LOG(NETWORK, "Disconnected from peer %d", info->u.disconnected.player);
+		if (info->u.disconnected.player == localPlayer || info->u.disconnected.player == remotePlayer)
+			peerDisconnected = true;
 		gui_setState(GuiState::Disconnected);
-		//throw FlycastException("Disconnected from peer");
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
@@ -484,6 +486,7 @@ static void on_message(u8 *msg, int len)
 
 void startSession(int localPort, int localPlayerNum)
 {
+	peerDisconnected = false;
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
 	cb.advance_frame   = advance_frame;
@@ -633,6 +636,14 @@ void stopSession()
 	emu.setNetworkState(false);
 	memwatch::unprotect();
 	memwatch::reset();
+	peerDisconnected = false;
+}
+
+static void handlePeerDisconnect()
+{
+	INFO_LOG(NETWORK, "Peer disconnected: draining recording and closing session");
+	stopSession();
+	throw FlycastException("Disconnected from peer");
 }
 
 void getInput(MapleInputState inputState[4])
@@ -730,6 +741,9 @@ bool nextFrame()
 			throw FlycastException("GGPO error");
 	}
 
+	if (peerDisconnected)
+		handlePeerDisconnect();
+
 	// may call save_game_state
 	do {
 		if (!config::ThreadedRendering)
@@ -790,6 +804,8 @@ bool nextFrame()
 			stopSession();
 			throw FlycastException("GGPO error");
 		}
+		if (peerDisconnected)
+			handlePeerDisconnect();
 	} while (active());
 #ifdef SYNC_TEST
 	u32 input = ~kcode[1 - localPlayerNum];
@@ -854,6 +870,8 @@ std::future<bool> startNetwork()
 					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
 					throw FlycastException("GGPO error");
 				}
+				if (peerDisconnected)
+					handlePeerDisconnect();
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		}
