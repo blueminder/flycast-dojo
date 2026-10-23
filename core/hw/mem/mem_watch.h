@@ -60,6 +60,16 @@ public:
 		}
 	}
 
+	void relock()
+	{
+		static_cast<T&>(*this).protectMem(0, 0xffffffff);
+	}
+
+	bool isWatching() const
+	{
+		return started;
+	}
+
 	void unprotect()
 	{
 		static_cast<T&>(*this).unprotectMem(0, 0xffffffff);
@@ -79,8 +89,10 @@ public:
 		offset &= ~PAGE_MASK;
 	    auto rv = pages.emplace(offset, Page());
 	    if (!rv.second)
-	      // already saved
+	    {
+	      static_cast<T&>(*this).unprotectMem(offset, PAGE_SIZE);
 	      return true;
+	    }
 	    Page& page = rv.first->second;
 	    memcpy(&page.data[0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
 		static_cast<T&>(*this).unprotectMem(offset, PAGE_SIZE);
@@ -229,5 +241,32 @@ inline static void reset()
 	aramWatcher.reset();
 	elanWatcher.reset();
 }
+
+class MemReadGuard
+{
+public:
+	MemReadGuard()
+	{
+		if (ramWatcher.isWatching() || vramWatcher.isWatching()
+				|| aramWatcher.isWatching() || elanWatcher.isWatching())
+		{
+			unprotect();
+			held = true;
+		}
+	}
+	~MemReadGuard()
+	{
+		if (held)
+		{
+			ramWatcher.relock();
+			vramWatcher.relock();
+			aramWatcher.relock();
+			elanWatcher.relock();
+		}
+	}
+
+private:
+	bool held = false;
+};
 
 }

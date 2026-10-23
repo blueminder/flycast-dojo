@@ -23,6 +23,7 @@
 #include <LuaBridge/LuaBridge.h>
 #include "rend/gui.h"
 #include "hw/mem/addrspace.h"
+#include "hw/mem/mem_watch.h"
 #include "cfg/option.h"
 #include "emulator.h"
 #include "input/gamepad_device.h"
@@ -122,10 +123,18 @@ void overlay()
 }
 
 template<typename T>
+static T readMemory(u32 address)
+{
+	memwatch::MemReadGuard guard;
+	return addrspace::readt<T>(address);
+}
+
+template<typename T>
 static LuaRef readMemoryTable(u32 address, int count, lua_State* L)
 {
 	LuaRef t(L);
 	t = newTable(L);
+	memwatch::MemReadGuard guard;
 	while (count > 0)
 	{
 		t[address] = addrspace::readt<T>(address);
@@ -508,25 +517,29 @@ static int uiLine(float x1, float y1, float x2, float y2, u32 color)
 
 static int read8s(u32 addr)
 {
-	u8 data = ReadMem8_nommu(addr);
+	memwatch::MemReadGuard guard;
+	u8 data = addrspace::readt<u8>(addr);
 	return (s8)data;
 }
 
 static int read16s(u32 addr)
 {
-	u16 data = ReadMem16_nommu(addr);
+	memwatch::MemReadGuard guard;
+	u16 data = addrspace::readt<u16>(addr);
 	return (s16)data;
 }
 
 static int read32s(u32 addr)
 {
-	u32 data = ReadMem32_nommu(addr);
+	memwatch::MemReadGuard guard;
+	u32 data = addrspace::readt<u32>(addr);
 	return (s32)data;
 }
 
 static f32 read32f(u32 addr)
 {
-	u32 data = ReadMem32_nommu(addr);
+	memwatch::MemReadGuard guard;
+	u32 data = addrspace::readt<u32>(addr);
 	return *(f32 *)&data;
 }
 
@@ -672,10 +685,10 @@ static void luaRegister(lua_State *L)
 			.endNamespace()
 
 	  		.beginNamespace("memory")
-				.addFunction("read8", addrspace::readt<u8>)
-				.addFunction("read16", addrspace::readt<u16>)
-				.addFunction("read32", addrspace::readt<u32>)
-				.addFunction("read64", addrspace::readt<u64>)
+				.addFunction("read8", readMemory<u8>)
+				.addFunction("read16", readMemory<u16>)
+				.addFunction("read32", readMemory<u32>)
+				.addFunction("read64", readMemory<u64>)
 				.addFunction("readTable8", readMemoryTable<u8>)
 				.addFunction("readTable16", readMemoryTable<u16>)
 				.addFunction("readTable32", readMemoryTable<u32>)
