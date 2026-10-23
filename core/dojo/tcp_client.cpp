@@ -1,5 +1,9 @@
 #include "dojo.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 TcpClient::TcpClient()
 {
 	isLoopStarted = false;
@@ -107,7 +111,7 @@ void TcpClient::TransmissionLoop()
 			last_sent_msg = outgoing_msgs.front();
 			memcpy((void *)to_send, last_sent_msg.data(), last_sent_msg.size());
 
-			int sendResult = send(sock, (const char *)to_send, last_sent_msg.size(), 0);
+			int sendResult = send(sock, (const char *)to_send, last_sent_msg.size(), MSG_NOSIGNAL);
 			if (VALID(sendResult))
 			{
 				outgoing_msgs.pop();
@@ -146,7 +150,7 @@ void TcpClient::ReceivingInit()
 	std::vector<unsigned char> message = spectate_request.Msg();
 
 	memcpy((void *)to_send, message.data(), message.size());
-	int sendResult = send(sock, (const char *)to_send, message.size(), 0);
+	int sendResult = send(sock, (const char *)to_send, message.size(), MSG_NOSIGNAL);
 	if (VALID(sendResult))
 	{
 		memset(to_send, 0, 256);
