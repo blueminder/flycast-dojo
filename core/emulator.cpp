@@ -988,7 +988,9 @@ void Emulator::vblank()
 		return;
 	renderTimeout = true;
 	if (ggpo::active())
-		ggpo::endOfFrame();
+	{
+		sh4_cpu.Stop();
+	}
 	else if (!config::ThreadedRendering)
 		sh4_cpu.Stop();
 }
