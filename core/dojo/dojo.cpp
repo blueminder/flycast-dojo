@@ -504,7 +504,7 @@ void Dojo::MapleApplyAction(MapleInputState inputState[4])
 	if (dojo.session_inputs.empty())
 		return;
 
-	if (!settings.network.online && dojo.frame_number < config::Delay)
+	if (!settings.network.online && !replay.ggpo_session && dojo.frame_number < config::Delay)
 	{
 		frame_number++;
 		return;

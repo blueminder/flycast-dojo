@@ -29,7 +29,7 @@ void Replay::Init()
 	if (ggpo_session)
 	{
 		config::GGPOEnable = true;
-		dojo.frame_number = 9;
+		dojo.frame_number = 0;
 	}
 	else
 	{
