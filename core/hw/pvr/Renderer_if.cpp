@@ -413,7 +413,8 @@ void rend_start_render()
 		else {
 			ctx->rend.clearFramebuffer = false;
 		}
-		ggpo::endOfFrame();
+		if (!ggpo::active())
+			ggpo::endOfFrame();
 	}
 
 	if (QueueRender(ctx))

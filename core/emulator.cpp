@@ -983,15 +983,16 @@ bool Emulator::render()
 void Emulator::vblank()
 {
 	EventManager::event(Event::VBlank);
+	if (ggpo::active())
+	{
+		ggpo::endOfFrame();
+		return;
+	}
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;
 	renderTimeout = true;
-	if (ggpo::active())
-	{
-		sh4_cpu.Stop();
-	}
-	else if (!config::ThreadedRendering)
+	if (!config::ThreadedRendering)
 		sh4_cpu.Stop();
 }
 
