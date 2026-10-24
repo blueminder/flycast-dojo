@@ -429,20 +429,14 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 static bool log_game_state(char *filename, unsigned char *buffer, int len)
 {
 #ifdef SYNC_TEST
-	static int lastLoggedFrame = -1;
-	static u8 *lastState;
+	FILE *f = fopen(filename, "wb");
+	if (f != nullptr)
+	{
+		fwrite(buffer, 1, len, f);
+		fclose(f);
+	}
 	int frame = *(u32 *)buffer;
 	DEBUG_LOG(NETWORK, "log_game_state frame %d len %d", frame, len);
-	if (lastLoggedFrame == frame) {
-		for (int i = 0; i < len; i++)
-			if (buffer[i] != lastState[i])
-			{
-				WARN_LOG(NETWORK, "States for frame %d differ at offset %d: now %x prev %x", frame, i, *(u32 *)&buffer[i & ~3], *(u32 *)&lastState[i & ~3]);
-				break;
-			}
-	}
-	lastState = buffer;
-	lastLoggedFrame = frame;
 #endif
 
 	return true;
