@@ -309,6 +309,8 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
+	// keep dojo.frame_number == ggpo frame across rollback loads
+	dojo.frame_number = frame;
 	memwatch::unprotect();
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
@@ -361,7 +363,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 	verify(ser.size() < allocSize);
 	*len = ser.size();
 #ifdef SYNC_TEST
-	*checksum = XXH3_64bits(*buffer, usedSize, 7);
+	*checksum = XXH3_64bits(*buffer, ser.size());
 #endif
 	memwatch::protect();
 	if (frame > 0)
@@ -389,13 +391,13 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 			for (const auto& pair : memPages.ram)
 			{
 				verify(savedPages.ram.count(pair.first) == 1);
-				verify(memcmp(&pair.second[0], &savedPages.ram.find(pair.first)->second[0], PAGE_SIZE) == 0);
+				verify(memcmp(&pair.second.data[0], &savedPages.ram.find(pair.first)->second.data[0], PAGE_SIZE) == 0);
 			}
 			verify(memPages.vram.size() == savedPages.vram.size());
 			for (const auto& pair : memPages.vram)
 			{
 				verify(savedPages.vram.count(pair.first) == 1);
-				verify(memcmp(&pair.second[0], &savedPages.vram.find(pair.first)->second[0], PAGE_SIZE) == 0);
+				verify(memcmp(&pair.second.data[0], &savedPages.vram.find(pair.first)->second.data[0], PAGE_SIZE) == 0);
 			}
 			//verify(memPages.aram.size() == savedPages.aram.size());
 			if (memPages.aram.size() != savedPages.aram.size())
@@ -406,7 +408,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 			for (const auto& pair : memPages.aram)
 			{
 				verify(savedPages.aram.count(pair.first) == 1);
-				verify(memcmp(&pair.second[0], &savedPages.aram.find(pair.first)->second[0], PAGE_SIZE) == 0);
+				verify(memcmp(&pair.second.data[0], &savedPages.aram.find(pair.first)->second.data[0], PAGE_SIZE) == 0);
 			}
 		}
 #endif
@@ -487,6 +489,8 @@ static void on_message(u8 *msg, int len)
 void startSession(int localPort, int localPlayerNum)
 {
 	peerDisconnected = false;
+	// frame clock starts with the session: keep dojo.frame_number == ggpo frame
+	dojo.frame_number = 0;
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
 	cb.advance_frame   = advance_frame;
@@ -513,6 +517,11 @@ void startSession(int localPort, int localPlayerNum)
 	result = ggpo_add_player(ggpoSession, &player, &remotePlayer);
 	synchronized = true;
 	analogAxes = 0;
+	absPointerPos = false;
+	keyboardGame = false;
+	mouseGame = false;
+	inputSize = sizeof(kcode[0]);
+	dojo.replay.analog = analogAxes;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
 	if (settings.platform.isConsole())
