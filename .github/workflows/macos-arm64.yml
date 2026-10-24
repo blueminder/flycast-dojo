@@ -35,7 +35,7 @@ jobs:
           submodules: true
 
       - name: Compile a universal OpenMP
-        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
 
       - name: CMake
         run: |
