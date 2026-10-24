@@ -10,19 +10,25 @@ jobs:
     timeout-minutes: 120
 
     env:
-      VULKAN_VER: 1.3.224.1
+      MOLTENVK_TAG: v1.2.9
 
     steps:
       - name: Set up build environment
         run: |
           brew update
           brew install libao ldid ninja pulseaudio zlib asio gnutls lua
-          command -v aria2c >/dev/null || brew install aria2
-          aria2c --parameterized-uri=true "https://sdk.lunarg.com/sdk/download/${VULKAN_VER}/mac/vulkansdk-macos-${VULKAN_VER}.dmg" "https://distfiles.macports.org/MoltenVK/vulkansdk-macos-${VULKAN_VER}.dmg" || curl -L -o "vulkansdk-macos-${VULKAN_VER}.dmg" "https://sdk.lunarg.com/sdk/download/${VULKAN_VER}/mac/vulkansdk-macos-${VULKAN_VER}.dmg"
-          hdiutil attach ./vulkansdk-macos-*.dmg
-          sudo /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root "$HOME/VulkanSDK" --accept-licenses --default-answer --confirm-command install
-          hdiutil detach /Volumes/vulkansdk-macos-*
-          echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
+          # Vulkan SDK dmg is no longer hosted by Lunarg; fetch MoltenVK from GitHub releases instead
+          moltenvk_root="$RUNNER_TEMP/MoltenVK-$MOLTENVK_TAG"
+          mkdir -p "$moltenvk_root" "$HOME/VulkanSDK/lib"
+          aria2c "https://github.com/KhronosGroup/MoltenVK/releases/download/$MOLTENVK_TAG/MoltenVK-macos.tar" -d "$RUNNER_TEMP" -o "MoltenVK-macos-$MOLTENVK_TAG.tar"
+          tar -xf "$RUNNER_TEMP/MoltenVK-macos-$MOLTENVK_TAG.tar" -C "$moltenvk_root"
+          moltenvk_dylib="$(find "$moltenvk_root" -type f -path '*/macOS/*' -name libMoltenVK.dylib | head -n 1)"
+          if [ -z "$moltenvk_dylib" ]; then
+            echo "MoltenVK $MOLTENVK_TAG was downloaded, but macOS libMoltenVK.dylib was not found." >&2
+            exit 1
+          fi
+          cp "$moltenvk_dylib" "$HOME/VulkanSDK/lib/libMoltenVK.dylib"
+          echo "VULKAN_SDK=$HOME/VulkanSDK" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4
         with:
