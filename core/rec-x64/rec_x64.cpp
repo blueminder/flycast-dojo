@@ -446,14 +446,9 @@ public:
 					{
 						movss(rd, rs1);
 					}
-					if (cpu.has(Cpu::tFMA) && !config::GGPOEnable)
-						vfmadd231ss(rd, rs2, rs3);
-					else
-					{
-						movss(xmm0, rs2);
-						mulss(xmm0, rs3);
-						addss(rd, xmm0);
-					}
+					movss(xmm0, rs2);
+					mulss(xmm0, rs3);
+					addss(rd, xmm0);
 				}
 				break;
 #endif

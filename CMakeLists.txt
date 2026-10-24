@@ -216,7 +216,9 @@ if(MSVC)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
-		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
+		$<$<COMPILE_LANGUAGE:CXX>:-Wall>
+		# no fp contraction
+		$<$<COMPILE_LANGUAGE:CXX>:-ffp-contract=off>)
 endif()
 
 if(${CMAKE_OSX_SYSROOT} MATCHES "\/MacOSX.platform\/Developer\/SDKs")
