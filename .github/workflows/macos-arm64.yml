@@ -42,7 +42,7 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=artifact \
             -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
             -DWITH_SYSTEM_ZLIB=ON -DCURL_ZLIB=OFF -DCPR_BUILD_TESTS=OFF -DCPR_BUILD_TESTS_SSL=OFF -DCMAKE_USE_LIBSSH2=OFF \
-            -DAPPLE_BREAKPAD=OFF -G Xcode
+            -DAPPLE_BREAKPAD=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -G Xcode
           cmake --build build --config RelWithDebInfo --target install
 
       - name: Package app
